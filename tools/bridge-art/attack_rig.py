@@ -52,8 +52,66 @@ def rig(ns, weapons=None):
         if wid in weapon_sprites.TWIN:
             build(ns['add'], ns['pivot']('w2_' + wid, (0, 0, 0), J.grip2))
         J.weapons[wid] = dict(cls=cls, pivot=piv, tip=tip, parts=[o for o, _, _ in ns['PARTS'][start:]])
+        if cls == 'bow':
+            J.weapons[wid]['bow'] = _bow_parts(ns, piv, weapon_sprites.BOWS[wid])
+            J.weapons[wid]['parts'] = [o for o, _, _ in ns['PARTS'][start:]]
     J.weapon_parts = set(o for o, _, _ in ns['PARTS'][first:])
     return J
+
+
+def _unit_rod(ns, name, r, tone, part, parent):
+    """A rod one unit long along its own +z, its foot at the origin: moved and stretched every frame (_place)."""
+    o = ns['add']('cylinder', name, (0, 0, 0), (r, r, 0.5), tone, part, parent, vertices=5)
+    for v in o.data.vertices:
+        v.co.z += 0.5
+    o.rotation_mode = 'QUATERNION'
+    return o
+
+
+def _bow_parts(ns, piv, spec):
+    """A bow's string (two lengths, tip to nock to tip) and a nocked arrow (shaft, head, fletching on a pivot)."""
+    a = _unit_rod(ns, 'bowstring', 0.2, 'w_string', 'string', piv)
+    b = _unit_rod(ns, 'bowstring', 0.2, 'w_string', 'string', piv)
+    arrow = ns['pivot']('arrow', (0, 0, 0), piv)
+    arrow.rotation_mode = 'QUATERNION'
+    L = spec['half'] * 1.25
+    ns['add']('cylinder', 'arrow_shaft', (0, -L / 2, 0), (0.2, 0.2, L / 2), 'w_wood', 'arrow', arrow, rot=(math.pi / 2, 0, 0), vertices=5)
+    ns['add']('cone', 'arrow_head', (0, -L - 0.7, 0), (0.42, 0.42, 1.0), 'w_steel', 'arrowhead', arrow, rot=(math.pi / 2, 0, 0),
+              vertices=4, radius1=1.0, radius2=0.0, depth=1.4)
+    for zz, xx in ((0.45, 0), (-0.25, 0.4), (-0.25, -0.4)):
+        ns['add']('cube', 'fletching', (xx, -0.9, zz), (0.08, 0.9, 0.3), 'w_fletch', 'fletch', arrow)
+    return dict(a=a, b=b, arrow=arrow, half=spec['half'], curve=spec['curve'], L=L)
+
+
+def _place(o, p, q):
+    """Stretch a unit rod from p to q (in its parent's space)."""
+    d = q - p
+    o.location = p
+    o.rotation_quaternion = d.normalized().to_track_quat('Z', 'Y') if d.length > 1e-6 else Quaternion()
+    o.scale = (1, 1, max(1e-3, d.length))
+
+
+def bow_update(J, w, spec):
+    """Frame by frame: the string from tip to tip, or — drawing (spec draw) — pulled to the other hand; the arrow on it
+    (spec arrow), pointing from the nock through the grip."""
+    B = w.get('bow')
+    if not B:
+        return
+    bpy.context.view_layer.update()
+    top, bot = Vector((0, B['curve'], B['half'])), Vector((0, B['curve'], -B['half']))
+    nock = Vector((0, B['curve'], 0))
+    if spec and spec.get('draw'):
+        hand = w['pivot'].matrix_world.inverted() @ J.grip2.matrix_world.translation
+        nock = Vector((0, max(B['curve'], hand.y), max(-1.5, min(1.5, hand.z))))      # in the bow's plane, behind it
+    _place(B['a'], top, nock)
+    _place(B['b'], nock, bot)
+    show = bool(spec and spec.get('arrow'))
+    for o in [B['arrow']] + list(B['arrow'].children_recursive):
+        o.hide_render = not show
+    if show:
+        B['arrow'].location = nock
+        d = (Vector((0, 0, 0)) - nock)
+        B['arrow'].rotation_quaternion = d.normalized().to_track_quat('-Y', 'Z')
 
 
 def _reset(J):
@@ -135,15 +193,17 @@ def carry(J, cls, swing, lift, frame):
 
 
 # ---- the pilot's attack sheet ------------------------------------------------------------------------------------
-def render_sheet(J, base, variants):
-    """Every column of the attack sheet in every direction into base/{id,depth,color_<v>}/<dir>_<col>.png."""
+def render_sheet(J, base, variants, cols=None):
+    """Every column of the attack sheet (or cols: the bow's, attacks.BOW_COLS) in every direction into
+    base/{id,depth,color_<v>}/<dir>_<col>.png."""
     ns = J.ns
+    cols = cols or attacks.COLS
     for kind in ['id', 'depth'] + ['color_' + v for v in variants]:
         os.makedirs(os.path.join(base, kind), exist_ok=True)
     with open(os.path.join(base, 'cols.json'), 'w') as f:
-        json.dump(attacks.COLNAMES, f)
+        json.dump([n for n, _ in cols], f)
     for dname, yaw in attacks.DIRS:
-        for name, spec in attacks.COLS:
+        for name, spec in cols:
             pose(J, spec, yaw)
             tag = '%s_%s.png' % (dname, name)
             ns['face_record'](tag)              # where the painted face goes (characters.py writes anchors.json after)
@@ -192,7 +252,10 @@ def render_weapons(J, outroot):
             o.data.materials[0] = hold
         ns['render'](os.path.join(base, 'color', tag))
 
+    only = [x for x in os.environ.get('WEAPON_IDS', '').split(',') if x]      # just these (a new weapon), the rest untouched
     for wid, w in J.weapons.items():
+        if only and wid not in only:
+            continue
         for other in J.weapons.values():
             for o in other['parts']:
                 o.hide_render = other is not w
@@ -201,7 +264,7 @@ def render_weapons(J, outroot):
             os.makedirs(os.path.join(base, kind), exist_ok=True)
         anchors = {}
         cls = w['cls']
-        frames = [(cls + '-' + n, s) for c, fl in attacks.CLASSES if c == cls for n, s in fl]
+        frames = attacks.BOW_COLS if cls == 'bow' else [(cls + '-' + n, s) for c, fl in attacks.CLASSES if c == cls for n, s in fl]
         for dname, yaw in attacks.DIRS:
             row = anchors.setdefault(dname, {})
             todo = [(n, 'attack', s) for n, s in frames]
@@ -212,6 +275,7 @@ def render_weapons(J, outroot):
                 else:
                     J.root.rotation_euler = (0, 0, R(yaw))
                     carry(J, cls, *spec)
+                bow_update(J, w, spec if kind == 'attack' else None)
                 bpy.context.view_layer.update()
                 g, gz = _project(ns, J.grip.matrix_world.translation)
                 tip = J.grip.matrix_world @ (w['pivot'].matrix_local @ Vector((0, -w['tip'], 0)))

@@ -58,7 +58,7 @@ var BridgeOrders = (function () {
                  'My mother sailed the Crimson. I sail it better.', 'A dry hold is a sad hold.', 'Salt fish south, rum north - the sea does the sums.',
                  'I sleep through the day. The night watch is mine.', 'Every port has a price, and I know most of them.', 'I\'ve never lost a cargo I couldn\'t talk my way out of losing.'];
   var COLOURS = ['#f0c848', '#68d0f0', '#f088b0', '#88e070', '#c8a0ff', '#f8a050'];   // each order's line on the chart table
-  var DANGER0 = { 'lumar-crimson': 0.35, 'lumar-midnight': 0.4, 'lumar-rose': 0.12, 'lumar-sapphire': 0.12 };
+  var DANGER0 = { 'lumar-crimson': 0.35, 'lumar-cinder': 0.38, 'lumar-midnight': 0.4, 'lumar-rose': 0.12, 'lumar-sapphire': 0.12 };
   var STOCK_DAYS = 48;                                    // a supply run keeps a business in two days' stock, no more
   var CRATES = { timber: 1, glassware: 1, spore_silk: 1, blackpowder: 1, roseite: 1 };   // what a run can bring the Workshop
 

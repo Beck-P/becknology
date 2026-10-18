@@ -1,8 +1,10 @@
 const { chromium } = require('playwright');
-// Sylvara's two quests played through, start to finish: The Queen's Favour, then Under the Willow (its sequel).
+// Sylvara's two quests played through, start to finish, both out of order (Alyssa: who you talk to first shouldn't
+// matter): The Queen's Favour from the willow first, then Under the Willow (its sequel) from the glade first.
 // Checks the things in them (js/keyitems.js): the ribbon and the moonflower held up on a card only once what was said
-// has been read, carried until given, flying to Beckolas as they're handed over; the topics that open as the story
-// moves (`when` / `until`); the willow's hint and its keepsake layer at the end. Shots in OUT.
+// has been read, in the Backpack under Quest items, carried until given, flying to Beckolas as they're handed over;
+// the topics that open as the story moves (`when` / `until`); the finale waiting for everything; the keepsake layer at
+// the end. Shots in OUT.
 const OUT = process.argv[2] || '/tmp';
 (async () => {
   const b = await chromium.launch({ executablePath: require(__dirname + '/../chrome.js') });
@@ -35,16 +37,11 @@ const OUT = process.argv[2] || '/tmp';
   const card = () => p.evaluate(() => !!document.getElementById('item-get'));
   const carried = () => p.evaluate(() => BridgeKeyItems.carried().map(i => i.id).join(','));
 
-  // ---- The Queen's Favour ----
-  await go('sylvara-hall', [11, 7]);
-  await talk(11, 6);
+  // ---- The Queen's Favour, out of order: the ribbon before anyone's said a word about it ----
   await go('sylvara', [6, 18]);
   await use(6, 18);
-  const hint = await p.evaluate(() => (document.querySelector('.world-dialog') || {}).innerText || '');
-  if (!/SOMEONE IN THE GLADE/.test(hint)) fail('the willow gives no hint before the bard and the herbalist');
-  await shut();
-  await talk(17, 12); await talk(34, 12);
-  await use(6, 18);
+  const found = await p.evaluate(() => (document.querySelector('.world-dialog') || {}).innerText || '');
+  if (!/GREEN SILK/.test(found)) fail('the willow didn\'t give up the ribbon first thing: ' + found.slice(0, 80));
   if (await card()) fail('the ribbon card came up over the willow\'s words');
   await shut(); await p.waitForTimeout(900);
   if (!await card()) fail('no card for the ribbon');
@@ -52,17 +49,28 @@ const OUT = process.argv[2] || '/tmp';
   await p.waitForTimeout(500); await p.keyboard.press('Space'); await p.waitForTimeout(500);
   if (await card()) fail('Space didn\'t put the ribbon card away');
   if (await carried() !== 'ribbon') fail('not carrying the ribbon: ' + await carried());
+  // the Backpack has it, under Quest items
+  await p.keyboard.press('i'); await p.waitForTimeout(700);
+  const qs = await p.evaluate(() => [...document.querySelectorAll('.bp-qslot')].map(b => b.dataset.q));
+  if (qs.join() !== 'queens-favour/ribbon') fail('the Backpack\'s quest items: ' + JSON.stringify(qs));
+  await p.evaluate(() => { const b = document.querySelector('.bp-qslot'); if (b) b.click(); }); await p.waitForTimeout(300);
+  const det = await p.evaluate(() => (document.querySelector('.bp-detail') || {}).innerText || '');
+  if (!/Beckolas's Ribbon/.test(det) || !/For Beckolas/.test(det)) fail('the ribbon\'s card in the Backpack: ' + det.slice(0, 120));
+  await p.screenshot({ path: OUT + '/sylvara_backpack.png' });
+  await p.keyboard.press('i'); await p.waitForTimeout(500);
   await go('sylvara-hall', [9, 6]);
   await use(9, 5);
   if (await carried() !== '') fail('still carrying after giving it back');
-  if (!await has('queens-favour')) fail('The Queen\'s Favour not done');
   await shut();
+  if (await has('queens-favour')) fail('done before the queen, the bard and the herbalist');
+  await talk(11, 6);
+  await go('sylvara', [17, 12]);
+  await talk(17, 12); await talk(34, 12);
+  if (!await has('queens-favour')) fail('The Queen\'s Favour not done');
+  if (await has('under-the-willow/flower') || await carried()) fail('the sequel started on the word that finished the first');
   console.log('queens-favour', await has('queens-favour'));
 
-  // ---- Under the Willow ----
-  await talk(11, 6, 'Something on your mind?');
-  await talk(9, 5, 'The queen... and you?');
-  await go('sylvara', [17, 12]);
+  // ---- Under the Willow, out of order: the glade first, Beckolas and the queen last ----
   await talk(17, 12, 'Help Beckolas say it');
   await use(34, 12); await shut(); await p.waitForTimeout(900);
   if (!await card()) fail('no card for the moonflower');
@@ -71,10 +79,14 @@ const OUT = process.argv[2] || '/tmp';
   await walker('LAMPLIGHTER', 'Light the willow');
   await walker('WEAVER', 'Ribbons for the willow');
   if (await carried() !== 'moonflower') fail('not carrying the moonflower: ' + await carried());
+  await use(6, 18);
+  if (await has('under-the-willow/vow')) fail('the moment came before Beckolas and the queen knew');
+  await shut();
   await go('sylvara-hall', [9, 6]);
-  await talk(9, 5, 'The Moonwell, at dusk');
+  await talk(9, 5, 'The queen... and you?');
   if (await carried() !== '') fail('still carrying the moonflower');
-  await talk(11, 6, 'The Moonwell, at dusk');
+  await talk(11, 6, 'Something on your mind?');
+  if (!await has('under-the-willow/invite')) fail('the queen wasn\'t told: the Moonwell, at dusk');
   await go('sylvara', [6, 18]);
   await use(6, 18); await p.waitForTimeout(6000);                  // (the moment types itself out)
   const moment = await p.evaluate(() => (document.querySelector('.world-dialog') || {}).innerText || '');

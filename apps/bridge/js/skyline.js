@@ -43,14 +43,24 @@ var BridgeSkyline = (function () {
 
   // where a layer sits on screen: it scrolls `p` as fast as the world
   // horizontally and `pv` vertically, centred on the world's centre column
+  // (and, in a world that moves — the Loop's carriage — `p` of how far it's gone: opts.motion, setMotion)
   function place(name, w, h, v, opts, p, pv, anchorRow, fromTop) {
     var m = manifest[name], ts = v.ts;
     var wx = v.offX + opts.centerCol * ts;
-    var x = Math.round(w / 2 + (wx - w / 2) * p - m.w / 2);
+    var x = Math.round(w / 2 + (wx - w / 2) * p - m.w / 2 - (opts._mx || 0) * p);
     var wy = v.offY + anchorRow * ts;
     var y = Math.round(h / 2 + (wy - h / 2) * pv - (fromTop ? 0 : m.h));
-    return { x: x, y: y, m: m };
+    return { x: x, y: y, m: m, wrap: !!opts._mx };
   }
+  // a layer, repeated across the screen when the world's moving past it
+  function blit(ctx, img, P, w, each) {
+    if (!P.wrap) { ctx.drawImage(img, P.x, P.y); if (each) each(P); return; }
+    var x = ((P.x % P.m.w) + P.m.w) % P.m.w - P.m.w;
+    for (; x < w; x += P.m.w) { ctx.drawImage(img, x, P.y); if (each) each({ x: x, y: P.y, m: P.m }); }
+  }
+  // what moves a world past the city: BridgeSkyline.setMotion(name, fn(now) → px gone east), a world's skyline.motion names it
+  var MOTION = {};
+  function setMotion(name, fn) { MOTION[name] = fn; }
 
   // ---- the sky ------------------------------------------------------------------------
   function sky(ctx, w, h, now, horizon) {
@@ -324,6 +334,7 @@ var BridgeSkyline = (function () {
     var v = BridgeWorld.getView();
     var ts = v.ts;
     opts = opts || {};
+    opts._mx = opts.motion && MOTION[opts.motion] ? MOTION[opts.motion](now) || 0 : 0;
     var baseRow = opts.baseRow != null ? opts.baseRow : 6;
     var railRow = opts.railRow != null ? opts.railRow : 13.2;
     opts.centerCol = opts.centerCol != null ? opts.centerCol : 16;
@@ -337,26 +348,43 @@ var BridgeSkyline = (function () {
       var F = place('far', w, h, v, opts, 0.22, 0.35, baseRow - 1);
       searchlights(ctx, w, F.y + F.m.h * 0.9, now);
       ctx.globalAlpha = 0.82;                          // the far towers sink into the smog
-      ctx.drawImage(imgs.far, F.x, F.y);
+      blit(ctx, imgs.far, F, w);
       ctx.globalAlpha = 1;
       traffic(ctx, w, F.y + F.m.h * 0.45, now, 3, 0.8);
       smog(ctx, w, F.y + F.m.h * 0.55, F.m.h * 0.4, now, 0.006, '170,60,150', 0.18);
     }
     if (imgs.mid) {
       var M = place('mid', w, h, v, opts, 0.45, 0.55, baseRow);
-      ctx.drawImage(imgs.mid, M.x, M.y);
-      ads(ctx, M, now);
+      blit(ctx, imgs.mid, M, w, function (at) { ads(ctx, at, now); });
       traffic(ctx, w, M.y + M.m.h * 0.62, now + 5000, 2, 1.3);
     }
     if (imgs.low) {
       var Lo = place('low', w, h, v, opts, 0.7, 1, railRow, true);
+      // further down and further off, between the towers' feet and the drop: the same roofs again, half the size, sinking
+      // into the haze (only where there's a gap to fill)
+      var gapTop = imgs.mid ? M.y + M.m.h : Lo.y;
+      if (Lo.y - gapTop > 16) {
+        var dh = Math.round(Lo.m.h / 2), dw = Math.round(Lo.m.w / 2);
+        var dy = Math.max(gapTop - 4, Lo.y - dh), dx = (((Math.round(Lo.x * 0.6)) % dw) + dw) % dw - dw;
+        ctx.save();
+        ctx.imageSmoothingEnabled = false;
+        ctx.globalAlpha = 0.5;
+        for (; dx < w; dx += dw) ctx.drawImage(imgs.low, dx, dy, dw, dh);
+        ctx.restore();
+        var dz = ctx.createLinearGradient(0, dy, 0, Lo.y);
+        dz.addColorStop(0, 'rgba(90,26,90,0.75)');
+        dz.addColorStop(1, 'rgba(40,10,50,0.35)');
+        ctx.fillStyle = dz;
+        ctx.fillRect(0, dy, w, Lo.y - dy);
+        traffic(ctx, w, dy + dh * 0.4, now + 3000, 2, 0.7);
+      }
       // the drop: dark first, then the roofs far below, haze over them
       ctx.fillStyle = '#0a0414';
       ctx.fillRect(0, Lo.y, w, h - Lo.y);
-      ctx.drawImage(imgs.low, Lo.x, Lo.y + 6);
+      blit(ctx, imgs.low, { x: Lo.x, y: Lo.y + 6, m: Lo.m, wrap: Lo.wrap }, w);
       var hz = ctx.createLinearGradient(0, Lo.y, 0, Lo.y + 90);
-      hz.addColorStop(0, 'rgba(60,16,70,0.85)');
-      hz.addColorStop(1, 'rgba(60,16,70,0.15)');
+      hz.addColorStop(0, 'rgba(60,16,70,0.6)');
+      hz.addColorStop(1, 'rgba(60,16,70,0.08)');
       ctx.fillStyle = hz;
       ctx.fillRect(0, Lo.y, w, h - Lo.y);
       traffic(ctx, w, Lo.y + 30, now + 9000, 2, 1.0);
@@ -405,6 +433,7 @@ var BridgeSkyline = (function () {
 
   // ---- rain ---------------------------------------------------------------------------------------
   function rain(ctx, w, h, now, opts) {
+    if (opts && opts.none) return;                          // indoors with a skyline (the Loop's carriage)
     var n = (opts && opts.drops) || 140;
     ctx.save();
     if (opts && opts.dry) {                                 // under a roof (world tiles, screen rows): no rain falls there
@@ -442,5 +471,8 @@ var BridgeSkyline = (function () {
     ctx.restore();
   }
 
-  return { draw: draw, rain: rain, load: load, ad: ad, streetAds: streetAds, steam: steam };
+  // the rendered layers themselves, for views drawn outside a world (js/transit.js's lift and cab rides)
+  function layers() { load(); return manifest ? { far: imgs.far, mid: imgs.mid, low: imgs.low, manifest: manifest } : null; }
+
+  return { draw: draw, rain: rain, load: load, ad: ad, streetAds: streetAds, steam: steam, setMotion: setMotion, layers: layers };
 })();

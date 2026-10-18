@@ -117,6 +117,7 @@ const NIGHT = '2026-10-16T07:20', DAY = '2026-10-16T12:00';           // Lumar's
 
   // a navy patrol in company, and a fishing ground (a trawler with her net out, dories at anchor)
   for (const [role, name] of [['navy', 'navy'], ['fisher', 'trawler'], ['privateer', 'privateer'], ['m_galleon', 'merchant_galleon'], ['navy_galleon', 'man_of_war']]) {
+    if (role === 'fisher') { await p.evaluate((t) => BridgeClock._at(t), DAY); await p.waitForTimeout(300); }   // (the fleet's in port by night)
     const at = await p.evaluate((role) => { const s = BridgeSloop._shipsAt(Date.now() / 1000 + 1.5).find(s => (s.role === role || s.kind === role) && s.shown); return s && { cx: s.X / KX, cy: (s.Y - 3) / KY, kind: s.kind }; }, role);
     if (!at) { bad('no ' + role + ' on the routes'); continue; }
     await goTo(at.cx, at.cy);
@@ -125,6 +126,7 @@ const NIGHT = '2026-10-16T07:20', DAY = '2026-10-16T12:00';           // Lumar's
     console.log(name + ':', JSON.stringify(vis.map(v => v.kind)));
     if (!vis.some(v => v.role === role || v.kind === role)) bad('no ' + role + ' in view where the plan has one');
     await both(name, role);
+    if (role === 'fisher') { await p.evaluate((t) => BridgeClock._at(t), NIGHT); await p.waitForTimeout(300); }
   }
   // hail one
   const hailed = await p.evaluate(() => { const o = BridgeSloop._traffic()[0]; if (!o) return null; BridgeSloop._hail(o); return o.role; });

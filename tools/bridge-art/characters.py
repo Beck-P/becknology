@@ -71,6 +71,7 @@ FIXED = {
     'skin2':  ('#7a4e36', '#b0784e', '#cc9468'),
     'skin3':  ('#3e2418', '#6a3e28', '#8a563a'),
     'skin0':  ('#b48468', '#ecc0a0', '#fcdcc4'),     # very fair (Queen Alyssara)
+    'ghost':  ('#4a7a8a', '#8cc0cc', '#c4eaf0'),     # the drowned of Midnight: cold light, not flesh (drawn see-through in the game)
     'eye':    ('#120c0a', '#120c0a', '#2a1a14'),     # (unused: eyes are painted now — FACE_POINTS, EYE)
     'white':  ('#9a968c', '#e4e0d4', '#fbf8f0'),
     'leather': ('#3a2416', '#5e3a22', '#7e5232'),
@@ -151,6 +152,40 @@ NPCS = {
                           pose='sit'),
     'npc-keeper':    dict(skin='skin', shirt=('#18223a', '#26365a', '#3a5080'), vest=('#9a7418', '#d0a028', '#e8c050'),
                           hair=('#8a8a90', '#b8b8c0', '#dcdce4'), bun=True, pose='sit'),
+    # Cinder Key (the Crimson Sea's pirate port, Workstream B2): Vesper Quick the fence, Scarlet Dee who keeps the harbour,
+    # Rook behind the Salt Rat's bar, Old Wick at the stormwatch, Ham Kettle on the pirates' slip
+    'npc-fence':     dict(skin='skin2', shirt=('#2a1a2a', '#4a2a46', '#6a3a62'), vest=('#141014', '#262026', '#3a323a'),
+                          hair=('#1a1414', '#2e2224', '#443034'), long_hair=True, bandana=('#6a1414', '#9a2020', '#c03030'),
+                          earring=True, smile=False, pose='stand'),
+    'npc-hm-dee':    dict(skin='skin', shirt=('#5a1414', '#8a2020', '#b03030'), coat=('#5a1414', '#8a2020', '#b03030'),
+                          waistcoat=('#a89a80', '#d8ccb0', '#f4ecd8'),
+                          hair=('#6a2a14', '#9a4422', '#c06030'), ponytail=True, tricorn=('#141014', '#262026', '#3a323a'),
+                          earring=True, pose='stand'),
+    'npc-rook':      dict(skin='skin2', shirt=('#3a3a40', '#5a5a64', '#7a7a88'), apron=('#3a2416', '#5e3a22', '#7e5232'),
+                          hair=('#1a1414', '#2e2224', '#443034'), beard=True, brawny=True, eyepatch=True, smile=False, pose='stand'),
+    'npc-wick':      dict(skin='skin', shirt=('#1a2a3a', '#2a4058', '#3e5a78'), vest=('#9a7418', '#d0a028', '#e8c050'),
+                          hair=('#9a9aa0', '#c8c8d0', '#ececf2'), beard=True, beanie=('#3a3a40', '#5a5a64', '#7a7a88'), pose='stand'),
+    'npc-annis':     dict(skin='skin', shirt=('#5a1414', '#8a2020', '#b03030'), coat=('#5a1414', '#8a2020', '#b03030'),
+                          hair=('#1a1414', '#2e2224', '#443034'), long_hair=True, tricorn=('#141014', '#262026', '#3a323a'),
+                          earring=True, smile=False, pose='sit'),
+    'npc-gash':      dict(skin='skin', shirt=('#2a3a2a', '#3e5a3e', '#5a7a58'), vest=('#141014', '#262026', '#3a323a'),
+                          hair=('#6a5a3a', '#9a8a5a', '#c0b080'), bandana=('#3a1a3a', '#5a2a5a', '#7a3a7a'), earring=True, pose='sit'),
+    'npc-kettle':    dict(skin='skin2', shirt=('#5a4a3a', '#7a6a52', '#9a8a6a'), sleeve='skin', apron=('#3a2416', '#5e3a22', '#7e5232'),
+                          hair=('#3a2414', '#5a3a20', '#7a5030'), bandana=('#1a2a4a', '#2a3e6a', '#3e5a8a'), brawny=True, pose='stand'),
+    # Midnight's dead (the game draws them see-through, floating: an actor's `ghost`): Master Idris Thorne in Morwen's
+    # stillroom, the drowned of Saltmere
+    'npc-ghost-scholar': dict(skin='ghost', shirt=('#2a5a6a', '#4a8a9a', '#7abcc8'), skirt=('#2a5a6a', '#4a8a9a', '#7abcc8'),
+                          hair=('#8ab8c4', '#b8e0e8', '#e4f8fc'), long_hair=True, beard=True, smile=False, pose='stand'),
+    'npc-ghost-ringer': dict(skin='ghost', shirt=('#2a5a5a', '#4a8a8a', '#7abcbc'), vest=('#1e4a4a', '#2e6a6a', '#4a8a8a'),
+                          hair=('#8ab8c4', '#b8e0e8', '#e4f8fc'), beard=True, smile=False, pose='stand'),
+    'npc-ghost-fisher': dict(skin='ghost', shirt=('#2a5a6a', '#4a8a9a', '#7abcc8'), apron=('#3a6a5a', '#5a9a88', '#8ac8b4'),
+                          hair=('#8ab8c4', '#b8e0e8', '#e4f8fc'), long_hair=True, pose='stand'),
+    'npc-ghost-child': dict(skin='ghost', shirt=('#3a6a6a', '#5a9a9a', '#8ac8c8'), hair=('#8ab8c4', '#b8e0e8', '#e4f8fc'),
+                          young=True, pose='stand'),
+    'npc-ghost-sailor': dict(skin='ghost', shirt=('#3a6a6a', '#5a9a9a', '#8ac8c8'), vest=('#1e4a52', '#2e6a74', '#4a8a96'),
+                          hair=('#8ab8c4', '#b8e0e8', '#e4f8fc'), bandana=('#1e4a52', '#2e6a74', '#4a8a96'), beard=True, pose='stand'),
+    'npc-ghost-captain': dict(skin='ghost', shirt=('#1e4a52', '#2e6a74', '#4a8a96'), coat=('#1e4a52', '#2e6a74', '#4a8a96'),
+                          hair=('#8ab8c4', '#b8e0e8', '#e4f8fc'), tricorn=('#143a40', '#1e4a52', '#2e6a74'), long_hair=True, smile=False, pose='stand'),
     'npc-scholar':   dict(skin='skin2', shirt=('#3a2a1e', '#5e4430', '#7e6046'), vest=('#1e2a3a', '#2e4058', '#465c78'),
                           hair=('#c8c8d0', '#e0e0e8', '#f4f4fa'), long_hair=True, beard=True, pose='stand'),
     # Arcadia (neon city)
@@ -277,7 +312,8 @@ NPCS = {
                           hair=('#a8843a', '#d8b058', '#f0d080'), long_hair='flowing', elf_ears=True,
                           circlet=('#9a7618', '#d8ac30', '#fae27a'), gem=('#0a6a3a', '#18b060', '#80f0b0'), gown='court',
                           veil=('#c8b888', '#ece0b8', '#fff8e0'),
-                          bell_sleeves=True, neckline=True, girdle=True, shoes=('#8a6a10', '#c89a20', '#f0d060'), blush=True, pose='sit'),
+                          bell_sleeves=True, neckline=True, girdle=True, shoes=('#8a6a10', '#c89a20', '#f0d060'), blush=True,
+                          eye=('#2e1a10', '#5a3420', '#8a5a34'), pose='sit'),
     'npc-beckolas':  dict(skin='skin', shirt=('#2e4a22', '#4a6a30', '#6a8a44'), armour=('#3a5a26', '#5a7a34', '#7e9a4a'),
                           cuirass=('#3a5a26', '#5a7a34', '#7e9a4a'), tunic=('#2e4a22', '#4a6a30', '#6a8a44'),
                           cloak=('#1e3a1e', '#2e5a2e', '#447a3e'), leaf_cloak=True, trim=('#7a5a20', '#c8a040', '#f0d070'),
@@ -448,7 +484,72 @@ NPCS = {
                           trim=('#7a5a10', '#c89a28', '#f0d060'), stole=('#a89a88', '#e2d8c8', '#fbf6ec'), sleeve='skin2',
                           circlet=('#8a6a10', '#c89a20', '#f0d060'), gem=('#6a0a3a', '#c0186a', '#ff70b0'),
                           hair=('#9a9aa0', '#c8c8d0', '#ececf2'), long_hair='flowing', pose='sit'),
+    # The Mid-Levels' Terraces (L200): Nadia behind Cirrus's round bar in a cyan waistcoat, Chef Bastien at Halo's grill,
+    # Hiro at Lumen's skewers, Dove the cab driver in her company jacket, the lift attendant in his cap; Moonglow's
+    # quartet — Odette Lark in midnight-blue sequins, Ray at the piano, Mingo on the bass, Lou-Lou on the drums — and Sol
+    # behind the bar
+    'npc-mixologist': dict(skin='skin3', shirt=('#a8a49a', '#e8e4d8', '#fcfaf2'), waistcoat=('#0e4a54', '#1a7a88', '#30b0c0'),
+                          bowtie=('#0a0a0e', '#18181e', '#2e2e3a'), hair=('#141010', '#241c1a', '#362a26'), bun=True,
+                          earpiece=True, pose='stand'),
+    'npc-grill-chef': dict(skin='skin', shirt=('#1a1a20', '#2a2a32', '#3e3e48'), apron=('#5a3a20', '#8a5a30', '#aa7a48'),
+                          hair=('#8a4a20', '#b06a30', '#d08a48'), beard=True, brawny=True, beanie=('#1a1a20', '#2a2a32', '#3e3e48'),
+                          pose='stand'),
+    'npc-izakaya':   dict(skin='skin2', shirt=('#1a2a4a', '#2a3e6a', '#3e5a8a'), apron=('#141018', '#241c2c', '#3a2e44'),
+                          hair=('#141010', '#241c1a', '#362a26'), cap=('#e8e4dc', '#f4f0e8', '#ffffff'), pose='stand'),
+    'npc-cabbie':    dict(skin='skin3', shirt=('#7a5a10', '#c89a20', '#f0c840'), vest=('#141018', '#241c2c', '#3a2e44'),
+                          hair=('#5a1a4a', '#8a2a70', '#b04a90'), ponytail=True, cap=('#141018', '#241c2c', '#3a2e44'), pose='stand'),
+    'npc-liftman':   dict(skin='skin', shirt=('#4a0612', '#7a0e1e', '#a81a2e'), coat=('#4a0612', '#7a0e1e', '#a81a2e'),
+                          cap=('#4a0612', '#7a0e1e', '#a81a2e'), gloves=True, hair=('#8a8a90', '#b8b8c0', '#dcdce4'),
+                          mustache=True, pose='stand'),
+    'npc-jazz-singer': dict(skin='skin3', shirt=('#141c4a', '#24307a', '#3a4ab0'), skirt=('#141c4a', '#24307a', '#3a4ab0'), gown=True,
+                          sequin=True, sleeve='skin3', gloves=('#c8c0b0', '#ece4d4', '#fffaf0'),
+                          hair=('#141010', '#241c1a', '#362a26'), long_hair='flowing', blush=True, pose='stand'),
+    'npc-jazz-pianist': dict(skin='skin2', shirt=('#0e0e14', '#1c1c26', '#30303e'), bib=True, bowtie=('#5a0a14', '#8a1420', '#b02030'),
+                          hair=('#8a8a90', '#b8b8c0', '#dcdce4'), mustache=True, pose='sit'),
+    'npc-jazz-bassist': dict(skin='skin3', shirt=('#2a2018', '#4a3a28', '#6a5438'), vest=('#141018', '#241c2c', '#3a2e44'),
+                          hair=('#141010', '#241c1a', '#362a26'), beard=True, cap=('#2a2018', '#4a3a28', '#6a5438'), pose='stand'),
+    'npc-jazz-drummer': dict(skin='skin', shirt=('#4a1a3a', '#7a2a5a', '#a84a7a'), hair=('#c06080', '#e080a0', '#f0a8c0'),
+                          bun=True, shades=True, pose='sit'),
+    'npc-concierge': dict(skin='skin0', shirt=('#4a7a8a', '#7ab0c0', '#a8dce8'), bib=('#c8ccd4', '#eceef2', '#ffffff'),
+                          hair=('#c8a050', '#e8c870', '#f8e8a0'), bun=True, earpiece=True, blush=True, pose='stand'),
+    'npc-jazz-bartender': dict(skin='skin2', shirt=('#a8a49a', '#e8e4d8', '#fcfaf2'), waistcoat=('#141c3a', '#24305a', '#3a4880'),
+                          bowtie=('#7a5a10', '#c89a28', '#f0d060'), hair=('#141010', '#241c1a', '#362a26'), bald=True,
+                          beard=True, pose='stand'),
+    # Arcadia's District grown out: Lantern Row (Granny Ume at the tea house, the lantern maker, old Hoshi at his ramen
+    # counter, Mama Keiko of the Akachochin, Kanna who keeps the roof shrine) and the spaceport (Inspector Halloran at
+    # customs, Brannigan behind the Last Burn's bar, Captain Desh of the Old Mercy)
+    'npc-ume':       dict(skin='skin0', shirt=('#1e2a4a', '#2e3e6a', '#4a5a8a'), skirt=('#1e2a4a', '#2e3e6a', '#4a5a8a'),
+                          apron=('#9a8e78', '#d4c8ae', '#f0e6d0'), hair=('#8a8a90', '#c0c0c8', '#e4e4ec'), bun=True, blush=True,
+                          pose='stand'),
+    'npc-lanternmaker': dict(skin='skin', shirt=('#6a1a12', '#a02a1e', '#c84a30'), pants=('#24202a', '#3e3646', '#5a5064'),
+                          hair=('#1a1410', '#2e2218', '#44342a'), beanie=('#9a8e78', '#d4c8ae', '#f0e6d0'), mustache=True, pose='stand'),
+    'npc-hoshi':     dict(skin='skin2', shirt=('#9a968c', '#e4e0d4', '#fbf8f0'), apron=('#14203a', '#1e2e52', '#2e4270'),
+                          hair=('#8a8a90', '#b8b8c0', '#dcdce4'), bald=True, mustache=True, beard=True,
+                          beanie=('#14203a', '#1e2e52', '#2e4270'), pose='stand'),
+    'npc-keiko':     dict(skin='skin', shirt=('#3a1430', '#5a2048', '#7a3466'), skirt=('#3a1430', '#5a2048', '#7a3466'),
+                          apron=('#14100e', '#241c1a', '#362a26'), hair=('#141010', '#241c1a', '#362a26'), bun=True, blush=True,
+                          pose='stand'),
+    'npc-kanna':     dict(skin='skin0', shirt=('#9a968c', '#e4e0d4', '#fbf8f0'), skirt=('#6a0e0a', '#a81a14', '#d83a2a'),
+                          hair=('#141010', '#241c1a', '#362a26'), ponytail=True, blush=True, pose='stand'),
+    'npc-halloran':  dict(skin='skin3', shirt=('#141c30', '#22304a', '#34466a'), pants=('#141c30', '#22304a', '#34466a'),
+                          cap=('#141c30', '#22304a', '#34466a'), hair=('#141010', '#241c1a', '#362a26'), earpiece=True,
+                          gloves=True, smile=False, pose='stand'),
+    'npc-brannigan': dict(skin='skin', shirt=('#24242c', '#3a3a46', '#545462'), apron=('#3a2416', '#5e3a22', '#7e5232'),
+                          hair=('#6a2a14', '#9a4422', '#c06030'), bald=True, beard=True, brawny=True, chrome_arm=True, pose='stand'),
+    'npc-desh':      dict(skin='skin2', shirt=('#3a3a2a', '#5a5a40', '#7a7a58'), coat=('#3a2416', '#5e3a22', '#7e5232'),
+                          hair=('#8a8a90', '#b8b8c0', '#dcdce4'), ponytail=True, cap=('#3a2416', '#5e3a22', '#7e5232'), pose='stand'),
+    # the Wayfarer's cook (the galley, js/galley.js): Dorrie Kettle — broad and ruddy, her grey-streaked hair in a bun,
+    # a blue dress under a white apron, sleeves rolled
+    'npc-dorrie':    dict(skin='skin', shirt=('#24386a', '#34529a', '#5274bc'), skirt=('#24386a', '#34529a', '#5274bc'),
+                          apron=('#a8a49a', '#dcd8cc', '#f6f2e8'), hair=('#4a2216', '#743622', '#9a5030'), bun=True,
+                          blush=True, brawny=True, pose='stand'),
 }
+# the Wayfarer's crew keep a day aboard (js/aboard.js): walking between their posts, the mess and the cards, so each needs
+# a standing sheet and a seated one (the cast's own sheets are one or the other)
+for _n in ('npc-regular', 'npc-traveler'):
+    NPCS[_n + '-stand'] = dict(NPCS[_n], pose='stand')
+for _n in ('npc-watcher', 'npc-okafor', 'npc-pawn-customer', 'npc-dorrie'):
+    NPCS[_n + '-sit'] = dict(NPCS[_n], pose='sit')
 # ---- the crowd: passers-by (js/crowd.js) -----------------------------------------------------------------------
 # A few bodies and outfits, every colour on them a KEY (XKEYS) that js/crowd.js swaps for the planet's wardrobe as a
 # sheet loads (as js/look.js does the pilot's) — so a handful of renders make hundreds of different people. Each
@@ -484,6 +585,12 @@ EXTRAS = {
     'gown':      dict(_X, skirt=XKEYS['bot'], gown=True, sequin=True, sleeve='xskin', long_hair='flowing', stole=XKEYS['out']),
     'elf':       dict(_X, long_hair=True, elf_ears=True, tunic=XKEYS['out'], tall_boots=True, bracers=True),
     'elf-braid': dict(_X, skirt=XKEYS['bot'], braid='side', elf_ears=True, shawl=XKEYS['out']),
+    # Lumar's other seas (workstream B1): Sapphire's merchants in waistcoats and sashes, its market women in shawls;
+    # Rose's mystics in long robes with flaring sleeves, the cowl fallen back
+    'merchant':  dict(_X, waistcoat=XKEYS['out'], sash=XKEYS['hat'], mustache=True),
+    'woman-shawl': dict(_X, skirt=XKEYS['bot'], shawl=XKEYS['out'], bun=True),
+    'mystic':    dict(_X, skirt=XKEYS['bot'], gown=True, bell_sleeves=True, cowl=XKEYS['out'], long_hair=True),
+    'mystic-m':  dict(_X, skirt=XKEYS['bot'], gown=True, bell_sleeves=True, cowl=XKEYS['out'], beard=True),
 }
 for _n, _s in EXTRAS.items():
     NPCS['extra-' + _n] = dict(_s, pose='stand')
@@ -1317,6 +1424,31 @@ def build_human(spec):
     if spec.get('chef'):
         add('cylinder', 'chef_band', (0, 0.2, 9.0), (4.6, 4.4, 1.0), 'white', 'hat', head, vertices=18)
         add('uv_sphere', 'chef_puff', (0, 0.2, 11.2), (5.0, 4.8, 2.6), 'white', 'hat', head, segments=16, ring_count=8)
+    # the pirates' (Cinder Key, the Crimson Sea): a tricorn, a knotted bandana, an eyepatch, a gold earring
+    if 'tricorn' in spec:        # a low crown, the brim cocked up in three points, one over the brow, a gold edge
+        add('cylinder', 'tricorn_crown', (0, 0.4, 9.5), (4.5, 4.3, 1.5), 'tricorn', 'hat', head, vertices=18)
+        add('cylinder', 'tricorn_brim', (0, 0.4, 8.3), (6.2, 6.0, 0.25), 'tricorn', 'hat', head, vertices=24)
+        cs = [(6.6 * math.cos(a), 0.4 + 6.4 * math.sin(a)) for a in (-math.pi / 2, math.pi / 6, 5 * math.pi / 6)]
+        for i in range(3):
+            (x0_, y0_), (x1_, y1_) = cs[i], cs[(i + 1) % 3]
+            mx, my = (x0_ + x1_) / 2, (y0_ + y1_) / 2
+            L = math.hypot(x1_ - x0_, y1_ - y0_)
+            ang = math.atan2(y1_ - y0_, x1_ - x0_)
+            add('cube', 'tricorn_cock', (mx * 0.88, my * 0.88 + 0.05, 9.3), (L / 2 * 0.98, 0.35, 1.25), 'tricorn', 'hat', head,
+                rot=(0, 0, ang), bevel=0.2)
+            add('cube', 'tricorn_edge', (mx * 0.88, my * 0.88 + 0.05, 10.55), (L / 2 * 0.9, 0.4, 0.18), 'brass', 'hat_band', head, rot=(0, 0, ang))
+    if 'bandana' in spec:        # a scarf knotted round the head, its tails hanging behind
+        add('uv_sphere', 'bandana', (0, 0.6, 7.4), (5.35, 5.15, 3.3), 'bandana', 'hat', head, segments=20, ring_count=10)
+        add('uv_sphere', 'bandana_knot', (1.6, 4.9, 7.0), (1.2, 0.9, 1.0), 'bandana', 'hat', head, segments=10, ring_count=6)
+        for sg in (-1, 1):
+            spike('bandana_tail', (1.6 + sg * 0.5, 5.2, 6.8), (sg * 0.25, 0.45, -1.0), 3.4, 0.7, 'bandana', 'hat', head, flat=(1.0, 0.4))
+    if spec.get('eyepatch'):     # a black patch over the right eye, its string round the head
+        add('cube', 'eyepatch', (2.05, -4.75, 5.6), (1.15, 0.45, 1.0), 'boot', 'shades', head, bevel=0.3)
+        add('torus', 'eyepatch_string', (0, 0.2, 6.6), (1, 1, 1), 'boot', 'shades', head, rot=(0.0, -0.32, 0),
+            major_radius=5.2, minor_radius=0.18, major_segments=20, minor_segments=4)
+    if spec.get('earring'):      # a gold ring in the left ear
+        add('torus', 'earring', (-5.05, -0.2, 3.9), (1, 1, 1), 'brass', 'earring', head, rot=(0, math.pi / 2, 0),
+            major_radius=0.75, minor_radius=0.2, major_segments=12, minor_segments=4)
     if 'cap' in spec:
         add('cylinder', 'cap', (0, 0.3, 9.0), (5.4, 5.2, 1.4), 'cap', 'hat', head, vertices=20)
         add('cube', 'brim', (0, -4.6, 8.1), (3.4, 2.2, 0.35), 'cap', 'hat', head, bevel=0.3)
@@ -1354,22 +1486,22 @@ def build_human(spec):
         head.scale = (1.14,) * 3
 
 
-if WHO.startswith('pilot'):          # pilot[-sit|-ski|-climb|-attack|-weapons][-<style>]-<a|b>: one suit on one body, every head
+if WHO.startswith('pilot'):          # pilot[-sit|-ski|-climb|-attack|-bow|-weapons][-<style>]-<a|b>: one suit on one body, every head
     _parts = WHO.split('-')[1:]
     BODY = _parts.pop() if _parts and _parts[-1] in ('a', 'b') else 'a'
-    MODE = _parts[0] if _parts and _parts[0] in ('sit', 'ski', 'climb', 'attack', 'weapons') else 'stand'
+    MODE = _parts[0] if _parts and _parts[0] in ('sit', 'ski', 'climb', 'attack', 'bow', 'weapons') else 'stand'
     _rest = _parts[1:] if MODE != 'stand' else _parts
     STYLE = _rest[0] if _rest else 'flight'
     {'flight': build_pilot, 'coat': build_coat, 'plate': build_plate, 'thermal': build_thermal, 'runner': build_runner,
      'mystic': build_mystic, 'ranger': build_ranger}[STYLE]()
     if BODY == 'b':
         body_b()
-    if MODE in ('attack', 'weapons'):  # fighting (attacks.py, attack_rig.py): a waist to turn at, a grip, the weapons
+    if MODE in ('attack', 'bow', 'weapons'):  # fighting (attacks.py, attack_rig.py): a waist to turn at, a grip, the weapons
         import attack_rig
         import attacks
         import weapon_sprites
-        W, H = attacks.FRAME if MODE == 'attack' else attacks.WEAPON_FRAME
-        ORIGIN_PX = attacks.ORIGIN if MODE == 'attack' else attacks.WEAPON_ORIGIN
+        W, H = attacks.FRAME if MODE in ('attack', 'bow') else attacks.WEAPON_FRAME
+        ORIGIN_PX = attacks.ORIGIN if MODE in ('attack', 'bow') else attacks.WEAPON_ORIGIN
         RIG = attack_rig.rig(globals(), list(weapon_sprites.WEAPONS) if MODE == 'weapons' else
                              [w for w in os.environ.get('ATTACK_WEAPON', '').split(',') if w])   # a weapon in hand: a quick look
     if MODE == 'climb':                # arms over the head need a taller frame
@@ -1395,7 +1527,9 @@ else:
                 'tunic', 'sash', 'bracers', 'cuirass', 'leaf_apron', 'leaf2', 'shawl', 'leaf_hood', 'cowl', 'bard_cap', 'feather',
                 'flower_crown', 'flower', 'flower2', 'braid_tie', 'quiver', 'satchel', 'herb', 'basket', 'lute', 'staff', 'lampglow',
                 # the Neon Royale's
-                'waistcoat', 'coat', 'bowtie', 'stole', 'pants'):
+                'waistcoat', 'coat', 'bowtie', 'stole', 'pants',
+                # the pirates'
+                'tricorn', 'bandana'):
         if key in spec and isinstance(spec[key], tuple):
             tones[key] = spec[key]
     for key, tone in (('bib', 'bib'), ('gloves', 'glove'), ('sequin', 'sequin')):   # True: the stock colour; a tuple: its own
@@ -1703,8 +1837,8 @@ def render_cell(base, dname, col, yaw, spec):
 
 def render_all(base):
     """Every frame of this character (as it's shown right now) into base/{id,depth,color_<variant>}/."""
-    if POSE == 'attack':
-        attack_rig.render_sheet(RIG, base, VARIANTS)
+    if POSE in ('attack', 'bow'):        # the bow's poses are a sheet of their own (attacks.BOW_COLS)
+        attack_rig.render_sheet(RIG, base, VARIANTS, attacks.BOW_COLS if POSE == 'bow' else None)
         return face_write(base)
     for kind in ['id', 'depth'] + ['color_' + v for v in VARIANTS]:
         os.makedirs(os.path.join(base, kind), exist_ok=True)

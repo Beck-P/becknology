@@ -65,7 +65,8 @@ var BridgeCrowd = (function () {
   var NATURAL = ['dark', 'black', 'brown', 'brown', 'auburn', 'blond', 'ginger', 'dark', 'black'];
   // the bodies (assets/characters/crowd/<body>.png and <body>-sit.png) and who wears what where; colours are mid
   // tones, shaded into three bands as the NPCs' are (shade)
-  var MEN = ['man', 'man-cap', 'vest', 'worker', 'elder', 'suit', 'elf'], WOMEN = ['woman', 'woman-bun', 'woman-hat', 'woman-hood', 'gown', 'elf-braid'];
+  var MEN = ['man', 'man-cap', 'vest', 'worker', 'elder', 'suit', 'elf', 'merchant', 'mystic-m'],
+      WOMEN = ['woman', 'woman-bun', 'woman-hat', 'woman-hood', 'gown', 'elf-braid', 'woman-shawl', 'mystic'];
   var WARDROBES = {
     lumar: {
       bodies: { man: 3, 'man-cap': 3, vest: 3, worker: 2, elder: 2, traveller: 1, woman: 3, 'woman-bun': 2, 'woman-hood': 2, child: 1, 'child-cap': 1 },
@@ -107,6 +108,41 @@ var BridgeCrowd = (function () {
       names: { m: ['Kade', 'Jin', 'Rook', 'Dex', 'Hiro', 'Vasco', 'Ozu', 'Kenji', 'Lio', 'Marz'],
                f: ['Nyx', 'Kiri', 'Juno', 'Mika', 'Sable', 'Reya', 'Tamsin', 'Yuki', 'Zara', 'Echo'], c: ['Bit', 'Pixel', 'Zip'] }
     },
+    // the Mid-Levels (the Terraces, L200): office money out for the evening — suits and smart coats in glass and cyan,
+    // ice and slate, a dash of pink; fewer children, nobody in work clothes
+    midlevels: {
+      bodies: { suit: 3, man: 2, vest: 1, traveller: 1, woman: 2, 'woman-bun': 2, gown: 1, 'woman-hat': 1, child: 0.2 },
+      top: ['#2a3a4e', '#5cc8d0', '#e8f0f4', '#3a4a6a', '#a8dce8', '#1e2430', '#e870c0', '#7080e8', '#c8ccd4'],
+      bot: ['#141820', '#1e2430', '#2a3040', '#3a4258', '#101014'],
+      out: ['#1e2430', '#5cc8d0', '#e8f0f4', '#3a4a6a', '#c8ccd4', '#2a3a4e'],
+      hat: ['#1e2430', '#c8ccd4', '#5cc8d0', '#e870c0'],
+      umbrella: ['#5cc8d0', '#e8f0f4', '#1e2430', '#7080e8', '#a8dce8'],
+      wild: 0.15,
+      names: { m: ['Aurel', 'Kenzo', 'Felix', 'Idris', 'Mateo', 'Sven', 'Ravi', 'Jules', 'Teo', 'Caspian'],
+               f: ['Celeste', 'Mira', 'Noor', 'Ines', 'Saskia', 'Lena', 'Yara', 'Ottilie', 'Rin', 'Paloma'], c: ['Pip', 'Lumi'] }
+    },
+    lantern: {    // Lantern Row, the old quarter: older folk, plainer cloth, indigo and rust, paper umbrellas
+      bodies: { man: 2, 'man-cap': 1, vest: 2, elder: 3, worker: 1, woman: 2, 'woman-bun': 3, 'woman-hood': 1, child: 0.6, 'child-cap': 0.4 },
+      top: ['#2e3e6a', '#7a3a2a', '#d8ccb0', '#3a4a3a', '#5a2048', '#a02a1e', '#1e2a4a', '#8a7a5a'],
+      bot: ['#1e2a4a', '#2e2a30', '#3e3646', '#4a3a28', '#141418'],
+      out: ['#1e2a4a', '#7a3a2a', '#3a2416', '#2a4a3a', '#d4c8ae'],
+      hat: ['#1e2a4a', '#d4c8ae', '#7a3a2a', '#2a2a30'],
+      umbrella: ['#c8301e', '#e8d8b0', '#1e2a4a', '#d89a30', '#3a6a4a'],
+      wild: 0.08,
+      names: { m: ['Taro', 'Genji', 'Ikki', 'Shun', 'Bo', 'Ren', 'Haru', 'Old Sato', 'Kaito', 'Yoshi'],
+               f: ['Hana', 'Aiko', 'Sumi', 'Nori', 'Fumi', 'Rin', 'Old Mitsu', 'Chiyo', 'Asa', 'Mei'], c: ['Tama', 'Koji', 'Momo'] }
+    },
+    spacers: {    // the spaceport: freighter crews off nine worlds, dockers, a customs clerk or two
+      bodies: { worker: 4, 'man-cap': 3, vest: 3, traveller: 3, man: 1, 'woman-hood': 2, woman: 1, 'woman-bun': 1 },
+      top: ['#d86a1a', '#3a4a3a', '#5a5a64', '#2a3a5a', '#a8c020', '#7a3a2a', '#1e1e26', '#c8a050'],
+      bot: ['#2a2a30', '#3a3a2a', '#1e2a38', '#4a3a28', '#141418'],
+      out: ['#d86a1a', '#3a3a2a', '#5e3a22', '#2a2a30', '#e0b020'],
+      hat: ['#e0b020', '#d86a1a', '#2a2a30', '#5e3a22', '#3a4a3a'],
+      umbrella: ['#2a2a30', '#d86a1a', '#e0b020'],
+      wild: 0.3,
+      names: { m: ['Vosk', 'Tibor', 'Okoro', 'Lenz', 'Ruk', 'Marten', 'Abe', 'Sol', 'Corvin', 'Dag'],
+               f: ['Ines', 'Petra', 'Yara', 'Ondine', 'Kass', 'Mags', 'Lior', 'Seren', 'Bex', 'Noor'], c: ['Sprocket'] }
+    },
     casino: {
       bodies: { suit: 5, gown: 5, vest: 1, man: 1, woman: 1 },
       top: ['#1c1c26', '#22304a', '#34164a', '#c89a28', '#8a1022', '#e4e0d4', '#0e0e14'],
@@ -147,6 +183,32 @@ var BridgeCrowd = (function () {
       skins: [0, 3, 1],
       names: { m: ['Eldrin', 'Calael', 'Thoren', 'Ilvar', 'Saelith', 'Vaeron'], f: ['Lirael', 'Ysmir', 'Naeva', 'Aelin', 'Seraphel', 'Thalia'], c: ['Fenwick'] }
     }
+  };
+  // Lumar's other seas look their own (Beck: "each of their people and cities should probably be a little bit more
+  // unique"): Sapphire, the merchants' sea — whitewash and deep blue, gold sashes, the glassblowers' leather aprons;
+  // Rose, the crystal sea — makers and mystics in plum, rose and cream, robes with the cowl fallen back, silk
+  WARDROBES.sapphire = {
+    bodies: { merchant: 3, 'woman-shawl': 3, man: 2, worker: 1.5, 'man-cap': 1, woman: 2, 'woman-hat': 1.5, elder: 1, traveller: 1, child: 1, 'child-cap': 1 },
+    top: ['#eceae2', '#dcd8cc', '#2a4a9a', '#3a6ac8', '#1e2e5a', '#c8d4e8', '#e8e0c8', '#5a7ab0'],
+    bot: ['#1e2e5a', '#2a3548', '#eceae2', '#3a4a6a', '#5e5a50'],
+    out: ['#1a3a8a', '#2a5ad8', '#e8e8f0', '#6a4a2a', '#c8a040', '#16306a', '#8ab0e0'],
+    hat: ['#c8a040', '#e0b848', '#2a5ad8', '#e8e8f0', '#1a3a8a'],
+    umbrella: ['#2a5ad8', '#e8e8f0', '#1a3a8a', '#c8a040'],
+    names: { m: ['Aris', 'Stavro', 'Nikos', 'Theo', 'Pelle', 'Doran', 'Mattias', 'Yannis', 'Lukas', 'Corin'],
+             f: ['Ione', 'Calla', 'Daria', 'Melina', 'Thessaly', 'Nerys', 'Zoe', 'Ariadne', 'Kassia', 'Lyra'],
+             c: ['Niko', 'Pip', 'Effie', 'Tam'] }
+  };
+  WARDROBES.rose = {
+    bodies: { mystic: 3, 'mystic-m': 2, 'woman-hood': 2, woman: 2, 'woman-bun': 1.5, traveller: 1.5, man: 1.5, vest: 1, elder: 1, child: 1 },
+    top: ['#e8d8d0', '#c87a9a', '#7a2a5a', '#f0c8d8', '#5a3a6a', '#d8b8a0', '#9a4a6a', '#eae2d8'],
+    bot: ['#4a2440', '#6a3458', '#e8d8d0', '#3a2a3e', '#8a5a7a', '#5a4a52'],
+    out: ['#b04884', '#f08cc8', '#e8d0b8', '#5a2a5a', '#d8a0b8', '#c8a050', '#3a2440'],
+    hat: ['#f08cc8', '#c8a050', '#e8d0b8', '#7a2a5a'],
+    umbrella: ['#f08cc8', '#b04884', '#e8d0b8', '#5a2a5a'],
+    hairs: ['dark', 'black', 'brown', 'auburn', 'blond', 'grey', 'white', 'pink', 'violet', 'silver', 'dark', 'brown'],
+    names: { m: ['Ilan', 'Soren', 'Eben', 'Rafe', 'Teodor', 'Ashby', 'Lior', 'Quill'],
+             f: ['Rosalind', 'Mireille', 'Ottoline', 'Seren', 'Amaryllis', 'Liesl', 'Wisteria', 'Odette', 'Briar', 'Isolde'],
+             c: ['Petal', 'Wren', 'Nim'] }
   };
   WARDROBES.crown.names = WARDROBES.lumar.names;
   function sexOf(body) { return body.indexOf('child') === 0 ? 'c' : MEN.indexOf(body) >= 0 ? 'm' : WOMEN.indexOf(body) >= 0 ? 'f' : null; }
@@ -775,8 +837,9 @@ var BridgeCrowd = (function () {
     shown.forEach(function (e) {
       var st = e.st, who = e.plan.who, sit = !!st.sit, sh = sheetOf(who, sit);
       if (!sh) return;
-      var cx = Math.round(offX + (st.x + 0.5) * ts), footRow = sit ? st.sit.seat[1] + 0.05 : st.y + 0.9;
-      var footY = Math.round(offY + footRow * ts);
+      // seated: drawn on the seat, depth-tested (and sorted) from its front edge, so the seat isn't drawn across them
+      var cx = Math.round(offX + (st.x + 0.5) * ts), seatY = sit ? st.sit.seat[1] + 0.05 : 0;
+      var footRow = sit ? BridgeScene.seatedRow(st.sit.seat[1], st.facing) : st.y + 0.9, footY = Math.round(offY + (sit ? seatY : footRow) * ts);
       if (V && (cx < -FW || cx > V.w + FW || footY < -8 || footY > V.h + FH)) return;
       list.push({ footRow: footRow, draw: function (ctx) {
         var col = st.walk != null ? 4 + Math.floor(st.walk / 0.3) % 8 : idleCol(Math.floor((nowMs + who.seed.length * 97 + e.plan.k * 131) / 360));

@@ -20,6 +20,8 @@ from scenekit import Kit, apply_world, shade  # noqa: E402
 import assets_cyber as Y               # noqa: E402
 import assets_district as D            # noqa: E402
 import assets_signs as S               # noqa: E402
+import assets_arcadia_rich as AR       # noqa: E402
+import random                          # noqa: E402
 
 OUT = sys.argv[1]
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
@@ -32,23 +34,33 @@ X0, X1, R0, R1 = 1.0, 29.0, 4.0, 9.3            # the deck
 BX0, BX1, BR1 = 12.5, 17.5, 10.5                 # the viewing bay, out over the drop
 
 # ---- the deck: dark tiles, an LED line down the middle, glass panels over the drop ----------------------------------
-Y.tile_floor(k, X0, R0, X1, R1, tones=('#2e2a3a', '#2a2636'), size=1.0, seam='#14101c')
-Y.tile_floor(k, BX0, R1, BX1, BR1, tones=('#2e2a3a', '#2a2636'), size=1.0, seam='#14101c')
-k.box(X0, R0, -0.7, X1, R1, -0.04, ('#1a1626', 0.08), 'deck_truss')
-k.box(BX0, R1, -0.7, BX1, BR1, -0.04, ('#1a1626', 0.08), 'deck_truss')
+gr = random.Random(3070)                                    # the deck's own dice
+k.wet = dict(AR.WET, deck=0.4)
+PLATES = ('#3a3648', '#343044', '#3e3a4c', '#322e40')
+AR.deck_plates(k, X0, R0, X1, R1, rng=gr, tones=PLATES)
+AR.deck_plates(k, BX0, R1, BX1, BR1, rng=gr, tones=PLATES)
+k.box(X0, R0, -0.7, X1, R1, -0.1, ('#1a1626', 0.08), 'deck_truss')
+k.box(BX0, R1, -0.7, BX1, BR1, -0.1, ('#1a1626', 0.08), 'deck_truss')
 for x in range(int(X0) + 1, int(X1), 2):                                        # the truss's ribs under the edge
     k.box(x - 0.06, R1 - 0.02, -0.7, x + 0.06, R1 + 0.02, -0.05, '#2a2638', 'truss_rib')
 k.box(X0, R1 + 0.0, -0.72, X1, R1 + 0.03, -0.66, shade(Y.PINK, 0.4), 'truss_led', emit=(Y.PINK, 0.8))
 k.box(X0, 6.86, 0.0, X1, 6.94, 0.006, shade(Y.CYAN, 0.4), 'deck_led', emit=(Y.CYAN, 0.6))
 for x in (5.5, 10.0, 20.0, 24.5):                                               # glass floor: the city far below
-    k.box(x - 0.8, 5.4, 0.0, x + 0.8, 6.6, 0.008, '#06061a', 'glass_floor', emit=('#141850', 0.5))
-    k.box(x - 0.82, 5.38, 0.0, x + 0.82, 6.62, 0.004, '#3a3a52', 'glass_frame')
-    for i in range(14):
-        gx, gr = x - 0.7 + k.rng.random() * 1.4, 5.5 + k.rng.random() * 1.0
-        c = k.rng.choice((Y.YEL, Y.PINK, Y.CYAN_L, '#ffd890'))
-        k.box(gx, gr, 0.008, gx + 0.04, gr + 0.02, 0.01, shade(c, 0.4), 'glass_city', emit=(c, 0.7))
-for (x, r, rx, ry, c) in ((7.2, 7.8, 0.6, 0.22, Y.PINK), (16.0, 6.0, 0.5, 0.2, Y.CYAN), (22.8, 7.9, 0.7, 0.24, Y.PURP)):
-    Y.puddle(k, x, r, rx, ry, tint=c)
+    k.box(x - 0.82, 5.38, -0.02, x + 0.82, 6.62, 0.012, '#3a3a52', 'glass_frame')
+    k.box(x - 0.8, 5.4, 0.0, x + 0.8, 6.6, 0.014, '#06061a', 'glass_floor', emit=('#141850', 0.5))
+    k.boxes([(x - 0.02, 5.4, 0.014, x + 0.02, 6.6, 0.02), (x - 0.8, 5.98, 0.014, x + 0.8, 6.02, 0.02)], '#3a3a52', 'glass_frame')
+    for i in range(16):
+        gx, gr_ = x - 0.72 + gr.random() * 1.44, 5.48 + gr.random() * 1.04
+        c = gr.choice((Y.YEL, Y.PINK, Y.CYAN_L, '#ffd890'))
+        k.box(gx, gr_, 0.014, gx + 0.04, gr_ + 0.02, 0.016, shade(c, 0.4), 'glass_city', emit=(c, 0.7))
+    for j in range(2):                                                          # a traffic lane streaking under it
+        rr = 5.6 + gr.random() * 0.8
+        k.box(x - 0.78, rr, 0.014, x + 0.78, rr + 0.012, 0.016, shade('#ff5050', 0.4), 'glass_city', emit=(('#ff5050', '#fff0d0')[j], 0.6))
+AR.puddles(k, ((7.2, 7.8, 0.6, 0.22, Y.PINK), (16.0, 6.0, 0.5, 0.2, Y.CYAN), (22.8, 7.9, 0.7, 0.24, Y.PURP),
+               (13.2, 8.6, 0.4, 0.16, Y.CYAN_L), (27.4, 6.6, 0.35, 0.14, Y.PINK)), z=0.0)
+for x in range(int(X0), int(X1)):                                               # anti-slip nosing along both edges
+    for rr in (R0 + 0.32, R1 - 0.32):
+        k.box(x + 0.1, rr - 0.04, 0.0, x + 0.9, rr + 0.04, 0.006, ('#8a7a34', 0.06), 'deck_tread')
 
 # ---- the balustrades: low glass between posts, a lit rail, the city beyond ---------------------------------------------
 def balustrade(xa, ra, xb, rb):
@@ -57,6 +69,12 @@ def balustrade(xa, ra, xb, rb):
     k.bar(xa, ra, xb, rb, 0.18, 0.92, 0.04, '#0e1030', 'balustrade_glass', emit=('#2a3a7a', 0.35))
     k.bar(xa, ra, xb, rb, 0.92, 0.98, 0.1, '#3a3a52', 'rail')
     k.bar(xa, ra, xb, rb, 0.88, 0.92, 0.06, shade(Y.CYAN, 0.4), 'rail_led', emit=(Y.CYAN, 0.7))
+    k.bar(xa, ra + 0.025, xb, rb + 0.025, 0.78, 0.8, 0.02, '#3a4a8a', 'balustrade_sheen', emit=('#6a7ad0', 0.35))
+    for i in range(n):                                                          # a glint across each pane
+        t = (i + 0.3) / n
+        gx, gr_ = xa + (xb - xa) * t, ra + (rb - ra) * t
+        k.tube((gx, gr_ + 0.03, 0.3), (gx + 0.25 * (xb - xa) / max(1e-6, math.hypot(xb - xa, rb - ra)), gr_ + 0.03, 0.62), 0.008,
+               '#4a5aa0', 'balustrade_glint', emit=('#8090e0', 0.4), verts=3)
     for i in range(n + 1):
         t = i / n
         x, r = xa + (xb - xa) * t, ra + (rb - ra) * t
@@ -75,15 +93,12 @@ k.solid(BX1, R1 - 0.2, X1, R1 + 0.1)
 k.solid(BX0, BR1 - 0.25, BX1, BR1 + 0.1)
 
 # ---- the two towers the bridge hangs between --------------------------------------------------------------------------
-for (a, b) in ((-3.0, X0), (X1, COLS + 3.0)):
-    k.box(a, -2.0, -8.0, b, 11.5, 9.0, ('#16122a', 0.08), 'tower')
-    rects = []
-    for i in range(int((b - a) / 0.5)):
-        for j in range(16):
-            if k.rng.random() < 0.4:
-                x = a + 0.12 + i * 0.5
-                rects.append((x, 11.5, 8.4 - j * 1.05, x + 0.26, 11.52, 8.75 - j * 1.05))
-    k.boxes(rects, shade('#ffd890', 0.5), 'tower_window', emit=('#ffd890', 0.7))
+for (a, b, neon) in ((-3.0, X0, Y.CYAN), (X1, COLS + 3.0, Y.PINK)):
+    k.box(a, -2.0, -8.0, b, 10.5, 9.0, ('#16122a', 0.08), 'tower')
+    AR.tower_face(k, a, b, 11.5, -4.2, 9.0, rng=gr, neon=neon)
+    for z in (1.0, 2.4):                                                            # the bridge's stays, from the towers to the deck
+        k.tube((b if a < 0 else a, R0 + 0.15, 6.5 + z), ((X0 + 4.0) if a < 0 else (X1 - 4.0), R0 + 0.15, 1.0), 0.03, '#4a4a5a',
+               'stay', verts=5)
 k.solid(0, 0, X0, ROWS)
 k.solid(X1, 0, COLS, ROWS)
 
@@ -153,7 +168,27 @@ Y.metal_bench(k, 24.3, 26.1, 4.65, neon=Y.CYAN)
 for x in (4.0, 10.5, 19.5, 26.0):
     Y.street_lamp(k, x, 8.75, col=Y.CYAN if x < 15 else Y.PINK)
 for x in (7.0, 23.5):
-    Y.street_planter(k, x, 8.55, glow=Y.YEL)
+    AR.planter(k, x, 8.55, glow=Y.YEL)
+AR.wet_sign(k, 16.9, 6.3)
+import assets_dock as DK                                                        # the way, stencilled on the deck
+DK.floor_text(k, '< STREET', 'RussoOne', 9.3, 7.45, 0.34, ('#b8a040', 0.1))
+DK.floor_text(k, 'SKYPORT 7 >', 'RussoOne', 21.2, 7.45, 0.34, ('#b8a040', 0.1))
+lamps = (4.0, 10.5, 19.5, 26.0)
+for a, b in zip(lamps, lamps[1:]):                                              # string lights from lamp to lamp
+    if b - a < 8:
+        D.cable(k, (a + 0.4, 8.75, 2.45), (b - 0.4, 8.75, 2.45), sag=0.35, lights=(Y.PINK, Y.CYAN, '#ffe090'), n=12)
+for i, x in enumerate(lamps):                                                   # a lit banner hung on each lamp
+    col = (Y.PINK, Y.CYAN, Y.PURP, Y.YEL)[i]
+    k.box(x + 0.06, 8.7, 1.25, x + 0.1, 8.8, 2.0, '#2a2832', 'banner_arm')
+    k.box(x + 0.1, 8.72, 1.2, x + 0.42, 8.76, 2.0, shade(col, 0.35), 'banner', emit=(col, 0.6))
+    for j in range(3):
+        k.box(x + 0.16, 8.76, 1.35 + j * 0.22, x + 0.36, 8.77, 1.45 + j * 0.22, '#140a18', 'banner_glyph')
+AR.coffee_cup(k, 12.2, 5.1)
+AR.coffee_cup(k, 26.2, 8.6, tipped=True)
+AR.pigeons(k, 11.3, 5.55, n=3, rng=gr)
+AR.pigeons(k, 25.2, 5.6, n=2, rng=gr)
+AR.flyers(k, X0 + 0.3, R0 + 0.5, X1 - 0.3, R1 - 0.4, 18, rng=gr)
+AR.recycler(k, 6.0, 4.55)
 VX, VR = 15.0, 9.85
 k.cyl(VX, VR, 0.0, 0.08, 0.22, '#2a2a3e', 'viewer_base', verts=12)
 k.cyl(VX, VR, 0.08, 1.0, 0.06, '#3a3a52', 'viewer_post', verts=8)
@@ -169,13 +204,13 @@ k.area_light(15.0, 3.0, 9.0, '#7058b8', 650, 30.0, rot=(math.radians(-35), 0, 0)
 k.area_light(15.0, 12.0, -3.0, '#ff70b0', 220, 26.0, rot=(math.radians(150), 0, 0))
 for (x, c) in ((8.0, '#80c0ff'), (22.0, '#ff90c8')):
     k.point_light(x, 7.0, 3.0, c, 22, radius=1.0)
-k.render(OUT, light_states={'full': {'flicker': 1.0}, 'dim': {'flicker': 0.7}}, light_samples=128, world_light=('#241a40', 0.5))
+k.render(OUT, light_states={'full': {'flicker': 1.0}, 'dim': {'flicker': 0.7}}, light_samples=int(os.environ.get('ARC_SAMPLES', 128)), world_light=('#241a40', 0.5))
 
 w = {'name': 'The Skywalk', 'width': COLS, 'height': ROWS, 'tileSize': 16, 'tileset': 'arcadia',
      'spawns': {'player': [2, 5]}, 'shipExit': False, 'tiles': [], 'collisions': [], 'tileNames': {},
      'interactions': [
-         {'x': 2, 'y': 4, 'type': 'enter_world', 'target': 'arcadia-street', 'spawn': [31, 9], 'label': 'LIFT · STREET', 'prompt': 'PRESS E TO RIDE DOWN'},
-         {'x': 28, 'y': 4, 'type': 'enter_world', 'target': 'arcadia-skypad', 'spawn': [19, 5], 'label': 'LIFT · SKYPORT 7', 'prompt': 'PRESS E TO RIDE UP'},
+         {'x': 2, 'y': 4, 'type': 'express_lift', 'label': 'LIFT · STREET', 'prompt': 'PRESS E TO CALL THE LIFT', 'shaft': 'skywalk', 'lobby': 'skywalk'},   # js/transit.js
+         {'x': 28, 'y': 4, 'type': 'express_lift', 'label': 'LIFT · SKYPORT 7', 'prompt': 'PRESS E TO CALL THE LIFT', 'shaft': 'skyport', 'lobby': 'skywalk'},
          {'x': 4, 'y': 4, 'type': 'vendor', 'label': 'VENDING MACHINE', 'prompt': 'PRESS E TO BUY',
           'items': [{'id': 'void_fizz', 'price': 6}, {'id': 'neon_udon', 'price': 9}, {'id': 'stim_pack', 'price': 28}]},
          {'x': 7, 'y': 4, 'type': 'fortune', 'label': 'ZOLTA.EXE', 'prompt': 'PRESS E FOR A FORTUNE'},

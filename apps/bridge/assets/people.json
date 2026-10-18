@@ -27,7 +27,11 @@
       },
       {
         "q": "Heard anything?",
-        "a": "TAM SAYS THE PIRATES ON CRIMSON ARE WAITING ON A LOW TIDE TO GET AT AN OLD WRECK. AND THAT SOMEONE WENT INTO THE DRAGON'S CAVE WITH A LANTERN AND A MAP, YEARS BACK, AND NEVER CAME OUT."
+        "a": "TAM SAYS THE PIRATES ON CRIMSON ARE WAITING ON A LOW TIDE TO GET AT AN OLD WRECK. AND THAT SOMEONE WENT INTO THE DRAGON'S CAVE WITH A LANTERN AND A MAP, YEARS BACK, AND NEVER CAME OUT.",
+        "rumour": [
+          "heron",
+          "ship-mark"
+        ]
       }
     ]
   },
@@ -54,7 +58,8 @@
       },
       {
         "q": "H.M.?",
-        "a": "HOLLIS MARR. CHARTED EVERY REEF ON THIS SEA AND SWORE THE HERON WENT DOWN WITH HER HOLD FULL. WENT LOOKING FOR A WAY IN THROUGH THE CAVES. THAT CHARCOAL BY THE MOUTH IS THE LAST OF HIM."
+        "a": "HOLLIS MARR. CHARTED EVERY REEF ON THIS SEA AND SWORE THE HERON WENT DOWN WITH HER HOLD FULL. WENT LOOKING FOR A WAY IN THROUGH THE CAVES. THAT CHARCOAL BY THE MOUTH IS THE LAST OF HIM.",
+        "rumour": "heron"
       }
     ],
     "crew": {
@@ -88,7 +93,8 @@
       },
       {
         "q": "Need anything?",
-        "a": "IF YOU SAIL THE ISLANDS, LOOK AT THE CRYSTALS FOR ME. CRIMSON, ROSE, SAPPHIRE - AND WHATEVER MIDNIGHT GROWS. COME BACK AND TELL ME. THE CURRENTS CHANGED LAST SPRING; THE MAPS NEED IT."
+        "a": "IF YOU SAIL THE ISLANDS, LOOK AT THE CRYSTALS FOR ME. CRIMSON, ROSE, SAPPHIRE - AND WHATEVER MIDNIGHT GROWS. COME BACK AND TELL ME. THE CURRENTS CHANGED LAST SPRING; THE MAPS NEED IT.",
+        "rumour": "crystals"
       },
       {
         "q": "Ivo Venn",
@@ -134,7 +140,8 @@
       },
       {
         "q": "The guestbook",
-        "a": "SOMEONE WROTE THAT THE DRAGON IS LISTENING. NO NAME. THE INK'S OLD BUT THE HAND'S STEADY. I'D SAY WHOEVER WROTE IT MEANT IT."
+        "a": "SOMEONE WROTE THAT THE DRAGON IS LISTENING. NO NAME. THE INK'S OLD BUT THE HAND'S STEADY. I'D SAY WHOEVER WROTE IT MEANT IT.",
+        "rumour": "ship-mark"
       }
     ],
     "crew": {
@@ -164,7 +171,8 @@
       },
       {
         "q": "Your ship mark",
-        "a": "I HAVE SEEN IT BEFORE. A PILOT CALLED E.B. CAME TO THIS TOWER WEARING IT, A LIFETIME AGO. SHE ASKED WHAT THE DRAGON WAS LISTENING FOR. I DIDN'T KNOW. I SEALED HER QUESTION IN A SCROLL."
+        "a": "I HAVE SEEN IT BEFORE. A PILOT CALLED E.B. CAME TO THIS TOWER WEARING IT, A LIFETIME AGO. SHE ASKED WHAT THE DRAGON WAS LISTENING FOR. I DIDN'T KNOW. I SEALED HER QUESTION IN A SCROLL.",
+        "rumour": "ship-mark"
       },
       {
         "q": "The dark thing",
@@ -172,7 +180,8 @@
       },
       {
         "q": "The abbey",
-        "a": "THE MONKS WERE LISTENERS. EVERY NIGHT THEY SAT BY THE MOON POOL AND WROTE DOWN THE SHIPS THEY HEARD PASSING OVERHEAD - NOT SAILING SHIPS. THE OTHER KIND. WHEN THE LAST OF THEM DIED THEY LEFT ME THE BOOK. I HAVEN'T OPENED IT. I KNOW WHAT'S ON THE LAST PAGE."
+        "a": "THE MONKS WERE LISTENERS. EVERY NIGHT THEY SAT BY THE MOON POOL AND WROTE DOWN THE SHIPS THEY HEARD PASSING OVERHEAD - NOT SAILING SHIPS. THE OTHER KIND. WHEN THE LAST OF THEM DIED THEY LEFT ME THE BOOK. I HAVEN'T OPENED IT. I KNOW WHAT'S ON THE LAST PAGE.",
+        "rumour": "listeners"
       }
     ]
   },
@@ -195,11 +204,13 @@
       },
       {
         "q": "The singing",
-        "a": "THEY HUM WHEN THE TIDE COMES IN. ALL OF THEM, THE SAME NOTE. THE BIG ONES IN THE GLASSHOUSE HUM WHEN YOU SING NEAR THEM, AND THEN THEY DON'T STOP. HENCE THE SIGN."
+        "a": "THEY HUM WHEN THE TIDE COMES IN. ALL OF THEM, THE SAME NOTE. THE BIG ONES IN THE GLASSHOUSE HUM WHEN YOU SING NEAR THEM, AND THEN THEY DON'T STOP. HENCE THE SIGN.",
+        "rumour": "singing-deep"
       },
       {
         "q": "The old mine",
-        "a": "WE CLOSED IT WHEN THE SINGING DOWN THERE GOT LOUD ENOUGH TO HEAR AT THE BATHHOUSE. THE ORE IN THE LAST CART STILL GLOWS. NOBODY WANTS TO FETCH IT."
+        "a": "WE CLOSED IT WHEN THE SINGING DOWN THERE GOT LOUD ENOUGH TO HEAR AT THE BATHHOUSE. THE ORE IN THE LAST CART STILL GLOWS. NOBODY WANTS TO FETCH IT.",
+        "rumour": "singing-deep"
       }
     ]
   },
@@ -226,7 +237,8 @@
       },
       {
         "q": "Heard anything?",
-        "a": "A STRANGER PAID ME IN COINS FROM NOWHERE ON THIS SEA. SHIP MARK STAMPED ON THEM - LOOKED A BIT LIKE YOURS, NOW I THINK ABOUT IT."
+        "a": "A STRANGER PAID ME IN COINS FROM NOWHERE ON THIS SEA. SHIP MARK STAMPED ON THEM - LOOKED A BIT LIKE YOURS, NOW I THINK ABOUT IT.",
+        "rumour": "ship-mark"
       },
       {
         "q": "Sell what you've found",
@@ -407,7 +419,8 @@
       },
       {
         "q": "The painting",
-        "a": "THE SHIP UNDER THE GREEN MOON? SIGNED E.B. SHE PAINTED IT RIGHT THERE BY THE FIRE, THEN SAILED OUT AND DIDN'T COME BACK. LEFT IT FOR HER TAB."
+        "a": "THE SHIP UNDER THE GREEN MOON? SIGNED E.B. SHE PAINTED IT RIGHT THERE BY THE FIRE, THEN SAILED OUT AND DIDN'T COME BACK. LEFT IT FOR HER TAB.",
+        "rumour": "ship-mark"
       }
     ],
     "crew": {
@@ -460,11 +473,13 @@
       },
       {
         "q": "The broken cabinet",
-        "a": "THE OLD OWNER LEFT SOMETHING INSIDE IT WHEN HE SOLD THE PLACE. THE KIDS WHO SPRAY NULL ON EVERYTHING KNOW WHAT. THEY CHECK IT EVERY NIGHT AT CLOSING."
+        "a": "THE OLD OWNER LEFT SOMETHING INSIDE IT WHEN HE SOLD THE PLACE. THE KIDS WHO SPRAY NULL ON EVERYTHING KNOW WHAT. THEY CHECK IT EVERY NIGHT AT CLOSING.",
+        "rumour": "null"
       },
       {
         "q": "NULL?",
-        "a": "A CREW. NO LEADER ANYONE'S MET. THEY MEET WHERE THE MUSIC'S LOUDEST AND LIVE WHERE THE GATES ARE CHAINED. THAT'S ALL I'LL SAY IN HERE."
+        "a": "A CREW. NO LEADER ANYONE'S MET. THEY MEET WHERE THE MUSIC'S LOUDEST AND LIVE WHERE THE GATES ARE CHAINED. THAT'S ALL I'LL SAY IN HERE.",
+        "rumour": "null"
       }
     ]
   },
@@ -521,7 +536,8 @@
       },
       {
         "q": "Business",
-        "a": "SLOW AT DAY, LOUD AT NIGHT. THE NULL KIDS COME IN WITH BURNS FROM SOMETHING BEHIND THE GATE - ELECTRICAL, OLD, POWERFUL. I PATCH THEM UP AND DON'T ASK. THEY PAY IN TOKENS."
+        "a": "SLOW AT DAY, LOUD AT NIGHT. THE NULL KIDS COME IN WITH BURNS FROM SOMETHING BEHIND THE GATE - ELECTRICAL, OLD, POWERFUL. I PATCH THEM UP AND DON'T ASK. THEY PAY IN TOKENS.",
+        "rumour": "null"
       }
     ]
   },
@@ -598,7 +614,8 @@
       },
       {
         "q": "Heard anything?",
-        "a": "EVERYONE TALKS AT A NOODLE BAR. THE MARSHAL ON SKYPORT 7 SAYS A SKIFF CALLED THE WREN TRIED TO LAND ON HER ROOF, YEARS BACK, OUT OF FUEL, FROM ENIGMA. SHE WAVED IT OFF. SHE STILL THINKS ABOUT IT."
+        "a": "EVERYONE TALKS AT A NOODLE BAR. THE MARSHAL ON SKYPORT 7 SAYS A SKIFF CALLED THE WREN TRIED TO LAND ON HER ROOF, YEARS BACK, OUT OF FUEL, FROM ENIGMA. SHE WAVED IT OFF. SHE STILL THINKS ABOUT IT.",
+        "rumour": "wren"
       }
     ]
   },
@@ -621,7 +638,8 @@
       },
       {
         "q": "The Wren",
-        "a": "A SKIFF OUT OF ENIGMA STATION. CAME IN ON FUMES, NO CLEARANCE, IN A STORM. I WAVED HER OFF - RULES. SHE TURNED AWAY TOWARD THE DARK SIDE OF THE PLANET. NEVER LOGGED ANYWHERE ELSE. I STILL THINK ABOUT IT."
+        "a": "A SKIFF OUT OF ENIGMA STATION. CAME IN ON FUMES, NO CLEARANCE, IN A STORM. I WAVED HER OFF - RULES. SHE TURNED AWAY TOWARD THE DARK SIDE OF THE PLANET. NEVER LOGGED ANYWHERE ELSE. I STILL THINK ABOUT IT.",
+        "rumour": "wren"
       },
       {
         "q": "Getting down",
@@ -714,11 +732,13 @@
       },
       {
         "q": "The Wren",
-        "a": "OUR SKIFF. FIVE CREW. THEY WENT FOR HELP WHEN THE RELAY DIED - ARCADIA FIRST. SOMEONE ON A ROOF WAVED THEM OFF IN A STORM. THEY HAD FUEL FOR ONE MORE BURN, AND THEY SPENT IT GOING THE OTHER WAY. TOWARDS THE DARK."
+        "a": "OUR SKIFF. FIVE CREW. THEY WENT FOR HELP WHEN THE RELAY DIED - ARCADIA FIRST. SOMEONE ON A ROOF WAVED THEM OFF IN A STORM. THEY HAD FUEL FOR ONE MORE BURN, AND THEY SPENT IT GOING THE OTHER WAY. TOWARDS THE DARK.",
+        "rumour": "wren"
       },
       {
         "q": "The signal",
-        "a": "FORTY-SEVEN POINT THREE. IT'S THE WREN'S DISTRESS LOOP. EXCEPT THE WREN WENT DOWN SEVENTY CYCLES AGO, AND THE LOOP KEEPS GETTING CLEARER. LIKE IT'S STILL ON ITS WAY HERE. LIKE IT'S CLIMBING OUT OF SOMETHING."
+        "a": "FORTY-SEVEN POINT THREE. IT'S THE WREN'S DISTRESS LOOP. EXCEPT THE WREN WENT DOWN SEVENTY CYCLES AGO, AND THE LOOP KEEPS GETTING CLEARER. LIKE IT'S STILL ON ITS WAY HERE. LIKE IT'S CLIMBING OUT OF SOMETHING.",
+        "rumour": "signal"
       },
       {
         "q": "The garden",
@@ -726,7 +746,8 @@
       },
       {
         "q": "Heard anything?",
-        "a": "IF YOU'RE GOING TO THE BRINK - THE THING ON THE OTHER SIDE OF THE DARK - LOOK FOR A PIECE OF THIS STATION. IT GOT THERE BEFORE US. EVERYTHING DOES."
+        "a": "IF YOU'RE GOING TO THE BRINK - THE THING ON THE OTHER SIDE OF THE DARK - LOOK FOR A PIECE OF THIS STATION. IT GOT THERE BEFORE US. EVERYTHING DOES.",
+        "rumour": "brink"
       }
     ],
     "crew": {
@@ -833,7 +854,8 @@
       },
       {
         "q": "Heard anything?",
-        "a": "SOMEONE'S BURNING A LAMP ON MIDNIGHT. NORTH BY EAST, PAST THE ABBEY. READ THE LOG DOWNSTAIRS IF YOU WANT TO KNOW MORE - IT'LL TELL YOU MORE THAN I WILL."
+        "a": "SOMEONE'S BURNING A LAMP ON MIDNIGHT. NORTH BY EAST, PAST THE ABBEY. READ THE LOG DOWNSTAIRS IF YOU WANT TO KNOW MORE - IT'LL TELL YOU MORE THAN I WILL.",
+        "rumour": "keepers-log"
       },
       {
         "q": "A compass for fog?",
@@ -892,7 +914,8 @@
       },
       {
         "q": "The singing",
-        "a": "STARTED THE WINTER THEY OPENED FLOOR TWENTY. NOT A TUNE - MORE LIKE A NOTE HELD FOREVER. THE CREW WOULDN'T GO PAST FIFTEEN AFTER THAT. I'VE NEVER BEEN BRAVE ENOUGH TO GO AND SEE WHAT'S SINGING."
+        "a": "STARTED THE WINTER THEY OPENED FLOOR TWENTY. NOT A TUNE - MORE LIKE A NOTE HELD FOREVER. THE CREW WOULDN'T GO PAST FIFTEEN AFTER THAT. I'VE NEVER BEEN BRAVE ENOUGH TO GO AND SEE WHAT'S SINGING.",
+        "rumour": "singing-deep"
       },
       {
         "q": "How it works",
@@ -1414,7 +1437,8 @@
       },
       {
         "q": "Heard anything?",
-        "a": "THE CREW OF A SHIP CALLED THE WREN USED TO COME IN HERE BEFORE A LONG HAUL. FIVE OF THEM, ONE BOOTH, ONE ROUND, NEVER DANCED. THEY STOPPED COMING. SOMEONE SAID THEY WENT NORTH."
+        "a": "THE CREW OF A SHIP CALLED THE WREN USED TO COME IN HERE BEFORE A LONG HAUL. FIVE OF THEM, ONE BOOTH, ONE ROUND, NEVER DANCED. THEY STOPPED COMING. SOMEONE SAID THEY WENT NORTH.",
+        "rumour": "wren"
       }
     ]
   },
@@ -1441,7 +1465,8 @@
       },
       {
         "q": "Heard anything?",
-        "a": "JORO'S BEEN IN TWICE THIS WEEK ASKING IF ANYONE'S SEEN A BLUE CRYSTAL THE SIZE OF A FIST. SAYS IT'S FOR A CLIENT. JORO ALWAYS SAYS IT'S FOR A CLIENT."
+        "a": "JORO'S BEEN IN TWICE THIS WEEK ASKING IF ANYONE'S SEEN A BLUE CRYSTAL THE SIZE OF A FIST. SAYS IT'S FOR A CLIENT. JORO ALWAYS SAYS IT'S FOR A CLIENT.",
+        "rumour": "crystals"
       }
     ]
   },
@@ -2203,7 +2228,8 @@
       },
       {
         "q": "Rumours",
-        "a": "ANNIE SAYS THERE'S A SIXTH SEA PAST THE CRIMSON. JOSS SAYS ANNIE'S BEEN AT THE GROG. THE ONE WHO'S NEVER WRONG IS TAMSIN UP AT SAPPHIRE'S LIGHT - AND SHE'S BEEN SIGNALLING SOMETHING OUT TOWARD MIDNIGHT EVERY NIGHT FOR A MONTH."
+        "a": "ANNIE SAYS THERE'S A SIXTH SEA PAST THE CRIMSON. JOSS SAYS ANNIE'S BEEN AT THE GROG. THE ONE WHO'S NEVER WRONG IS TAMSIN UP AT SAPPHIRE'S LIGHT - AND SHE'S BEEN SIGNALLING SOMETHING OUT TOWARD MIDNIGHT EVERY NIGHT FOR A MONTH.",
+        "rumour": "keepers-log"
       }
     ]
   },
@@ -2358,7 +2384,8 @@
       },
       {
         "q": "The unclaimed cargo",
-        "a": "CRATES NOBODY CAME BACK FOR. THE HERON'S PICKLED EELS HAVE BEEN HERE NINE YEARS. I DO NOT OPEN THEM."
+        "a": "CRATES NOBODY CAME BACK FOR. THE HERON'S PICKLED EELS HAVE BEEN HERE NINE YEARS. I DO NOT OPEN THEM.",
+        "rumour": "heron"
       }
     ]
   },
@@ -2530,7 +2557,7 @@
         "q": "Something on your mind?",
         "a": "YOU HAVE SHARP EYES, TRAVELLER, SO I'LL SAVE US BOTH THE PRETENDING. I LOVE HIM. I HAVE FOR A VERY LONG TIME. AND I THINK HE LOVES ME, BUT HE IS A SWORN SWORD, AND A SWORN SWORD DOES NOT SPEAK ABOVE HIS OATH. I CAN COMMAND HIM TO GUARD ME. I CANNOT COMMAND HIM TO SAY IT.\n\nASK HIM FOR ME? GENTLY. HE BRUISES LIKE A PEACH.",
         "when": "under-the-willow/start",
-        "until": "under-the-willow/courage"
+        "until": "under-the-willow"
       },
       {
         "q": "The Moonwell, at dusk",
@@ -2563,17 +2590,18 @@
       },
       {
         "q": "Your sword",
-        "a": "...IT IS A GOOD SWORD. THERE IS NOTHING MISSING FROM IT. WHY DO YOU ASK. WHO HAVE YOU BEEN TALKING TO."
+        "a": "...IT IS A GOOD SWORD. THERE IS NOTHING MISSING FROM IT. WHY DO YOU ASK. WHO HAVE YOU BEEN TALKING TO.",
+        "rumour": "queens-favour"
       },
       {
         "q": "The queen... and you?",
         "a": "I AM HER SWORD. A SWORD DOES NOT HAVE FEELINGS ABOUT THE HAND THAT HOLDS IT.\n\n...WHO TOLD YOU. WAS IT THE BARD. IT WAS THE BARD.\n\n...FINE. YES. FOR THREE HUNDRED YEARS. I HAVE TRIED TO TELL HER TWO HUNDRED AND TWELVE TIMES. ONCE I WROTE IT DOWN. THEN I PANICKED AND ATE THE LETTER. DO NOT TELL HER ABOUT THE LETTER.",
         "when": "under-the-willow/ask",
-        "until": "under-the-willow/courage"
+        "until": "under-the-willow"
       },
       {
         "q": "The Moonwell, at dusk",
-        "a": "THE LANTERNS. THE RIBBONS. A MOONFLOWER, FROM MIRELLE. YOU DID ALL THIS.\n\n...IT IS NEARLY DUSK. I MUST POLISH MY ARMOUR. ALL OF IT. TWICE. THEN I WILL SAY IT. PROBABLY. DEFINITELY. TELL HER... NO. TELL HER NOTHING. TELL HER THE MOONWELL.",
+        "a": "A MOONFLOWER. FROM MIRELLE. SHE'S BEEN KEEPING IT FOR ME, HASN'T SHE. EVERYONE HAS BEEN KEEPING SOMETHING FOR ME.\n\nTHE MOONWELL, AT DUSK. ...IT IS NEARLY DUSK. I MUST POLISH MY ARMOUR. ALL OF IT. TWICE. THEN I WILL SAY IT. PROBABLY. DEFINITELY. TELL HER... NO. TELL HER NOTHING. TELL HER THE MOONWELL.",
         "when": "under-the-willow/courage",
         "until": "under-the-willow"
       }
@@ -2598,7 +2626,8 @@
       },
       {
         "q": "Heard anything?",
-        "a": "I'M WRITING A NEW ONE: THE FIRST SWORD AT THE MOONWELL, A GUST OF WIND, AND A RIBBON GONE UP INTO THE WILLOW. BECKOLAS HAS ASKED ME, VERY POLITELY, WITH HIS HAND ON HIS SWORD, NOT TO SING IT."
+        "a": "I'M WRITING A NEW ONE: THE FIRST SWORD AT THE MOONWELL, A GUST OF WIND, AND A RIBBON GONE UP INTO THE WILLOW. BECKOLAS HAS ASKED ME, VERY POLITELY, WITH HIS HAND ON HIS SWORD, NOT TO SING IT.",
+        "rumour": "queens-favour"
       },
       {
         "q": "The queen",
@@ -2606,8 +2635,8 @@
       },
       {
         "q": "Help Beckolas say it",
-        "a": "AT LAST! I'VE HAD THE SONG WRITTEN FOR A CENTURY. 'THE FIRST SWORD SAYS NOTHING, AT LENGTH.' TWELVE VERSES.\n\n...NO, YOU'RE RIGHT. HE HAS TO SAY IT HIMSELF. THE MOONWELL, THEN, AT DUSK. EVERYONE SAYS THE TRUE THING AT THE MOONWELL. I'LL BE IN THE BUSHES. PLAYING VERY QUIETLY.",
-        "when": "under-the-willow/ask",
+        "a": "YOU'VE NOTICED TOO? AT LAST. I'VE HAD THE SONG WRITTEN FOR A CENTURY. 'THE FIRST SWORD SAYS NOTHING, AT LENGTH.' TWELVE VERSES.\n\n...NO, YOU'RE RIGHT. HE HAS TO SAY IT HIMSELF. THE MOONWELL, THEN, AT DUSK. EVERYONE SAYS THE TRUE THING AT THE MOONWELL. I'LL BE IN THE BUSHES. PLAYING VERY QUIETLY.",
+        "when": "under-the-willow/song",
         "until": "under-the-willow"
       }
     ]
@@ -2655,7 +2684,7 @@
       {
         "q": "A flower for him",
         "a": "A MOONFLOWER. IT OPENS ONLY IN THE HAND OF SOMEONE WHO MEANS WHAT THEY'RE ABOUT TO SAY. I PICKED THIS ONE TWENTY YEARS AGO, FOR HIM. IT'S BEEN WAITING.\n\nTAKE IT TO HIM. IF IT STAYS SHUT, BRING IT BACK AND WE WILL NEVER SPEAK OF IT.",
-        "when": "under-the-willow/ask",
+        "when": "under-the-willow/flower",
         "until": "under-the-willow"
       }
     ]
@@ -2888,7 +2917,8 @@
       },
       {
         "q": "Heard anything?",
-        "a": "HALCYON WANTS THE ROYALE'S SCREENS LIKE THEY WANT EVERYONE'S. THE DUCHESS LETS NULL BORROW THEM ONE NIGHT A YEAR INSTEAD, JUST TO WATCH HALCYON'S FACE. LAST YEAR IT WAS A POEM."
+        "a": "HALCYON WANTS THE ROYALE'S SCREENS LIKE THEY WANT EVERYONE'S. THE DUCHESS LETS NULL BORROW THEM ONE NIGHT A YEAR INSTEAD, JUST TO WATCH HALCYON'S FACE. LAST YEAR IT WAS A POEM.",
+        "rumour": "null"
       }
     ]
   },
@@ -3049,7 +3079,8 @@
       },
       {
         "q": "Heard anything?",
-        "a": "A SKIFF CREW FROM THE STATION USED TO PLAY HERE BEFORE THEIR LONG HAULS. THE YOUNGEST, A CARDSHARP CALLED BIX, LEFT A MARKER ON MY TABLE - ONE HAND, TO BE PLAYED WHEN THEY CAME BACK. I'VE KEPT THE CHAIR. I'M PATIENT."
+        "a": "A SKIFF CREW FROM THE STATION USED TO PLAY HERE BEFORE THEIR LONG HAULS. THE YOUNGEST, A CARDSHARP CALLED BIX, LEFT A MARKER ON MY TABLE - ONE HAND, TO BE PLAYED WHEN THEY CAME BACK. I'VE KEPT THE CHAIR. I'M PATIENT.",
+        "rumour": "keepsakes"
       }
     ]
   },
@@ -3081,7 +3112,7 @@
       {
         "q": "Light the willow",
         "a": "THE WILLOW? AT DUSK? FOR THE FIRST SWORD?\n\nI HAVE BEEN SAVING THE GOOD LANTERNS FOR SIX HUNDRED YEARS, FOR SOMETHING WORTH LIGHTING. CONSIDER IT DONE. I WILL EVEN KEEP MY EYES OPEN.",
-        "when": "under-the-willow/ask",
+        "when": "under-the-willow/lanterns",
         "until": "under-the-willow"
       }
     ]
@@ -3109,12 +3140,13 @@
       },
       {
         "q": "Heard anything?",
-        "a": "THIS SPRING THE QUEEN HAD ME WEAVE HER A RIBBON - GREEN SILK, GOLD LEAVES, MY BEST WORK. SHE WANTED IT FOR SOMEONE. SHE WOULDN'T SAY WHO. SHE DIDN'T HAVE TO."
+        "a": "THIS SPRING THE QUEEN HAD ME WEAVE HER A RIBBON - GREEN SILK, GOLD LEAVES, MY BEST WORK. SHE WANTED IT FOR SOMEONE. SHE WOULDN'T SAY WHO. SHE DIDN'T HAVE TO.",
+        "rumour": "queens-favour"
       },
       {
         "q": "Ribbons for the willow",
         "a": "RIBBONS! THE SAME SILK AS HIS FAVOUR, GREEN WITH GOLD LEAVES. I WOVE A WHOLE BOLT OF IT IN THE SPRING. I KNEW. EVERYONE KNEW.\n\nI'LL TIE THEM IN THE WILLOW MYSELF. HE'LL THINK IT'S A COINCIDENCE. HE WILL BE THE ONLY ONE.",
-        "when": "under-the-willow/ask",
+        "when": "under-the-willow/ribbons",
         "until": "under-the-willow"
       }
     ]
@@ -3142,18 +3174,859 @@
       },
       {
         "q": "Heard anything?",
-        "a": "BECKOLAS CLIMBED A TREE! IN HIS ARMOUR! HE THOUGHT NOBODY SAW. I'M NOT SAYING WHICH TREE. MIRELLE SAYS SECRETS ARE LIKE SEEDS: DIG THEM UP TO LOOK AND THEY NEVER GROW."
+        "a": "BECKOLAS CLIMBED A TREE! IN HIS ARMOUR! HE THOUGHT NOBODY SAW. I'M NOT SAYING WHICH TREE. MIRELLE SAYS SECRETS ARE LIKE SEEDS: DIG THEM UP TO LOOK AND THEY NEVER GROW.",
+        "rumour": "queens-favour"
       },
       {
         "q": "Is it a secret?",
         "a": "IS IT ABOUT BECKOLAS AND THE QUEEN? EVERYBODY KNOWS ABOUT BECKOLAS AND THE QUEEN. EXCEPT BECKOLAS. AND THE QUEEN.",
-        "when": "under-the-willow/start",
-        "until": "under-the-willow"
+        "when": "queens-favour",
+        "until": "under-the-willow",
+        "rumour": "under-the-willow"
       },
       {
         "q": "Did you see?",
         "a": "I SAW! I WAS UP IN THE WILLOW! HE SAID IT ALL IN ONE BREATH AND THEN HE HAD TO SIT DOWN. AND SHE SAID 'FINALLY.' MIRELLE SAYS I'M NOT ALLOWED TO TELL ANYONE. I'M ONLY TELLING YOU.",
         "when": "under-the-willow"
+      }
+    ]
+  },
+  "idris": {
+    "name": "Idris Thorne",
+    "role": "Morwen's old master. Drowned with Saltmere; she didn't let him go",
+    "sheet": "npc-ghost-scholar",
+    "at": [
+      {
+        "world": "lumar-midnight-tower-2",
+        "label": "IDRIS THORNE"
+      }
+    ],
+    "greet": "AH. A VISITOR WITH A PULSE. SIT, IF YOU LIKE. I CAN'T. MORWEN DREW THIS CIRCLE TO KEEP ME, AND SHE DRAWS A VERY GOOD CIRCLE.",
+    "again": "STILL WARM, I SEE. GOOD. ONE OF US SHOULD BE.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "IDRIS THORNE. I TAUGHT MORWEN THE WEAVE WHEN SHE WAS ELEVEN AND HAD SET FIRE TO HER FATHER'S BOAT WITH A THOUGHT. I WAS A GOOD TEACHER AND A POOR SWIMMER. THE SECOND MATTERED MORE, ONE NIGHT."
+      },
+      {
+        "q": "Saltmere?",
+        "a": "A VILLAGE ON A LOW ISLAND SOUTH-WEST OF HERE. FIFTY HOUSES, A CHAPEL, A QUAY. THE NIGHT THE SEA CAME UP, MORWEN AND I HELD A WARD ROUND IT TILL DAWN. IT HELD FOR THE CHAPEL TOWER. IT DID NOT HOLD FOR ME. THE VILLAGE IS STILL THERE, HALF UNDER THE WATER. SO ARE ITS PEOPLE, IN A MANNER OF SPEAKING."
+      },
+      {
+        "q": "The bell",
+        "a": "SALTMERE'S BELL STILL HANGS IN THE CHAPEL TOWER, AND IN THE DARK OF THE MOON IT RINGS ITSELF. THE DROWNED SAY IT RINGS FOR THE GLOAMING - THE BOAT THAT WENT OUT FOR HELP THAT NIGHT AND NEVER CAME BACK. IT IS STILL OUT THERE, YOU KNOW. LOOKING FOR THE WAY HOME."
+      },
+      {
+        "q": "The Gloaming?",
+        "a": "SALTMERE'S OLD PACKET BOAT. SHE PUT OUT INTO THE STORM WITH SIX ABOARD TO FETCH THE ABBEY'S BOATS, AND THE SEA HAD HER. SAILORS SEE HER NOW AND THEN, GREEN LANTERNS IN THE MIST, SAILING AGAINST THE WIND. IF YOU EVER BOARD HER - AND ONLY A FOOL WOULD - LOOK FOR HER LANTERN. A SHIP FINDS HER WAY HOME BY HER OWN LIGHT."
+      },
+      {
+        "q": "Morwen",
+        "a": "SHE BLAMES HERSELF. SHE SHOULDN'T. SHE WAS SEVENTEEN AND SHE HELD BACK THE SEA FOR NINE HOURS. I'VE TOLD HER SO EVERY DAY FOR FIFTY YEARS. SHE BRINGS ME TEA I CAN'T DRINK AND WE ARGUE ABOUT ASTRONOMY. IT'S NOT A BAD AFTERLIFE."
+      },
+      {
+        "q": "The star chamber",
+        "a": "UP THE STAIR. HER ORRERY - THE SEVEN WORLDS YOUR SHIP KNOWS, THOUGH SHE BUILT IT LONG BEFORE ANY OF YOU CAME. AND THE SCRYING POOL: LOOK IN IT AT NIGHT. IT SHOWS THE SEA AS IT IS NOW, AND WHAT'S SAILING ON IT."
+      }
+    ]
+  },
+  "vesper": {
+    "name": "Vesper Quick",
+    "role": "The fence on Cinder Key. Buys what others won't",
+    "sheet": "npc-fence",
+    "at": [
+      {
+        "world": "lumar-cinder",
+        "label": "THE FENCE"
+      }
+    ],
+    "greet": "VESPER QUICK. I BUY WHAT THE HONEST WON'T TOUCH AND I PAY WHAT THE HONEST WOULDN'T. WHATEVER YOU'VE GOT, I'VE SEEN WORSE. WHAT ARE YOU SELLING?",
+    "again": "BACK AGAIN. YOU'VE GOT THAT LOOK - LIKE SOMETHING IN YOUR PACK IS STARING AT YOU.",
+    "topics": [
+      {
+        "q": "What'll you buy?",
+        "a": "SILVER WITH THE CREST SCRATCHED OFF. OTHER PEOPLE'S RINGS. IDOLS THAT ARE WARM WHEN THEY SHOULDN'T BE. LOCKETS OFF THE DROWNED. SERPENT SCALES, MAW INK, PEARLS, HERON SILVER, GLASS FROM THE CRATER. NO QUESTIONS, NO RECEIPTS.",
+        "sell": [
+          {
+            "id": "plunder_plate",
+            "price": 70
+          },
+          {
+            "id": "plunder_rings",
+            "price": 120
+          },
+          {
+            "id": "plunder_idol",
+            "price": 280
+          },
+          {
+            "id": "drowned_locket",
+            "price": 90
+          },
+          {
+            "id": "ember_glass",
+            "price": 55
+          },
+          {
+            "id": "gloam_scale",
+            "price": 90
+          },
+          {
+            "id": "abyss_ink",
+            "price": 160
+          },
+          {
+            "id": "deep_pearl",
+            "price": 450
+          },
+          {
+            "id": "heron_coin",
+            "price": 60
+          },
+          {
+            "id": "star_pearl",
+            "price": 80
+          }
+        ]
+      },
+      {
+        "q": "Where does it come from?",
+        "a": "PIRATES YOU'VE BEATEN, MOSTLY. THEY CARRY WHAT THEY'VE TAKEN, AND WHEN THEY STRIKE THEIR COLOURS IT'S YOURS. THE HONEST TRADERS WON'T BUY IT BECAUSE SOMEBODY MIGHT RECOGNISE IT. I DON'T MIND BEING RECOGNISED. IT'S GOOD FOR BUSINESS."
+      },
+      {
+        "q": "The upturned hull?",
+        "a": "THE BLACK GULL. RAN AGROUND IN THE COVE THE YEAR I WAS BORN AND ROLLED OVER IN A GALE. MY MOTHER SAW A ROOF WHERE EVERYONE ELSE SAW A WRECK. I SAW A COUNTER."
+      },
+      {
+        "q": "The idol?",
+        "a": "THAT ONE COMES BACK. I SELL IT TO A CAPTAIN, HE LOSES A FIGHT, THE MAN WHO BEAT HIM BRINGS IT TO ME. NINE TIMES NOW. I'VE STARTED TO THINK IT LIKES IT HERE."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "A GREEN SHIP IN THE MIDNIGHT SEA, SAILING AGAINST THE WIND. THE DROWNED ABOARD HER CARRY LOCKETS, AND I'LL TAKE EVERY ONE. AND THE DRAGON ON CRIMSON REACH HAS BEEN RESTLESS. THE CRATER UP THE HILL GLOWS BRIGHTER WHEN SHE IS."
+      }
+    ]
+  },
+  "dee": {
+    "name": "Scarlet Dee",
+    "role": "Keeps Cinder Key's harbour. Tortuga's, if you're a pirate",
+    "sheet": "npc-hm-dee",
+    "at": [
+      {
+        "world": "lumar-cinder",
+        "label": "HARBOURMASTER"
+      }
+    ],
+    "greet": "SCARLET DEE. I KEEP THE BOOK FOR THE COVE - WHO TIES UP, WHO OWES, WHO'S HANGING ABOUT THE GIBBET LOOKING THOUGHTFUL. WELCOME TO TORTUGA. MIND YOUR PURSE.",
+    "again": "STILL AFLOAT, CAPTAIN. THE SQUALLS DIDN'T WANT YOU EITHER.",
+    "topics": [
+      {
+        "q": "The harbour book",
+        "a": "HERE. YOUR SHIPS, THE GUNS WE'VE GOT, STORM RIGGING THAT'LL KEEP YOUR MAST IN, HANDS WHO KNOW A CUTLASS FROM A FORK, AND RUM AT A PRICE THAT'LL MAKE YOU SMILE.",
+        "harbour": true
+      },
+      {
+        "q": "Tortuga?",
+        "a": "THE PIRATES CALL THE TOWN THAT, AFTER A SONG ABOUT A PLACE NOBODY'S EVER BEEN. THE CHART SAYS CINDER KEY, AFTER THE MOUNTAIN. THE MOUNTAIN DOESN'T CARE WHAT ANYONE CALLS IT."
+      },
+      {
+        "q": "The wrecks?",
+        "a": "THE NAVY SANK A GALLEON IN THE MOUTH TO SHUT US IN. WE LIVE ON HER NOW - HALF THE TOWN IS HER TIMBERS. THE MAST BY THE PIER WE DON'T TALK ABOUT. THE HULL ON THE BEACH IS VESPER'S SHOP."
+      },
+      {
+        "q": "The volcano?",
+        "a": "UP THE TRAIL BEHIND TOWN. THE CRATER'S HOT, THE GLASS UP THERE SELLS, AND THINGS LIVE IN THE ASH THAT BITE. TAKE A BLADE AND DON'T STAND ON THE BRIGHT BITS."
+      }
+    ]
+  },
+  "rook": {
+    "name": "Rook",
+    "role": "Keeps the Salt Rat, Tortuga's tavern",
+    "sheet": "npc-rook",
+    "at": [
+      {
+        "world": "lumar-cinder-tavern",
+        "label": "ROOK"
+      }
+    ],
+    "greet": "...RUM, GROG OR TROUBLE? WE DO ALL THREE. THE THIRD ONE'S FREE BUT YOU PAY FOR THE FURNITURE.",
+    "again": "YOU AGAIN. SIT WHERE I CAN SEE YOU.",
+    "topics": [
+      {
+        "q": "About the Salt Rat",
+        "a": "BUILT OUT OF THE STERN OF A GALLEON THE NAVY SANK. THE BEAMS ARE HER BEAMS. THE BAR WAS HER CAPTAIN'S TABLE. HE WOULDN'T LIKE WHAT WE DO ON IT."
+      },
+      {
+        "q": "The eye?",
+        "a": "LOST IT IN A CARD GAME. THE OTHER FELLOW LOST MORE. WE DON'T PLAY CARDS IN HERE NOW. WE PLAY BONES."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "OLD WICK UP IN THE STORMWATCH SAYS A BIG BLOW'S COMING. OLD WICK ALWAYS SAYS THAT. ONE DAY HE'LL BE RIGHT AND THEN WE'LL NEVER HEAR THE END OF IT."
+      }
+    ]
+  },
+  "wick": {
+    "name": "Old Wick",
+    "role": "Keeps the stormwatch on Cinder Key",
+    "sheet": "npc-wick",
+    "at": [
+      {
+        "world": "lumar-cinder-stormwatch",
+        "label": "OLD WICK"
+      }
+    ],
+    "greet": "WICK. I WATCH THE WEATHER SO THE PIRATES DON'T HAVE TO. THEY DON'T THANK ME. THE ONES WHO LISTEN COME HOME.",
+    "again": "GLASS IS MOVING. IT'S ALWAYS MOVING. SIT DOWN.",
+    "topics": [
+      {
+        "q": "The stormwatch",
+        "a": "THE BOARD BY THE GLASS SAYS WHAT'S COMING - FOR THE WHOLE SEA, MIND, NOT JUST THIS ROCK. THE CONES ON THE MAST OUTSIDE SAY IT TO ANYONE IN THE COVE WHO CAN'T READ. WHICH IS EVERYONE."
+      },
+      {
+        "q": "The Crimson's squalls",
+        "a": "THEY COME UP OUT OF NOTHING. A DARK PATCH ON THE WATER, A CURTAIN OF RAIN, AND THEN THE WIND HITS YOU LIKE A DOOR. IF YOU'RE CARRYING FULL SAIL SHE GOES OVER. REEF EARLY. REEF OFTEN. AND CARRY ONE OF MY GLASSES."
+      },
+      {
+        "q": "A storm glass?",
+        "a": "SEALED GLASS, CAMPHOR AND SALTPETRE AND A LITTLE SECRET. IT CLOUDS BEFORE A SQUALL. CARRY ONE AND YOU'LL FEEL THE BLOW COMING - HALF THE DAMAGE IS NOT EXPECTING IT. THE BOARD SELLS THEM; I WROTE THE PRICE ON IT."
+      },
+      {
+        "q": "The dragon?",
+        "a": "ON CRIMSON REACH, UP NORTH. SHE MAKES HER OWN WEATHER. WHEN THE CRATER HERE GLOWS AND THE GLASS DROPS FOR NO REASON, SHE'S AWAKE. I WRITE IT DOWN. NOBODY READS IT."
+      }
+    ]
+  },
+  "kettle": {
+    "name": "Ham Kettle",
+    "role": "Builds raiders on the pirates' slip, without plans",
+    "sheet": "npc-kettle",
+    "at": [
+      {
+        "world": "lumar-cinder",
+        "label": "SHIPWRIGHT"
+      }
+    ],
+    "greet": "HAM KETTLE. I BUILD SHIPS FROM WHAT'S IN MY HEAD AND WHAT'S IN THE COVE. THIS ONE'S GOT THREE GALLEONS IN HER ALREADY AND SHE'S NOT HALF DONE.",
+    "again": "MIND THE PITCH. IT REMEMBERS WHO STOOD IN IT.",
+    "topics": [
+      {
+        "q": "The raider?",
+        "a": "LONG, LOW AND BLACK, TWO MASTS, FOUR GUNS. THE FASTEST THING ON THE SEAS WHEN SHE'S DONE. GARRO ON CRIMSON REACH SELLS THEM IF YOU CAN'T WAIT. I CAN WAIT. I'M VERY GOOD AT IT."
+      },
+      {
+        "q": "Black sails?",
+        "a": "ANY SHIP OF YOURS CAN WEAR THEM. YOUR OWN SLIPWAY'LL PAINT HER WHATEVER YOU LIKE - BLACK HULL, BLACK CLOTH, A SKULL UNDER THE BOWSPRIT. MAKES THE MERCHANTS NERVOUS. MAKES THE NAVY NERVOUS. MAKES ME PROUD."
+      },
+      {
+        "q": "No plans?",
+        "a": "PLANS ARE FOR PEOPLE WHO EXPECT TO BE INTERRUPTED. NOBODY INTERRUPTS ME. I'VE GOT A POT OF BOILING PITCH."
+      }
+    ]
+  },
+  "annis": {
+    "name": "Red Annis",
+    "role": "Pirate captain, between ships. Plays Bones at the Salt Rat",
+    "sheet": "npc-annis",
+    "at": [
+      {
+        "world": "lumar-cinder-tavern",
+        "label": "RED ANNIS"
+      }
+    ],
+    "greet": "RED ANNIS. YOU'LL HAVE SEEN MY POSTER - IT'S THE FRAMED ONE. SIT DOWN AND LOSE SOME MONEY.",
+    "again": "BACK FOR MORE? I LIKE YOU. I'LL STILL TAKE YOUR COINS.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "CAPTAIN OF THE SCARLET WIDOW TILL THE NAVY TOOK HER OFF ME AT THE TEETH. I'M WAITING FOR A SHIP. SOMEBODY ELSE'S, PROBABLY."
+      },
+      {
+        "q": "Pirate water",
+        "a": "THE CRIMSON'S OURS BECAUSE NOBODY ELSE WANTS IT. THE SQUALLS SCARE THE MERCHANTS AND THE NAVY HATES THE ROCKS. IF YOU SAIL IT, CARRY GUNS, CARRY A STORM GLASS, AND IF A BLACK SAIL HAILS YOU, PAY OR FIGHT. DON'T DITHER. WE HATE DITHERING."
+      },
+      {
+        "q": "The ghost ship",
+        "a": "THE GREEN ONE? I SAW HER ONCE, OFF THE MIDNIGHT EDGE, SAILING STRAIGHT INTO THE WIND. MY WHOLE CREW WENT QUIET. I DON'T GO QUIET. I WENT QUIET."
+      }
+    ]
+  },
+  "gash": {
+    "name": "Gash",
+    "role": "Cheats at Bones. Says so",
+    "sheet": "npc-gash",
+    "at": [
+      {
+        "world": "lumar-cinder-tavern",
+        "label": "GASH"
+      }
+    ],
+    "greet": "FRESH COINS. LOVELY. SIT DOWN, SIT DOWN.",
+    "again": "MY FAVOURITE CUSTOMER. MY FAVOURITE PURSE.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "I DO A BIT OF THIS AND A BIT OF THAT AND A LOT OF BONES. THE RINGS? WON THEM. ALL OF THEM. MOSTLY FAIRLY."
+      },
+      {
+        "q": "The fence",
+        "a": "VESPER? UNDER THE HULL ON THE BEACH. ANYTHING HOT YOU TAKE OFF A PIRATE - SILVER, RINGS, THAT CURSED LITTLE IDOL - SHE'LL BUY. THE HONEST LOT WON'T TOUCH IT. MORE FOOL THEM."
+      }
+    ]
+  },
+  "tobiah": {
+    "name": "Tobiah Wren",
+    "role": "Saltmere's bell-ringer. Drowned ringing",
+    "sheet": "npc-ghost-ringer",
+    "at": [
+      {
+        "world": "lumar-saltmere",
+        "label": "TOBIAH"
+      }
+    ],
+    "greet": "...A WARM ONE. WE DON'T GET MANY. MIND THE PLANKS - SOME OF THEM REMEMBER BEING TREES.",
+    "again": "STILL HERE? SO AM I. SO ARE WE ALL.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "TOBIAH WREN. I RANG THE BELL FOR SALTMERE FORTY YEARS - WEDDINGS, BURIALS, FOG. THE NIGHT THE SEA CAME UP I RANG IT TILL THE WATER CAME UP THE STAIRS. THEN I KEPT RINGING. I'M NOT SURE I EVER STOPPED."
+      },
+      {
+        "q": "Saltmere",
+        "a": "FIFTY HOUSES AND A CHAPEL. WE FISHED, WE MENDED NETS, WE MARRIED EACH OTHER'S COUSINS. NOW WE WALK THE OLD WAYS AT NIGHT AND THE STREET'S FULL OF SEA. IT'S QUIETER THAN IT WAS. I MISS THE NOISE."
+      },
+      {
+        "q": "The bell",
+        "a": "IN THE DARK OF THE MOON IT RINGS ITSELF - OR I RING IT; IT'S HARD TO TELL, NOW. WE RING FOR THE GLOAMING. SHE WENT OUT FOR HELP THAT NIGHT AND NEVER CAME BACK."
+      },
+      {
+        "q": "The drowned fishers",
+        "a": "SOME OF US WENT DOWN WITH OUR WITS AND SOME DIDN'T. THE ONES WHO DIDN'T COME UP OUT OF THE WATER AT ANYONE WARM. DON'T HOLD IT AGAINST THEM. DO HOLD A SWORD."
+      }
+    ]
+  },
+  "marrow": {
+    "name": "Captain Wenna Marrow",
+    "role": "Master of the Gloaming. Still steering for home",
+    "sheet": "npc-ghost-captain",
+    "at": [
+      {
+        "world": "lumar-gloaming",
+        "label": "CAPTAIN MARROW"
+      }
+    ],
+    "greet": "STAND BY THE SHEETS. NO - YOU'RE NOT CREW. YOU'RE WARM. HOW DID YOU GET ABOARD? NEVER MIND. HAVE YOU SEEN SALTMERE?",
+    "again": "STILL ABOARD? WE'RE CLOSE NOW. WE'RE ALWAYS CLOSE.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "WENNA MARROW. I'VE HAD THE GLOAMING TWENTY YEARS. WE PUT OUT INTO THE STORM WITH SIX ABOARD FOR THE ABBEY'S BOATS. THE ABBEY WAS ALREADY UNDER. WE TURNED FOR HOME. WE'VE BEEN TURNING FOR HOME EVER SINCE."
+      },
+      {
+        "q": "The way home",
+        "a": "I CAN'T SEE THE HARBOUR LIGHT. FIFTY YEARS AND I CAN'T SEE IT. THE MIST, OR THE DARK, OR ME. A SHIP NEEDS A LIGHT TO STEER FOR, AND A LIGHT TO BE SEEN BY."
+      },
+      {
+        "q": "Her crew",
+        "a": "SIX OF US. FOUR STILL KNOW WHO THEY ARE AND GO ABOUT THEIR WORK. TWO DON'T, AND THEY COME AT ANYONE WARM WITH A CUTLASS. I'M SORRY FOR THAT. KEEP CLEAR OF THE HATCH."
+      }
+    ]
+  },
+  "ume": {
+    "name": "Granny Ume",
+    "role": "Keeps the tea house on Lantern Row",
+    "sheet": "npc-ume",
+    "at": [
+      {
+        "world": "arcadia-oldquarter",
+        "label": "GRANNY UME"
+      }
+    ],
+    "greet": "SIT, SIT. NOBODY DRINKS TEA STANDING UP ON MY ROW. YOU'VE COME DOWN OUT OF THE RAIN AND THE NEON - YOU HAVE THE LOOK. GREEN OR MATCHA?",
+    "again": "BACK AGAIN. GOOD. THE KETTLE KNEW. IT STARTED SINGING BEFORE YOU TURNED THE CORNER.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "UME. I'VE POURED TEA IN THIS ROOM SINCE BEFORE THE FIRST TOWER WENT UP. THEY BUILT IT RIGHT OVER MY HEAD. I KEPT POURING."
+      },
+      {
+        "q": "Lantern Row",
+        "a": "THIS WAS THE WHOLE DISTRICT ONCE. TIMBER AND TILE AND LANTERNS. NOW IT'S ONE STREET THE CITY FORGOT TO KNOCK DOWN. DON'T REMIND IT."
+      },
+      {
+        "q": "The shrine",
+        "a": "UP THE STEPS AT THE END, ON TOKUDA'S ROOF. KANNA KEEPS IT. RING THE BELL, DRAW A FORTUNE. IF IT'S A BAD ONE, TIE IT TO THE CORD AND LEAVE IT THERE."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "HALCYON SENT ANOTHER MAN WITH A CLIPBOARD ABOUT 'REDEVELOPMENT'. HOSHI FED HIM. HE CAME BACK THE NEXT NIGHT, WITHOUT THE CLIPBOARD."
+      }
+    ]
+  },
+  "lanternmaker": {
+    "name": "Tokuda the Lantern Maker",
+    "role": "Makes the paper lanterns of Lantern Row",
+    "sheet": "npc-lanternmaker",
+    "at": [
+      {
+        "world": "arcadia-oldquarter",
+        "label": "THE LANTERN MAKER"
+      }
+    ],
+    "greet": "MIND THE GLUE. EVERY LANTERN ON THIS ROW CAME OFF THAT TABLE, ONE RIB AT A TIME. TAKE ONE IF YOU LIKE - THEY'RE FOR GIVING.",
+    "again": "AH, THE SKY-CAPTAIN. I'VE SAVED YOU A RED ONE. RED FOR LUCK, AMBER FOR HOME.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "TOKUDA. MY GRANDFATHER MADE LANTERNS, AND HIS, AND HIS. I'M THE FIRST ONE WHO HAD TO MAKE THEM UNDER A SKY YOU CAN'T SEE."
+      },
+      {
+        "q": "Why lanterns?",
+        "a": "THE TOWERS HAVE NEON. NEON IS LOUD. A PAPER LANTERN IS QUIET. IT SAYS: SOMEONE LIVES HERE AND THEY'RE STILL UP."
+      },
+      {
+        "q": "The shrine roof",
+        "a": "THAT'S MY ROOF THE SHRINE'S ON. MY FATHER LET THE OLD KEEPER PUT IT THERE IN A STORM AND NOBODY EVER MOVED IT. NOBODY WANTS TO."
+      }
+    ]
+  },
+  "hoshi": {
+    "name": "Old Hoshi",
+    "role": "Cooks at Hoshi Ramen on Lantern Row",
+    "sheet": "npc-hoshi",
+    "at": [
+      {
+        "world": "arcadia-oldquarter",
+        "label": "OLD HOSHI"
+      }
+    ],
+    "greet": "SIT. EAT. TALK AFTER. THE BROTH'S BEEN GOING FORTY YEARS AND IT'S NEVER BEEN BETTER THAN TONIGHT.",
+    "again": "YOU AGAIN. GOOD - THE STOOL REMEMBERS YOU. SHOYU?",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "HOSHI. FORTY YEARS AT THIS COUNTER. THE POT'S NEVER GONE COLD. NOT IN THE BROWNOUTS, NOT IN THE FLOOD, NOT WHEN THE LOOP CAME THROUGH."
+      },
+      {
+        "q": "The broth",
+        "a": "SOY, BONES, KELP FROM LUMAR WHEN I CAN GET IT, AND WHATEVER WAS IN THE POT YESTERDAY. THE SECRET IS YESTERDAY."
+      },
+      {
+        "q": "Miyu on the street",
+        "a": "CYBER NOODLES? HER BROTH GLOWS. MINE DOESN'T NEED TO. SHE LEARNED ON THIS STOOL. TELL HER I SAID SO."
+      }
+    ]
+  },
+  "keiko": {
+    "name": "Mama Keiko",
+    "role": "Owns the Akachochin izakaya on Lantern Row",
+    "sheet": "npc-keiko",
+    "at": [
+      {
+        "world": "arcadia-oldquarter",
+        "label": "MAMA KEIKO"
+      }
+    ],
+    "greet": "IN OR OUT, THE RAIN DOESN'T CARE. THE SAKE'S WARM, THE SKEWERS ARE ON, AND I DON'T SERVE ANYONE WHO TALKS ABOUT WORK.",
+    "again": "THE SKY-CAPTAIN. YOUR CRATE'S STILL THERE, NOBODY SITS ON IT BUT YOU.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "KEIKO. MY MOTHER RAN THIS PLACE AND HER MOTHER BEFORE HER. EVERYONE CALLS ME MAMA. EVEN MAMA DID."
+      },
+      {
+        "q": "The spaceport",
+        "a": "THE FREIGHTER CREWS COME UP THE STREET WHEN THEY BERTH. THEY DRINK WHAT I POUR AND PAY IN WHATEVER THEY'VE GOT. I'VE A JAR OF COINS FROM NINE WORLDS."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "DESH OFF THE OLD MERCY IS LOOKING FOR CREW AGAIN. SHE ALWAYS IS. NOBODY STAYS ON THAT SHIP AND NOBODY KNOWS WHY THEY LEAVE."
+      }
+    ]
+  },
+  "kanna": {
+    "name": "Kanna",
+    "role": "Keeps the shrine on Lantern Row's roofs",
+    "sheet": "npc-kanna",
+    "at": [
+      {
+        "world": "arcadia-oldquarter-shrine",
+        "label": "KANNA"
+      }
+    ],
+    "greet": "WELCOME UP. MIND THE GRAVEL - I'VE JUST RAKED IT. RING THE BELL TO SAY YOU'RE HERE, AND DRAW A FORTUNE IF YOU DARE.",
+    "again": "BACK UP THE STEPS. THE FOXES SAID YOU'D COME.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "KANNA. MY GRANDMOTHER KEPT THE SHRINE AND I KEEP IT NOW. I SWEEP, I LIGHT THE LANTERNS, I LISTEN. PEOPLE TELL A SHRINE THINGS THEY DON'T TELL EACH OTHER."
+      },
+      {
+        "q": "The foxes",
+        "a": "INARI'S MESSENGERS. THEY KEEP AN EYE ON THE ROW. AND ON THE TOWERS, WHICH I THINK WORRIES THEM MORE."
+      },
+      {
+        "q": "The fortunes",
+        "a": "A COIN IN THE BOX, RING THE BELL, DRAW A SLIP. GREAT BLESSING, BLESSING, SMALL BLESSING, OR A CURSE. A CURSE YOU TIE TO THE CORD AND WALK AWAY FROM."
+      },
+      {
+        "q": "The view",
+        "a": "THE LOOP GOES BY AT EYE LEVEL UP HERE. AT NIGHT EVERY WINDOW'S LIT AND YOU CAN SEE THE PEOPLE IN THEM. SOME OF THEM WAVE."
+      }
+    ]
+  },
+  "halloran": {
+    "name": "Inspector Halloran",
+    "role": "Customs, the spaceport",
+    "sheet": "npc-halloran",
+    "at": [
+      {
+        "world": "arcadia-spaceport",
+        "label": "INSPECTOR HALLORAN"
+      }
+    ],
+    "greet": "ARMS OUT. HOLD STILL. NOTHING? NOTHING. YOU'D BE AMAZED WHAT PEOPLE TRY TO WALK THROUGH THIS ARCH. MOSTLY SPORES. ONCE A GOAT.",
+    "again": "YOU AGAIN. STILL CLEAN. I'M ALMOST DISAPPOINTED.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "HALLORAN, ARCADIA CUSTOMS. TWENTY-TWO YEARS ON THIS ARCH. I'VE CONFISCATED NINE PLANETS' WORTH OF CONTRABAND AND I KEEP THE BEST OF IT IN A DRAWER I'M NOT ALLOWED TO OPEN."
+      },
+      {
+        "q": "The ships",
+        "a": "THE OLD MERCY, HAULING. THE HALCYON IX, HALCYON'S - DON'T TOUCH, DON'T LOOK. THE SLOW HAZARD, WHO KNOWS. NOBODY'S EVER DECLARED A THING OFF HER."
+      },
+      {
+        "q": "The Core Express",
+        "a": "THE BIG LIFT. GOES ALL THE WAY UP TO THE SPIRES AND ALL THE WAY DOWN TO THE PLACES WE DON'T TALK ABOUT. FREIGHT GOES DOWN. THINGS COME UP. I DON'T INSPECT WHAT COMES UP."
+      }
+    ]
+  },
+  "brannigan": {
+    "name": "Brannigan",
+    "role": "Keeps the Last Burn, the spacers' bar",
+    "sheet": "npc-brannigan",
+    "at": [
+      {
+        "world": "arcadia-spaceport",
+        "label": "BRANNIGAN"
+      }
+    ],
+    "greet": "WELCOME TO THE LAST BURN. LAST THING YOU DO BEFORE YOU LEAVE A PLANET, FIRST THING YOU DO WHEN YOU GET BACK. REACTOR STOUT'S ON. DON'T ASK WHAT'S IN IT.",
+    "again": "THE SKY-CAPTAIN. YOUR MUG'S ON THE HOOK - THE ONE WITH THE DENT.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "BRANNIGAN. FLEW HAULERS THIRTY YEARS TILL A REACTOR TOOK MY ARM. GOT A CHROME ONE AND A BAR. THE BAR'S THE BETTER DEAL."
+      },
+      {
+        "q": "The arm",
+        "a": "CHROME CLINIC ON THE STREET DID IT, BACK WHEN THEY STILL DID IT CHEAP. NOW YOU WANT GOOD CHROME YOU GO UP TO THE SPIRES AND PAY FOR THE NAME."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "THE SLOW HAZARD COMES IN EMPTY AND GOES OUT HEAVY, AND HER CREW DRINK HERE AND NEVER SAY A WORD. I DON'T ASK. YOU SHOULDN'T EITHER."
+      }
+    ]
+  },
+  "desh": {
+    "name": "Captain Desh",
+    "role": "Captain of the Old Mercy, a bulk hauler",
+    "sheet": "npc-desh",
+    "at": [
+      {
+        "world": "arcadia-spaceport",
+        "label": "CAPTAIN DESH"
+      }
+    ],
+    "greet": "FORTY-ONE, FORTY-TWO - YOU MADE ME LOSE COUNT. DESH, OLD MERCY. IF YOU'RE HERE ABOUT THE CREW JOB, YOU'RE HIRED. IF YOU'RE NOT, YOU'RE STILL HIRED.",
+    "again": "BACK FOR THE JOB? NO? THE OFFER STANDS. IT ALWAYS STANDS.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "DESH. I'VE RUN THE OLD MERCY BETWEEN LUMAR, ENIGMA AND HERE FOR NINETEEN YEARS. SHE'S HELD TOGETHER WITH PATCHES AND SPITE AND SHE'S NEVER MISSED A BERTH."
+      },
+      {
+        "q": "The Old Mercy",
+        "a": "SALT FISH AND SPORE-LAMP OIL OUT, CHROME AND CIRCUIT IN. LUMAR PAYS IN FISH, ARCADIA PAYS IN CREDIT, ENIGMA DOESN'T PAY AT ALL, THEY JUST WAVE."
+      },
+      {
+        "q": "Why no crew?",
+        "a": "THEY LEAVE. EVERY ONE OF THEM, AFTER A RUN OR TWO. THEY SAY SHE HUMS AT NIGHT. SHE DOES. I LIKE IT."
+      }
+    ]
+  },
+  "nadia": {
+    "name": "Nadia Voss",
+    "role": "Mixologist, Cirrus (the Terraces, L200)",
+    "sheet": "npc-mixologist",
+    "at": [
+      {
+        "world": "arcadia-terraces",
+        "label": "NADIA"
+      }
+    ],
+    "greet": "CIRRUS. THE HIGHEST BAR YOU CAN GET INTO WITHOUT A NAME ON A LIST. WHAT ARE WE CELEBRATING?",
+    "again": "BACK FOR THE SOUR? EVERYONE COMES BACK FOR THE SOUR.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "I POURED IN THE DISTRICT TEN YEARS. CLUB VOID, A PLACE THAT ISN'T THERE ANY MORE, A NOODLE BAR THAT SOLD BEER IF YOU ASKED NICELY. UP HERE THEY TIP IN SPIRES MONEY AND COMPLAIN ABOUT THE ICE. I LIKE IT BETTER DOWN THERE. I EARN MORE UP HERE."
+      },
+      {
+        "q": "The bar",
+        "a": "ROUND, SO NOBODY GETS THE BAD SEAT. THE TOWER IN THE MIDDLE IS MY BACK BAR; THE SIGN IS PINK BECAUSE THE OWNER'S WIFE LIKED PINK. THE SOUR'S MINE. THE SPRITZ IS FOR PEOPLE WHO WANT TO HOLD SOMETHING PRETTY."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "THE CHAMPAGNE BAR UP IN THE SPIRES POACHED MY LAST BARBACK. THEY GAVE HIM A WHITE JACKET AND A NEW NAME. HE STILL SENDS ME POSTCARDS OF THE STARS. YOU CAN'T SEE THEM FROM HERE - THE SMOG'S IN THE WAY."
+      },
+      {
+        "q": "The Loop",
+        "a": "THE TRAIN GOES ROUND EVERY TWELVE MINUTES. THE LAST ONE OF THE NIGHT IS ALWAYS FULL OF PEOPLE WHO MISSED THE ONE BEFORE. I CAN SET MY CLOCK BY THE RUMBLE."
+      }
+    ]
+  },
+  "bastien": {
+    "name": "Chef Bastien",
+    "role": "Halo grill (the Terraces)",
+    "sheet": "npc-grill-chef",
+    "at": [
+      {
+        "world": "arcadia-terraces",
+        "label": "CHEF BASTIEN"
+      }
+    ],
+    "greet": "YOU'RE STANDING IN THE SMOKE. GOOD. THAT'S WHERE THE FLAVOUR IS.",
+    "again": "SKEWERS? I'LL PUT SOME ON.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "BASTIEN. I COOKED ON A FREIGHTER FOR SIX YEARS - THE SPACEPORT DOWN IN THE DISTRICT, THEN EVERYWHERE. A GRILL IS A GRILL. UP HERE THE WIND TAKES THE SMOKE OFF OVER THE EDGE AND SOMEWHERE A THOUSAND FEET DOWN SOMEONE GETS HUNGRY."
+      },
+      {
+        "q": "The meat",
+        "a": "VAT BEEF, GROWN IN THE UNDERCITY, AND DON'T MAKE THAT FACE - IT'S GOOD BEEF. THE SALT COMES FROM LUMAR, OFF A HARBOUR CALLED DIGGEN'S POINT. SEA SALT FROM ANOTHER WORLD. THEY CHARGE MORE FOR THE SALT THAN THE STEAK."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "LUMEN'S HIRO AND I HAVE A BET ON WHO SELLS MORE SKEWERS BY THE END OF THE YEAR. HE'S WINNING. DON'T TELL HIM I SAID."
+      }
+    ]
+  },
+  "hiro": {
+    "name": "Hiro Tanabe",
+    "role": "Lumen izakaya (the Terraces)",
+    "sheet": "npc-izakaya",
+    "at": [
+      {
+        "world": "arcadia-terraces",
+        "label": "HIRO"
+      }
+    ],
+    "greet": "IRASSHAI. SIT, SIT. THE SAKE IS WARM AND THE COALS ARE WHITE.",
+    "again": "WELCOME BACK. THE USUAL CUSHION?",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "MY FATHER HAD A STALL ON LANTERN ROW, DOWN IN THE OLD QUARTER. SAME TARE - HE STARTED IT THIRTY YEARS AGO AND I'VE ADDED TO IT EVERY NIGHT SINCE. THE POT IS OLDER THAN THIS TOWER."
+      },
+      {
+        "q": "The skewers",
+        "a": "BINCHOTAN - WHITE CHARCOAL. NO FLAME, JUST HEAT. YOU TURN THEM WHEN THEY TELL YOU. THEY TELL YOU WITH A SOUND."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "BASTIEN THINKS WE HAVE A BET. WE DO NOT HAVE A BET. I AM SIMPLY WINNING."
+      }
+    ]
+  },
+  "dove": {
+    "name": "Dove Okafor-Reyes",
+    "role": "Air cab driver (the Terraces pad)",
+    "sheet": "npc-cabbie",
+    "at": [
+      {
+        "world": "arcadia-terraces",
+        "label": "DOVE"
+      }
+    ],
+    "greet": "NEED A LIFT? I DO SKYPORT, THE SPIRES, THE SPACEPORT, ANYWHERE WITH A PAD AND A REASON.",
+    "again": "WHERE TO?",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "TWENTY YEARS IN THE LANES. I KNOW EVERY TOWER BY ITS LIGHTS. YOU KNOW YOU'RE IN THE SPIRES WHEN THE NEON GOES PASTEL AND THE PASSENGERS STOP SAYING THANK YOU."
+      },
+      {
+        "q": "The lanes",
+        "a": "THE TRAFFIC RUNS IN RIVERS BETWEEN THE TOWERS - EAST ON THE TOP LANE, WEST UNDER IT. POLICE CUT ACROSS WHEREVER THEY LIKE. ABOVE THE SMOG IT'S QUIET. TOO QUIET. I DON'T TRUST QUIET."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "SOMEONE UP IN THE SPIRES HAS A YACHT THAT CAN FLY. ACTUALLY FLY. KEEPS IT AT THE SKY DOCKS. I'VE SEEN IT GO OUT ONCE, LIT UP LIKE A CHANDELIER, NOBODY AT THE WHEEL."
+      }
+    ]
+  },
+  "liftman": {
+    "name": "Augustin",
+    "role": "Lift attendant, the Terraces express lobby",
+    "sheet": "npc-liftman",
+    "at": [
+      {
+        "world": "arcadia-terraces",
+        "label": "THE LIFT ATTENDANT"
+      }
+    ],
+    "greet": "GOOD EVENING. THE SPIRE EXPRESS GOES UP TO FOUR HUNDRED AND EIGHTY. THE CORE EXPRESS GOES - WELL. EVERYWHERE.",
+    "again": "UP OR DOWN THIS EVENING?",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "AUGUSTIN. FORTY-ONE YEARS IN THIS LOBBY. I HAVE PRESSED THE BUTTON FOR TWO MAYORS, A DUCHESS AND A MAN WHO SAID HE WAS A GOD. THE GOD TIPPED THE WORST."
+      },
+      {
+        "q": "The express",
+        "a": "THE SPIRE EXPRESS CLIMBS TWO HUNDRED AND EIGHTY FLOORS IN NINETY SECONDS. YOUR EARS WILL POP AT THE SMOG LINE. WHEN THE DOORS OPEN, LOOK UP. YOU'LL SEE STARS. REAL ONES."
+      },
+      {
+        "q": "The Core",
+        "a": "THE CORE EXPRESS GOES DOWN THROUGH THE DISTRICT AND KEEPS GOING. I HAVE NEVER TAKEN IT BELOW THE STREET. I HAVE A WIFE."
+      }
+    ]
+  },
+  "odette": {
+    "name": "Odette Lark",
+    "role": "Singer, Moonglow",
+    "sheet": "npc-jazz-singer",
+    "at": [
+      {
+        "world": "arcadia-jazz",
+        "label": "ODETTE"
+      }
+    ],
+    "greet": "CAREFUL, HONEY. YOU WALKED IN DURING THE QUIET PART. EVERYBODY HEARD YOUR SHOES.",
+    "again": "YOU CAME BACK. THEY ALWAYS COME BACK FOR THE SECOND SET.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "I SANG MY FIRST NIGHT HERE AT NINETEEN IN THIS SAME DRESS. THEY'VE LET THE DRESS OUT TWICE AND MY FEE UP FOUR TIMES. THE SPIRES KEEP ASKING ME TO SING AT THE OPERA. I KEEP SAYING THE OPERA CAN COME DOWN HERE."
+      },
+      {
+        "q": "The band",
+        "a": "RAY ON THE PIANO - HE TAUGHT ME TO WAIT A BEAT. MINGO ON THE BASS, WHO HASN'T SPOKEN A FULL SENTENCE SINCE I'VE KNOWN HIM AND DOESN'T NEED TO. LOU-LOU ON THE DRUMS. SHE'S THE ONLY ONE OF US UNDER FIFTY AND SHE KEEPS US HONEST."
+      },
+      {
+        "q": "Moonglow",
+        "a": "THE WINDOW. THAT'S THE WHOLE REASON. THE MOON SITS IN THE SMOG RIGHT THERE BEHIND ME ON A CLEAR NIGHT AND I SING TO IT AND IT DOESN'T SING BACK. BEST AUDIENCE I EVER HAD."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "LADY VELVET AT THE ROYALE AND I CAME UP TOGETHER. WE DON'T SPEAK. WE SEND EACH OTHER FLOWERS ON OPENING NIGHTS WITH NO CARD. EVERYBODY KNOWS WHO THEY'RE FROM."
+      }
+    ]
+  },
+  "ray": {
+    "name": "Ray Delacroix",
+    "role": "Pianist, Moonglow",
+    "sheet": "npc-jazz-pianist",
+    "at": [
+      {
+        "world": "arcadia-jazz",
+        "label": "RAY"
+      }
+    ],
+    "greet": "MM. ONE MORE CHORUS AND I'M ALL YOURS.",
+    "again": "STILL HERE? GOOD. THIS NEXT ONE'S FOR THE PEOPLE STILL HERE.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "I'VE PLAYED THIS PIANO LONGER THAN THE TOWER'S HAD ITS NAME. IT USED TO BE THE HALBERD BUILDING. BEFORE THAT IT WAS A HOLE IN THE AIR. I PLAYED THE HOLE TOO."
+      },
+      {
+        "q": "The cigarette",
+        "a": "I QUIT THIRTY YEARS AGO. THE CIGARETTE DIDN'T. IT LIKES IT HERE."
+      }
+    ]
+  },
+  "mingo": {
+    "name": "Mingo",
+    "role": "Bass, Moonglow",
+    "sheet": "npc-jazz-bassist",
+    "at": [
+      {
+        "world": "arcadia-jazz",
+        "label": "MINGO"
+      }
+    ],
+    "greet": "MINGO NODS. THE BASS SAYS HELLO FOR HIM.",
+    "again": "MINGO NODS AGAIN, A LITTLE WARMER.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "...BASS."
+      },
+      {
+        "q": "The band",
+        "a": "ODETTE SINGS. RAY THINKS. LOU-LOU DRIVES. I HOLD THE FLOOR UP. ...GOOD BAND."
+      }
+    ]
+  },
+  "sol": {
+    "name": "Sol Achebe",
+    "role": "Bartender, Moonglow",
+    "sheet": "npc-jazz-bartender",
+    "at": [
+      {
+        "world": "arcadia-jazz",
+        "label": "SOL"
+      }
+    ],
+    "greet": "EVENING. KEEP YOUR VOICE DOWN AND YOUR GLASS UP AND WE'LL GET ALONG FINE.",
+    "again": "OLD FASHIONED? STIRRED FOR THE LENGTH OF A BALLAD. IT'S A RULE.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "SOL. I TEND BAR LIKE RAY PLAYS PIANO - SLOW, AND ONLY WHAT'S NEEDED. THE BLUE NOTE'S MINE. IT TASTES THE WAY THE LAST SONG OF THE NIGHT SOUNDS."
+      },
+      {
+        "q": "The room",
+        "a": "NO SCREENS IN HERE. NO HOLO-ADS. THE OWNERS TRIED ONCE; ODETTE STOPPED SINGING UNTIL THEY TOOK IT DOWN. TOOK FOUR NIGHTS. FULLEST FOUR NIGHTS WE EVER HAD."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "THERE'S A MEMBERS' CLUB UP IN THE SPIRES WITH A JAZZ ROOM NOBODY'S PLAYED IN FOR YEARS. THEY'VE OFFERED ODETTE A FORTUNE. SHE SENDS THEIR LETTERS BACK WITH A LIPSTICK KISS ON THEM."
+      }
+    ]
+  },
+  "iris": {
+    "name": "Iris Vance",
+    "role": "Concierge, the Atrium",
+    "sheet": "npc-concierge",
+    "at": [
+      {
+        "world": "arcadia-atrium",
+        "label": "IRIS"
+      }
+    ],
+    "greet": "WELCOME TO THE ATRIUM, L200. HOW CAN I HELP YOU FIND YOUR WAY?",
+    "again": "LOST AGAIN? IT'S A BIG CITY. IT'S ALL I THINK ABOUT.",
+    "topics": [
+      {
+        "q": "Getting around",
+        "a": "THE LOOP TAKES YOU ROUND THE RING - LANTERN ROW, THE SPACEPORT, BACK HERE. THE SPIRE EXPRESS IN THE LOBBY OUTSIDE GOES UP TO THE SPIRES. THE CORE EXPRESS GOES DOWN, ALL THE WAY. AND THE CABS ON THE PAD GO ANYWHERE WITH A PAD."
+      },
+      {
+        "q": "The levels",
+        "a": "THE STREET IS LEVEL ZERO. WE'RE TWO HUNDRED UP. THE SPIRES ARE FOUR-EIGHTY, ABOVE THE SMOG. BELOW THE STREET, THE UNDERCITY, AND BELOW THAT THE SUMP. THE MONEY GOES UP. THE WATER GOES DOWN."
+      },
+      {
+        "q": "The Atrium",
+        "a": "FORTY FLOORS OF SHOPS AROUND ONE EMPTY MIDDLE. THE CHANDELIER IS NINE HUNDRED RODS OF LIGHT; A MAN COMES ONCE A MONTH TO REPLACE THE ONE THAT WENT OUT. HE NEVER FINDS IT. HE CHANGES ONE ANYWAY."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "THE SPIRES HAVE A CHROME BOUTIQUE NOW - DESIGNER IMPLANTS, GOLD-LEAF CIRCUITRY. THEY'RE TALKING ABOUT OPENING A BRANCH DOWN HERE. THE SHUTTERED SHOP AT THE END. WE'LL SEE."
       }
     ]
   }
