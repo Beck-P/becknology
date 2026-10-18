@@ -11,6 +11,7 @@ arcadia-foundry, 32 x 22.
 """
 import json
 import math
+import random
 import os
 import sys
 
@@ -69,11 +70,18 @@ S.letters(k, 'FOUNDRY', 'RubikMonoOne', 16.0, R0 + 1.46, 3.8, size=0.8, col=ORG,
 
 # ---- the dance floor: steel grating with red light coming up through it -------------------------------------------------------
 DF = (8, 9, 24, 15)                     # tiles x 8..23, rows 9..14
-k.box(DF[0], DF[1], 0.0, DF[2], DF[3], 0.006, '#2a0604', 'floor_glow', emit=(RED, 0.75))
+# the light under it comes up unevenly: hot under the ladle, dimmer toward the edges, a few panels dark (a tile each)
+fr = random.Random(9071)
+for x in range(DF[0], DF[2]):
+    for r in range(DF[1], DF[3]):
+        d = math.hypot((x + 0.5 - 16.0) / 8.0, (r + 0.5 - 11.6) / 3.5)
+        s = max(0.0, 0.62 - 0.38 * d) * fr.choice((1.0, 1.0, 0.85, 0.7, 0.0 if fr.random() < 0.12 else 0.55))
+        col = ORG if d < 0.35 else RED
+        k.box(x, r, 0.0, x + 1, r + 1, 0.006, shade('#2a0604', 0.6 + s * 0.6), 'floor_glow', emit=(col, round(s, 2)) if s > 0.05 else None)
 k.box(DF[0] - 0.1, DF[1] - 0.1, -0.02, DF[2] + 0.1, DF[3] + 0.1, 0.0, '#3a3a40', 'floor_frame')
-bars = [(x, DF[1], 0.006, x + 0.06, DF[3], 0.03) for x in [DF[0] + i * 0.25 for i in range(int((DF[2] - DF[0]) / 0.25) + 1)]]
-bars += [(DF[0], r, 0.006, DF[2], r + 0.05, 0.03) for r in [DF[1] + i * 0.5 for i in range(int((DF[3] - DF[1]) / 0.5) + 1)]]
-k.boxes(bars, ('#4a4a50', 0.06), 'floor_grating')
+bars = [(x, DF[1], 0.006, x + 0.1, DF[3], 0.05) for x in [DF[0] + i * 0.5 for i in range(int((DF[2] - DF[0]) / 0.5) + 1)]]
+bars += [(DF[0], r, 0.006, DF[2], r + 0.1, 0.05) for r in [DF[1] + i * 0.5 for i in range(int((DF[3] - DF[1]) / 0.5) + 1)]]
+k.boxes(bars, ('#5a5a62', 0.06), 'floor_grating')
 k.point_light((DF[0] + DF[2]) / 2, (DF[1] + DF[3]) / 2, 0.4, RED, 70, radius=2.0, group='flicker')
 # the ladle hung over the floor on chains, chains and hooks hanging from the dark
 k.cyl(16.0, 11.6, 3.6, 4.4, 0.9, ('#3a3030', 0.1), 'ladle', verts=18)
