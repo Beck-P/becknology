@@ -2,12 +2,24 @@
 // for the cast (the queen-regent on her throne, Queen Alyssara, Beckolas, an elf bard with his ears, Hollin in his
 // straw hat, the Ferryman, Pip the young elf), a passer-by in their wardrobe's colours, another pilot in a helmet, a hand
 // in the harbour's hiring list and a captain's face (24 × 24, half size); the expressions; the old crop when there's no
-// portrait file; on a desktop and a phone. node world/portraits.js [shots]
+// portrait file; on a desktop and a phone; a face in a chooser's row (the watch bill), the title's face, a card pinned up
+// in the world (11 across, a quarter size). First of all, that every portrait on disk was drawn by portraits.py from
+// what's in characters.py now (`portraits.py check`: none missing, none drawn some other way or from an older entry).
+// node world/portraits.js [shots]
 const { chromium } = require('playwright');
+const { execFileSync } = require('child_process');
 const SHOTS = process.argv[2] || __dirname + '/shots';
 let errors = 0;
 const bad = (m) => { errors++; console.log('BAD', m); };
 (async () => {
+  try {
+    console.log(execFileSync('python3', [__dirname + '/../../bridge-art/portraits.py', 'check'], { encoding: 'utf8' }).trim().split('\n').slice(-1)[0]);
+  } catch (e) {
+    const out = String(e.stdout || e.message).trim().split('\n');
+    console.log(out.slice(0, 12).join('\n') + (out.length > 12 ? '\n…' : ''));
+    if (e.status === 1) bad('portraits out of date: python3 tools/bridge-art/portraits.py stale (then look at them)');
+    else console.log('(portraits.py check could not run: ' + String(e.message).slice(0, 120) + ')');
+  }
   const b = await chromium.launch({ executablePath: require(__dirname + '/../chrome.js') });
   async function page(opts) {
     const p = await (await b.newContext(opts)).newPage();
@@ -158,6 +170,22 @@ const bad = (m) => { errors++; console.log('BAD', m); };
   console.log('portrait hands in the hiring list:', JSON.stringify(hands));
   if (!hands.rows || hands.faces < hands.rows || !hands.files) bad('the hands\' faces are not portraits');
   await p.screenshot({ path: SHOTS + '/portrait_hands.png' });
+  await shut(p);
+
+  // a chooser row with someone's sheet (the watch bill's crew) shows their portrait; a card pinned up in the world (the
+  // passage's watch bill, 11 × 10) their head at a quarter; the title's face is their own portrait in what they wear
+  const small = await ev(async () => {
+    BridgeInteractions.choose({ title: 'Faces', rows: [{ label: 'Dorrie', sheet: 'npc-dorrie', info: true }], closeLabel: 'Done' });
+    const c = document.createElement('canvas'); c.width = 11; c.height = 10; document.body.appendChild(c);
+    BridgeLook.npcFace(c, 'npc-hollin');
+    await new Promise(r => setTimeout(r, 1200));
+    const row = document.querySelector('.world-dialog canvas.sp-face');
+    const op = (c, x, y) => !!c && c.getContext('2d').getImageData(x, y, 1, 1).data[3] > 0;
+    return { row: op(row, 12, 10), pinned: op(c, 5, 5) };
+  });
+  small.files = ['npc-dorrie', 'npc-hollin'].filter(f => p._asked.has(f));
+  console.log('portrait in a row and on a pinned card:', JSON.stringify(small));
+  if (!small.row || !small.pinned || small.files.length < 2) bad('a row\'s or a pinned card\'s face is not a portrait');
   await shut(p);
 
   // no portrait file: the card falls back to the head cropped out of the sheet
