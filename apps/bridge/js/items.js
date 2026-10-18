@@ -1192,6 +1192,31 @@ var BridgeItems = (function () {
     px(ctx, x, y, u, '#e8f8ff', [[5, 4, 1, 2]]);
     px(ctx, x, y, u, '#3a6a9a', [[9, 9, 2, 3]]);
   }
+  // a glowing cocoon from Rosewell's silk groves, and a scarf woven from them
+  function cocoonIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#3a1a2a', [[6, 2, 4, 12], [5, 4, 6, 8]]);
+    px(ctx, x, y, u, '#f0b0d0', [[6, 3, 4, 10], [5, 5, 6, 6]]);
+    px(ctx, x, y, u, '#ffe8f6', [[6, 4, 2, 3], [7, 8, 1, 3]]);
+    px(ctx, x, y, u, '#c87aa0', [[9, 9, 1, 3], [5, 7, 1, 2]]);
+    px(ctx, x, y, u, '#e8e0e8', [[8, 0, 1, 3]]);
+  }
+  function scarfIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#3a1a2a', [[2, 3, 12, 5], [9, 7, 4, 7]]);
+    px(ctx, x, y, u, '#f080b0', [[3, 4, 10, 3], [10, 7, 2, 6]]);
+    px(ctx, x, y, u, '#ffd0e8', [[3, 4, 10, 1], [10, 8, 1, 4]]);
+    px(ctx, x, y, u, '#c8a050', [[10, 12, 2, 1], [3, 6, 1, 1], [6, 6, 1, 1]]);
+  }
+  // a fisherman's glass float from the Sapphire Glassworks: a blue ball in a net of cord
+  function floatIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#0c1a30', [[4, 3, 8, 10], [3, 4, 10, 8]]);
+    px(ctx, x, y, u, '#2a5ad8', [[4, 4, 8, 8], [5, 3, 6, 10]]);
+    px(ctx, x, y, u, '#6a9af0', [[5, 4, 3, 3]]);
+    px(ctx, x, y, u, '#e8f4ff', [[5, 5, 1, 1]]);
+    px(ctx, x, y, u, '#c8a870', [[3, 8, 10, 1], [8, 3, 1, 10], [5, 11, 6, 1]]);
+  }
   // a little powder keg, iron-hooped, a red mark on its head, a spill of powder
   function powderIcon(ctx, x, y, s) {
     var u = s / 16;
@@ -1457,6 +1482,14 @@ var BridgeItems = (function () {
     moon_wand:     { id: 'moon_wand', name: 'Moonlit Wand', desc: 'Black wood, a white stone at the tip. F casts a bolt of moonlight seven tiles down the way you face. Each cast takes 2 energy.',
                      type: 'weapon', stackable: false, draw: wandIcon, damage: 30, cls: 'cast', value: 200,
                      onUse: function () { if (typeof BridgeMagic !== 'undefined') BridgeMagic.cast(this); return false; } },
+    silk_cocoon:   { id: 'silk_cocoon', name: 'Silk Cocoon', desc: 'An empty cocoon from Rosewell\'s silk groves, still glowing faintly pink. A mile of spore silk wound up inside it.',
+                     type: 'material', stackable: true, draw: cocoonIcon, value: 10 },
+    silk_scarf:    { id: 'silk_scarf', name: 'Spore Silk Scarf', desc: 'Woven for you on Seren\'s loom from five cocoons you gathered. It glows like a lamp turned low. Anyone would love it.',
+                     type: 'material', stackable: true, draw: scarfIcon, value: 90 },
+    glass_float:   { id: 'glass_float', name: 'Glass Float', desc: 'A fisherman\'s float of blue Sapphire glass in a net of cord. Hang one in a window and the light comes through it like the sea.',
+                     type: 'material', stackable: true, draw: floatIcon, value: 18 },
+    caldera_lantern: { id: 'caldera_lantern', name: 'Caldera Lantern', desc: 'Blue Sapphire glass in a tin frame, from the lantern maker at Lanternfall. It has never once blown out, she says.',
+                     type: 'material', stackable: true, draw: lanternIcon, value: 24 },
     glimmer_lantern: { id: 'glimmer_lantern', name: 'Glimmer Lantern', desc: 'A lantern that burns brighter near hidden things. Hold it to see them; use it to ask which way is warmer.',
                      type: 'tool', stackable: false, draw: lanternIcon, value: 80,
                      onUse: function () { if (typeof BridgeMagic !== 'undefined') BridgeMagic.lantern(); return false; } },
