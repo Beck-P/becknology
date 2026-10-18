@@ -725,6 +725,13 @@ lanes three rows or more and the houses south of a lane mostly two storeys.
   `find` scores best in the island's collisions as it loads, so a re-render of the island moves them with it; `BACK`
   points each district's way home at that tile. Re-run `python3 tools/bridge-art/atlas.py` after adding one (its
   `EXTRA` lists Crownhaven's).
+- **Walking the map:** a solid longer than a tile blocks every cell it touches, so beds, parterres, canal walls and bridge
+  parapets are laid on whole tiles with whole-tile walks between (the Hill's garden and the canal bridges were walled
+  shut until they were). Nothing a district stands on may lie below the sea's level (`assets_coast.WZ` and its foam band)
+  unless it's meant to be water — the game draws seawater over anything lower (the Arsenal's dry dock came out flooded).
+- Test: `world/capital.js` — every district in `BUILT` loads, its spawn and every interaction can be reached (across a
+  counter too, as js/interactions.js allows), each door and gate both ways, Crownhaven's three doors, the theatre, the
+  cast's words, live light; shots `capital_<id>_{noon,golden,night}.png`.
 
 ### The Sapphire and Rose seas: Lanternfall, the floating market, Rosewell (Lumar)
 Workstream B1 of the denser worlds (`_claude_docs/spec-denser-worlds.md`; Beck: "the Emerald, Sapphire and Rose seas are your different places… each of their people and cities should probably be a little bit more unique"). What each sea's places do is `js/sapphire.js` (BridgeSapphire, interaction types `lanternfall` and `sapphire`) and `js/rose.js` (BridgeRose, type `rose`).
