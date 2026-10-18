@@ -96,8 +96,8 @@
     { "sheet": "npc-sailor", "path": [[17, 7], [17, 18], [21, 18]], "speed": 0.7, "pause": 6000, "rest": "down" }
   ],
   "lumar-rose-springs": [
-    { "sheet": "npc-traveler", "path": [[21, 26], [21, 8], [21, 4], [34, 4]], "speed": 0.7, "pause": 6000, "rest": "down" },
-    { "sheet": "npc-quiet", "path": [[3, 24], [16, 24]], "speed": 0.6, "pause": 7000, "rest": "up" }
+    { "sheet": "npc-traveler", "path": [[21, 26], [21, 6], [22, 6], [22, 4], [34, 4]], "speed": 0.7, "pause": 6000, "rest": "down" },
+    { "sheet": "npc-quiet", "path": [[3, 25], [16, 25]], "speed": 0.6, "pause": 7000, "rest": "up" }
   ],
   "lumar-saltmere": [
     { "sheet": "npc-ghost-fisher", "ghost": true, "path": [[16, 24], [21, 24], [27, 24]], "speed": 0.45, "pause": 7000, "rest": "down" },

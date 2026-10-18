@@ -109,7 +109,7 @@ w.update({'name': 'The Tea House', 'width': COLS, 'height': ROWS, 'tileSize': 16
           'spawns': {'player': [7, 8]}, 'tiles': [[1] * COLS for _ in range(ROWS)], 'collisions': [[1] * COLS for _ in range(ROWS)],
           'shipExit': False, 'indoors': True})
 w['interactions'] = [
-    {'x': x, 'y': y, 'type': 'leave_world', 'leaveTo': 'lumar-rose-springs', 'leaveSpawn': [29, 20], 'label': 'ROSEWELL', 'prompt': 'PRESS E TO GO OUT'}
+    {'x': x, 'y': y, 'type': 'leave_world', 'leaveTo': 'lumar-rose-springs', 'leaveSpawn': [28, 20], 'label': 'ROSEWELL', 'prompt': 'PRESS E TO GO OUT'}
     for (x, y) in DOORS] + [
     {'x': 3, 'y': 3, 'type': 'dialog', 'label': 'MASTER LIOR', 'prompt': 'PRESS E TO TALK', 'dialog': ''},
     {'x': 4, 'y': 3, 'type': 'rose', 'act': 'tea', 'label': 'A POT OF TEA', 'prompt': 'PRESS E TO ORDER'},

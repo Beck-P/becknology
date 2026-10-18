@@ -397,7 +397,7 @@
       "type": "leave_world",
       "leaveTo": "lumar-rose-springs",
       "leaveSpawn": [
-        29,
+        28,
         20
       ],
       "label": "ROSEWELL",
