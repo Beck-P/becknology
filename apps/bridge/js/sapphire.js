@@ -329,7 +329,7 @@ var BridgeSapphire = (function () {
         c.fillStyle = m == null ? '#3a2e28' : m === 2 ? '#ffd060' : m === 1 ? '#8ad070' : '#a04030';
         c.fillRect(gx0 + 30 + i * 22, 72, 16, 6);
       }
-      if (gb.flash && now - gb.flash < 600) {
+      if (gb.flash && now - gb.flash < 600 && gb.word.length < 10) {     // PERFECT / GOOD / MISSED, not the verdict
         c.globalAlpha = 1 - (now - gb.flash) / 600;
         c.fillStyle = gb.word === 'PERFECT' ? '#ffd060' : gb.word === 'GOOD' ? '#8ad070' : '#e06050';
         c.font = '12px monospace'; c.textAlign = 'center'; c.fillText(gb.word, 132, 30); c.globalAlpha = 1;

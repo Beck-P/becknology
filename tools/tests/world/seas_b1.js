@@ -71,8 +71,8 @@ const PLACES = [
     if (!it) bad(w + ' has no way to ' + target); else if (!it.open) bad(w + "'s way to " + target + ' stands on a wall');
     if (it) {
       await ev((t) => BridgeInteractions.execute(BridgeWorld.getWorld().interactions.find(x => x.target === t)), target);
-      await p.waitForTimeout(2600);
-      const now = await ev(() => BridgeWorld.getWorldId());
+      let now = null;
+      for (let i = 0; i < 16 && now !== target; i++) { await p.waitForTimeout(500); now = await ev(() => BridgeWorld.getWorldId()); }
       if (now !== target) bad('going from ' + w + ' ended up in ' + now);
     }
   }
