@@ -311,10 +311,13 @@ var BridgeVillage = (function () {
     var ins = data.interactions = data.interactions || [];
     if (!ins.some(function (it) { return it.target === WID; })) {
       // the open run of the east edge nearest the street (row 11), wherever Brambleford's own render leaves it open
+      // (Brambleford's own last column is solid, so the way on is the street's last open tiles, a column or two in)
       var c = data.collisions || [], x = data.width - 1, best = null;
-      for (var d = 0; d < data.height && !best; d++) [11 - d, 11 + d].forEach(function (y) {
-        if (!best && c[y] && c[y][x] === 0 && c[y][x - 1] === 0) best = y;
-      });
+      for (; x > data.width - 4 && best === null; x--)
+        for (var d = 0; d < 6 && best === null; d++) [11 - d, 11 + d].forEach(function (y) {
+          if (best === null && c[y] && c[y][x] === 0 && c[y][x - 1] === 0) best = y;
+        });
+      if (best === null) x = data.width - 1; else x++;
       var y0 = best === null ? 11 : best;
       gate = [x - 1, y0];
       [y0 - 1, y0, y0 + 1].forEach(function (y) {
