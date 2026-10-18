@@ -334,7 +334,7 @@ def rooftop(k, dr, x0, x1, r0, r1, z, rng=None):
     on stands, a pigeon loft, a shed of corrugated, an antenna mast and dishes, a few pots of greens, washing on a line,
     a mattress, vents breathing steam."""
     rng = rng or k.rng
-    k.box(x0, r0, z - 0.06, x1, r1, z, ('#4a4650', 0.14), 'roof_tar')
+    k.box(x0, r0, z + 0.005, x1, r1, z + 0.04, ('#4a4650', 0.14), 'roof_tar')       # clear of the block's own top (they fought)
     k.area_light((x0 + x1) / 2, (r0 + r1) / 2, z + 4.0, '#c0a8d0', 14 * (x1 - x0), max(2.0, x1 - x0), group='flicker')   # the stacks' windows on it
     for lx in [x0 + 2.0 + i * 5.0 for i in range(int((x1 - x0 - 1.0) / 5.0))]:      # bulbs strung over the roofs, so they're lived on
         caged_bulb(k, lx, (r0 + r1) / 2, z + 1.5, col=rng.choice(('#ffc070', '#ffd890', '#a0e0ff')), energy=14, wire_to=z + 1.9)
@@ -342,7 +342,7 @@ def rooftop(k, dr, x0, x1, r0, r1, z, rng=None):
              (x1 - 0.12, r0, z, x1, r1, z + 0.25)], ('#3a3640', 0.1), 'roof_parapet')
     for _ in range(int((x1 - x0) / 3)):                              # patches of sheet laid over the tar
         px, pr = rng.uniform(x0 + 0.2, x1 - 1.2), rng.uniform(r0 + 0.2, r1 - 0.9)
-        k.box(px, pr, z, px + rng.uniform(0.6, 1.1), pr + rng.uniform(0.4, 0.7), z + 0.012, (rng.choice(('#3a3a44', '#4a3a30', '#2e3438')), 0.12), 'roof_patch')
+        k.box(px, pr, z + 0.04, px + rng.uniform(0.6, 1.1), pr + rng.uniform(0.4, 0.7), z + 0.05, (rng.choice(('#55555f', '#5a4a3e', '#44505a')), 0.12), 'roof_patch')
     x = x0 + 0.4
     while x < x1 - 1.0:
         w = rng.uniform(1.0, 2.2)
