@@ -139,7 +139,7 @@ def balustrade_v(k, x, ra, rb, h=0.95, lamps=4.0, glow=LILAC):
 
 
 # ---- street furniture -----------------------------------------------------------------------------------------------------
-def lamp(k, cx, cr, h=2.6, glow=WARM, energy=26):
+def lamp(k, cx, cr, h=2.6, glow=WARM, energy=10):
     """A slender white-and-gold lamp standard, fluted, with a frosted globe in a gold cage."""
     k.cyl(cx, cr, 0.0, 0.2, 0.16, (STONE_L, 0.05), 'lamp_base', verts=10)
     k.cyl(cx, cr, 0.2, h - 0.3, 0.05, (STONE_L, 0.05), 'lamp_post', verts=10)
@@ -153,7 +153,7 @@ def lamp(k, cx, cr, h=2.6, glow=WARM, energy=26):
                0.012, GOLD, 'lamp_cage', verts=4)
     k.cone(cx, cr, h + 0.18, h + 0.36, 0.08, 0.01, (GOLD, 0.2), 'lamp_finial', verts=8)
     k.point_light(cx, cr + 0.15, h, glow, energy, radius=0.25, group='flicker')
-    k.point_light(cx, cr + 0.15, 0.8, glow, energy * 0.6, radius=0.3, group='flicker')
+    k.point_light(cx, cr + 0.15, 0.9, glow, energy * 0.4, radius=0.4, group='flicker')   # a small pool, not a blot
     k.solid_post(cx, cr)
 
 
@@ -259,14 +259,15 @@ def statue(k, cx, cr, h=1.6):
     k.solid(cx - 0.5, cr - 0.5, cx + 0.5, cr + 0.5)
 
 
-def cafe_table(k, cx, cr, cloth='#f4f0ea', chairs=(-1, 1), china=True):
+def cafe_table(k, cx, cr, cloth='#f4f0ea', chairs=(-1, 1), china=True, light=3.5):
     """A round marble table with gilt bistro chairs either side, a little lamp, china for tea or a coupe."""
     k.cyl(cx, cr, 0.0, 0.04, 0.2, GOLD_D, 'table_foot', verts=10)
     k.cyl(cx, cr, 0.04, 0.68, 0.035, GOLD, 'table_stem', verts=8)
     k.cyl(cx, cr, 0.68, 0.73, 0.36, (cloth, 0.05), 'table_top', verts=18)
     k.cyl(cx, cr, 0.73, 0.76, 0.06, GOLD, 'table_lamp', verts=8)
     k.sphere(cx, cr, 0.84, 0.06, 0.08, '#ffe8c0', 'table_lamp_glow', emit=(WARM, 0.9), segs=8)
-    k.point_light(cx, cr, 0.95, WARM, 3.5, radius=0.1, group='flicker')
+    if light:
+        k.point_light(cx, cr, 0.95, WARM, light, radius=0.1, group='flicker')
     if china:
         for s in (-1, 1):
             k.cyl(cx + s * 0.18, cr + 0.08, 0.73, 0.745, 0.08, '#f8f8f4', 'saucer', verts=10)
@@ -660,3 +661,158 @@ def champagne_bar(k, cx, cr, w=4.6, d=2.4, stools=()):
         k.cyl(x, r, 0.05, 0.62, 0.03, GOLD, 'stool_stem', verts=6)
         k.cyl(x, r, 0.62, 0.72, 0.2, (PINK, 0.08), 'stool_seat', verts=12)
     k.solid(cx - w / 2, cr - d / 2, cx + w / 2, cr + d / 2)
+
+
+# ---- the detail pass: one paved surface, path lights, the opera's forecourt, Aurelle's terrace, kiosks -------------------
+def flagstones(k, x0, r0, x1, r1, tone='#d2ccbf', w=2.0, d=1.0, joint='#b0a898', seed=0):
+    """Pale stone flags as one surface: a single slab of stone (grain in tile units, 'ground_' — no seams, no line
+    work) with long flags laid in running bond, their joints drawn in flat and faint, a few flags a shade off. Not
+    a box per tile: the tile grid never shows."""
+    import random
+    rng = random.Random(seed or int(x0 * 131 + r0 * 17))
+    k.box(x0, r0, -0.08, x1, r1, 0.0, (tone, 0.07), 'ground_paving')
+    joints, odd = [], {}
+    r, row = r0, 0
+    while r < r1 - 1e-6:
+        rb = min(r1, r + d)
+        if r > r0:
+            joints.append((x0, r - 0.012, 0.0, x1, r + 0.012, 0.0012))
+        x = x0 - (w / 2 if row % 2 else 0.0) - rng.uniform(0, 0.4)
+        while x < x1 - 1e-6:
+            xa, xb = max(x0, x), min(x1, x + w * rng.choice((1.0, 1.0, 0.75, 1.25)))
+            if xa > x0 + 0.05:
+                joints.append((xa - 0.012, r, 0.0, xa + 0.012, rb, 0.0012))
+            if rng.random() < 0.22:
+                t = shade(tone, rng.choice((0.95, 0.97, 1.03, 1.05)))
+                odd.setdefault(t, []).append((xa + 0.02, r + 0.02, 0.0, xb - 0.02, rb - 0.02, 0.0008))
+            x = xb
+        r, row = rb, row + 1
+    k.boxes(joints, joint, 'paving_joint')
+    for t, rects in odd.items():
+        k.boxes(rects, (t, 0.06), 'paving_flag')
+
+
+def gold_inlay(k, rects):
+    """Gold strips let flush into the paving (x0, r0, x1, r1 each)."""
+    k.boxes([(a, b, 0.0, c, d, 0.003) for (a, b, c, d) in rects], (GOLD, 0.25), 'paving_gold')
+
+
+def path_light(k, cx, cr, glow=WARM, energy=2.5):
+    """A knee-high stone bollard with a frosted cap, a small pool of light on the path."""
+    k.cyl(cx, cr, 0.0, 0.42, 0.075, (STONE_L, 0.05), 'pathlight', verts=10)
+    k.cyl(cx, cr, 0.42, 0.5, 0.085, (GOLD, 0.2), 'pathlight_cap', verts=10)
+    k.cyl(cx, cr, 0.3, 0.4, 0.078, shade(glow, 0.6), 'pathlight_lens', emit=(glow, 0.9), verts=10)
+    k.point_light(cx, cr + 0.1, 0.35, glow, energy, radius=0.06, group='flicker')
+    k.solid_post(cx, cr)
+
+
+def lantern_post(k, cx, cr, h=1.6, glow=PEACH, energy=4.0):
+    """A low garden lantern on a slim gold post: a paper-white shade glowing in a pastel."""
+    k.cyl(cx, cr, 0.0, h - 0.3, 0.025, GOLD_D, 'lantern_post', verts=6)
+    k.cyl(cx, cr, h - 0.32, h, 0.11, shade(glow, 0.7), 'lantern_shade', emit=(glow, 0.9), verts=8)
+    k.cone(cx, cr, h, h + 0.1, 0.13, 0.02, (GOLD, 0.2), 'lantern_cap', verts=8)
+    k.point_light(cx, cr + 0.12, h - 0.2, glow, energy, radius=0.1, group='flicker')
+    k.solid_post(cx, cr)
+
+
+def runner(k, x0, r0, x1, r1, col='#8a1430', edge=GOLD):
+    """A red carpet laid on the stone, gold-edged."""
+    k.box(x0, r0, 0.0, x1, r1, 0.02, (col, 0.08), 'carpet_runner')
+    k.boxes([(x0, r0, 0.02, x0 + 0.06, r1, 0.024), (x1 - 0.06, r0, 0.02, x1, r1, 0.024)], (edge, 0.2), 'carpet_edge')
+
+
+def rope_line(k, x, r0, r1, step=1.2):
+    """Gold posts and a red velvet rope along a run of rows at column x."""
+    n = max(1, int(round((r1 - r0) / step)))
+    pts = [r0 + (r1 - r0) * i / n for i in range(n + 1)]
+    for r in pts:
+        k.cyl(x, r, 0.0, 0.62, 0.035, GOLD, 'rope_post', verts=8)
+        k.sphere(x, r, 0.64, 0.055, 0.055, GOLD_L, 'rope_post', segs=6)
+        k.solid_post(x, r)
+    for a, b in zip(pts, pts[1:]):
+        m = (a + b) / 2
+        k.tube((x, a, 0.55), (x, m, 0.44), 0.025, '#8a1430', 'rope', verts=6)
+        k.tube((x, m, 0.44), (x, b, 0.55), 0.025, '#8a1430', 'rope', verts=6)
+
+
+def candelabra(k, cx, cr, h=2.2, glow=WARM):
+    """A tall gilt candelabra standard: three frosted flames on curling arms."""
+    k.cyl(cx, cr, 0.0, 0.12, 0.2, (STONE_L, 0.05), 'candelabra_base', verts=10)
+    k.cyl(cx, cr, 0.12, h, 0.045, (GOLD, 0.2), 'candelabra', verts=8)
+    for s in (-1, 0, 1):
+        x = cx + s * 0.32
+        z = h + (0.14 if s == 0 else 0.0)
+        if s:
+            k.tube((cx, cr, h - 0.2), (x, cr, h - 0.1), 0.02, GOLD, 'candelabra', verts=4)
+            k.cyl(x, cr, h - 0.1, h, 0.03, GOLD, 'candelabra', verts=6)
+        k.sphere(x, cr, z + 0.08, 0.06, 0.09, '#fff0d0', 'candle_globe', emit=(glow, 1.0), segs=8)
+    k.point_light(cx, cr + 0.15, h, glow, 14, radius=0.2, group='flicker')
+    k.solid_post(cx, cr)
+
+
+def poster_column(k, cx, cr, h=2.3):
+    """A round advertising column: the Lyra's bills round it in pastel, a gold dome and finial, lit from inside its cap."""
+    k.cyl(cx, cr, 0.0, 0.15, 0.42, (STONE_D, 0.06), 'column_base', verts=18)
+    k.cyl(cx, cr, 0.15, h, 0.36, (STONE_L, 0.05), 'column_drum', verts=18)
+    for i, c in enumerate((PINK, LILAC, PEACH)):                 # three bills on the face toward you
+        x = cx - 0.27 + i * 0.19
+        k.box(x, cr + 0.3, 0.6, x + 0.16, cr + 0.37, 1.7, (shade(c, 0.85), 0.05), 'column_bill')
+    k.cyl(cx, cr, h, h + 0.08, 0.42, (GOLD, 0.2), 'column_cornice', verts=18)
+    k.sphere(cx, cr, h + 0.08, 0.36, 0.26, (GOLD, 0.2), 'column_dome', segs=14)
+    k.cone(cx, cr, h + 0.32, h + 0.6, 0.05, 0.01, GOLD_L, 'column_finial', verts=6)
+    k.cyl(cx, cr, h - 0.18, h, 0.365, shade(WARM, 0.6), 'column_band', emit=(WARM, 0.6), verts=18)
+    k.solid(cx - 0.4, cr - 0.4, cx + 0.4, cr + 0.4)
+
+
+def parasol_table(k, cx, cr, canopy=PINK, chairs=(-1, 1)):
+    """A café table under a pastel parasol with a lamp hung beneath it: Aurelle's terrace."""
+    cafe_table(k, cx, cr, chairs=chairs, china=False, light=0)   # one light a table (the parasol's), or the pools crowd
+    k.cyl(cx, cr, 0.76, 2.0, 0.025, GOLD, 'parasol_pole', verts=6)
+    k.cone(cx, cr, 1.85, 2.2, 0.72, 0.04, (canopy, 0.06), 'parasol', verts=12)
+    k.cone(cx, cr, 1.83, 1.86, 0.74, 0.7, (GOLD, 0.2), 'parasol_rim', verts=12)
+    k.sphere(cx, cr, 1.72, 0.07, 0.08, '#fff0e0', 'parasol_lamp', emit=(canopy, 1.0), segs=8)
+    k.point_light(cx, cr + 0.1, 1.6, canopy, 2.2, radius=0.1, group='flicker')
+    for s in (-1, 1):                                            # a coupe on the table, a bottle in a bucket
+        k.cyl(cx + s * 0.14, cr, 0.73, 0.86, 0.03, ('#f0e0b0', 0.05), 'coupe', verts=8)
+    k.cyl(cx, cr - 0.12, 0.73, 0.9, 0.07, (STONE_L, 0.05), 'ice_bucket', verts=10)
+    k.cyl(cx, cr - 0.12, 0.9, 1.08, 0.025, '#1e3a24', 'bottle', verts=6)
+
+
+def flower_kiosk(k, cx, cr, w=1.8, d=1.2):
+    """A little white kiosk with a gold dome, its shutters up on buckets of flowers and a lit counter."""
+    k.box(cx - w / 2, cr - d / 2, 0.0, cx + w / 2, cr + d / 2, 2.0, (STONE_L, 0.05), 'kiosk', bevel=0.04)
+    k.box(cx - w / 2 + 0.2, cr + d / 2, 0.9, cx + w / 2 - 0.2, cr + d / 2 + 0.03, 1.7, '#1a1424', 'kiosk_hatch', emit=('#ffe0c8', 0.5))
+    k.box(cx - w / 2 + 0.1, cr + d / 2, 1.7, cx + w / 2 - 0.1, cr + d / 2 + 0.6, 1.76, (PINK, 0.06), 'kiosk_awning')
+    k.box(cx - w / 2 + 0.1, cr + d / 2 + 0.55, 1.6, cx + w / 2 - 0.1, cr + d / 2 + 0.62, 1.76, (GOLD, 0.2), 'kiosk_awning')
+    k.sphere(cx, cr, 2.0, w * 0.4, 0.4, (GOLD, 0.2), 'kiosk_dome', segs=14)
+    k.cone(cx, cr, 2.35, 2.7, 0.05, 0.01, GOLD_L, 'kiosk_finial', verts=6)
+    for i in range(5):                                           # buckets of flowers along its front
+        x = cx - w / 2 + 0.2 + i * (w - 0.4) / 4
+        k.cyl(x, cr + d / 2 + 0.25, 0.0, 0.32, 0.12, (STONE_D, 0.06), 'bucket', verts=10)
+        c = (PINK, '#f8f0f4', LILAC, PEACH, '#e8e070')[i]
+        for j in range(5):
+            k.sphere(x + (j % 3 - 1) * 0.06, cr + d / 2 + 0.25 + (j // 3 - 0.5) * 0.06, 0.4 + (j % 2) * 0.06, 0.05, 0.045, c, 'flower', segs=6)
+    k.point_light(cx, cr + d / 2 + 0.5, 1.3, '#ffe0c8', 7, radius=0.15, group='flicker')
+    k.solid(cx - w / 2, cr - d / 2, cx + w / 2, cr + d / 2 + 0.4)
+
+
+def cypress(k, cx, cr, h=2.6, tone='#24402e'):
+    """A slim Italian cypress in a stone pot: a column of dark leaves."""
+    k.cyl(cx, cr, 0.0, 0.42, 0.26, (STONE, 0.06), 'pot', verts=14)
+    k.cyl(cx, cr, 0.42, 0.47, 0.29, (GOLD, 0.2), 'pot_rim', verts=14)
+    with k.foliage('needle'):
+        for i in range(6):
+            t = i / 5
+            T.leafy_crown(k, cx, cr, 0.6 + t * (h - 0.8), 0.26 * (1 - t * 0.6), 0.22 * (1 - t * 0.6), 0.32, shade(tone, 0.95 + t * 0.12), part='cypress')
+    k.solid(cx - 0.3, cr - 0.3, cx + 0.3, cr + 0.3)
+
+
+def shrub_bed(k, x0, r0, x1, r1, rng, tone='#2c4c34', n=None, blooms=(PINK, '#f8f0f4', LILAC)):
+    """A bed of layered shrubs: low bushes at the front, taller behind, a few in flower, mulch under them."""
+    k.box(x0, r0, 0.0, x1, r1, 0.03, '#2a2018', 'soil')
+    n = n or max(3, int((x1 - x0) * (r1 - r0) * 2.2))
+    for _ in range(n):
+        x, r = rng.uniform(x0 + 0.2, x1 - 0.2), rng.uniform(r0 + 0.2, r1 - 0.2)
+        s = rng.uniform(0.2, 0.36) * (1.15 if r < (r0 + r1) / 2 else 0.9)
+        T.bush(k, x, r, s=s, tone=shade(tone, rng.uniform(0.85, 1.15)),
+               berries=rng.choice(blooms) if rng.random() < 0.35 else None)
