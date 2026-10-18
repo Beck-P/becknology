@@ -741,6 +741,10 @@ class Kit:
             bb = self._variant_bbox(v)
             d = os.path.join(out, 'variants', v['slot'] + '__' + v['key'])
             os.makedirs(d, exist_ok=True)
+            last = 'lit_lamps.png' if getattr(self, '_lit', False) else 'light_' + list(light_states)[-1] + '.png'
+            if os.environ.get('SCENE_RESUME') and os.path.exists(os.path.join(d, last)):
+                done.append({'slot': v['slot'], 'key': v['key'], 'dir': os.path.relpath(d, out), 'bbox': bb})
+                continue                            # rendered whole before the cut: skip it without touching a material
             self._active_var = v
             for p in self.parts:
                 p['obj'].visible_camera = p['var'] is v
