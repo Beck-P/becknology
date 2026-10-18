@@ -53,10 +53,9 @@ rect(0, 5, COLS - 1, 6)            # the walk along the foot of the wall
 rect(6, 7, 7, 12)                  # boardwalks out from it
 rect(19, 7, 20, 10)
 rect(33, 7, 34, 13)
-rect(43, 7, 44, 11)
 rect(2, 13, 13, 14)                # the first ring of platforms
 rect(15, 11, 25, 12)
-rect(27, 14, 40, 15)
+rect(27, 14, 42, 15)               # (on to the Undertow's landing: the barge lies across the way north)
 rect(42, 12, 46, 13)
 rect(10, 15, 11, 20)
 rect(22, 13, 23, 19)
@@ -65,10 +64,11 @@ rect(4, 21, 18, 22)                # the outer walk
 rect(20, 20, 30, 21)
 rect(32, 22, 45, 23)
 rect(16, 23, 17, 25)
-rect(30, 24, 31, 26)
+rect(29, 24, 32, 26)               # between the south platforms
 PLATS = [(2, 15, 8, 19), (13, 15, 20, 19), (25, 16, 36, 19), (40, 15, 46, 20), (6, 23, 14, 26), (19, 22, 28, 26), (33, 24, 44, 27)]
 for (c0, r0, c1, r1) in PLATS:
     rect(c0, r0, c1, r1)
+WALK -= {(6, 25), (6, 26)}         # behind the net shed: nowhere to stand
 BRIDGE = [(9, 17)]                 # a rope bridge from the west platform across to the walk past it
 
 # ---- the quay wall: towering at the back, its vaults lived in --------------------------------------------------------------
