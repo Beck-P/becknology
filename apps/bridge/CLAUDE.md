@@ -792,7 +792,7 @@ plan is `_claude_docs/spec-arcadia-above.md`. Beck: "the skytrain, express lifts
   screen with her shell, and the skyline block's `rain: { none: true }` keeps it dry inside.
 - **The Loop's train in the city** (the same moment for everyone, from the clock): a world whose skyline block has
   `loop: { row, from, to, scale }` (screen tiles) has her viaduct across its sky and sees her cross every 150 s, west then
-  east (`PASS`, `CROSS`; a rumble, `train`) — the neon street; a station world's `loop: { track: [x0, x1, row, z] }` sees
+  east (`PASS`, `CROSS`; a rumble, `train`) — the neon street; a station world's `loop: { track: [x0, x1, row, lift] }` (`lift`: screen tiles above the row the rails stand at — their height × 0.7071 at the scenes' 45°) sees
   her brake in, wait and pull out on its track every 90 s (`stationItems`, depth-tested at the track's row). Her sprite is
   `assets/scenes/loop-train` (`tools/bridge-art/loop_train.py`).
 - **The Map** (js/map.js): Arcadia's card on *All places* opens with a side-on cutaway of the city (`cutaway`, a
