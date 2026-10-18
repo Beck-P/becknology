@@ -267,6 +267,10 @@ var BridgeAudio = (function () {
                 arp: { inst: 'bell', steps: [0, 3, 6, 10, 13], oct: 24, pattern: [0, 2, 1, 3] },
                 bass: { inst: 'sub', steps: [0, 6, 8] }, lead: { inst: 'keys', oct: 24, density: 0.22 },
                 perc: [['kick', [0, 8]], ['hat', [4, 12]]] },
+    // the Spires (Arcadia above the smog): quiet and starlit - a slow lydian harp, bells high up, a cello under it, no drums
+    spires:   { bpm: 58, root: 52, mode: 'lydian', chords: [0, 4, 1, 5, 0, 3, 1, 4], pad: 'warm',
+                arp: { inst: 'pluck', steps: [0, 3, 6, 8, 11, 14], oct: 12, pattern: [0, 2, 1, 3, 2, 1] },
+                bass: { inst: 'bass', steps: [0, 8] }, lead: { inst: 'bell', oct: 36, density: 0.16 } },
     // the Harvest Fair: a jig, the fiddle leading, guitar strummed on the off-beats, a tambourine
     fair:     { bpm: 116, root: 55, mode: 'ionian', chords: [0, 4, 0, 4, 3, 0, 4, 0], swing: 0.18, pad: 'squeeze',
                 arp: { inst: 'pluck', steps: [4, 12], oct: 12, chord: true }, bass: { inst: 'bass', steps: [0, 8] },
@@ -306,6 +310,10 @@ var BridgeAudio = (function () {
     if (id === 'arcadia-oldquarter') return { theme: 'lantern', amb: ['rain', 'murmur'] };                 // Lantern Row
     if (id === 'arcadia-oldquarter-shrine') return { theme: 'lantern', amb: ['rainsoft', 'chimes'] };      // its roof shrine
     if (id === 'arcadia-spaceport') return { theme: 'arcadia', amb: ['rain', 'city', 'engine'] };
+    if (id === 'arcadia-spires') return { theme: 'spires', amb: ['breeze', 'chimes'] };                  // above the smog: no rain, a high wind
+    if (id === 'arcadia-opera') return { theme: 'spires', amb: ['murmur'] };
+    if (id === 'arcadia-champagne' || id === 'arcadia-members') return { theme: 'casino', amb: ['murmur'] };
+    if (id === 'arcadia-boutique') return { theme: 'spires', amb: ['hum'] };
     if (/^arcadia-(street|skypad|alley|skywalk)$/.test(id)) return { theme: 'arcadia', amb: ['rain', 'city'] };
     if (/^(arcadia|cyber|chrome|junk|tech|null)/.test(id)) return { theme: 'lofi', amb: ['rainsoft', 'hum'] };
     if (/^enigma/.test(id)) return { theme: 'enigma', amb: ['hum', 'beeps'] };

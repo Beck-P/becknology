@@ -442,6 +442,26 @@ var BridgeEvents = (function () {
       react: 'look', note: function (L) { return 'NULL had every screen in Arcadia: "' + pick(NULL_SAYS, L.key) + '"'; },
       over: function (L, ctx, offX, offY, ts, ms) { scanlines(L, ctx, ms); }
     },
+    // the Spires (arcadia-spires, L480: js/spires.js)
+    operaout: {
+      world: 'arcadia-spires', name: 'The Lyra lets out', len: 4, w: 3, at: [72.5, 12],
+      hint: 'The interval — the Lyra empties onto the plaza', sfx: 'chime',
+      cast: [{ sheet: 'npc-diva', path: [[72.5, 10.2], [71.0, 13.0], [69.5, 14.5]], speed: 0.05, from: 20, until: 220, end: 'down' },
+             { sheet: 'npc-usher', x: 74, y: 11, f: 'down' },
+             { sheet: 'npc-member-b', path: [[73.5, 10.2], [76.0, 14.0]], speed: 0.05, from: 6, end: 'down' }],
+      gather: { x: 71, y: 15.5, r: 3.6, n: 12, face: [72.5, 10] },
+      say: [[8, 'at', 'BRAVA! BRAVA!'], [26, 0, 'THANK YOU, DARLINGS. THE THIRD ACT IS WORSE. FOR ME.'], [60, 'at', 'IS THAT SERAPHINE?'],
+            [110, 1, 'THE SECOND ACT, LADIES AND GENTLEMEN, IN FIVE MINUTES.']],
+      note: 'The Lyra let out for the interval and Seraphine came down the steps'
+    },
+    fireworks: {
+      world: 'arcadia-spires', name: 'Fireworks over the sky docks', len: 3, w: 2, at: [80, 38],
+      hint: 'Fireworks off the Lumière — a party aboard', sfx: 'blast', loop: { name: 'blast', every: 2.4, near: 60 },
+      gather: { x: 78, y: 39, r: 4.2, n: 14, face: [80, 44] },
+      say: [[10, 'at', 'OOOH.'], [40, 'at', 'WHOSE PARTY IS IT?'], [90, 'at', 'NOBODY KNOWS. NOBODY EVER KNOWS.']],
+      over: function (L, ctx, offX, offY, ts, ms) { spireFireworks(L, ctx, offX, offY, ts, ms); },
+      note: 'Fireworks went up off the yacht at the sky docks'
+    },
 
     // the Mid-Levels' Terraces (L200): a proposal at Halo, a jam at Moonglow
     proposal: {
@@ -990,6 +1010,32 @@ var BridgeEvents = (function () {
     ctx.drawImage(f, cx - 2, footY - 28);
     ctx.fillStyle = '#e8dcc0';
     for (var i = 0; i < 5; i++) ctx.fillRect(cx - 8 + bow + i * 2, footY - 18 - i * 2, 2, 2);
+  }
+  // the Spires: shells bursting in pastel over the yacht at the sky docks, a few at a time, falling as sparks
+  function spireFireworks(L, ctx, offX, offY, ts, ms) {
+    var cols = ['#f4a8d0', '#9ad8f0', '#c8b0f8', '#a8f0d0', '#ffd890'];
+    var bx = offX + 80 * ts, by = offY + 30 * ts;
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    for (var s = 0; s < 4; s++) {
+      var k = Math.floor(L.t / 2400) - s, life = (L.t - k * 2400) / 2400;
+      if (k < 0 || life > 1.6) continue;
+      var h = Math.sin(k * 12.9898) * 43758.5453, r1 = h - Math.floor(h);
+      var cx = Math.round(bx + (r1 - 0.5) * ts * 14), cy = Math.round(by - ts * (4 + r1 * 5)), col = cols[k % cols.length];
+      if (life < 0.35) {                                       // the shell climbing
+        ctx.fillStyle = '#fff4d0';
+        ctx.fillRect(cx, Math.round(cy + (0.35 - life) * ts * 18), 1, 2);
+        continue;
+      }
+      var p = (life - 0.35) / 1.25, R = Math.sqrt(p) * ts * 2.4;
+      ctx.globalAlpha = Math.max(0, 1 - p);
+      ctx.fillStyle = col;
+      for (var i = 0; i < 24; i++) {
+        var a = i / 24 * Math.PI * 2;
+        ctx.fillRect(Math.round(cx + Math.cos(a) * R), Math.round(cy + Math.sin(a) * R + p * p * ts * 1.5), p < 0.4 ? 2 : 1, p < 0.4 ? 2 : 1);
+      }
+    }
+    ctx.restore();
   }
   function notes(ctx, offX, offY, ts, ms, x, y, kind) {
     var n = ART.note();
