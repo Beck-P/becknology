@@ -4307,5 +4307,399 @@
         "a": "THE SPIRES HAVE A CHROME BOUTIQUE NOW - DESIGNER IMPLANTS, GOLD-LEAF CIRCUITRY. THEY'RE TALKING ABOUT OPENING A BRANCH DOWN HERE. THE SHUTTERED SHOP AT THE END. WE'LL SEE."
       }
     ]
+  },
+  "clemence": {
+    "name": "Clémence",
+    "role": "Hostess, the Tea Salon",
+    "sheet": "npc-tea-host",
+    "at": [
+      {
+        "world": "arcadia-spires",
+        "label": "TEA HOSTESS"
+      }
+    ],
+    "greet": "GOOD EVENING. A TABLE UNDER THE WISTERIA? THE JASMINE PEARLS OPEN BEST IF YOU WATCH THEM. NOBODY IS IN A HURRY UP HERE.",
+    "again": "BACK FOR ANOTHER POT. I KEPT YOUR CUP WARM. METAPHORICALLY. HALCYON WOULD BILL ME FOR THE HEAT.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "I GREW UP SIXTY FLOORS UNDER THE STREET, WHERE TEA COMES IN A BRICK AND TASTES OF THE PIPE IT CAME THROUGH. I SAVED FOR NINE YEARS FOR A LIFT PASS. I WAS GOING TO LOOK AT THE STARS ONCE AND GO HOME. THAT WAS TWELVE YEARS AGO."
+      },
+      {
+        "q": "The tea",
+        "a": "REAL LEAVES, GROWN ON VERDANCE AND SHIPPED UP IN CEDAR BOXES. THE PETIT FOURS ARE MINE. THE HONEY CAKE IS A BRAMBLEFORD RECIPE - DON'T TELL THE GUESTS, THEY THINK IT'S FRENCH."
+      },
+      {
+        "q": "The Spires",
+        "a": "THE ONLY PLACE IN ARCADIA ABOVE THE SMOG. THE ONLY PLACE WITH REAL STARS. PEOPLE UP HERE STOP NOTICING THEM AFTER A MONTH. I STILL LOOK EVERY NIGHT BEFORE I LOCK UP."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "THE YACHT AT THE DOCKS BELONGS TO SOMEBODY WHO HAS NEVER ONCE STEPPED OFF IT. THE STEWARD COMES UP FOR MACARONS. HE SAYS SHE'S WAITING FOR SOMEONE. THEY ALWAYS ARE."
+      }
+    ]
+  },
+  "ferris": {
+    "name": "Old Ferris",
+    "role": "Gardener, the sky gardens",
+    "sheet": "npc-gardener",
+    "at": [
+      {
+        "world": "arcadia-spires",
+        "label": "GARDENER"
+      }
+    ],
+    "greet": "MIND THE LAWN. EVERY BLADE OF IT CAME UP IN THE LIFT IN A SEED TRAY ON MY KNEES.",
+    "again": "STILL HERE? GOOD. THE TREES LIKE COMPANY. THEY DON'T GET MUCH WIND UP HERE.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "FORTY YEARS KEEPING THESE GARDENS. BEFORE THAT I GREW MUSHROOMS IN THE SUMP UNDER A LAMP. I KNOW BOTH ENDS OF THIS CITY. THE ROOTS ARE THE SAME."
+      },
+      {
+        "q": "The trees",
+        "a": "REAL ONES. CHERRY, LIME, A PEAR THAT SULKS. THEY THINK THE STARS ARE THE SUN. I DON'T CORRECT THEM. THE BLOSSOM COMES IN SPITE OF EVERYTHING, AND THAT'S MORE THAN YOU CAN SAY FOR MOST OF THE PEOPLE WHO WALK UNDER IT."
+      },
+      {
+        "q": "The pool",
+        "a": "THE ONLY WATER IN ARCADIA THAT SHOWS THE STARS. THE CHILDREN COUNT THEM. NOBODY'S EVER GOT THE SAME ANSWER TWICE."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "HALCYON WANTS THE GARDENS FOR ANOTHER DOCK. EVERY YEAR THEY ASK, AND EVERY YEAR THE OLD LADY IN THE ORRERY SAYS NO. NOBODY KNOWS WHO SHE IS. I WATER HER ROSES."
+      }
+    ]
+  },
+  "aurelio": {
+    "name": "Aurelio",
+    "role": "Concierge, Halcyon Tower",
+    "sheet": "npc-halcyon-doorman",
+    "at": [
+      {
+        "world": "arcadia-spires",
+        "label": "CONCIERGE"
+      }
+    ],
+    "greet": "GOOD EVENING. HALCYON TOWER RECEIVES BY APPOINTMENT. YOU HAVE NO APPOINTMENT. NEVERTHELESS - GOOD EVENING.",
+    "again": "STILL NO APPOINTMENT. STILL GOOD EVENING.",
+    "topics": [
+      {
+        "q": "Halcyon",
+        "a": "THE COMPANY THAT OWNS THE LIGHT. THE TOWERS, THE SCREENS, THE AIR UP HERE. MOST OF THE LIFTS. WHAT IT DOESN'T OWN IT IS USUALLY IN THE PROCESS OF ASKING ABOUT."
+      },
+      {
+        "q": "Getting about",
+        "a": "THE SPIRE EXPRESS TAKES YOU DOWN TO THE TERRACES. THE CORE EXPRESS GOES ALL THE WAY DOWN, FURTHER THAN MOST GUESTS CARE TO. THE AIR CABS ARE ON THE DOCKS. THE LOOP IS BELOW US, ROUND THE MID-LEVELS - WE HEAR IT, ON QUIET NIGHTS, LIKE THE SEA."
+      },
+      {
+        "q": "The Orrery",
+        "a": "A PRIVATE CLUB. I AM NOT PERMITTED TO SAY WHO ITS MEMBERS ARE. I AM NOT PERMITTED TO SAY THAT I AM NOT PERMITTED. KNOCK, IF YOU LIKE. MR ASHDOWN WILL DECIDE."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "SOMEBODY ON THE BOARD HAS NEW EYES FROM LUMEN. THEY CAN SEE IN THE DARK AND THEY STILL CAN'T SEE WHY NOBODY LIKES THEM."
+      }
+    ]
+  },
+  "harlan": {
+    "name": "Harlan Quay",
+    "role": "Dockmaster, the sky docks",
+    "sheet": "npc-dockmaster",
+    "at": [
+      {
+        "world": "arcadia-spires",
+        "label": "DOCKMASTER"
+      }
+    ],
+    "greet": "SKY DOCKS. YACHTS, CABS, THE ODD PRIVATE SHUTTLE THAT THINKS IT'S A YACHT. STAND BEHIND THE GOLD LINE, THE LIFT FIELDS TICKLE.",
+    "again": "BACK AGAIN. THE CABS RUN ALL NIGHT. THE YACHT DOESN'T RUN AT ALL.",
+    "topics": [
+      {
+        "q": "The air cabs",
+        "a": "THE PAD BY THE SIGN. A CAB WILL TAKE YOU TO ANY PAD IN THE CITY - THE TERRACES, SKYPORT 7, THE SPACEPORT DOWN ON THE STREET. DEAR, BUT YOU GET THE VIEW FOR NOTHING."
+      },
+      {
+        "q": "The Lumière",
+        "a": "BERTHED HERE SIX YEARS. NEVER SAILED. OWNER NEVER COMES ASHORE. STEWARD PAYS THE BERTH IN GOLD COINS THAT ARE OLDER THAN THE CITY. I DON'T ASK. THE COINS DON'T ASK EITHER."
+      },
+      {
+        "q": "About you",
+        "a": "I RAN FREIGHTERS INTO THE SPACEPORT FOR TWENTY YEARS, DOWN IN THE RAIN. NOW I WATCH RICH PEOPLE PARK. THE PAY'S BETTER. THE STORIES ARE WORSE."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "THE SMOG WAS THIN LAST WEEK - YOU COULD SEE THE LOOP'S LIGHTS GOING ROUND, AND UNDER THAT THE STREET. ONE OF THE MEMBERS FAINTED. SAID IT WAS THE HEIGHT. IT WASN'T THE HEIGHT."
+      }
+    ]
+  },
+  "coco": {
+    "name": "Coco",
+    "role": "Bartender, Aurelle",
+    "sheet": "npc-aurelle-bartender",
+    "at": [
+      {
+        "world": "arcadia-champagne",
+        "label": "COCO"
+      }
+    ],
+    "greet": "WELCOME TO AURELLE. THE HIGHEST BAR IN ARCADIA, IF YOU DON'T COUNT HALCYON'S PRIVATE ONE, AND NOBODY'S ALLOWED TO. A STARLIGHT? IT GLITTERS. ON PURPOSE.",
+    "again": "THE USUAL? YOU HAVE A USUAL NOW. THAT'S HOW IT STARTS.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "I MIXED DRINKS AT CLUB VOID FOR SIX YEARS. THEN SOMEBODY FROM UP HERE TASTED ONE AND HIRED ME ON THE SPOT. I STILL PUT A PINCH OF VOID FIZZ IN THE STARLIGHT. DON'T TELL BASTIEN."
+      },
+      {
+        "q": "The Starlight",
+        "a": "CHAMPAGNE OVER A VIOLET LIQUEUR WITH SILVER IN IT. IT CATCHES THE REAL STARS THROUGH THE GLASS. DOWN BELOW THEY'D NEVER SEE IT SPARKLE - THE SMOG EATS THE LIGHT."
+      },
+      {
+        "q": "The sky lounge",
+        "a": "THE SOFAS BY THE GLASS. PEOPLE SIT THERE FOR HOURS LOOKING AT THE SMOG SEA. ONE OLD MAN COMES EVERY NIGHT AND WAVES AT SOMETHING DOWN THERE. I'VE NEVER ASKED WHAT."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "THE STEWARD OFF THE LUMIERE BUYS A BOTTLE OF THE '41 EVERY NIGHT AND CARRIES IT BACK UNOPENED. SIX YEARS OF UNOPENED BOTTLES. THERE'S A PARTY WAITING ON THAT YACHT."
+      }
+    ]
+  },
+  "bastien_sommelier": {
+    "name": "Bastien",
+    "role": "Sommelier, Aurelle",
+    "sheet": "npc-sommelier",
+    "at": [
+      {
+        "world": "arcadia-champagne",
+        "label": "BASTIEN"
+      }
+    ],
+    "greet": "GOOD EVENING. THE CELLAR IS SEVEN HUNDRED FLOORS BELOW US AND THE BOTTLES COME UP IN THEIR OWN LIFT. MAY I SUGGEST SOMETHING THAT HAS TRAVELLED FURTHER THAN YOU?",
+    "again": "AH. YOU AGAIN. I'VE BEEN SAVING SOMETHING.",
+    "topics": [
+      {
+        "q": "The cellar",
+        "a": "VINES DON'T GROW IN ARCADIA. EVERY BOTTLE IS FROM OFF-WORLD - VERDANCE'S HILL VINEYARDS, MOSTLY, AND A FEW CASES FROM A ROSE ISLAND THAT SHOULDN'T EXIST. THEY COME IN AT THE SPACEPORT AND UP THE CORE EXPRESS LIKE ROYALTY."
+      },
+      {
+        "q": "About you",
+        "a": "MY FATHER SOLD WINE OFF A CART IN THE UNDERCITY. IT WAS MOSTLY RUST. HE COULD STILL TELL YOU WHICH RUST. I LEARNED FROM HIM."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "THE ORRERY ORDERED A CASE OF SOMETHING NOBODY HAS DRUNK IN A HUNDRED YEARS. THE MEMBER WHO ORDERED IT HAS BEEN DEAD FOR FIFTY. MR ASHDOWN SIGNED FOR IT WITHOUT BLINKING."
+      }
+    ]
+  },
+  "ashdown": {
+    "name": "Mr Ashdown",
+    "role": "Secretary, the Orrery",
+    "sheet": "npc-club-secretary",
+    "at": [
+      {
+        "world": "arcadia-members",
+        "label": "MR ASHDOWN"
+      }
+    ],
+    "greet": "WELCOME TO THE ORRERY. MEMBERS MAY SIT WHERE THEY LIKE, EXCEPT IN SIR AUGUSTIN'S CHAIR, WHICH IS SIR AUGUSTIN.",
+    "again": "GOOD EVENING. YOUR CHAIR IS WHERE YOU LEFT IT. EVERYTHING HERE IS.",
+    "topics": [
+      {
+        "q": "The club",
+        "a": "FOUNDED BEFORE THE TOWERS, WHEN THIS WAS A HILL AND THE CITY WAS A HARBOUR. THE MEMBERS MOVED IT UP A FLOOR EVERY TIME THE SMOG ROSE. WE ARE NOW, BY MY COUNT, FOUR HUNDRED AND EIGHTY FLOORS UP AND STILL MOVING."
+      },
+      {
+        "q": "The orrery",
+        "a": "SEVEN WORLDS ROUND A SUN. A MEMBER MADE IT FROM A SHIP'S CHART LONG AGO - A SHIP THAT CAME AND WENT LIKE A RUMOUR. IT HAS SEVEN ARMS. YOUR SHIP, I BELIEVE, KNOWS SEVEN WORLDS. A COINCIDENCE, I'M SURE."
+      },
+      {
+        "q": "The members",
+        "a": "LADY PERPETUA OWNS THE AIR ABOVE THE EASTERN DOCKS. SIR AUGUSTIN OWNED THE SMOG, BRIEFLY, AND SOLD IT BACK TO HALCYON AT A PROFIT. THE REST ARE DISCREET. YOU WILL BE TOO."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "I HEAR EVERYTHING. I REPEAT NOTHING. ASK LADY PERPETUA - SHE HEARS LESS AND REPEATS MORE."
+      }
+    ]
+  },
+  "perpetua": {
+    "name": "Lady Perpetua",
+    "role": "Member, the Orrery",
+    "sheet": "npc-member-a",
+    "at": [
+      {
+        "world": "arcadia-members",
+        "label": "LADY PERPETUA"
+      }
+    ],
+    "greet": "SIT, DARLING, YOU'RE BLOCKING THE STARS. DO YOU PLAY? NO? GOOD. I CHEAT, AND IT'S SO TIRESOME WHEN PEOPLE NOTICE.",
+    "again": "BACK FOR MORE GOSSIP. I THOUGHT YOU MIGHT BE.",
+    "topics": [
+      {
+        "q": "Heard anything?",
+        "a": "HALCYON IS BUILDING A NEW SPIRE TALLER THAN THIS ONE. THE OLD ONES ARE FURIOUS. THE STARS, I'M TOLD, HAVE NOT BEEN CONSULTED."
+      },
+      {
+        "q": "Below the smog",
+        "a": "I WENT DOWN ONCE, AS A GIRL. ALL THE WAY TO THE STREET. IT WAS RAINING AND A NOODLE MAN GAVE ME A BOWL FOR NOTHING BECAUSE I LOOKED SO LOST. I'VE NEVER EATEN ANYTHING SO GOOD. DON'T TELL ANYONE."
+      },
+      {
+        "q": "The Duchess",
+        "a": "WE WERE AT SCHOOL TOGETHER. SHE CHEATED AT CARDS EVEN THEN. SHE'S THE ONLY PERSON IN ARCADIA I'VE NEVER BEATEN."
+      }
+    ]
+  },
+  "augustin": {
+    "name": "Sir Augustin",
+    "role": "Member, the Orrery",
+    "sheet": "npc-member-b",
+    "at": [
+      {
+        "world": "arcadia-members",
+        "label": "SIR AUGUSTIN"
+      }
+    ],
+    "greet": "HM? OH. ANOTHER NEW ONE. WELCOME. DON'T WAKE ME UNLESS THE SMOG CLEARS.",
+    "again": "STILL HERE? SO AM I. IT'S A LIFE.",
+    "topics": [
+      {
+        "q": "The smog",
+        "a": "I OWNED IT, YOU KNOW. ALL OF IT. BOUGHT IT FOR A SONG WHEN NOBODY THOUGHT AIR COULD BE OWNED. SOLD IT TO HALCYON FOR A FORTUNE. BEST AND WORST THING I EVER DID. MOSTLY WORST."
+      },
+      {
+        "q": "About you",
+        "a": "NINETY-SIX. I'VE BEEN A MEMBER SINCE I WAS TWELVE. MY FATHER PUT MY NAME DOWN AT BIRTH AND I HAD TO WAIT. I'M STILL WAITING FOR SOMETHING, BUT I'VE FORGOTTEN WHAT."
+      }
+    ]
+  },
+  "iris_kade": {
+    "name": "Iris Kade",
+    "role": "Designer, LUMEN",
+    "sheet": "npc-atelier",
+    "at": [
+      {
+        "world": "arcadia-boutique",
+        "label": "IRIS KADE"
+      }
+    ],
+    "greet": "WELCOME TO LUMEN. EVERYTHING HERE IS MADE FOR ONE PERSON AND WORN BY ONE PERSON. THE CLINICS BELOW FIT PARTS. I FIT PEOPLE.",
+    "again": "BACK. GOOD. I'VE BEEN THINKING ABOUT YOUR HANDS.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "I TRAINED IN A CHROME SHOP UNDER THE STREET, WHERE THE ARMS COME OUT OF A BIN AND YOU HOPE. THEN AT THE CHROME CLINIC, WHERE THEY COME OUT OF A BOX AND YOU'RE SURE. HERE THEY COME OUT OF ME."
+      },
+      {
+        "q": "The collection",
+        "a": "EYES THAT SEE THE STARS THROUGH ANY SMOG. LACE OF CHROME UNDER THE SKIN. A VOICE TUNED BY THE LYRA'S COACH. A HALO THAT KEEPS TIME WITH YOUR HEART. NOTHING HERE GLITCHES. THAT'S THE WHOLE POINT."
+      },
+      {
+        "q": "Down below",
+        "a": "BACK-ALLEY CHROME IN THE UNDERCITY IS BRAVE AND CHEAP AND NOW AND THEN IT BITES. THE CLINIC ON THE STREET IS HONEST. WE'RE NEITHER BRAVE NOR CHEAP. WE'RE PERFECT. AND WE CHARGE FOR IT."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "A MEMBER OF HALCYON'S BOARD HAS MY STARLIGHT OPTICS. HE CAN SEE IN THE DARK NOW. HE SAYS IT'S MADE THE BOARD MEETINGS UNBEARABLE."
+      }
+    ]
+  },
+  "nox": {
+    "name": "Nox",
+    "role": "Assistant, LUMEN",
+    "sheet": "npc-atelier-b",
+    "at": [
+      {
+        "world": "arcadia-boutique",
+        "label": "NOX"
+      }
+    ],
+    "greet": "HI. DON'T TOUCH THE CASES - THEY KNOW. I MEAN THAT LITERALLY.",
+    "again": "OH, HEY. STILL BROWSING? IRIS LIKES BROWSERS. THEY BECOME BUYERS.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "IRIS FOUND ME IN THE BACKS BEHIND THE NEON STREET WITH A BUSTED EYE AND FIXED IT FOR NOTHING. NOW I DUST HALOS. IT'S A GOOD LIFE. THE EYE SEES ULTRAVIOLET, WHICH MAKES THE MEMBERS' TEETH LOOK HILARIOUS."
+      },
+      {
+        "q": "Prices",
+        "a": "IF YOU HAVE TO ASK... NO, I'LL TELL YOU, IRIS HATES IT WHEN I DO THAT BIT. MORE THAN A SLOOP. LESS THAN A YACHT. ABOUT A HALCYON EXECUTIVE'S LUNCH."
+      }
+    ]
+  },
+  "tobias": {
+    "name": "Tobias",
+    "role": "Usher, the Lyra",
+    "sheet": "npc-usher",
+    "at": [
+      {
+        "world": "arcadia-opera",
+        "label": "TOBIAS"
+      }
+    ],
+    "greet": "GOOD EVENING. THE STALLS ARE FULL - THEY'RE ALWAYS FULL - BUT THERE'S A BOX UP THE STAIR WITH NOBODY IN IT. THERE USUALLY IS. HALCYON PAYS FOR IT AND NEVER COMES.",
+    "again": "BACK FOR THE NEXT ACT? THE BOX IS STILL EMPTY.",
+    "topics": [
+      {
+        "q": "Tonight",
+        "a": "\"STARFALL\". THE LAST STAR IN THE SKY FALLS IN LOVE WITH A CITY THAT CAN'T SEE HER. IT ENDS BADLY. THE AUDIENCE WEEPS AND THEN GOES TO AURELLE. EVERY NIGHT."
+      },
+      {
+        "q": "About you",
+        "a": "I SNUCK IN THROUGH THE STAGE DOOR WHEN I WAS NINE AND HID IN A BOX FOR THE WHOLE OF THE SECOND ACT. THEY CAUGHT ME AT THE INTERVAL AND GAVE ME A JOB. I'VE NEVER LEFT."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "SERAPHINE HIT A NOTE LAST WEEK THAT CRACKED A FLUTE AT AURELLE, ACROSS THE PLAZA. THEY'VE FRAMED THE PIECES."
+      }
+    ]
+  },
+  "fleur": {
+    "name": "Madame Fleur",
+    "role": "Box office, the Lyra",
+    "sheet": "npc-boxoffice",
+    "at": [
+      {
+        "world": "arcadia-opera",
+        "label": "MADAME FLEUR"
+      }
+    ],
+    "greet": "TICKETS ARE SOLD OUT UNTIL NEXT SEASON. THE SEASON AFTER THAT IS ALSO SOLD OUT. TOBIAS MAY HAVE A BOX. TOBIAS ALWAYS HAS A BOX. I HAVE GIVEN UP ASKING HOW.",
+    "again": "STILL SOLD OUT.",
+    "topics": [
+      {
+        "q": "The Lyra",
+        "a": "THREE THOUSAND SEATS, FOUR TIERS OF BOXES, A CHANDELIER THAT WEIGHS AS MUCH AS A LOOP CARRIAGE. BUILT BY THE FIRST HALCYON FOR HIS WIFE, WHO COULDN'T SING. SHE SANG HERE ANYWAY. NOBODY SAID A WORD."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "NEXT SEASON IS A NEW PIECE ABOUT A DROWNED BELL ON A WORLD OF SEAS. THE COMPOSER SAYS HE DREAMED IT. I SAY HE READ IT SOMEWHERE."
+      }
+    ]
+  },
+  "seraphine": {
+    "name": "Seraphine Lune",
+    "role": "Soprano, the Lyra",
+    "sheet": "npc-diva",
+    "at": [
+      {
+        "world": "arcadia-opera",
+        "label": "SERAPHINE"
+      }
+    ],
+    "greet": "A PROGRAMME? OF COURSE, DARLING. WHO SHALL I MAKE IT OUT TO? ... HOW UNUSUAL. I'LL WRITE IT IN GOLD.",
+    "again": "YOU AGAIN! EITHER YOU LOVE THE OPERA OR YOU'RE AFTER ANOTHER PROGRAMME. BOTH ARE ACCEPTABLE.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "I WAS BORN IN THE SUMP, WHERE THE WATER ECHOES. I SANG TO THE PIPES UNTIL THE PIPES SANG BACK. A TALENT SCOUT HEARD ME THROUGH A GRATING. NOW I SING TO THREE THOUSAND PEOPLE WHO'VE NEVER HEARD WATER ECHO. THEY THINK IT'S ART."
+      },
+      {
+        "q": "Starfall",
+        "a": "I PLAY THE LAST STAR. I FALL IN THE THIRD ACT. EVERY NIGHT I LOOK OUT FROM THE STAGE AND THINK OF ALL THE PEOPLE BELOW THE SMOG WHO'VE NEVER SEEN ONE. I SING THE FALL FOR THEM."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "LADY VELVET AT THE NEON ROYALE AND I WERE ONCE THE SAME GIRL IN THE SAME CHORUS. SHE WENT DOWN; I CAME UP. WE WRITE EVERY MONTH. SHE ALWAYS SAYS SHE HAS THE BETTER AUDIENCE. SHE'S RIGHT."
+      }
+    ]
   }
 }

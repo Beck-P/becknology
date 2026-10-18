@@ -38,6 +38,7 @@
   "arcadia-pit":            { "n": 18, "wardrobe": "undercity", "busy": "always", "adults": true, "avoid": [[12, 9, 23, 16]] },
   "arcadia-sump":           { "n": 8,  "wardrobe": "sump", "busy": "always", "pass": 0.5, "adults": true },
   "arcadia-sump-rave":      { "n": 20, "wardrobe": "sump", "busy": "always", "adults": true },
+  "arcadia-spires":         { "n": 18, "wardrobe": "spires",  "busy": "bustle", "sit": 0.35, "pass": 0.3 },
 
   "verdance-village":       { "n": 12, "wardrobe": "verdance", "busy": "day" },
 
@@ -144,6 +145,16 @@
       "MY OFFICE IS ON TWO-THIRTY. I CAN SEE THE DISTRICT FROM MY DESK. I DON'T LOOK.",
       "DON'T STAND ON THE GLASS PANELS IF YOU'VE HAD A SOUR. TRUST ME.",
       "THE ATRIUM'S GOT A SHOP THAT ONLY SELLS UMBRELLAS. IT'S THE RICHEST SHOP IN THE TOWER."
+    ],
+    "spires": [
+      "DARLING, I HAVEN'T BEEN BELOW THE SMOG SINCE THE CORONATION. WHOSE? DOES IT MATTER?",
+      "THEY SAY THE STARS ARE REAL. I PAY FOR THEM EITHER WAY.",
+      "MY NEW EYES SEE ULTRAVIOLET. THE OPERA IS ASTONISHING. THE PEOPLE ARE NOT.",
+      "THE LYRA'S SOPRANO HIT A NOTE LAST NIGHT THAT CRACKED A CHAMPAGNE FLUTE. WE APPLAUDED THE FLUTE.",
+      "IS IT TRUE THEY HAVE RAIN DOWN THERE? EVERY DAY? HOW DO THEY BEAR IT?",
+      "THE ORRERY TURNED ME DOWN. THIRD TIME. I'M BUILDING MY OWN ORRERY. WITH BLACKJACK.",
+      "LOOK - THE LOOP'S LIGHTS, THROUGH THE SMOG. LIKE A NECKLACE SOMEBODY DROPPED.",
+      "CLEMENCE'S PETIT FOURS ARE THE ONLY HONEST THING ON THIS PLATFORM."
     ],
     "casino": [
       "DARLING, NOBODY WALKS INTO THE ROYALE BY ACCIDENT.",
