@@ -202,6 +202,17 @@ for (x, r) in ((29.98, 31.48), (30.3, 31.8)):
 for (x, r) in ((32.4, 30.55), (32.55, 30.62), (32.72, 30.5)):
     k.cyl(x, r, 0.0, 0.16, 0.035, ('#2a5a3a', 0.05), 'bottle', verts=8)
     k.cyl(x, r, 0.16, 0.22, 0.014, ('#2a5a3a', 0.05), 'bottle', verts=6)
+# the beach's life: fish drying on a rack, an old boat's ribs half-buried in the sand, a sea chest by the tents, pennants
+# strung from tent to tent (all clear of the auction's boxes, the sea glass and the nets the harbour folk mend)
+with WL.own_dice(k, 8301):
+    I.drying_rack(k, 21.7, 23.1, 30.65)
+    I.rib_cage(k, 25.6, 32.75, L=1.4, h=0.55, tone='#6a4a30')
+    I.chest(k, 35.6, 29.45)
+    W.bunting(k, (24.8, 28.4, 1.3), (34.4, 27.9, 1.3), sag=0.35, cols=('#2a2226', '#e8dcc8', '#a02028', '#2a2226'))
+    W.bunting(k, (34.4, 27.9, 1.3), (36.0, 30.4, 1.2), sag=0.2, cols=('#2a2226', '#e8dcc8', '#a02028'))
+    for (x, r) in ((24.4, 30.3), (27.1, 29.9), (33.0, 29.4)):
+        k.cyl(x, r, 0.0, 0.28, 0.12, ('#6a4a2a', 0.2), 'keg', verts=10)
+        k.cyl(x, r, 0.08, 0.11, 0.125, A.IRON, 'keg_hoop', verts=10)
 # driftwood and a coil of rope on the sand
 for (x, r, L, a) in ((21.0, 32.4, 1.1, 0.3), (35.6, 34.2, 0.9, -0.4), (25.6, 34.6, 0.7, 0.9)):
     k.tube((x, r, 0.05), (x + math.cos(a) * L, r + math.sin(a) * L * 0.5, 0.06), 0.06, ('#a89480', 0.3), 'driftwood', rb=0.04, verts=6)
