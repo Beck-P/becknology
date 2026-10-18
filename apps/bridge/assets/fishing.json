@@ -190,5 +190,31 @@
       "pool": "harbour",
       "label": "OFF THE JETTY"
     }
+  ],
+  "lumar-cliff": [
+    {
+      "x": 18,
+      "y": 36,
+      "pool": "sapphire",
+      "label": "OFF THE JETTY"
+    },
+    {
+      "x": 20,
+      "y": 36,
+      "pool": "sapphire",
+      "label": "OFF THE JETTY"
+    },
+    {
+      "x": 19,
+      "y": 38,
+      "pool": "sapphire",
+      "label": "END OF THE JETTY"
+    },
+    {
+      "x": 34,
+      "y": 32,
+      "pool": "sapphire",
+      "label": "OFF THE QUAY"
+    }
   ]
 }

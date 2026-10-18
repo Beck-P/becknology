@@ -75,7 +75,7 @@ House style as `apps/bridge/CLAUDE.md` (*North star*, *Making a new place*, the 
 `tools/bridge-art/CLAUDE.md`; the bar is `tools/bridge-art/dioramas/ref/arcadia_*` (Rainline Street). Arcadia is always
 night: `light_states={'full': {...}, 'dim': {...}}` (neon flicker), the toy finish from `scene_post.py`; the Spires lit
 by lamps, pastel neon and starlight. Backdrop worlds (`scene.backdrop`, a `skyline` block) where the city shows.
-Level tags on the signs. Painted-face NPCs (`characters.py` + `portraits.py`), `people.json`, `gifts.js` tastes,
+Level tags on the signs. Painted-face NPCs (`characters.py`; their portraits drawn by `portraits.py stale`), `people.json`, `gifts.js` tastes,
 `assets/crowds.json` (new wardrobes in js/crowd.js `WARDROBES`: `spires`, `midlevels`), an event or two in js/events.js
 where they fit, `assets/actions.json` seats, music in js/audio.js `themeFor`. A test per place in `tools/tests/world/`,
 registered in `run.js`. Docs: your own section in `apps/bridge/CLAUDE.md`.

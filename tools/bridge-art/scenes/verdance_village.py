@@ -21,12 +21,16 @@ import os
 import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
-from scenekit import Kit, apply_world  # noqa: E402
+from scenekit import Kit, apply_world, shade  # noqa: E402
 import assets_farm as F                # noqa: E402
 import assets_isle as I                # noqa: E402
 import assets_ship as P                # noqa: E402
 import assets_town as W                # noqa: E402
 import assets_village as V             # noqa: E402
+import assets_house as HK              # noqa: E402
+import assets_verdance_rich as VR      # noqa: E402
+
+HK.install()                           # every house, shop window and the main street from the richer kit
 
 OUT = sys.argv[1]
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
@@ -36,11 +40,61 @@ COLS, ROWS = 46, 34
 FRONT = 10.2                                                    # the street-side facades
 SR0, SR1 = 26.2, 28.0                                           # the stream, across the bottom
 k = Kit(COLS, ROWS, margin_top=2.4, margin_bottom=0.6, seed=1907)
+VR.fast_top(k)
+rng = k.rng
 C = math.cos(math.radians(45))
 SMOKE = []
+GREEN = F.GRASS
+TERR_R, TERR_Z = 1.7, 0.85                                      # the terrace along the top, behind the houses
+WATER_Z = -0.11
 
-# ---- the ground: meadow, the street, the square, the lanes ----------------------------------------------------
-W.grass(k, 0, -2.4, COLS, ROWS + 0.6, tone=F.GRASS, tufts=0.45)
+
+def smooth(a, b, t):
+    t = max(0.0, min(1.0, (t - a) / (b - a)))
+    return t * t * (3 - 2 * t)
+
+
+def s_mid(x):                                                   # the stream's line: wandering a little inside its rows
+    return 27.0 + 0.12 * math.sin(x * 0.41 + 0.6) + 0.06 * math.sin(x * 1.13 + 2.0)
+
+
+def s_half(x):
+    return 0.78 + 0.06 * math.sin(x * 0.77 + 1.3) + 0.04 * math.sin(x * 2.1)
+
+
+def s_d(x, r):                                                  # 0 on the line, 1 at the water's edge
+    return abs(r - s_mid(x)) / s_half(x)
+
+
+def low_h(x, r):
+    d = s_d(x, r)
+    return -(0.13 * smooth(1.55, 1.0, d) + 0.16 * smooth(1.0, 0.55, d))
+
+
+def low_mat(x, r):
+    d = s_d(x, r)
+    if d < 0.95:
+        return 'bed'
+    if d < 1.18 + 0.1 * I.n2(x, r, 3.0, 4):
+        return 'bank' if I.n2(x, r, 4.0, 8) > -0.2 else 'gravel'
+    return 'grass'
+
+
+def up_h(x, r):
+    return TERR_Z + 0.03 * I.n2(x, r, 0.9, 3) + max(0.0, -r - 0.8) * 0.1
+
+
+ALB = {'grass': (GREEN, 0.12), 'bank': ('#6a5638', 0.22), 'bed': ('#3e4a3a', 0.2), 'gravel': ('#8a8274', 0.25)}
+
+# ---- the ground: meadow, the street, the square, the lanes; the stream sunk in its banks, a terrace along the top ------
+W.grass(k, -1, TERR_R, COLS + 1, 25.0, tone=GREEN, tufts=0.45)
+W.grass(k, -1, 29.0, COLS + 1, ROWS + 0.6, tone=GREEN, tufts=0.45)
+UP = [(c, r) for c in range(-1, COLS + 1) for r in range(-3, int(TERR_R))]
+LO = [(c, r) for c in range(-1, COLS + 1) for r in range(25, 29)]
+I.ground(k, UP, lambda x, r: 'grass', ALB, height=up_h, bump=0.0, seed=11, dither=0.0, step=0.125)
+I.ground(k, LO, low_mat, ALB, height=low_h, bump=0.0, seed=12, dither=0.035, step=0.0625)
+k.box(-1, TERR_R - 0.3, -0.2, COLS + 1, TERR_R - 0.02, TERR_Z - 0.02, ('#4a4440', 0.2), 'mortar')
+k.later.append(lambda: W.meadow(k, GREEN, cells=UP + LO, ok=('ground_grass',), density=1.05, flowers=1.0))
 F.dirt_path(k, 0.6, 10.4, 45.4, 12.4)                            # the main street
 F.dirt_path(k, 38.6, 9.2, 40.4, 10.4)                            # up to the landing green
 W.cobbles(k, 9.0, 12.4, 27.0, 19.6, tone='#8a8274', lawn=True)   # the square
@@ -48,7 +102,7 @@ F.dirt_path(k, 10.0, 19.6, 11.4, SR0 - 0.2)                      # Meadow Lane, 
 F.dirt_path(k, 10.0, SR1 + 0.2, 11.4, ROWS + 0.6)                # ...and away south
 F.dirt_path(k, 30.0, 19.6, 31.8, SR0 - 0.2)                      # to the stone bridge
 F.dirt_path(k, 30.0, SR1 + 0.2, 31.8, 29.0)
-F.dirt_path(k, 1.0, 25.0, 9.6, 26.0)                             # the mill yard along the bank
+F.dirt_path(k, 1.0, 25.0, 9.6, 25.75)                            # the mill yard along the bank
 F.dirt_path(k, 6.2, 19.4, 9.6, 25.0)
 F.dirt_path(k, 32.6, 18.6, 45.0, 19.6)                           # past the forge to the cottages
 
@@ -118,8 +172,16 @@ V.board_sign(k, 'BRAMBLEFORD', 'IMFellEnglishSC', 36.55, 9.68, 0.8, size=0.22, b
 k.solid(35, 9, 38, 10)
 F.wildflowers(k, 34.0, 2.6, 45.0, 9.0, 60)
 
+# ---- the main street's life (Look Book 2's richer village): a walled garden between the Loaf and the Hayloft, the pump,
+# tubs of flowers by the doors, crates
+HK.garden(k, 8.0, 9.2, 6.4, 10.05)
+HK.pump(k, 8.6, 10.34)
+for x in (3.5, 10.05, 16.85):
+    HK.tub(k, x, 10.5)
+V.crates(k, 2.3, 10.5)
+
 # ---- the square: the well, the flower stall, the notice board, the pub's tables -------------------------------
-I.well(k, 18.0, 16.0)
+VR.well(k, 18.0, 16.0)
 for (x0, r0) in ((16.2, 14.2), (19.2, 14.2), (16.2, 17.3), (19.2, 17.3)):
     V.flower_bed(k, x0, r0, x0 + 0.6, r0 + 0.5)
 W.market_stall(k, 21.4, 23.8, 17.2, 18.1, awning=('#d070a0', '#f4ece4'), goods=None)
@@ -146,7 +208,8 @@ V.flower_bed(k, 9.3, 17.6, 10.9, 18.6)
 V.flower_bed(k, 24.9, 17.6, 26.5, 18.6)
 
 # ---- east: the Anvil & Hoof and two cottages ---------------------------------------------------------------------
-V.forge(k, 28.6, 33.8, 13.4, 18.6)
+V.forge(k, 28.6, 33.8, 13.4, 18.6, roof='#8a5a44')
+W.chimney_stack(k, 30.25, 14.0, 14.5, 2.3, 4.3, pots=1)                 # the hearth's flue up through the roof
 V.board_sign(k, 'ANVIL & HOOF', 'Rye', 31.2, 18.55, 1.82, size=0.18, board='#2a1a10', ink='#f0c860', trim='#8a6a3a', pad=0.1)
 W.hanging_sign(k, 34.0, 18.2, 1.8, icon='anvil')
 k.box(34.4, 19.05, 0.65, 36.2, 19.15, 0.72, (V.WOOD, 0.15), 'hitching_rail')
@@ -165,7 +228,7 @@ V.picket_fence(k, (41.0, 19.15), (42.9, 19.15))
 V.picket_fence(k, (43.5, 19.15), (45.4, 19.15))
 
 # ---- west: Ludd's mill on the stream -----------------------------------------------------------------------------
-W.house(k, 1.0, 6.0, 18.8, 25.0, wall_h=3.0, rise=1.6, roof='#5a4636', wall='#a89a88', door_x=5.0, windows=[(1.9, 0.9)],
+W.house(k, 1.0, 6.0, 18.8, 25.0, wall_h=3.0, rise=1.6, roof='#62666e', wall='#a89a88', door_x=5.0, windows=[(1.9, 0.9)],
         windows_up=[(1.9, 2.2), (4.6, 2.2)], stone=True)
 V.board_sign(k, "LUDD'S MILL", 'IMFellEnglishSC', 3.25, 25.03, 1.6, size=0.17, board='#e8dcc0', ink='#3a2414', trim='#6a4a2a', pad=0.1)
 V.waterwheel(k, 2.5, 26.4, rad=1.1, width=0.5)
@@ -177,7 +240,49 @@ k.cyl_y(7.2, 21.08, 21.12, 0.55, 0.1, 0.1, '#5a5048', 'millstone_eye', verts=10)
 k.solid(6.6, 20.6, 7.8, 21.4)
 
 # ---- the stream, its bridges, Meadow Lane ------------------------------------------------------------------------
-V.stream(k, -1.0, COLS + 1.0, SR0, SR1)
+N = 180                                                         # the water: one surface between its wandering banks
+q = []
+for i in range(N):
+    xa, xb = -1.0 + (COLS + 2.0) * i / N, -1.0 + (COLS + 2.0) * (i + 1) / N
+    q.append(((xa, s_mid(xa) - s_half(xa), WATER_Z), (xb, s_mid(xb) - s_half(xb), WATER_Z),
+              (xb, s_mid(xb) + s_half(xb), WATER_Z), (xa, s_mid(xa) + s_half(xa), WATER_Z)))
+k.quads(q, '#2e6070', 'stream_water')
+
+
+def free_bank(x):
+    return not (9.6 < x < 11.8 or 29.5 < x < 32.3 or 0.8 < x < 4.2)
+
+
+x = -0.8
+while x < COLS + 0.8:                                           # reeds in clumps, stones, lilies, turf hanging over the banks
+    for side in (-1, 1):
+        if free_bank(x) and rng.random() < 0.42:
+            clump = {shade('#5a8a3a', 0.8): [], '#5a8a3a': [], shade('#6a9a44', 1.12): []}
+            for j in range(rng.randint(10, 22)):
+                xx = x + rng.uniform(-0.35, 0.35)
+                rr = s_mid(xx) + side * s_half(xx) * rng.uniform(0.92, 1.06)
+                zb = max(low_h(xx, rr), WATER_Z)
+                h = rng.uniform(0.35, 0.85)
+                clump[rng.choice(list(clump))].append((xx, rr, zb, h, 0.03, rng.uniform(-0.12, 0.12), rng.uniform(-0.04, 0.04)))
+                if rng.random() < 0.18:
+                    k.cyl(xx, rr, zb + h * 0.8, zb + h * 0.96, 0.026, '#5a3a20', 'cattail', verts=6)
+            with k.foliage('leaf'):
+                for col, bl in clump.items():
+                    if bl:
+                        k.blades(bl, (col, 0.2), 'reed')
+        if free_bank(x) and rng.random() < 0.5:
+            s = rng.choice((0.07, 0.1, 0.14, 0.2)) * rng.uniform(0.85, 1.15)
+            xx = x + rng.uniform(-0.3, 0.3)
+            rr = s_mid(xx) + side * s_half(xx) * rng.uniform(0.9, 1.12)
+            k.rock(xx, rr, max(low_h(xx, rr), WATER_Z - 0.06) - s * 0.25, s, s * 0.8, s * 0.6,
+                   (shade(rng.choice(('#8a8478', '#9a9080', '#7a766c')), rng.uniform(0.8, 1.1)), 0.2), part='rock', segs=8)
+    if free_bank(x) and rng.random() < 0.25:
+        sz = rng.uniform(0.1, 0.16)
+        k.cyl(x, s_mid(x) + rng.uniform(-0.5, 0.5) * s_half(x), WATER_Z, WATER_Z + 0.012, sz, ('#4a8a3a', 0.2), 'lily', verts=12, ry=sz * 0.8)
+    if free_bank(x) and rng.random() < 0.18:
+        k.rock(x, s_mid(x) + rng.uniform(-0.3, 0.3), WATER_Z - 0.06, rng.uniform(0.12, 0.2), 0.12, 0.09, ('#8a8478', 0.22), part='rock', segs=7)
+    x += rng.uniform(0.5, 0.9)
+VR.ducks(k, [(20.4, 26.7, 15), (21.0, 27.2, 190), (38.6, 27.0, 170)], WATER_Z)
 V.footbridge(k, 10.0, 11.4, SR0 - 0.25, SR1 + 0.25)
 V.stone_bridge(k, 30.0, 31.8, SR0 - 0.3, SR1 + 0.3)
 V.signpost(k, 12.5, 24.8, [('MEADOW LANE', 'w', 1.55), ('THE MILL', 'w', 1.25), ('ALLOTMENTS', 'e', 1.4)])
@@ -185,18 +290,36 @@ V.signpost(k, 12.5, 24.8, [('MEADOW LANE', 'w', 1.55), ('THE MILL', 'w', 1.25), 
 # ---- over the stream: the allotments, Nan Ashby's cottage, apple trees ------------------------------------------
 for i, x0 in enumerate((24.2, 27.4, 33.0)):
     F.earth(k, x0, 29.0, x0 + 2.6, 31.8)
-    for xx in [x0 + 0.4 + j * 0.6 for j in range(4)]:
-        for rr in (29.5, 30.4, 31.3):
-            if i == 0:
-                k.sphere(xx, rr, 0.1, 0.17, 0.12, ('#5a9a4a', 0.25), 'cabbage', segs=8)
-            elif i == 1:
-                k.cone(xx, rr, 0.0, 0.45, 0.08, 0.01, ('#4a8a3a', 0.25), 'bean_cane', verts=5)
-            else:
-                k.sphere(xx, rr, 0.12, 0.14, 0.12, ('#e08a30', 0.25), 'pumpkin', segs=8)
+    for rr in (29.5, 30.4, 31.3):
+        k.cyl_x(x0 + 0.15, x0 + 2.45, rr, 0.02, 0.1, 0.05, (shade(F.EARTH, 0.92), 0.08), 'field_ridge', verts=8)
+        for xx in [x0 + 0.4 + j * 0.6 for j in range(4)]:
+            with k.foliage('leaf'):
+                if i == 0:                                       # cabbages in layered leaves
+                    s_ = rng.uniform(0.12, 0.15)
+                    k.sphere(xx, rr, 0.13, s_ * 0.8, s_ * 0.7, (shade('#8ab86a', rng.uniform(0.92, 1.08)), 0.15), 'crop', segs=8)
+                    for j in range(6):
+                        a = j * 1.05 + rng.uniform(0, 0.4)
+                        k.blob(xx + math.cos(a) * s_ * 0.95, rr + math.sin(a) * s_ * 0.65, 0.08, s_ * 0.75, s_ * 0.45, s_ * 0.3,
+                               (shade('#4a8a3a', rng.uniform(0.85, 1.1)), 0.2), 'crop', rot=(0, 0, math.degrees(a)), segs=6)
+                elif i == 1:                                     # beans up their canes, tied at the top
+                    for dx in (-0.12, 0.12):
+                        k.tube((xx + dx, rr, 0.0), (xx, rr, 0.75), 0.014, '#a08458', 'bean_cane', verts=4)
+                    for j in range(7):
+                        k.blob(xx + rng.uniform(-0.1, 0.1), rr + 0.04, rng.uniform(0.12, 0.68), 0.07, 0.05, 0.06,
+                               (shade('#4a8a3a', rng.uniform(0.85, 1.12)), 0.2), 'crop', segs=6)
+                    k.sphere(xx + 0.05, rr + 0.07, 0.4, 0.03, 0.03, '#e05040', 'bean_flower', segs=5)
+                else:                                            # pumpkins on their vines under big leaves
+                    k.sphere(xx, rr + 0.05, 0.12, 0.15, 0.12, (shade('#e08a30', rng.uniform(0.9, 1.08)), 0.25), 'pumpkin', segs=10)
+                    k.cyl(xx, rr + 0.05, 0.22, 0.28, 0.02, '#5a6a2a', 'pumpkin_stalk', verts=5)
+                    for j in range(3):
+                        a = rng.uniform(0, math.tau)
+                        k.blob(xx + math.cos(a) * 0.22, rr + math.sin(a) * 0.14, 0.06, 0.13, 0.1, 0.035,
+                               (shade('#4a8a3a', rng.uniform(0.85, 1.1)), 0.2), 'crop', rot=(0, 0, math.degrees(a)), segs=7)
     F.fence(k, (x0 - 0.1, 28.8), (x0 + 2.7, 28.8))
     F.fence(k, (x0 - 0.1, 32.0), (x0 + 2.7, 32.0))
-k.box(36.4, 28.8, 0, 38.0, 30.2, 1.5, ('#6a5a40', 0.2), 'allotment_shed')
-k.poly([(36.2, 30.4, 1.4), (38.2, 30.4, 1.4), (38.2, 28.6, 1.8), (36.2, 28.6, 1.8)], ('#5a6a5a', 0.2), 'shed_roof')
+VR.tool_shed(k, 36.4, 38.0, 28.8, 30.2, wall_h=1.5, roof='#5a6a5a', door_x=36.95)
+VR.wheelbarrow(k, 39.3, 30.9, load='#5a8a3a')
+VR.pots(k, 38.3, 30.5, n=4)
 k.solid(36, 28, 38, 30)
 F.scarecrow(k, 31.0, 31.0)
 k.solid(30.5, 30.5, 31.5, 31.5)
@@ -209,31 +332,62 @@ for (x, r) in ((20.6, 29.6), (21.9, 32.2), (40.6, 30.4), (42.8, 32.0)):
     F.apple_tree(k, x, r, h=k.rng.uniform(2.2, 2.6))
     k.solid(x - 0.35, r - 0.35, x + 0.35, r + 0.35)
 
-# ---- trees and hedges all round ----------------------------------------------------------------------------------
-for x in [i * 2.3 + 0.8 for i in range(20)]:
-    if x < 33.0:                                                 # behind the buildings: small ones
-        W.bush(k, x, 1.6, s=0.45, tone='#3a6a30')
-    elif k.rng.random() < 0.5:
-        W.tree(k, x, 1.0, h=k.rng.uniform(2.4, 3.0), tone='#3a6a34')
+# ---- the terrace along the top: its stone face, a hedge and trees on it; the edges; the bottom's wall and hedge -----------
+VR.terrace_face(k, -1.0, COLS + 1.0, TERR_R, TERR_Z, green=GREEN, ivy=(5.5, 14.2, 22.4, 34.5, 42.6), flowers=40)
+
+
+def lifted(fn, *a, dz=TERR_Z, **kw):
+    sp, sl = len(k.parts), len(k.lights)
+    out = fn(*a, **kw)
+    I.pose(k, sp, (0, 0, 0), dz=dz, lights_since=sl)
+    return out
+
+
+lifted(VR.hedge, k, (-1.0, 1.15), (COLS + 1.0, 1.15), h=0.7, w=0.5, tone='#3a6a30', flowers=('#f4f0e8', '#f0d8e0'))
+x = 0.9
+while x < COLS:
+    h = rng.uniform(2.4, 3.2)
+    if rng.random() < 0.38:
+        lifted(W.pine, k, x, rng.uniform(-0.1, 0.4), h=h, tone=shade('#2e5a38', rng.uniform(0.92, 1.08)))
     else:
-        W.pine(k, x, 1.0, h=k.rng.uniform(2.2, 2.8), tone='#2e5a38')
+        lifted(W.tree, k, x, rng.uniform(-0.1, 0.4), h=h, tone=rng.choice(('#3a6a34', '#3e7a34', '#46743a')))
+    x += rng.uniform(1.9, 2.6)
+lifted(VR.verge, k, -0.5, 1.3, COLS + 0.5, 1.6, n=40)
 for r in (3.0, 5.6, 8.2, 13.6, 16.0):                           # oaks, and firs among them
     if r in (5.6, 13.6):
-        W.pine(k, 0.5, r, h=k.rng.uniform(2.3, 2.9), tone='#2e5a38')
+        W.pine(k, 0.5, r, h=rng.uniform(2.3, 2.9), tone='#2e5a38')
     else:
-        W.tree(k, 0.5, r, h=k.rng.uniform(2.2, 2.8), tone='#3a6a34')
+        W.tree(k, 0.5, r, h=rng.uniform(2.2, 2.8), tone='#3a6a34')
 for r in (12.8, 21.0, 23.4):
     if r == 21.0:
-        W.pine(k, 45.5, r, h=k.rng.uniform(2.3, 2.9), tone='#2e5a38')
+        W.pine(k, 45.5, r, h=rng.uniform(2.3, 2.9), tone='#2e5a38')
     else:
-        W.tree(k, 45.5, r, h=k.rng.uniform(2.2, 2.8), tone='#3a6a34')
-for x in [i * 1.9 + 0.8 for i in range(25)]:
-    if 9.4 < x < 12.0 or 13.8 < x < 19.0:                         # the lane's gap, the cottage garden
-        continue
-    W.bush(k, x, 33.6, s=0.5, tone=k.rng.choice(('#3a6a30', '#4a7a34')), berries=k.rng.choice((None, '#c03050', None)))
-F.wildflowers(k, 1.0, 29.0, 9.0, 33.0, 40)
-F.wildflowers(k, 12.6, 20.0, 27.0, 25.4, 50)
-F.wildflowers(k, 34.0, 20.0, 45.0, 25.4, 40)
+        W.tree(k, 45.5, r, h=rng.uniform(2.2, 2.8), tone='#3a6a34')
+VR.hedge(k, (-0.3, 2.4), (-0.3, 17.6), h=0.8, w=0.6, tone='#3a6a30')
+VR.hedge(k, (45.8, 9.0), (45.8, 25.6), h=0.8, w=0.6, tone='#3a6a30', flowers=('#f4f0e8',))
+for (a, b) in ((0.0, 9.5), (11.9, 13.9), (18.9, 46.0)):          # the bottom: a dry-stone wall, the hedge behind it
+    VR.dry_wall(k, (a, 33.3), (b, 33.3), h=0.5)
+    VR.hedge(k, (a, 33.9), (b, 33.9), h=0.75, w=0.55, tone='#3e6e32', flowers=('#c03050', '#f4f0e8'))
+VR.verge(k, 0.6, 32.6, 9.2, 33.0, n=14)
+VR.verge(k, 19.2, 32.4, 45.4, 33.0, n=30, avoid=lambda x, r: 23.8 < x < 36.0)
+VR.verge(k, 12.6, 20.0, 27.0, 25.4, n=26, avoid=lambda x, r: 9.8 < x < 11.6 or 29.8 < x < 32.0)
+VR.verge(k, 34.0, 20.0, 45.0, 25.4, n=22)
+VR.verge(k, 1.0, 29.0, 9.0, 32.8, n=20, avoid=lambda x, r: 9.8 < x < 11.6)
+VR.verge(k, 33.0, 2.3, 45.4, 3.3, n=12)
+F.wildflowers(k, 1.0, 29.0, 9.0, 33.0, 24)
+F.wildflowers(k, 12.6, 20.0, 27.0, 25.4, 30)
+F.wildflowers(k, 34.0, 20.0, 45.0, 25.4, 24)
+VR.willow(k, 24.2, 24.9)                                       # a willow leaning over the stream
+for (tx, tr) in ((17.0, 24.6), (36.8, 23.6)):                   # oaks at the green's edges, a bench under one
+    W.tree(k, tx, tr, h=rng.uniform(2.8, 3.2), tone=rng.choice(('#3a6a34', '#3e7a34')))
+    k.solid(tx - 0.3, tr - 0.3, tx + 0.3, tr + 0.3)
+W.bench(k, 35.9, 37.6, 24.55)
+for (bx, br) in ((13.6, 24.7), (36.2, 24.8), (43.2, 24.3), (2.0, 28.9), (44.6, 28.9)):
+    W.bush(k, bx, br, s=rng.uniform(0.3, 0.42), tone=rng.choice(('#2e5a2e', '#3a6a34')), berries=rng.choice((None, '#c03050')))
+    k.solid(bx - 0.25, br - 0.25, bx + 0.25, br + 0.25)
+for (fx, fr) in ((15.5, 21.4), (21.0, 23.6), (27.6, 21.0), (34.8, 22.6), (40.5, 23.2), (44.0, 21.5), (3.4, 30.6),
+                 (7.4, 29.6), (42.4, 30.2), (33.6, 4.0), (43.6, 7.4), (35.2, 8.4), (1.8, 12.4), (20.5, 31.4)):
+    VR.flower_patch(k, fx, fr, rad=rng.uniform(0.45, 0.8), n=rng.randint(26, 46))
 k.solid(0, 0, COLS, 2)
 k.solid(0, 0, 1, ROWS)
 k.solid(COLS - 1, 0, COLS, ROWS)
@@ -286,7 +440,7 @@ w['interactions'] = [
     look('COTTAGE', 38, 17, 'A BLUE DOOR, A CAT ON THE STEP, WASHING ON A LINE ROUND THE BACK. THE CAT DOES NOT MOVE FOR YOU.'),
     look('STONE COTTAGE', 43, 18, 'THE SCHOOLMISTRESS LIVES HERE. THE WINDOW IS FULL OF CHILDREN\'S DRAWINGS OF YOUR SHUTTLE.'),
     look("LUDD'S MILL", 5, 24, "THE WHEEL TURNS, THE STONES GRIND, THE WHOLE MILL SHIVERS AND HUMS. FLOUR ON EVERYTHING.\n\nCHALKED BY THE DOOR: \"BRING ME GRAIN, I'LL BRING YOU BREAD. - L.\""),
-    look('WATERWHEEL', 2, 26, 'THE WHEEL CLACKS ROUND, SLOW AND STEADY, WATER POURING OFF EVERY PADDLE.'),
+    look('WATERWHEEL', 1, 26, 'THE WHEEL CLACKS ROUND, SLOW AND STEADY, WATER POURING OFF EVERY PADDLE.'),
     look('SIGNPOST', 12, 24, 'MEADOW LANE, THIS WAY. THE MILL, THAT WAY. THE ALLOTMENTS, OVER THE BRIDGE.\n\nSOMEBODY HAS SCRATCHED UNDER "MEADOW LANE": "THE OLD FARM".', 'PRESS E TO READ'),
     look('ALLOTMENTS', 27, 29, 'CABBAGES, BEANS UP THEIR CANES, PUMPKINS GETTING IDEAS. A HAND-PAINTED SIGN: "NO GOATS".'),
     look("NAN ASHBY'S", 14, 30, "NAN ASHBY'S COTTAGE. THE BEST APPLES IN THE VILLAGE, AND SHE KNOWS IT."),

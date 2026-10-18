@@ -155,6 +155,9 @@ var BridgeInteractions = (function () {
     }
     var cx = view.offX + (t.x + 0.5) * view.ts;
     var cy = view.offY + (t.y - promptLift(t)) * view.ts;
+    var lw = typeof BridgeWorld !== 'undefined' && BridgeWorld.getWorld && BridgeWorld.getWorld();
+    var lsc = lw && lw.scene && Array.isArray(lw.scene.heights) && typeof BridgeScene !== 'undefined' && BridgeScene.get(lw.scene.id);
+    if (lsc) cy -= BridgeScene.liftAt(lsc, t.x + 0.5, t.y + 0.5) * Math.SQRT1_2 * view.ts;   // on raised ground, over it there
     var w = el.offsetWidth || 120, h = el.offsetHeight || 28;
     var x = Math.round(Math.max(8, Math.min(window.innerWidth - w - 8, cx - w / 2)));
     var y = Math.round(Math.max(56, Math.min(window.innerHeight - h - 70, cy - h - 6)));
@@ -438,7 +441,10 @@ var BridgeInteractions = (function () {
     var biz = typeof BridgeBusiness !== 'undefined' && BridgeBusiness.find(BridgeWorld.getWorldId(), inter.label);
     if (biz) { showBusiness(biz, inter); return; }
     // sit, sleep, look out of the window (js/actions.js) instead of a text box
-    if (inter.action && typeof BridgeActions !== 'undefined') { BridgeActions.run(inter); return; }
+    // (only its own actions: a module's interaction may carry an `action` of its own — the expedition's, the High Route's)
+    if (inter.action && typeof BridgeActions !== 'undefined' && (/^(sit|sleep|view)$/.test(inter.action) || inter.type === 'deck')) {
+      BridgeActions.run(inter); return;
+    }
     if (OWN[inter.type]) { OWN[inter.type](inter); return; }        // a type some module handles itself (register)
     switch (inter.type) {
       case 'app':
@@ -602,6 +608,13 @@ var BridgeInteractions = (function () {
         break;
       case 'exchange':                                                   // the Merchants' Exchange board (js/harbour.js)
         if (typeof BridgeHarbour !== 'undefined') BridgeHarbour.exchange();
+        break;
+      case 'lanternfall':                                                // the cliff town on the Sapphire Sea (js/sapphire.js)
+      case 'sapphire':                                                   // the floating market's glassworks
+        if (typeof BridgeSapphire !== 'undefined') BridgeSapphire.use(inter);
+        break;
+      case 'rose':                                                       // Rosewell, the bathhouse town on Rose Cove's springs (js/rose.js)
+        if (typeof BridgeRose !== 'undefined') BridgeRose.use(inter);
         break;
       case 'holm':                                                       // your own island (js/holm.js)
         if (typeof BridgeHolm !== 'undefined') BridgeHolm.use(inter);
@@ -1239,6 +1252,7 @@ var BridgeInteractions = (function () {
       if (item && item.draw) { var g = cv.getContext('2d'); g.imageSmoothingEnabled = false; item.draw(g, 0, 0, 24); }
       else if (r.draw) { var g2 = cv.getContext('2d'); g2.imageSmoothingEnabled = false; r.draw(g2, 24); }
       else if (r.face && typeof BridgeLook !== 'undefined' && BridgeLook.face) { cv.classList.add('sp-face'); BridgeLook.face(cv, r.face.seed, r.face.style, r.face.colour, r.face.wild); }   // someone you'd hire
+      else if (r.sheet && typeof BridgeLook !== 'undefined' && BridgeLook.npcFace) { cv.classList.add('sp-face'); BridgeLook.npcFace(cv, r.sheet); }   // someone in the cast: their portrait
       else cv.style.visibility = 'hidden';
     });
     var rowEls = [].slice.call(dialogEl.querySelectorAll('.wd-sell-row.pick')).filter(function (e) { var r = rows[+e.getAttribute('data-r')]; return !r.disabled && !r.info; });
@@ -1462,6 +1476,11 @@ var BridgeInteractions = (function () {
       if (t.pet && typeof BridgePet !== 'undefined') {                // a pup, a kitten, a drone (js/pet.js)
         close();
         BridgePet.adopt(t.pet, person.name.split(' ')[0]);
+        return;
+      }
+      if (t.use && OWN[t.use.type]) {                                 // a topic that does what a thing in the world does (a sleigh ride, a room)
+        close();
+        OWN[t.use.type](Object.assign({}, t.use));
         return;
       }
       if (t.climbrace && typeof BridgeHoarfell !== 'undefined') {     // Ysolde: race her up the face (js/climb.js)

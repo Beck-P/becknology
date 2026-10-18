@@ -67,7 +67,9 @@ var BridgeExpedition = (function () {
   function carried(id) { return typeof BridgeInventory !== 'undefined' && BridgeInventory.getCount(id) > 0; }
   function held(id) { return typeof BridgeInventory !== 'undefined' && BridgeInventory.getSelectedItemId && BridgeInventory.getSelectedItemId() === id; }
   function day() { return Math.floor(Date.now() / 86400000); }
-  function key(x, y) { return x + ',' + y; }
+  // a crack's key: plain on the Last Ridge (as saved before), the world's id in front anywhere else with a crevasse field
+  // (the touring days' glaciers, js/touring.js)
+  function key(x, y, wid) { wid = wid || (typeof BridgeWorld !== 'undefined' && BridgeWorld.getWorldId()) || RIDGE; return (wid === RIDGE ? '' : wid + ':') + x + ',' + y; }
   function curios() { return typeof BridgeMagic !== 'undefined' ? Object.keys(BridgeMagic._st().found).length : 0; }
   function runeFound() { return typeof BridgeMagic !== 'undefined' && !!BridgeMagic._st().found.summit_rune; }
 
@@ -94,9 +96,11 @@ var BridgeExpedition = (function () {
         if (it.label === 'GUIDE\'S HUT' && it.items && !it.items.some(function (i) { return i.id === 'probe'; })) it.items.push({ id: 'probe', price: 50 });
       });
     }
-    if (worldId === RIDGE && data.expedition) {               // cracks fallen through today are open holes
+    if (data.expedition) {                                     // cracks fallen through today are open holes
+      var pre = worldId === RIDGE ? '' : worldId + ':';
       Object.keys(opened()).forEach(function (k) {
-        var p = k.split(','), x = +p[0], y = +p[1];
+        if ((pre && k.indexOf(pre) !== 0) || (!pre && k.indexOf(':') >= 0)) return;
+        var p = k.slice(pre.length).split(','), x = +p[0], y = +p[1];
         if (data.collisions[y]) data.collisions[y][x] = 1;
       });
     }
@@ -288,11 +292,11 @@ var BridgeExpedition = (function () {
   function landOut(world, quiet) {
     if (!fall) return;
     fall = null;
-    var E = world.expedition, c = E.cairns[sel == null ? -1 : sel], spot = c ? [c[0], c[1] + 1] : ARRIVE.slice();
+    var E = world.expedition, c = E.cairns[sel == null ? -1 : sel], spot = c ? [c[0], c[1] + 1] : (E.arrive || ARRIVE).slice();
     if (world.collisions[spot[1]] && world.collisions[spot[1]][spot[0]]) spot = [spot[0] + 1, spot[1]];
     BridgeCharacter.setHidden(false);
     if (BridgeWorld.getMode()) BridgeWorld.setMode(null);
-    if (BridgeWorld.getWorldId() === RIDGE) { BridgeCharacter.init(spot[0], spot[1]); BridgeCharacter.setFacing('up'); }
+    if (world.expedition) { BridgeCharacter.init(spot[0], spot[1]); BridgeCharacter.setFacing('up'); }
     if (typeof BridgeInventory !== 'undefined') BridgeInventory.takeDamage(25);
     if (quiet) return;
     say('THE SNOW GIVES WAY', 'ONE STEP AND THE WORLD DROPS OUT FROM UNDER YOU - BLUE, THEN DARK, THEN A LEDGE OF ICE THAT KNOCKS THE WIND OUT OF YOU. ' +
@@ -305,13 +309,13 @@ var BridgeExpedition = (function () {
     var wid = BridgeWorld.getWorldId();
     if (wid !== lastWorld) {
       lastWorld = wid;
-      if (wid === RIDGE) {
+      if (world.expedition) {
         sel = null; wx.next = now + 70000 + Math.random() * 60000; wx.start = wx.end = 0;
-        if (!st.came) { st.came = true; store(); toast('The Last Ridge', 'Past the Hoarspire', 'Keep to the wands'); }
+        if (wid === RIDGE && !st.came) { st.came = true; store(); toast('The Last Ridge', 'Past the Hoarspire', 'Keep to the wands'); }
       }
       if (wid === 'hoarfell-icestep' && !st.stepped) { st.stepped = true; store(); }
     }
-    if (wid !== RIDGE || !world.expedition) return;
+    if (!world.expedition) return;
     if (fall) {
       if (now - fall.t0 > 1500) landOut(world, false);
       return;
@@ -329,7 +333,8 @@ var BridgeExpedition = (function () {
     if (wx.end && now > wx.end) { wx.end = 0; wx.next = now + 120000 + Math.random() * 120000; }
   }
   function whiteout() {
-    if (!wx.end || BridgeWorld.getWorldId() !== RIDGE) return 0;
+    var w = BridgeWorld.getWorld && BridgeWorld.getWorld();
+    if (!wx.end || !(w && w.expedition)) return 0;
     var now = clock, a = Math.min(1, (now - wx.start) / 4000), b = Math.min(1, (wx.end - now) / 4000);
     return Math.max(0, Math.min(a, b));
   }

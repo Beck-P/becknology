@@ -261,6 +261,11 @@ var BridgeItems = (function () {
     if (!(w && w.remote) && !(w && w.dot) && typeof BridgeCodex !== 'undefined' && BridgeCodex.bonus('gear')) dmg = Math.round(dmg * 1.05);   // tools and weapons, all found
     var F = typeof BridgeFight !== 'undefined' ? BridgeFight : null, follow = F && !(w && w.remote) && F.follower(target);
     if (typeof target._hp !== 'number') target._hp = target.maxHP || 50;
+    // a creature's own armour (js/combat.js kinds: a rime beetle's shell, the wyrm under the snow) takes its share first
+    if (!(w && (w.remote || w.dot)) && target.creature && typeof BridgeCombat !== 'undefined' && BridgeCombat.guard) {
+      dmg = BridgeCombat.guard(world, target, dmg, w);
+      if (dmg <= 0) return;
+    }
     target._hp -= dmg;
     var dot = w && w.dot;
     if (!dot) target._hitAt = performance.now();
@@ -581,6 +586,40 @@ var BridgeItems = (function () {
     var u = s / 16;
     px(ctx, x, y, u, '#1a1028', [[5, 5, 6, 7], [6, 4, 4, 9]]);
     px(ctx, x, y, u, '#8a60e0', [[6, 6, 4, 5]]); px(ctx, x, y, u, '#d8c8ff', [[7, 7, 2, 2]]); px(ctx, x, y, u, '#c0a0ff', [[7, 2, 1, 2], [9, 3, 1, 1]]);
+  }
+  // Hoarfell's hidden valley (js/valley.js): what its creatures leave
+  function peltIcon(ctx, x, y, s) {               // a folded pelt, white-blue fur
+    var u = s / 16;
+    px(ctx, x, y, u, '#121a26', [[2, 5, 12, 8], [4, 4, 8, 1], [3, 13, 3, 1], [10, 13, 3, 1]]);
+    px(ctx, x, y, u, '#8aa0c0', [[3, 6, 10, 6]]); px(ctx, x, y, u, '#c8d8ec', [[3, 6, 10, 3], [4, 12, 2, 1], [10, 12, 2, 1]]);
+    px(ctx, x, y, u, '#f0f8ff', [[4, 6, 3, 1], [9, 7, 2, 1]]);
+  }
+  function shellIcon(ctx, x, y, s) {              // a domed plate of blue shell, rime on its ridge
+    var u = s / 16;
+    px(ctx, x, y, u, '#0e1622', [[3, 5, 10, 8], [5, 4, 6, 1]]);
+    px(ctx, x, y, u, '#2a4a6a', [[4, 6, 8, 6]]); px(ctx, x, y, u, '#4a7aa8', [[5, 6, 6, 3]]); px(ctx, x, y, u, '#e8f8ff', [[7, 5, 2, 1], [6, 7, 1, 1]]);
+    px(ctx, x, y, u, '#1a2a3a', [[7, 9, 2, 3]]);
+  }
+  function wingIcon(ctx, x, y, s) {               // a bat's wing, the membrane between its fingers
+    var u = s / 16;
+    px(ctx, x, y, u, '#0e1220', [[2, 3, 2, 9], [4, 4, 3, 8], [7, 5, 3, 6], [10, 6, 3, 4], [13, 6, 1, 2]]);
+    px(ctx, x, y, u, '#4a6a9a', [[3, 4, 1, 7], [5, 5, 2, 6], [8, 6, 2, 4], [11, 7, 2, 2]]); px(ctx, x, y, u, '#7ab0d8', [[5, 5, 1, 3], [8, 6, 1, 2]]);
+  }
+  function coreIcon(ctx, x, y, s) {               // a golem's heart: a cyan glow in a fist of ice
+    var u = s / 16;
+    px(ctx, x, y, u, '#0a1420', [[4, 4, 8, 9], [3, 6, 10, 5]]);
+    px(ctx, x, y, u, '#5a8ab0', [[4, 6, 8, 5], [5, 5, 6, 7]]); px(ctx, x, y, u, '#a8e8ff', [[6, 7, 4, 3]]); px(ctx, x, y, u, '#ffffff', [[7, 8, 2, 1]]);
+  }
+  function essenceIcon(ctx, x, y, s) {            // a stoppered phial of pale cold light
+    var u = s / 16;
+    px(ctx, x, y, u, '#0a1018', [[5, 6, 6, 8], [6, 3, 4, 3]]);
+    px(ctx, x, y, u, '#5a4a3a', [[6, 3, 4, 2]]); px(ctx, x, y, u, '#9ae8ff', [[6, 7, 4, 6]]); px(ctx, x, y, u, '#e8fcff', [[7, 8, 1, 3]]);
+  }
+  function scaleIcon(ctx, x, y, s) {              // a great blue-white scale, iridescent at the edge
+    var u = s / 16;
+    px(ctx, x, y, u, '#0a1220', [[4, 2, 8, 11], [5, 13, 6, 1], [3, 4, 10, 7]]);
+    px(ctx, x, y, u, '#3a6a9a', [[4, 4, 8, 7], [5, 3, 6, 9]]); px(ctx, x, y, u, '#8ac8ec', [[6, 3, 4, 6]]); px(ctx, x, y, u, '#e8f8ff', [[7, 4, 1, 3]]);
+    px(ctx, x, y, u, '#a080e0', [[11, 6, 1, 3]]);
   }
   function shellKeyIcon(ctx, x, y, s) {
     var u = s / 16;
@@ -1059,6 +1098,47 @@ var BridgeItems = (function () {
     px(ctx, x, y, u, '#8a8a94', [[10, 1, 1, 7]]); px(ctx, x, y, u, '#d8b070', [[9, 1, 3, 2]]);
     px(ctx, x, y, u, 'rgba(240,240,250,0.7)', [[5, 3, 1, 3], [7, 2, 1, 3]]);
   }
+  // Hoarfell's grander side (js/alpine.js): Aurelle's bars, the pâtisserie, the stübli
+  function vinIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#3a1018', [[4, 5, 7, 9], [11, 7, 2, 4]]); px(ctx, x, y, u, '#8a1a2a', [[5, 6, 5, 7]]);
+    px(ctx, x, y, u, '#c84a3a', [[5, 6, 2, 3]]); px(ctx, x, y, u, '#e8a040', [[8, 5, 2, 2]]); px(ctx, x, y, u, '#5a3a10', [[9, 3, 1, 3]]);
+    px(ctx, x, y, u, 'rgba(240,240,250,0.7)', [[6, 1, 1, 3], [10, 1, 1, 2]]);
+  }
+  function champagneIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#3a2a10', [[3, 3, 10, 1], [3, 3, 1, 4], [12, 3, 1, 4], [4, 7, 8, 1], [7, 8, 2, 5], [5, 13, 6, 1]]);
+    px(ctx, x, y, u, '#f0d070', [[4, 4, 8, 3]]); px(ctx, x, y, u, '#fff4c0', [[5, 4, 3, 1]]);
+    px(ctx, x, y, u, '#e8eef4', [[8, 8, 1, 5], [6, 13, 4, 1]]); px(ctx, x, y, u, '#ffffff', [[6, 5, 1, 1], [9, 5, 1, 1], [10, 4, 1, 1]]);
+  }
+  function macaronIcon(ctx, x, y, s) {
+    var u = s / 16;
+    [[2, 8, '#e898b0', '#f8c8d8'], [6, 5, '#a8d878', '#d0f0a8'], [9, 9, '#c8a0e0', '#e8d0f8']].forEach(function (m) {
+      px(ctx, x, y, u, '#3a2028', [[m[0], m[1], 6, 5]]); px(ctx, x, y, u, m[2], [[m[0] + 1, m[1], 4, 2], [m[0] + 1, m[1] + 3, 4, 1]]);
+      px(ctx, x, y, u, m[3], [[m[0] + 1, m[1], 2, 1]]); px(ctx, x, y, u, '#f8f0e8', [[m[0] + 1, m[1] + 2, 4, 1]]);
+    });
+  }
+  function millefeuilleIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#3a2410', [[2, 5, 12, 9]]); px(ctx, x, y, u, '#d8a050', [[3, 12, 10, 1], [3, 9, 10, 1]]);
+    px(ctx, x, y, u, '#f8ecd0', [[3, 10, 10, 2], [3, 7, 10, 2]]); px(ctx, x, y, u, '#f8f8f8', [[3, 5, 10, 2]]);
+    px(ctx, x, y, u, '#6a3a20', [[4, 5, 1, 2], [7, 5, 1, 2], [10, 5, 1, 2]]);
+  }
+  function truffleIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#d8b060', [[1, 9, 14, 6]]); px(ctx, x, y, u, '#8a1a2a', [[2, 10, 12, 4]]);
+    [[3, 6], [7, 5], [11, 6]].forEach(function (c) { px(ctx, x, y, u, '#1a0e08', [[c[0], c[1], 3, 4]]); px(ctx, x, y, u, '#5a3018', [[c[0], c[1], 2, 2]]); });
+  }
+  function rostiIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#2a2a30', [[1, 8, 14, 5], [13, 9, 3, 2]]); px(ctx, x, y, u, '#c88a30', [[2, 8, 11, 3]]);
+    px(ctx, x, y, u, '#f0c060', [[3, 8, 4, 1], [8, 9, 3, 1]]); px(ctx, x, y, u, '#f8f0e0', [[6, 6, 3, 2]]); px(ctx, x, y, u, '#f0c030', [[7, 6, 1, 1]]);
+  }
+  function racletteIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#f0f0f0', [[1, 10, 14, 4]]); px(ctx, x, y, u, '#c8a060', [[3, 9, 3, 2], [9, 9, 3, 2]]);
+    px(ctx, x, y, u, '#f8d050', [[3, 7, 10, 3]]); px(ctx, x, y, u, '#fff0a0', [[4, 7, 4, 1]]); px(ctx, x, y, u, '#5a7a2a', [[12, 9, 2, 2]]);
+  }
   function ciderIcon(ctx, x, y, s) {
     var u = s / 16;
     px(ctx, x, y, u, '#4a2a10', [[4, 5, 7, 10], [11, 7, 2, 5]]); px(ctx, x, y, u, '#c87a20', [[5, 7, 5, 7]]);
@@ -1273,6 +1353,31 @@ var BridgeItems = (function () {
     px(ctx, x, y, u, '#a0d0f0', [[5, 4, 2, 4], [7, 3, 1, 2]]);
     px(ctx, x, y, u, '#e8f8ff', [[5, 4, 1, 2]]);
     px(ctx, x, y, u, '#3a6a9a', [[9, 9, 2, 3]]);
+  }
+  // a glowing cocoon from Rosewell's silk groves, and a scarf woven from them
+  function cocoonIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#3a1a2a', [[6, 2, 4, 12], [5, 4, 6, 8]]);
+    px(ctx, x, y, u, '#f0b0d0', [[6, 3, 4, 10], [5, 5, 6, 6]]);
+    px(ctx, x, y, u, '#ffe8f6', [[6, 4, 2, 3], [7, 8, 1, 3]]);
+    px(ctx, x, y, u, '#c87aa0', [[9, 9, 1, 3], [5, 7, 1, 2]]);
+    px(ctx, x, y, u, '#e8e0e8', [[8, 0, 1, 3]]);
+  }
+  function scarfIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#3a1a2a', [[2, 3, 12, 5], [9, 7, 4, 7]]);
+    px(ctx, x, y, u, '#f080b0', [[3, 4, 10, 3], [10, 7, 2, 6]]);
+    px(ctx, x, y, u, '#ffd0e8', [[3, 4, 10, 1], [10, 8, 1, 4]]);
+    px(ctx, x, y, u, '#c8a050', [[10, 12, 2, 1], [3, 6, 1, 1], [6, 6, 1, 1]]);
+  }
+  // a fisherman's glass float from the Sapphire Glassworks: a blue ball in a net of cord
+  function floatIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#0c1a30', [[4, 3, 8, 10], [3, 4, 10, 8]]);
+    px(ctx, x, y, u, '#2a5ad8', [[4, 4, 8, 8], [5, 3, 6, 10]]);
+    px(ctx, x, y, u, '#6a9af0', [[5, 4, 3, 3]]);
+    px(ctx, x, y, u, '#e8f4ff', [[5, 5, 1, 1]]);
+    px(ctx, x, y, u, '#c8a870', [[3, 8, 10, 1], [8, 3, 1, 10], [5, 11, 6, 1]]);
   }
   // a little powder keg, iron-hooped, a red mark on its head, a spill of powder
   function powderIcon(ctx, x, y, s) {
@@ -1525,6 +1630,21 @@ var BridgeItems = (function () {
                      stackable: true, draw: posyIcon, value: 4 },
     lucky_horseshoe: { id: 'lucky_horseshoe', name: 'Lucky Horseshoe', desc: 'From Wat at the Anvil & Hoof, nail holes and all. Carried, the fish bite sooner.',
                      type: 'tool', stackable: false, draw: horseshoeIcon, value: 30, onUse: charmUse },
+    // the hidden valley under the Hoarspire (js/valley.js): what its creatures leave, and the wyrm's tooth
+    wolf_pelt:     { id: 'wolf_pelt', name: 'Ice Wolf Pelt', desc: 'Thick white fur, blue at the roots, from an ice wolf of the valley\'s outer slopes. Warm even wet.',
+                     type: 'material', stackable: true, draw: peltIcon, value: 24 },
+    rime_shell:    { id: 'rime_shell', name: 'Rime Shell', desc: 'A plate off a rime beetle\'s back, hard as glass and furred with frost that doesn\'t melt.',
+                     type: 'material', stackable: true, draw: shellIcon, value: 30 },
+    bat_wing:      { id: 'bat_wing', name: 'Ice Bat Wing', desc: 'Thin as paper and cold to touch. Held to the light it shows the veins, blue as a glacier.',
+                     type: 'material', stackable: true, draw: wingIcon, value: 16 },
+    golem_core:    { id: 'golem_core', name: 'Golem Core', desc: 'What kept a rime golem walking: a fist of old ice round a cyan glow that beats, very slowly.',
+                     type: 'material', stackable: true, draw: coreIcon, value: 90 },
+    wraith_essence: { id: 'wraith_essence', name: 'Wraith Essence', desc: 'The last of a frost wraith, stoppered in a phial. It mists the glass from the inside.',
+                     type: 'material', stackable: true, draw: essenceIcon, value: 60 },
+    wyrm_scale:    { id: 'wyrm_scale', name: 'Wyrm Scale', desc: 'A scale off the glacier wyrm, as broad as your hand, blue-white with a violet sheen at the edge. Proof, if anyone asks.',
+                     type: 'material', stackable: true, draw: scaleIcon, value: 180 },
+    wyrmfang:      { id: 'wyrmfang', name: 'Wyrmfang', desc: 'A sabre ground from the glacier wyrm\'s own tooth, bound in its hide. Its sweep cuts either side, and what it cuts is rimed and slowed.',
+                     type: 'weapon', stackable: false, draw: bladeIcon('#d8f0ff', '#2a4a6a', true, '#ffffff'), damage: 72, arc: true, frost: true, cls: 'sword', value: 400, onUse: weaponUse },
     wisp_ember:    { id: 'wisp_ember', name: 'Wisp Ember', desc: 'What\'s left of a will-o\'-wisp: a cold violet coal that won\'t go out. Morwen buys them.',
                      type: 'material', stackable: true, draw: emberIcon, value: 15 },
     tomb_key:      { id: 'tomb_key', name: 'Shell Key', desc: 'A key shaped like a cockle shell, green with the sea. A drowned thing in the graveyard on Midnight Isle was carrying it.',
@@ -1539,6 +1659,14 @@ var BridgeItems = (function () {
     moon_wand:     { id: 'moon_wand', name: 'Moonlit Wand', desc: 'Black wood, a white stone at the tip. F casts a bolt of moonlight seven tiles down the way you face. Each cast takes 2 energy.',
                      type: 'weapon', stackable: false, draw: wandIcon, damage: 30, cls: 'cast', value: 200,
                      onUse: function () { if (typeof BridgeMagic !== 'undefined') BridgeMagic.cast(this); return false; } },
+    silk_cocoon:   { id: 'silk_cocoon', name: 'Silk Cocoon', desc: 'An empty cocoon from Rosewell\'s silk groves, still glowing faintly pink. A mile of spore silk wound up inside it.',
+                     type: 'material', stackable: true, draw: cocoonIcon, value: 10 },
+    silk_scarf:    { id: 'silk_scarf', name: 'Spore Silk Scarf', desc: 'Woven for you on Seren\'s loom from five cocoons you gathered. It glows like a lamp turned low. Anyone would love it.',
+                     type: 'material', stackable: true, draw: scarfIcon, value: 90 },
+    glass_float:   { id: 'glass_float', name: 'Glass Float', desc: 'A fisherman\'s float of blue Sapphire glass in a net of cord. Hang one in a window and the light comes through it like the sea.',
+                     type: 'material', stackable: true, draw: floatIcon, value: 18 },
+    caldera_lantern: { id: 'caldera_lantern', name: 'Caldera Lantern', desc: 'Blue Sapphire glass in a tin frame, from the lantern maker at Lanternfall. It has never once blown out, she says.',
+                     type: 'material', stackable: true, draw: lanternIcon, value: 24 },
     glimmer_lantern: { id: 'glimmer_lantern', name: 'Glimmer Lantern', desc: 'A lantern that burns brighter near hidden things. Hold it to see them; use it to ask which way is warmer.',
                      type: 'tool', stackable: false, draw: lanternIcon, value: 80,
                      onUse: function () { if (typeof BridgeMagic !== 'undefined') BridgeMagic.lantern(); return false; } },
@@ -1750,6 +1878,23 @@ var BridgeItems = (function () {
     mulled_cider:  { id: 'mulled_cider', name: 'Mulled Cider', desc: 'Hot apple cider with a cinnamon stick in it, and something else Mette won\'t name. Warm for eight minutes.', type: 'drink',
                      stackable: true, draw: ciderIcon, effects: { energy: 25 }, value: 4,
                      onUse: function (inv) { if (typeof BridgeHoarfell !== 'undefined') BridgeHoarfell.warm(8); return consumableUse.call(this, inv); } },
+    // Hoarfell's grander side (js/alpine.js): Aurelle's bars and pâtisserie, the promenade's stübli
+    vin_chaud:     { id: 'vin_chaud', name: 'Vin Chaud', desc: 'Hot red wine with orange peel and cloves, in a glass with a handle. The après-ski\'s whole personality. Warm for ten minutes.', type: 'drink',
+                     stackable: true, draw: vinIcon, effects: { energy: 25 }, value: 4,
+                     onUse: function (inv) { if (typeof BridgeHoarfell !== 'undefined') BridgeHoarfell.warm(10); return consumableUse.call(this, inv); } },
+    champagne:     { id: 'champagne', name: 'Coupe of Champagne', desc: 'From Bar Étoile, in a coupe they say was modelled on somebody\'s shoulder. Fizz, gold, and a lift to the spirits.', type: 'drink',
+                     stackable: true, draw: champagneIcon, effects: { energy: 40 }, onUse: consumableUse, value: 20 },
+    macarons:      { id: 'macarons', name: 'Macarons', desc: 'A pink box of them from the pâtisserie: rose, pistachio, violet. Almost too pretty to eat. Almost.', type: 'food',
+                     stackable: true, draw: macaronIcon, effects: { hp: 6, energy: 18 }, onUse: consumableUse, value: 9 },
+    mille_feuille: { id: 'mille_feuille', name: 'Mille-Feuille', desc: 'A thousand layers of pastry and cream, iced in feathered stripes. Impossible to eat with dignity.', type: 'food',
+                     stackable: true, draw: millefeuilleIcon, effects: { hp: 10, energy: 16 }, onUse: consumableUse, value: 7 },
+    truffles:      { id: 'truffles', name: 'Chocolate Truffles', desc: 'Six in a gilt box, dusted in cocoa. A gift that says you went to Aurelle and thought of them.', type: 'food',
+                     stackable: true, draw: truffleIcon, effects: { hp: 4, energy: 22 }, onUse: consumableUse, value: 12 },
+    rosti:         { id: 'rosti', name: 'Rösti', desc: 'Grated potato fried crisp in a pan, an egg on top. Built for people who have skied all morning.', type: 'food',
+                     stackable: true, draw: rostiIcon, effects: { hp: 22, energy: 22 }, onUse: consumableUse, value: 6 },
+    raclette:      { id: 'raclette', name: 'Raclette', desc: 'The cut face of a wheel melted under the grill and scraped over potatoes, a gherkin on the side. Warm for ten minutes.', type: 'food',
+                     stackable: true, draw: racletteIcon, effects: { hp: 26, energy: 26 }, value: 8,
+                     onUse: function (inv) { if (typeof BridgeHoarfell !== 'undefined') BridgeHoarfell.warm(10); return consumableUse.call(this, inv); } },
     edelweiss:     { id: 'edelweiss', name: 'Edelweiss', desc: 'A woolly white star from the top of the Staircase. Ysolde says you have to climb for your own.', type: 'material',
                      stackable: true, draw: edelweissIcon, value: 30 },
     hoar_crystal:  { id: 'hoar_crystal', name: 'Hoar Crystal', desc: 'Frost that never melts, grown in the Hoarspire\'s rock. Cold enough to burn.', type: 'material',

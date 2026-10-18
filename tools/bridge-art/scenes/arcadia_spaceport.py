@@ -25,6 +25,7 @@ import assets_signs as S               # noqa: E402
 import assets_dock as K                # noqa: E402
 import assets_oldquarter as O          # noqa: E402
 import assets_spaceport as P           # noqa: E402
+import assets_arcadia_rich as AR       # noqa: E402
 
 OUT = sys.argv[1]
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
@@ -34,14 +35,18 @@ COLS, ROWS = 72, 30
 RF = 9.0           # the buildings' faces; doors on row 8; the concourse rows 9-13
 LINE = 13.9        # the crew line: the apron beyond, rows 14-27
 RAIL = 28.0
-VZ, VR = 6.0, 6.2
+VZ, VR = 5.0, 6.2
 
 k = Kit(COLS, ROWS, margin_top=2.8, margin_bottom=0.6, seed=2207)
 st = D.Street()
 rng = k.rng
 
 # ---- the ground: the concourse's tiles, the crew line, the apron's slabs ------------------------------------------------
-Y.tile_floor(k, -0.5, RF, COLS + 0.5, LINE, tones=('#34303e', '#2e2a38'), size=1.0, seam='#100c1a')
+gr = random.Random(22070)                                       # the ground's own dice: the buildings keep theirs
+k.wet = dict(AR.WET, apron=0.4, deck=0.25)
+AR.paving(k, -0.5, RF, 7.0, LINE, size=1.0, tones=('#26222e', '#2a2632', '#221e2a', '#2c2834'), seam='#0c0a10', rng=gr)   # the street's forecourt slabs
+AR.paving(k, 7.0, RF, COLS + 0.5, LINE, rng=gr)                 # then the street's own paving along the concourse
+AR.tactile(k, -0.5, COLS + 0.5, LINE - 0.42, LINE - 0.12)
 P.apron(k, -0.5, LINE, COLS + 0.5, RAIL)
 k.box(-0.5, LINE - 0.05, 0.0, COLS + 0.5, LINE + 0.07, 0.006, P.STRIPE, 'floor_paint')
 for x in [i * 1.2 + 0.3 for i in range(60)]:
@@ -56,6 +61,11 @@ for x in [1.0 + i * 3.0 for i in range(24)]:                                    
 P.bay_marks(k, 1.2, 15.0, 22.0, 26.4, 'BAY 1')
 P.bay_marks(k, 25.0, 15.0, 48.0, 26.4, 'BAY 2')
 P.bay_marks(k, 59.6, 18.2, 71.0, 26.6, 'BAY 3')
+for (x0_, x1_, r0_, r1_) in ((1.2, 22.0, 15.0, 26.4), (25.0, 48.0, 15.0, 26.4), (59.6, 71.0, 18.2, 26.6)):
+    P.landing_lights(k, x0_ + 0.4, x1_ - 0.4, r0_ - 0.25)
+    P.landing_lights(k, x0_ + 0.4, x1_ - 0.4, r1_ + 0.25, cols=(Y.CYAN, '#2a8aff'))
+AR.hazard_stripes(k, 52.0, 15.6, 56.0, 16.2)
+AR.hazard_stripes(k, 52.0, 20.6, 56.0, 21.2)
 for (x, r, rx, ry, c) in ((6.0, 11.2, 0.6, 0.25, Y.PINK), (16.4, 12.4, 0.7, 0.28, '#ffb050'), (24.6, 11.0, 0.5, 0.2, Y.CYAN),
                           (33.2, 12.2, 0.8, 0.3, '#ffb030'), (44.6, 11.4, 0.6, 0.24, Y.CYAN), (52.0, 12.6, 0.5, 0.2, Y.PURP),
                           (63.0, 11.6, 0.7, 0.26, '#ff8040'), (4.4, 24.8, 0.9, 0.3, '#ffe0a0'), (23.6, 20.4, 0.7, 0.26, '#fff0d0'),
@@ -68,7 +78,7 @@ Y.manhole(k, 19.0, 12.0)
 Y.manhole(k, 48.0, 11.4)
 
 # ---- the Loop's viaduct along the back, in and out of the Core's tower --------------------------------------------------
-O.viaduct(k, -0.5, COLS + 0.5, VR, VZ, piers=(3.2, 34.0, 52.6, 64.0))
+O.viaduct(k, -0.5, COLS + 0.5, VR, VZ, piers=(3.2, 33.6, 52.6, 64.0), gaps=((36.9, 45.5),))
 
 # ---- along the concourse ---------------------------------------------------------------------------------------------------
 D.frontage(k, st, -0.5, 4.0, RF, floors=4, kind='glass', trim=Y.PINK, door_x=1.8, glow='#6a3a8a', sign_floor=True,
@@ -139,7 +149,7 @@ for i in range(6):
     k.box(31.15, RF + 0.1, z, 36.25, RF + 0.11, z + 0.16, '#1a1004', 'board_line', emit=(('#ffb030', '#ffb030', '#ff6030')[i % 3], 0.85))
 k.point_light(33.7, RF + 0.8, 2.9, '#ffb040', 16, radius=0.6, group='flicker')
 # the Loop's Spaceport station
-O.station_block(k, 37.2, 45.2, RF, VZ, name='SPACEPORT', depth=RF - VR + 0.4)
+O.station_block(k, 37.2, 45.2, RF, VZ, name='SPACEPORT', depth=RF - VR + 0.4, vr_=VR)
 # the Spacer's Rest: capsule bunks stacked five high, vending machines at its door
 D.frontage(k, st, 45.2, 55.0, RF, floors=5, kind='glass', trim=Y.PURP, door_x=50.0, glow='#3a4a9a', sign_floor=True,
            roof=('tank', 'antenna'), wall='#2a2838', clad='tile', windows=False, rng=rng)
@@ -187,8 +197,12 @@ k.solid(57.0, 15.9, 57.8, 16.6)
 P.hauler(k, 61.4, 21.8, L=8.6, hull='#6a7068', trim='#2a2e30', name='SLOW HAZARD', reg='SH-0013', ramp_at=(0.4, 0.75))
 k.solid(61.4 + 8.6 * 0.4, 23.3, 61.4 + 8.6 * 0.75, 25.1)
 
-for (x, r) in ((23.6, 15.6), (49.4, 15.6), (23.6, 27.0), (57.8, 27.0)):
+for (x, r) in ((23.6, 15.6), (49.4, 15.6), (23.6, 27.0), (57.8, 27.0), (0.4, 27.0), (71.4, 17.4)):
     P.floodlight(k, x, r)
+AR.floodlight(k, 51.4, 18.4, h=1.8, energy=30)                                          # the cab pad's own
+AR.windsock(k, 58.6, 15.6)
+for (x, r, z) in ((29.8, 15.8, 5.7), (42.2, 15.8, 5.7), (CX0 + 0.3, RF - 0.4, 10.55), (CX1 - 0.3, RF - 0.4, 10.55)):
+    P.beacon(k, x, r, z)
 for (x0_, x1_, r_) in ((1.0, 21.0, 27.4), (25.0, 47.0, 27.4)):                                # fuel lines along the apron's foot
     k.cyl_x(x0_, x1_, r_, 0.14, 0.09, 0.09, ('#8a2a1a', 0.08), 'fuel_line', verts=10)
     k.cyl_x(x0_, x1_, r_ + 0.22, 0.12, 0.07, 0.07, ('#3a3a44', 0.08), 'fuel_line', verts=10)
@@ -207,7 +221,10 @@ Y.street_railing(k, -0.5, COLS + 0.5, RAIL)
 for (x, c) in ((6.0, '#a060ff'), (17.0, '#ff8a40'), (26.0, '#60c0ff'), (35.0, '#ffb040'), (42.0, '#80d0ff'), (51.0, '#a080ff'),
                (62.0, '#ff9a50')):
     k.point_light(x, 11.5, 3.0, c, 36, radius=1.0)
-k.area_light(COLS / 2, 6.0, 14.0, '#7058b8', 1100 * COLS / 44, COLS + 2.0, rot=(math.radians(-35), 0, 0))
+for x in (2.0, 6.5, 11.5, 15.5, 19.0, 32.0, 35.5, 48.0, 52.5, 57.0, 66.0):                  # warm light out of the windows
+    k.point_light(x, RF + 0.6, 1.4, '#ffc080', 12, radius=0.6, group='flicker')
+k.area_light(COLS / 2, 6.0, 14.0, '#7058b8', 1400 * COLS / 44, COLS + 2.0, rot=(math.radians(-35), 0, 0))
+k.area_light(COLS / 2, 21.0, 9.0, '#5a68a8', 700 * COLS / 44, COLS + 2.0, rot=(math.radians(-20), 0, 0))     # the city's glow on the apron
 k.render(OUT, light_states={'full': {'flicker': 1.0}, 'dim': {'flicker': 0.8}}, light_samples=128, world_light=('#241a40', 0.45))
 
 # ---- the world -------------------------------------------------------------------------------------------------------------
@@ -260,7 +277,8 @@ apply_world(WORLD, k, (0, int(RF), COLS - 1, int(RAIL) - 1), scene_id=WID,
             scene_extra={'backdrop': True, 'steam': st.steam})
 w = json.load(open(WORLD))
 w['view'] = [-0.5, -3.8, COLS + 0.5, ROWS + 0.4]
-w['loop'] = {'track': [37.2, 45.2, VR, VZ]}                     # where js/transit.js stops the Loop's train
+w['loop'] = {'track': [37.2, 45.2, VR, round(0.3625 + 0.7071 * (VZ + 0.17), 2)]}   # js/transit.js: her rails on ours
+w['cameraLead'] = -4.0                                          # frame above you: the viaduct and her train over the roofs
 w['skyline'] = {'baseRow': 3.6, 'railRow': RAIL + 0.3, 'centerCol': COLS / 2,
                 'rain': {'drops': 170, 'splash': [0, RF + 0.3, COLS, RAIL - 0.2]}}
 open(WORLD, 'w').write(json.dumps(w, indent=2) + '\n')
