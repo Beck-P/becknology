@@ -52,10 +52,31 @@ LAND = {(c, r) for c in range(0, COLS) for r in range(0, 33)}
 LAND -= {(c, r) for c in range(int(CHAN[0]), int(CHAN[1])) for r in range(int(DOCK[3]), 33)}
 
 # ---- ground ---------------------------------------------------------------------------------------------------------
-k.box(-0.6, -3.5, -0.3, COLS + 0.6, QUAY, -0.06, ('#3a3632', 0.12), 'ground')
+HOLES = [(DOCK[0], DOCK[2], DOCK[1], DOCK[3]), (CHAN[0], DOCK[3], CHAN[1], QUAY + 1.0)]   # the dock and the channel: open
+
+
+def around(x0, r0, x1, r1, holes=HOLES):
+    """The rect (x0, r0, x1, r1) less the holes, as rects: banded at the holes' rows, cut at their columns."""
+    cuts = sorted({r0, r1} | {v for h in holes for v in (h[1], h[3]) if r0 < v < r1})
+    out = []
+    for ra, rb in zip(cuts, cuts[1:]):
+        xs = sorted((h[0], h[2]) for h in holes if h[1] < rb and h[3] > ra and h[0] < x1 and h[2] > x0)
+        xa = x0
+        for (ha, hb) in xs:
+            if ha > xa:
+                out.append((xa, ra, ha, rb))
+            xa = max(xa, hb)
+        if xa < x1:
+            out.append((xa, ra, x1, rb))
+    return out
+
+
+for (x0, r0, x1, r1) in around(-0.6, -3.5, COLS + 0.6, QUAY):
+    k.box(x0, r0, -0.3, x1, r1, -0.06, ('#3a3632', 0.12), 'ground')
 I.ground(k, {(c, r) for c in range(0, COLS) for r in range(-3, 3)}, lambda x, r: 'grass', {'grass': ('#3a5a3a', 0.3)})
 # the yard: packed earth and grit, flagged where it's worked hardest, setts along the road and the quay
-k.box(-0.6, ROAD[0], -0.05, COLS + 0.6, QUAY, -0.01, ('#7a6e5c', 0.32), 'path_yard')
+for (x0, r0, x1, r1) in around(-0.6, ROAD[0], COLS + 0.6, QUAY):
+    k.box(x0, r0, -0.05, x1, r1, -0.01, ('#7a6e5c', 0.32), 'path_yard')
 for (x0, r0, x1, r1) in ((-0.6, ROAD[0], COLS + 0.6, ROAD[1]), (-0.6, 28.6, CHAN[0], QUAY - 0.3), (CHAN[1], 28.6, COLS + 0.6, QUAY - 0.3)):
     CAP.cobbles(k, x0, r0, x1, r1, tone='#8e8676', size=0.3)
 CAP.flagged(k, -0.6, 13.6, DOCK[0] - 0.4, 20.0, tone='#8a8274')

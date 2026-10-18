@@ -28,6 +28,7 @@ import assets_lumar as A               # noqa: E402
 import assets_town as W                # noqa: E402
 import assets_village as V             # noqa: E402
 import assets_house as HK              # noqa: E402
+import assets_harbour as HB            # noqa: E402
 
 OUT = sys.argv[1]
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
@@ -57,7 +58,8 @@ SWALL = 35.6               # the Old Town's north wall (its top, here)
 GATE_X = 28.0
 
 # ---- ground --------------------------------------------------------------------------------------------------------
-k.box(-0.6, -3.5, -0.3, COLS + 0.6, 40.0, -0.06, ('#3a3632', 0.12), 'ground')
+for (ra, rb) in ((-3.5, CA[0] - 0.3), (CA[1], CB[0] - 0.3), (CB[1], 40.0)):     # round the canals, never over their water
+    k.box(-0.6, ra, -0.3, COLS + 0.6, rb, -0.06, ('#3a3632', 0.12), 'ground')
 
 
 def worn(x, r):
@@ -242,27 +244,36 @@ for (tx, tr) in ((24.4, 29.4), (33.6, 26.0)):
     HK.tub(k, tx, tr)
 
 # ---- life on the quays -------------------------------------------------------------------------------------------------------
-def quay_life(r, x0, x1, seed, gaps=()):
+def quay_life(r, x0, x1, seed, gaps=(), avoid=()):
     q = random.Random(seed)
     x = x0 + q.uniform(0.5, 1.5)
     while x < x1 - 0.6:
-        if any(a - 0.7 < x < b + 0.7 for a, b in gaps):
+        if any(a - 0.7 < x < b + 0.7 for a, b in gaps) or any(abs(x - ax) < 1.6 for ax in avoid):
             x += 0.8
             continue
         p = q.random()
-        if p < 0.25:
+        if p < 0.2:
             A.barrel(k, x, r, h=0.66, radius=0.24, tone=q.choice((A.WOOD, shade(A.WOOD, 0.85))))
-        elif p < 0.45:
+            if q.random() < 0.5:
+                A.barrel(k, x + 0.5, r + 0.1, h=0.62, radius=0.22, tone=shade(A.WOOD, 0.92))
+        elif p < 0.36:
             A.crate(k, x, r, s=0.46, tone=shade(A.WOOD_L, q.uniform(0.88, 1.06)))
-        elif p < 0.6:
+        elif p < 0.5:
+            HB.cargo_stack(k, x, r - 0.1, n=q.choice((3, 4, 5, 6)))
+            x += 0.8
+        elif p < 0.62:
             V.sacks(k, x, r, n=3)
-        elif p < 0.72:
+        elif p < 0.74:
             HK.tub(k, x, r)
-        x += q.uniform(2.4, 4.4)
+        elif p < 0.86:                                          # a coil of rope on the stones
+            for i in range(4):
+                k.cyl(x, r, i * 0.05, i * 0.05 + 0.05, 0.26 - i * 0.03, ('#b49a6a', 0.3), 'rope', verts=14)
+            k.solid(x - 0.25, r - 0.25, x + 0.25, r + 0.25)
+        x += q.uniform(1.6, 3.2)
 
 
 quay_life(GQ[0] + 0.5, 19.0, FUNI[0], 401)
-quay_life(MQ[0] + 0.5, -0.6, COLS + 0.6, 402, gaps=M_GAPS)
+quay_life(MQ[0] + 0.5, -0.6, COLS + 0.6, 402, gaps=M_GAPS, avoid=(8.0, 22.5, 38.0, 51.0))   # not beside the limes
 quay_life(GS[0] + 0.5, -0.6, COLS + 0.6, 403, gaps=S_GAPS)
 for (x, r) in ((10.0, CA[0] - 0.55), (22.0, CA[0] - 0.55), (36.0, CA[0] - 0.55), (52.0, CA[0] - 0.55),
                (4.0, CB[0] - 0.55), (16.0, CB[0] - 0.55), (27.0, CB[0] - 0.55), (45.0, CB[0] - 0.55), (53.0, CB[0] - 0.55),
