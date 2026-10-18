@@ -184,7 +184,7 @@ for j in range(3):
     k.cyl(PX + 0.72, pier_top + 1.2, 0.02 + j * 0.03, 0.05 + j * 0.03, 0.14 - j * 0.03, '#a08a60', 'rope_coil', verts=10)
 WL.basket(k, PX + 0.3, pier_top + 4.4, fill=ROSE, glow=CRYSTAL[1], s=0.15)
 # at the pier's foot: a cart of crates waiting for the boat, a lamp
-HK.barrels(k, 31.8, 17.0)
+HK.barrels(k, 33.4, 17.3)
 
 WL.tick('north: the terraces -------------')
 # ---- north: the terraces ------------------------------------------------------------------------------------------
@@ -285,9 +285,6 @@ k.tube((20.75, 11.45, 0.0), (20.7, 11.2, 0.62), 0.02, A.WOOD, 'ladder', verts=4)
 for j in range(4):
     zz = 0.1 + j * 0.15
     k.tube((20.3, 11.45 - zz * 0.4, zz), (20.75, 11.45 - zz * 0.4, zz), 0.014, A.WOOD, 'ladder', verts=4)
-for (x, r) in ((30.0, 11.8), (35.6, 11.7)):
-    k.cyl(x, r, 0.0, 0.24, 0.11, ('#6a7480', 0.25), 'bucket', verts=10)
-    k.cyl(x, r, 0.2, 0.23, 0.095, '#3a6a7a', 'bucket_water', verts=10)
 
 WL.tick('the workshop, its yard ----------')
 # ---- the workshop, its yard ------------------------------------------------------------------------------------------
@@ -755,6 +752,42 @@ for (x, r) in ((25.75, 18.2), (26.3, 18.35)):
 W.cart(k, 24.4, 19.3)
 WL.basket(k, 27.2, 18.95, fill=ROSE, glow=CRYSTAL[1], s=0.16)
 WL.signpost(k, 26.8, 16.2, arms=((-0.6, '#d8c8a0'), (0.6, '#c8b890'), (-0.55, '#d0c098')))
+
+# the harvesters' square where the pier's path meets the terraces' and the paths east and west: flagstones, a well, a
+# roseite stall under a striped awning, bunting between the lamps, benches, tubs of flowers, crates and sacks
+SQUARE = {(c, r) for c in range(26, 32) for r in range(13, 18) if (c, r) in walk and math.hypot(c + 0.5 - 28.6, (r + 0.5 - 15.4) * 1.25) < 3.3}
+with WL.own_dice(k, 4601):
+    W.flagstones(k, SQUARE, '#a89c90')
+    I.well(k, 31.6, 16.7, stone='#a89c90')
+    W.market_stall(k, 34.0, 35.6, 15.95, 16.65, awning=('#d0508a', '#f4e6ee'), goods='produce')
+    W.bench(k, 25.25, 26.45, 13.25)
+    for (x, r) in ((27.05, 12.95), (29.95, 13.1), (32.2, 13.55), (26.7, 17.6)):
+        HK.tub(k, x, r, blooms=('#f080b0', '#ffffff'))
+    W.bunting(k, (27.3, 13.6, 1.85), (30.5, 16.6, 1.85), cols=('#f080b0', '#f4e6ee', '#c05090', '#f0d070'))
+    W.bunting(k, (30.5, 16.6, 1.85), (36.7, 15.4, 1.85), cols=('#f080b0', '#f4e6ee', '#c05090', '#f0d070'))
+    A.crate(k, 32.75, 16.15, s=0.42, solid=False)
+    for (x, r) in ((36.0, 16.95), (36.25, 17.1)):
+        k.blob(x, r, 0.2, 0.17, 0.14, 0.22, ('#d8c8a0', 0.3), 'sack', segs=8)
+    # flower boxes along the terraces' foot (the row in front of them stays walkable where the harvest is)
+    for (x0, x1) in ((19.3, 21.9), (30.0, 33.0), (34.2, 36.7)):
+        W.planter(k, x0, x1, 11.68, flowers=('#f080b0', '#ffffff', '#c8a8f0'))
+    # dinghies moored either side of the pier
+    for (x0, x1, r, yaw) in ((25.9, 27.4, 22.4, 8), (29.7, 31.2, 21.7, -10)):
+        sp_ = len(k.parts)
+        W.rowboat(k, x0, x1, r, beam=0.62, oars=False)
+        I.pose(k, sp_, ((x0 + x1) / 2, r, 0), yaw=yaw, dz=C.WZ + 0.08)
+    # by the springs: a bench, paper lanterns on poles, a stack of folded towels, buckets
+    W.bench(k, 39.6, 40.8, 22.7)
+    for (x, r) in ((40.1, 24.6), (43.9, 22.9), (44.0, 26.9)):
+        k.cyl(x, r, 0.0, 1.45, 0.03, A.WOOD_D, 'lantern_pole', verts=6)
+        k.sphere(x + 0.12, r, 1.3, 0.11, 0.14, '#a03050', 'paper_lantern', emit=('#ff8090', 0.8), segs=8)
+        k.point_light(x + 0.12, r + 0.3, 1.25, '#ff9090', 6, radius=0.1, group='flicker')
+        k.solid_post(x, r)
+    for j, col in enumerate(('#f0e8e0', '#e890b0', '#f0e8e0')):
+        k.box(44.55, 21.0, 0.0 + j * 0.07, 44.95, 21.3, 0.07 + j * 0.07, (col, 0.3), 'towel')
+    for (x, r) in ((40.7, 25.6), (45.2, 23.2)):
+        k.cyl(x, r, 0.0, 0.24, 0.11, ('#7a5a34', 0.2), 'bucket', verts=10)
+        k.cyl(x, r, 0.2, 0.23, 0.095, '#5aa4a8', 'bucket_water', verts=10)
 
 # ---- scatter --------------------------------------------------------------------------------------------------------
 SHORE = {(c + dc, r + dr) for (c, r) in land for dc in (-1, 0, 1) for dr in (-1, 0, 1)}      # the land and the coast's lip
