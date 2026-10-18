@@ -225,6 +225,10 @@ var BridgeAudio = (function () {
                 arp: { inst: 'chip', steps: [0, 2, 4, 6, 8, 10, 12, 14], oct: 12, pattern: [0, 1, 2, 1] },
                 bass: { inst: 'chip', steps: [0, 4, 8, 12], oct: -12 }, lead: { inst: 'chip', oct: 24, density: 0.6 },
                 perc: [['chipdrum', [0, 8], 1], ['chipdrum', [2, 6, 10, 14], 0], ['chipdrum', [4, 12], 1]] },
+    // Lantern Row: a slow plucked line over a warm pad, a flute now and then, a shaker on the off-beats
+    lantern:  { bpm: 68, root: 50, mode: 'aeolian', chords: [0, 5, 3, 4, 0, 5, 6, 4], swing: 0.15, pad: 'warm',
+                arp: { inst: 'pluck', steps: [0, 3, 6, 10, 12], oct: 12, pattern: [0, 2, 3, 1] }, bass: { inst: 'bass', steps: [0, 10] },
+                lead: { inst: 'flute', oct: 24, density: 0.26 }, perc: [['shaker', [4, 12]]] },
     lofi:     { bpm: 74, root: 53, mode: 'dorian', chords: [0, 3, 6, 4], swing: 0.22, pad: null,
                 arp: { inst: 'keys', steps: [0, 7, 10], oct: 12, chord: true }, bass: { inst: 'bass', steps: [0, 7, 10] },
                 perc: [['kick', [0, 9]], ['snare', [4, 12]], ['hat', [0, 2, 4, 6, 8, 10, 12, 14]]] },
@@ -253,6 +257,20 @@ var BridgeAudio = (function () {
     casino:   { bpm: 92, root: 50, mode: 'ionian', chords: [1, 4, 0, 5, 1, 4, 0, 0], swing: 0.2, pad: 'warm',
                 arp: { inst: 'keys', steps: [3, 10], oct: 12, chord: true }, bass: { inst: 'upright', steps: [0, 4, 8, 12], walk: true },
                 lead: { inst: 'sax', oct: 12, density: 0.38 }, perc: [['ride', [0, 4, 7, 8, 12, 15]], ['brush', [4, 12]]] },
+    // Moonglow, the jazz bar on the Terraces: a slow minor ballad after midnight — brushes, the upright walking
+    // under it, piano comping in the gaps, the sax taking its time (the Royale's is brighter and quicker)
+    jazz:     { bpm: 68, root: 46, mode: 'dorian', chords: [0, 3, 6, 4, 0, 5, 3, 4], swing: 0.3, pad: 'warm',
+                arp: { inst: 'keys', steps: [2, 7, 11], oct: 12, chord: true }, bass: { inst: 'upright', steps: [0, 4, 8, 12], walk: true },
+                lead: { inst: 'sax', oct: 12, density: 0.26 }, perc: [['brush', [4, 12]], ['ride', [0, 6, 8, 14]]] },
+    // the Mid-Levels' open decks: glass and cyan — the street's synthwave lifted, slower and airier, bells over a soft pulse
+    midlevels: { bpm: 84, root: 50, mode: 'lydian', chords: [0, 4, 5, 3], pad: 'pad',
+                arp: { inst: 'bell', steps: [0, 3, 6, 10, 13], oct: 24, pattern: [0, 2, 1, 3] },
+                bass: { inst: 'sub', steps: [0, 6, 8] }, lead: { inst: 'keys', oct: 24, density: 0.22 },
+                perc: [['kick', [0, 8]], ['hat', [4, 12]]] },
+    // the Spires (Arcadia above the smog): quiet and starlit - a slow lydian harp, bells high up, a cello under it, no drums
+    spires:   { bpm: 58, root: 52, mode: 'lydian', chords: [0, 4, 1, 5, 0, 3, 1, 4], pad: 'warm',
+                arp: { inst: 'pluck', steps: [0, 3, 6, 8, 11, 14], oct: 12, pattern: [0, 2, 1, 3, 2, 1] },
+                bass: { inst: 'bass', steps: [0, 8] }, lead: { inst: 'bell', oct: 36, density: 0.16 } },
     // the Harvest Fair: a jig, the fiddle leading, guitar strummed on the off-beats, a tambourine
     fair:     { bpm: 116, root: 55, mode: 'ionian', chords: [0, 4, 0, 4, 3, 0, 4, 0], swing: 0.18, pad: 'squeeze',
                 arp: { inst: 'pluck', steps: [4, 12], oct: 12, chord: true }, bass: { inst: 'bass', steps: [0, 8] },
@@ -286,6 +304,16 @@ var BridgeAudio = (function () {
     if (id === 'arcadia-casino') return { theme: 'casino', amb: ['crowd', 'slots'] };            // the Neon Royale's floor
     if (id === 'arcadia-casino-cards') return { theme: 'casino', amb: ['murmur', 'chips'] };
     if (/^arcadia-casino-(dining|vip)$/.test(id)) return { theme: 'casino', amb: ['murmur'] };
+    if (id === 'arcadia-jazz') return { theme: 'jazz', amb: ['murmur'] };                       // Moonglow
+    if (id === 'arcadia-terraces') return { theme: 'midlevels', amb: ['rain', 'city', 'murmur'] };  // the Mid-Levels' decks
+    if (id === 'arcadia-atrium') return { theme: 'midlevels', amb: ['murmur', 'crowd'] };
+    if (id === 'arcadia-oldquarter') return { theme: 'lantern', amb: ['rain', 'murmur'] };                 // Lantern Row
+    if (id === 'arcadia-oldquarter-shrine') return { theme: 'lantern', amb: ['rainsoft', 'chimes'] };      // its roof shrine
+    if (id === 'arcadia-spaceport') return { theme: 'arcadia', amb: ['rain', 'city', 'engine'] };
+    if (id === 'arcadia-spires') return { theme: 'spires', amb: ['breeze', 'chimes'] };                  // above the smog: no rain, a high wind
+    if (id === 'arcadia-opera') return { theme: 'spires', amb: ['murmur'] };
+    if (id === 'arcadia-champagne' || id === 'arcadia-members') return { theme: 'casino', amb: ['murmur'] };
+    if (id === 'arcadia-boutique') return { theme: 'spires', amb: ['hum'] };
     if (/^arcadia-(street|skypad|alley|skywalk)$/.test(id)) return { theme: 'arcadia', amb: ['rain', 'city'] };
     if (/^(arcadia|cyber|chrome|junk|tech|null)/.test(id)) return { theme: 'lofi', amb: ['rainsoft', 'hum'] };
     if (/^enigma/.test(id)) return { theme: 'enigma', amb: ['hum', 'beeps'] };
@@ -849,6 +877,15 @@ var BridgeAudio = (function () {
       noiseHit(sfxBus, t + 0.18, 0.08, { freq: 420, ftype: 'lowpass', gain: 0.14, rev: 0.2 });
     },
     frost:   function (t) { [0, 0.04, 0.09].forEach(function (d, i) { voice(sfxBus, t + d, 0.05, { type: 'sine', freq: 2400 + i * 520, gain: 0.04, a: 0.001, d: 0.12, s: 0, r: 0.1 }); }); },
+    // Hoarfell's hidden valley (js/valley.js): a wolf calling the pack, a bat's screech, ice cracking, the wyrm breaking
+    // up through the snow, a yeti's low hoot
+    howl:    function (t) { voice(sfxBus, t, 1.4, { type: 'sine', freq: 330, glide: 1.6, glideT: 0.5, gain: 0.07, a: 0.25, d: 0.6, s: 0.6, r: 0.6, rev: 0.7 });
+                            voice(sfxBus, t + 0.6, 0.9, { type: 'sine', freq: 520, glide: 0.62, glideT: 0.8, gain: 0.05, a: 0.1, d: 0.5, s: 0.5, r: 0.5, rev: 0.7 }); },
+    screech: function (t) { voice(sfxBus, t, 0.12, { type: 'square', freq: 2600, glide: 1.5, glideT: 0.1, gain: 0.03, a: 0.002, d: 0.1, s: 0.2, r: 0.05, cutoff: 6000 }); },
+    icecrack: function (t) { noiseHit(sfxBus, t, 0.12, { freq: 3800, ftype: 'highpass', gain: 0.08 }); noiseHit(sfxBus, t + 0.05, 0.3, { freq: 900, ftype: 'bandpass', q: 1.1, gain: 0.07, rev: 0.3 }); },
+    breach:  function (t) { noiseHit(sfxBus, t, 0.9, { freq: 320, ftype: 'lowpass', gain: 0.2, rev: 0.5 }); noiseHit(sfxBus, t + 0.02, 0.4, { freq: 2800, ftype: 'bandpass', q: 0.7, gain: 0.06 });
+                            voice(sfxBus, t, 0.8, { type: 'sawtooth', freq: 60, glide: 0.6, glideT: 0.6, gain: 0.1, a: 0.02, d: 0.5, s: 0.3, r: 0.3, cutoff: 500, rev: 0.5 }); },
+    hoot:    function (t) { [0, 0.32].forEach(function (d) { voice(sfxBus, t + d, 0.22, { type: 'sine', freq: 190, glide: 0.85, glideT: 0.2, gain: 0.07, a: 0.04, d: 0.2, s: 0.4, r: 0.12, rev: 0.5 }); }); },
     error:   function (t) { voice(sfxBus, t, 0.12, { type: 'square', freq: 140, gain: 0.04, a: 0.002, d: 0.1, s: 0.6, r: 0.05, cutoff: 900 }); },
     // fighting (js/arms.js): each kind of weapon its own swing and its own blow
     swing_blade: function (t) { whoosh(t, 0.09, 5200, 3000, 0.09, 1.6); },
@@ -860,6 +897,10 @@ var BridgeAudio = (function () {
     swing_great: function (t) { whoosh(t, 0.26, 500, 2400, 0.15, 0.9); },
     swing_pick:  function (t) { whoosh(t, 0.12, 900, 2000, 0.1, 1.0); },
     // the bow (js/arms.js, js/bows.js): the creak of the draw, the string's thrum on the loose, an arrow going home
+    // brewing (js/brewing.js): a bubble and a chime; a drink; a bite
+    brew:        function (t) { for (var i = 0; i < 5; i++) voice(sfxBus, t + i * 0.07, 0.06, { type: 'sine', freq: 300 + Math.random() * 400, glide: 1.8, glideT: 0.05, gain: 0.04, a: 0.002, d: 0.06, s: 0, r: 0.04 }); INST.bell(sfxBus, t + 0.4, 88, 0.2, 0.7); },
+    drink:       function (t) { for (var i = 0; i < 3; i++) noiseHit(sfxBus, t + i * 0.12, 0.08, { freq: 500 + i * 80, ftype: 'bandpass', q: 3, gain: 0.08 }); },
+    eat:         function (t) { for (var i = 0; i < 2; i++) noiseHit(sfxBus, t + i * 0.14, 0.06, { freq: 1800, ftype: 'bandpass', q: 1.5, gain: 0.1 }); },
     bow_draw:    function (t) { voice(sfxBus, t, 0.28, { type: 'sawtooth', freq: 140, glide: 1.6, glideT: 0.3, gain: 0.018, a: 0.05, d: 0.25, s: 0, r: 0.05, cutoff: 900 }); },
     bow_full:    function (t) { voice(sfxBus, t, 0.08, { type: 'triangle', freq: 520, gain: 0.025, a: 0.002, d: 0.08, s: 0, r: 0.05 }); },
     swing_bow:   function (t) { voice(sfxBus, t, 0.14, { type: 'triangle', freq: 196, glide: 0.92, glideT: 0.14, gain: 0.07, a: 0.001, d: 0.14, s: 0, r: 0.08 }); whoosh(t + 0.02, 0.1, 3000, 6000, 0.05, 2.0); },

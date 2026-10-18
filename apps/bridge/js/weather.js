@@ -256,23 +256,71 @@ var BridgeWeather = (function () {
   function store() { try { localStorage.setItem(KEY, JSON.stringify(save)); } catch (e) { /* private mode */ } }
   function nightOf(id) { var s = C() ? C().sky(id) : null; return !s || !s.cycles ? (s && s.part === 'night' ? 1 : 0) : 1 - (s.sun || 0); }
 
-  function rain(ctx, W, Hh, t, k, heavy, night) {
-    var n = Math.round((heavy ? 260 : 150) * k), slant = heavy ? 0.6 : 0.35;
-    ctx.fillStyle = 'rgba(36,52,78,' + ((heavy ? 0.26 : 0.16) * k).toFixed(3) + ')';
-    ctx.fillRect(0, 0, W, Hh);
-    ctx.fillStyle = night ? 'rgba(150,170,200,0.4)' : 'rgba(190,210,235,0.5)';
+  // Look Book 2's rain (LB.weatherFx, drawn before its grade): every drop somewhere of its own with a speed of its own
+  // (260-380 px a second), slanting a little, a pixel wide and six long, '#c4d2e8' at 0.35-0.65; one to 700 px of
+  // screen; and where they land a splash — a three-pixel crown on the ground, one to 2600 px, a third of each beat — and
+  // on water rings (js/sea.js, js/litscene.js). The grade is the Look Book's too: the light greyed and dimmed
+  // (multiplied), not a wash laid over it. Before, the drops sat on a lattice at five speeds, so they fell in lines.
+  var DROPS = (function () {
+    function h(i, s) { var x = Math.sin(i * 127.1 + s * 311.7) * 43758.5453; return x - Math.floor(x); }
+    var n = 2400, d = { x: new Float32Array(n), y: new Float32Array(n), sp: new Float32Array(n), a: new Float32Array(n), h: h };
+    for (var i = 0; i < n; i++) { d.x[i] = h(i, 1); d.y[i] = h(i, 2); var s = h(i, 3); d.sp[i] = 260 + s * 120; d.a[i] = 0.35 + s * 0.3; }
+    return d;
+  })();
+  var DROP = [196, 210, 232], CROWN = [221, 230, 244];
+  // the light the rain falls in (what the Look Book's grade multiplied its drops by): a grey day, a blue night
+  function rainAmb(night, heavy) {
+    var d = [0.782, 0.808, 0.847], n = [0.30, 0.36, 0.6];       // the night's lifted a little so the drops still read
+    var a = [d[0] + (n[0] - d[0]) * night, d[1] + (n[1] - d[1]) * night, d[2] + (n[2] - d[2]) * night];
+    return heavy ? a.map(function (v) { return v * 0.86; }) : a;
+  }
+  function tone(c, amb) { return 'rgb(' + Math.round(c[0] * amb[0]) + ',' + Math.round(c[1] * amb[1]) + ',' + Math.round(c[2] * amb[2]) + ')'; }
+  /** o: { ox, oy (the world's offset, so it falls on the world, not the glass), grade (the scene's light greyed: off in
+   *  live light, which greys its own), amb (the light's colour, 0..1), water(x, y) (no crown there: it rings) } */
+  function rain(ctx, W, Hh, t, k, heavy, night, o) {
+    o = o || {};
+    var s = t / 1000, amb = o.amb || rainAmb(night, heavy), ox = o.ox || 0, oy = o.oy || 0;
+    if (o.grade) {                                               // the baked light, grey and a touch dimmer
+      var g = rainAmb(0, heavy), gn = [0.88, 0.88, 0.92], f = Math.min(1, k);
+      var c = [0, 1, 2].map(function (i) { var v = g[i] + (gn[i] - g[i]) * night; return Math.round(255 * (1 - (1 - v) * f)); });
+      ctx.save(); ctx.globalCompositeOperation = 'multiply'; ctx.fillStyle = 'rgb(' + c.join(',') + ')'; ctx.fillRect(0, 0, W, Hh); ctx.restore();
+    }
+    var n = Math.min(DROPS.x.length, Math.round(W * Hh / 700 * (heavy ? 1.7 : 1) * k)), slant = heavy ? 0.34 : 0.22;
+    var SW = W + 40, SH = Hh + 40;
+    ctx.save();
+    ctx.fillStyle = tone(DROP, amb);
     for (var i = 0; i < n; i++) {
-      var sp = (heavy ? 0.5 : 0.32) + (i % 5) * 0.05;
-      var y = ((i * 97.3 + t * sp) % (Hh + 40)) - 20, x = ((i * 53.7 - t * sp * slant) % (W + 40) + W + 40) % (W + 40) - 20;
-      ctx.fillRect(Math.round(x), Math.round(y), 1, 5 + (i % 3));
-      ctx.fillRect(Math.round(x) - 1, Math.round(y) + 5 + (i % 3), 1, 2);
+      var sp = DROPS.sp[i] * (heavy ? 1.25 : 1);
+      var y = (((DROPS.y[i] * SH + s * sp + oy) % SH) + SH) % SH - 20;
+      var x = (((DROPS.x[i] * SW - s * sp * slant + ox) % SW) + SW) % SW - 20;
+      x = Math.round(x); y = Math.round(y);
+      ctx.globalAlpha = DROPS.a[i];
+      ctx.fillRect(x, y, 1, 3); ctx.fillRect(x - 1, y + 3, 1, 3);   // the Look Book's line from (x, y) to (x - 1, y + 5)
     }
-    ctx.fillStyle = 'rgba(210,225,245,0.5)';                      // drops landing
-    for (var j = 0; j < 40 * k; j++) {
-      var ph = ((t / 600) + j * 0.137) % 1, cyc = Math.floor(t / 600 + j * 0.137);
-      var rx = (j * 211.7 + cyc * 97) % W, ry = (j * 131.3 + cyc * 53) % Hh, r = Math.round(1 + ph * 3);
-      if (ph < 0.7) ctx.fillRect(Math.round(rx) - r, Math.round(ry), r * 2 + 1, 1);
+    if (o.splash !== false) {
+      // the splashes: a cell of the world each (so they stay put as the camera moves), a new spot every third of a second:
+      // the Look Book's crown, then (a beat it didn't have, so the drops are seen to land) a ring spreading flat
+      var cell = heavy ? 36 : 44, hh = DROPS.h, cx0 = Math.floor(-ox / cell), cy0 = Math.floor(-oy / cell);
+      ctx.fillStyle = tone(CROWN, amb);
+      for (var cy = cy0; cy <= cy0 + Math.ceil(Hh / cell) + 1; cy++) for (var cx = cx0; cx <= cx0 + Math.ceil(W / cell) + 1; cx++) {
+        var id = cx * 7919 + cy * 104729;
+        if (hh(id, 4) > k) continue;
+        var ph = s * 3 + hh(id, 5), beat = Math.floor(ph), u = ph - beat;
+        if (u > 0.36) continue;
+        var sx = Math.floor(cx * cell + hh(id + beat, 6) * cell + ox), sy = Math.floor(cy * cell + hh(id + beat, 7) * cell + oy);
+        if (sx < 2 || sy < 2 || sx >= W - 2 || sy >= Hh - 1 || (o.water && o.water(sx, sy))) continue;
+        if (u < 0.14) {
+          ctx.globalAlpha = 0.65;
+          ctx.fillRect(sx - 1, sy, 1, 1); ctx.fillRect(sx + 1, sy, 1, 1); ctx.fillRect(sx, sy - 1, 1, 1);
+          if (u < 0.07) ctx.fillRect(sx, sy - 3, 1, 1);                       // a droplet thrown up
+        } else {
+          ctx.globalAlpha = 0.45 * (1 - (u - 0.14) / 0.22);
+          ctx.fillRect(sx - 1, sy - 1, 3, 1); ctx.fillRect(sx - 1, sy + 1, 3, 1);
+          ctx.fillRect(sx - 2, sy, 1, 1); ctx.fillRect(sx + 2, sy, 1, 1);
+        }
+      }
     }
+    ctx.restore();
   }
   function snow(ctx, W, Hh, t, k, blizzard, px, py, ts) {
     var n = Math.round((blizzard ? 340 : 190) * k);
@@ -365,6 +413,19 @@ var BridgeWeather = (function () {
     ctx.restore();
   }
 
+  // how the rain falls on this scene: in live light (js/litscene.js) the light's own colour, already greyed for the
+  // rain, so no grade of ours; a baked scene greyed here; no crowns where it lands in water (that rings)
+  function rainHere(id, offX, offY, night, heavy) {
+    var sc = typeof BridgeScene !== 'undefined' && BridgeScene.get ? BridgeScene.get(id) : null;
+    var lt = sc && sc.lit && typeof BridgeLit !== 'undefined' && BridgeLit.ready(sc) ? BridgeLit.light(id) : null;
+    var amb = null;
+    if (lt && lt.P && lt.P.amb) {
+      var lift = 1 + 0.3 * (lt.night || 0);
+      amb = lt.P.amb.map(function (v) { return Math.min(1, v * lift); });
+    }
+    var water = sc && typeof BridgeSea !== 'undefined' && BridgeSea.waterAt ? BridgeSea.waterAt(sc, offX, offY) : null;
+    return { ox: offX, oy: offY, grade: !lt, amb: amb, water: water };
+  }
   function over(ctx, world, offX, offY, ts, t) {
     var id = wid();
     if (!id || !C() || !C().outdoor(id)) return;
@@ -374,8 +435,8 @@ var BridgeWeather = (function () {
     var p = typeof BridgeCharacter !== 'undefined' ? BridgeCharacter.getRenderPos() : { x: 0, y: 0 };
     var px = offX + (p.x + 0.5) * ts, py = offY + (p.y + 0.5) * ts;
     switch (w.kind) {
-      case 'rain': rain(ctx, W, Hh, t, k, false, night > 0.5); break;
-      case 'storm': rain(ctx, W, Hh, t, k, true, night > 0.5); lightning(ctx, W, Hh, t, k, true); break;
+      case 'rain': rain(ctx, W, Hh, t, k, false, night, rainHere(id, offX, offY, night, false)); break;
+      case 'storm': rain(ctx, W, Hh, t, k, true, night, rainHere(id, offX, offY, night, true)); lightning(ctx, W, Hh, t, k, true); break;
       case 'snow': snow(ctx, W, Hh, t, k, false, px, py, ts); break;
       case 'blizzard': snow(ctx, W, Hh, t, k, true, px, py, ts); break;
       case 'fog': fogBanks(ctx, W, Hh, t, k, '214,220,228', offX, offY); veil(ctx, W, Hh, px, py, ts * 2.5, ts * 8, '205,212,222', 0.78 * k); break;
@@ -383,8 +444,10 @@ var BridgeWeather = (function () {
       case 'smog': ctx.fillStyle = 'rgba(120,100,60,' + (0.22 * k).toFixed(3) + ')'; ctx.fillRect(0, 0, W, Hh); fogBanks(ctx, W, Hh, t, 0.7 * k, '150,130,80', offX, offY); break;
       case 'blackout': {
         var sputter = t - w.from < 6000 && Math.sin(t / 40) > 0.3 ? 0.3 : 1;     // the neon gutters as it goes
-        veil(ctx, W, Hh, px, py, ts * 1.6, ts * 6.5, '3,3,10', 0.8 * k * sputter);
-        ctx.fillStyle = 'rgba(3,3,10,' + (0.25 * k * sputter).toFixed(3) + ')'; ctx.fillRect(0, 0, W, Hh);
+        // night eyes (an Owl's-Eye Tincture, js/brewing.js): the dark gives way round you
+        var eyes = typeof BridgeGear !== 'undefined' && BridgeGear.has('night_eyes') ? 1 : 0;
+        veil(ctx, W, Hh, px, py, ts * (eyes ? 5 : 1.6), ts * (eyes ? 14 : 6.5), '3,3,10', (eyes ? 0.35 : 0.8) * k * sputter);
+        ctx.fillStyle = 'rgba(3,3,10,' + ((eyes ? 0.08 : 0.25) * k * sputter).toFixed(3) + ')'; ctx.fillRect(0, 0, W, Hh);
         break;
       }
       case 'heat': ctx.fillStyle = 'rgba(255,170,80,' + (0.08 * k).toFixed(3) + ')'; ctx.fillRect(0, 0, W, Hh); break;
@@ -402,7 +465,7 @@ var BridgeWeather = (function () {
   function drawSea(ctx, W, Hh, t, bx, by, ts, light) {
     var s = sea();
     if (s.dark > 0.01) { ctx.fillStyle = 'rgba(16,22,34,' + s.dark.toFixed(3) + ')'; ctx.fillRect(0, 0, W, Hh); }
-    if (s.rain > 0.01) rain(ctx, W, Hh, t, s.rain, s.kind === 'storm', nightOf('lumar') > 0.5);
+    if (s.rain > 0.01) rain(ctx, W, Hh, t, s.rain, s.kind === 'storm', nightOf('lumar'), { splash: false });   // it rings on the sea (js/sea.js)
     if (s.kind === 'storm' && s.k > 0.3) lightning(ctx, W, Hh, t, s.k, false);
     if (s.veil > 0.01) {
       veil(ctx, W, Hh, bx, by, ts * 3, ts * 11, '205,212,222', 0.85 * s.veil);

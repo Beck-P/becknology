@@ -3005,6 +3005,18 @@ html.item-get #interact-prompt { display: none !important; }
 .jn-clues li.carrying::before { content: none; }
 .jn-item { width: 16px; height: 16px; image-rendering: pixelated; vertical-align: -3px; margin: 0 6px 0 -16px; }
 
+/* ---- the Sapphire Glassworks: blowing glass at the pipe (js/sapphire.js, workstream B1) ---- */
+#glassblow { position: fixed; inset: 0; z-index: 85; display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.1) 70%); }
+.gb-card { position: relative; width: min(500px, 92vw); box-sizing: border-box; padding: 12px 16px 12px; text-align: center; border-radius: 8px;
+  background: linear-gradient(180deg, rgba(28, 18, 14, 0.97), rgba(12, 8, 7, 0.97)); border: 2px solid #e08a40; color: #e8dcc4;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.6), 0 16px 40px rgba(0, 0, 0, 0.6), 0 0 34px rgba(255, 140, 60, 0.35);
+  font-family: 'Pixelify Sans', 'Courier New', monospace; font-variant-ligatures: none; }
+.gb-card canvas { display: block; width: 100%; height: auto; image-rendering: pixelated; margin: 4px 0 8px; cursor: pointer; }
+.gb-title { font-size: 11px; letter-spacing: 5px; text-transform: uppercase; color: #e8a050; }
+.gb-step { font-size: 20px; color: #f6eedc; margin: 2px 0; }
+.gb-hint { font-size: 13px; color: #c8bca4; line-height: 1.4; min-height: 2.8em; }
+.gb-keys { font-size: 12px; color: #a89c84; margin-top: 4px; }
 /* ---- Eights in the Wayfarer's mess (js/eights.js): green baize in an oak rim, the cards drawn a pixel at a time ---- */
 #eights {
   position: fixed; inset: 0; z-index: 40; display: none; align-items: center; justify-content: center;

@@ -50,6 +50,7 @@ var BridgeGear = (function () {
     fell_watch:   { name: 'Fell Pocket Watch', price: 600, reads: ['hoarfell'], blurb: 'Brass, a hunter case with a snowflake on the lid. Twelve hours to the face: Hoarfell\'s day.' },
     farm_watch:   { name: 'Farmer\'s Watch', price: 500, reads: ['verdance'], blurb: 'Six hours to the face, wound every market day. Tells you when to water.' },
     moonglass:    { name: 'Moonglass', price: 900, reads: ['sylvara'], blurb: 'An elvish lens. Hold it to the sky and the hour shows in it, and the moon.' },
+    chronometer:  { name: 'Ship\'s Chronometer', price: 700, reads: ['lumar'], blurb: 'Brassworth\'s of Guild Row: eight hours round the face, Lumar\'s day, gimballed in brass so it keeps time in a gale.' },
     wrist_chrono: { name: 'World Watch', price: 2500, reads: ['all'], blurb: 'Every world on one face: tap the time by the place\'s name and it shows them all, with the weather. Synced to Eastern time; glows in the dark, obviously.' }
   };
   var SHOPS = {
@@ -59,6 +60,7 @@ var BridgeGear = (function () {
     joro:             { title: "JORO'S BACK ROOM", goods: ['suit:plate', 'pack:expedition'] },
     vex:              { title: "VEX'S STASH", goods: ['pack:voidweave'] },
     alpine:           { title: 'ALPINE OUTFITTERS', goods: ['suit:thermal', 'pack:expedition', 'time:fell_watch'] },
+    brassworth:       { title: "BRASSWORTH'S INSTRUMENTS", goods: ['time:chronometer', 'time:wrist_chrono'] },
     pennyworth:       { title: "PENNYWORTH'S GLASS CASE", goods: ['time:farm_watch'] },
     elf_lens:         { title: "MIRELLE'S LENS", goods: ['time:moonglass'] },
     peddler:          { title: 'THE PEDDLER\'S CLOTHES RAIL', goods: ['suit:mystic', 'suit:ranger'] }
@@ -93,8 +95,10 @@ var BridgeGear = (function () {
   function style() { return state.style; }
   function colour() { return state.colour || null; }
   function perk() { return SUITS[state.style].perk; }
-  function speed() { return (1 + (perk().speed || 0)) * (typeof BridgeMagic !== 'undefined' ? BridgeMagic.speed() : 1); }
-  function bonus() { return { hp: perk().hp || 0, energy: perk().energy || 0 }; }
+  // implants add to the suit's perk (js/implants.js: core → health, lungs → energy, legs → speed)
+  function imp() { return typeof BridgeImplants !== 'undefined' ? BridgeImplants.bonus() : {}; }
+  function speed() { return (1 + (perk().speed || 0) + (typeof BridgeImplants !== 'undefined' ? BridgeImplants.speed() : 0)) * (typeof BridgeMagic !== 'undefined' ? BridgeMagic.speed() : 1); }
+  function bonus() { var i = imp(); return { hp: (perk().hp || 0) + (i.hp || 0), energy: (perk().energy || 0) + (i.energy || 0) }; }
   function has(what) { return !!perk()[what] || (typeof BridgeMagic !== 'undefined' && BridgeMagic.has(what)); }
   function bestPack() {
     var best = 'flight';

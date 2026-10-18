@@ -76,11 +76,13 @@ var BridgeMagic = (function () {
   function held(id) { return typeof BridgeInventory !== 'undefined' && BridgeInventory.getSelectedItemId && BridgeInventory.getSelectedItemId() === id; }
 
   // ---- passive charms ---------------------------------------------------------------------------------------------
-  function speed() { return carried('heron_feather') ? 1.12 : 1; }
+  // a potion brewed with Mirelle works the same way (js/brewing.js: warmth, night eyes, the tide, a quicker step)
+  function brewed(k) { return typeof BridgeBrewing !== 'undefined' && BridgeBrewing.active(k); }
+  function speed() { return (carried('heron_feather') ? 1.12 : 1) * (typeof BridgeBrewing !== 'undefined' ? BridgeBrewing.speed() : 1); }
   function has(what) {
-    if (what === 'cold') return carried('frost_ring') || carried('lantern_beyond');
-    if (what === 'tide') return carried('tide_charm');
-    return false;
+    if (what === 'cold') return carried('frost_ring') || carried('lantern_beyond') || brewed('cold');
+    if (what === 'tide') return carried('tide_charm') || brewed('tide');
+    return brewed(what);
   }
 
   // ---- the Peddler: where he is today ------------------------------------------------------------------------------
@@ -249,7 +251,7 @@ var BridgeMagic = (function () {
       ctx.fillStyle = '#ffffff'; ctx.fillRect(X, Y, 1, 1);
     });
     // curios: a glint now and then where one lies, bright to the lantern
-    var wid = BridgeWorld.getWorldId && BridgeWorld.getWorldId(), lamp = held('glimmer_lantern') || held('lantern_beyond');
+    var wid = BridgeWorld.getWorldId && BridgeWorld.getWorldId(), lamp = held('glimmer_lantern') || held('lantern_beyond') || brewed('glimmer');
     var px = typeof BridgeCharacter !== 'undefined' ? BridgeCharacter.getX() : 0, py = typeof BridgeCharacter !== 'undefined' ? BridgeCharacter.getY() : 0;
     CURIOS.forEach(function (c, i) {
       if (c.world !== wid || st.found[c.id]) return;

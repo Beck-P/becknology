@@ -304,6 +304,7 @@ var BridgeAboard = (function () {
     return people().map(function (id) {
       var st = where(id, c) || below(), p = C[id];
       return { id: id, name: id === 'dorrie' ? 'Dorrie Kettle' : p.name, role: id === 'dorrie' ? 'Cook' : p.crew.role, sheet: sheets(id)[0],
+               face: id === 'dorrie' ? 'npc-dorrie' : p && p.sheet,                              // their portrait (js/look.js)
                doing: st.doing, where: ROOM_NAME[st.state === 'walking' ? st.to.room : st.room] || st.room, state: st.state === 'walking' ? 'off' : st.state };
     });
   }

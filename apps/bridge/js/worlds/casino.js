@@ -505,18 +505,21 @@ var BridgeRoyale = (function () {
       if (world.royale) drawBeams(ctx, world, offX, offY, ts, now);
       if (world.casino && world.casino.sky) drawSky(ctx, world, offX, offY, ts, now);
     },
-    ground: function (ctx, world, offX, offY, ts, now) {
-      var L = world.casino && world.casino.live;
-      if (!L) return;
-      var i;
-      for (i = 0; i < (L.screens || []).length; i++) drawScreen(ctx, L.screens[i], i, offX, offY, ts, now);
-      for (i = 0; i < (L.wheels || []).length; i++) drawWheel(ctx, L.wheels[i], i, offX, offY, ts, now);
-      drawChases(ctx, L.chases || [], offX, offY, ts, now);
-      drawBulbs(ctx, L.bulbs || [], offX, offY, ts, now);
-      drawGlints(ctx, L.glints || [], offX, offY, ts, now);
-      drawDice(ctx, L.dice || [], offX, offY, ts, now);
-    }
+    ground: live
   });
+  // the same tables elsewhere: Château Aurelle's salon on Hoarfell (tools/bridge-art/scenes/hoarfell_chateau.py)
+  BridgeWorld.registerSceneHooks('hoarfell', { ground: live });
+  function live(ctx, world, offX, offY, ts, now) {
+    var L = world.casino && world.casino.live;
+    if (!L) return;
+    var i;
+    for (i = 0; i < (L.screens || []).length; i++) drawScreen(ctx, L.screens[i], i, offX, offY, ts, now);
+    for (i = 0; i < (L.wheels || []).length; i++) drawWheel(ctx, L.wheels[i], i, offX, offY, ts, now);
+    drawChases(ctx, L.chases || [], offX, offY, ts, now);
+    drawBulbs(ctx, L.bulbs || [], offX, offY, ts, now);
+    drawGlints(ctx, L.glints || [], offX, offY, ts, now);
+    drawDice(ctx, L.dice || [], offX, offY, ts, now);
+  }
 
   // ---- the Crown Room's rope ------------------------------------------------------------------------------------------------
   function vipNeed() {

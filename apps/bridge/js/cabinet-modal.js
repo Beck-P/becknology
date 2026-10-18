@@ -62,7 +62,7 @@ var BridgeCabinetModal = (function () {
 
     overlayEl = document.createElement('div');
     overlayEl.id = 'cabinet-modal-overlay';
-    overlayEl.className = 'cm-' + frameFor() + (opts.together ? ' cm-together' : '');
+    overlayEl.className = 'cm-' + frameFor() + (opts.skin ? ' cm-' + opts.skin : '') + (opts.together ? ' cm-together' : '');
     overlayEl.innerHTML = renderShellHTML();
     document.body.appendChild(overlayEl);
 
