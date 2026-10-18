@@ -2544,18 +2544,6 @@
   "arrows": "open",
   "interactions": [
     {
-      "x": 7,
-      "y": 23,
-      "type": "enter_world",
-      "label": "THE QUEEN'S STAIR",
-      "prompt": "PRESS E TO CLIMB DOWN TO THE BOUGHS",
-      "target": "sylvara-boughs",
-      "spawn": [
-        13,
-        31
-      ]
-    },
-    {
       "x": 14,
       "y": 16,
       "type": "enter_world",
