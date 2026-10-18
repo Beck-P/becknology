@@ -116,9 +116,11 @@ k.solid(pc - 2.0, pr1, pc - 1.2, pr1 + 1.4)
 k.solid(pc + 1.2, pr1, pc + 2.0, pr1 + 1.4)
 
 # ---- the palace gardens: parterres round a fountain, topiary, statues --------------------------------------------------------
-def parterre(x0, r0, x1, r1, seed):
-    """A bed of clipped box in a pattern: a border all round, a diamond inside, flowers in its corners."""
+def parterre(bx0, br0, bx1, br1, seed):
+    """A bed of clipped box in a pattern: a border all round, a diamond inside, flowers in its corners. On whole tiles
+    (a solid longer than a tile blocks every cell it touches), drawn a little inside them so the paths read."""
     pr = random.Random(seed)
+    x0, r0, x1, r1 = bx0 + 0.1, br0 + 0.1, bx1 - 0.1, br1 - 0.1
     with k.foliage('leaf'):
         for (a, b, c, d) in ((x0, r0, x1, r0 + 0.3), (x0, r1 - 0.3, x1, r1), (x0, r0, x0 + 0.3, r1), (x1 - 0.3, r0, x1, r1)):
             k.box(a, b, 0.0, c, d, 0.32, (shade('#2e5a2a', pr.uniform(0.92, 1.06)), 0.25), 'hedge', bevel=0.06)
@@ -129,11 +131,12 @@ def parterre(x0, r0, x1, r1, seed):
             k.tube((p[0], p[1], 0.12), (q[0], q[1], 0.12), 0.13, ('#2e5a2a', 0.25), 'hedge', verts=6, smooth=False)
     for (fx, fr) in ((x0 + 0.6, r0 + 0.6), (x1 - 0.6, r0 + 0.6), (x0 + 0.6, r1 - 0.6), (x1 - 0.6, r1 - 0.6)):
         V.flower_bed(k, fx - 0.25, fr - 0.2, fx + 0.25, fr + 0.2)
-    k.solid(x0, r0, x1, r1)
+    k.solid(bx0, br0, bx1, br1)
 
 
-for (x0, r0, x1, r1, sd) in ((14.0, 8.4, 20.0, 12.2, 1), (20.6, 8.4, 26.4, 12.2, 2), (29.6, 8.4, 35.4, 12.2, 3), (36.0, 8.4, 42.0, 12.2, 4),
-                             (14.0, 13.8, 20.0, 17.6, 5), (20.6, 13.8, 26.4, 17.6, 6), (29.6, 13.8, 35.4, 17.6, 7), (36.0, 13.8, 42.0, 17.6, 8)):
+# gravel walks a tile wide between them: x 20, 26-29 (the axis, round the fountain), 35; rows 12-13 across, 18 below
+for (x0, r0, x1, r1, sd) in ((14, 8, 20, 12, 1), (21, 8, 26, 12, 2), (30, 8, 35, 12, 3), (36, 8, 42, 12, 4),
+                             (14, 14, 20, 18, 5), (21, 14, 26, 18, 6), (30, 14, 35, 18, 7), (36, 14, 42, 18, 8)):
     parterre(x0, r0, x1, r1, sd)
 W.fountain(k, 28.0, 13.0, rad=1.0)
 k.solid(27.0, 12.2, 29.0, 13.9)
@@ -142,7 +145,7 @@ with k.foliage('needle'):
         k.cone(x, r, 0.15, 1.6, 0.36, 0.04, ('#2a4a2a', 0.25), 'topiary', verts=12)
         k.cyl(x, r, 0.0, 0.18, 0.22, ('#7a5a3a', 0.12), 'topiary_pot', verts=10)
         k.solid(x - 0.3, r - 0.3, x + 0.3, r + 0.3)
-for (x, r) in ((20.3, 13.0), (35.7, 13.0)):
+for (x, r) in ((23.5, 10.0), (32.5, 10.0)):                    # in the middle of the inner beds
     W.statue(k, x, r)
     k.solid(x - 0.4, r - 0.4, x + 0.4, r + 0.4)
 for x in (16.0, 24.0, 32.0, 40.0):
@@ -278,7 +281,7 @@ def look(label, x, y, text, prompt='PRESS E TO LOOK'):
 
 
 inters = [
-    {'x': FUNI_X, 'y': int(EDGE) - 1, 'type': 'enter_world', 'target': 'lumar-crown-canals', 'spawn': [45, 4], 'label': 'FUNICULAR', 'prompt': 'PRESS E TO RIDE DOWN'},
+    {'x': int(FUNI_X), 'y': int(EDGE) - 1, 'type': 'enter_world', 'target': 'lumar-crown-canals', 'spawn': [45, 4], 'label': 'FUNICULAR', 'prompt': 'PRESS E TO RIDE DOWN'},
     {'x': int(pc), 'y': int(PAL[3]) + 2, 'type': 'palace_gate', 'label': 'GARDEN DOOR', 'prompt': 'PRESS E TO ASK'},
     {'x': 5, 'y': 8, 'type': 'dialog', 'label': 'ACADEMY MASTER', 'prompt': 'PRESS E TO TALK', 'dialog': 'THE MASTER WATCHES THE CADETS ON THE MAST.'},
     {'x': int(ox) + 1, 'y': int(orow) + 2, 'type': 'dialog', 'label': 'ASTRONOMER', 'prompt': 'PRESS E TO TALK', 'dialog': 'THE ASTRONOMER IS WRITING DOWN A STAR.'},
@@ -290,7 +293,7 @@ inters = [
     look('PARTERRE', 17, 12, 'CLIPPED BOX, GRAVEL, ROSES. THE HEAD GARDENER CUTS IT WITH SCISSORS. ACTUAL SCISSORS.'),
 ]
 w = {'name': 'The Hill', 'width': COLS, 'height': ROWS, 'tileSize': 16, 'tileset': 'lumar', 'fixedCamera': True,
-     'spawns': {'player': [FUNI_X + 3, int(EDGE) - 2]}, 'moonColor': '#d8f0e0', 'tiles': [], 'collisions': [], 'tileNames': {}, 'interactions': inters}
+     'spawns': {'player': [int(FUNI_X) + 3, int(EDGE) - 2]}, 'moonColor': '#d8f0e0', 'tiles': [], 'collisions': [], 'tileNames': {}, 'interactions': inters}
 open(WORLD, 'w').write(json.dumps(w, indent=2) + '\n')
 k.solid(5, 8, 6, 9)                                        # the academy master on the parade ground
 k.solid(int(ox) + 1, int(orow) + 2, int(ox) + 2, int(orow) + 3)   # the astronomer at the tower's door
