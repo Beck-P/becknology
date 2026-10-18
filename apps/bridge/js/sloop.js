@@ -167,6 +167,7 @@ var BridgeSloop = (function () {
     'lumar': [-15.7, 16.1, -19.7, 7.1], 'lumar-crown': [-31.3, 32.4, -25.0, 17.5], 'lumar-tern': [-19.2, 19.3, -12.7, 9.5],
     'lumar-holm': [-20.8, 20.5, -14.5, 9.3], 'lumar-sapphire': [-28.2, 29.0, -14.5, 13.5], 'lumar-rose': [-27.9, 27.7, -18.4, 21.0],
     'lumar-crimson': [-26.4, 27.1, -19.2, 18.3], 'lumar-midnight': [-24.8, 24.3, -17.6, 18.1],
+    'lumar-cliff': [-29.5, 29.7, -25.5, 22.4],
     'lumar-saltmere': [-21.0, 21.3, -15.0, 10.1], 'lumar-cinder': [-27.9, 28.1, -22.9, 17.4]
   };
   var LINES = [                                         // what the fisherman says when you hail him
@@ -438,6 +439,7 @@ var BridgeSloop = (function () {
     'lumar': [8.0, 17.75, 0], 'lumar-sapphire': [28.5, 28.75, 0], 'lumar-rose': [28.5, 25.75, 0],
     'lumar-crimson': [28.5, 38.75, 0], 'lumar-midnight': [24.5, 39.75, 0],
     'lumar-crown': [22.5, 37.75, 0], 'lumar-tern': [19.5, 21.75, 0], 'lumar-holm': [21.5, 25.75, 0],
+    'lumar-cliff': [30.5, 35.75, 0],
     'lumar-cinder': [28.5, 31.75, 0], 'lumar-saltmere': [22.5, 28.75, 0]
   };
   function afloat(I, x, r, rad) {                     // nothing standing out of the water here (shallows will do)
@@ -907,9 +909,11 @@ var BridgeSloop = (function () {
   // Lumar harbour opens to the south: MOUTH is the pier's end from the map's centre) and of each other.
   var MOUTH = { 'lumar': [0, 7.75], 'lumar-crown': [-9.5, 14.75], 'lumar-tern': [0.5, 7.75], 'lumar-holm': [0.5, 9.75],
                 'lumar-sapphire': [-0.5, 9.75], 'lumar-rose': [0.5, 4.75], 'lumar-crimson': [0.5, 17.75], 'lumar-midnight': [-1.5, 18.75],
+                'lumar-cliff': [0.5, 10.75],
                 'lumar-cinder': [0.5, 10.75], 'lumar-saltmere': [-0.5, 10.75] };
   var LANES = [['lumar', 'lumar-crown'], ['lumar', 'lumar-tern'], ['lumar-tern', 'lumar-crown'], ['lumar', 'lumar-sapphire'],
-               ['lumar', 'lumar-rose'], ['lumar-crown', 'lumar-rose'], ['lumar-sapphire', 'lumar-rose']];
+               ['lumar', 'lumar-rose'], ['lumar-crown', 'lumar-rose'], ['lumar-sapphire', 'lumar-rose'],
+               ['lumar-sapphire', 'lumar-cliff']];
   var BEATS = [                                         // [role, chart from, chart to, the ships in company, line astern]
     ['navy', [0.40, 0.27], [0.62, 0.27], ['navy_brig', 'navy_cutter']],
     ['navy', [0.42, 0.53], [0.38, 0.65], ['navy_galleon', 'navy_brig']],
@@ -918,8 +922,10 @@ var BridgeSloop = (function () {
     ['privateer', [0.47, 0.71], [0.50, 0.90], ['privateer_raider', 'privateer_brig']]
   ];
   // the fishing grounds: bearings off each island (radians, 0 east, -π/2 north - never south, where its harbour opens)
-  var GROUNDS = { 'lumar': [-2.4, -0.6], 'lumar-crown': [-2.3, -0.8, 0.15], 'lumar-tern': [-1.6, -2.75, -0.25], 'lumar-sapphire': [-2.1, -0.5], 'lumar-rose': [-1.3, 0.3] };
-  var GOODS = { 'lumar': 'spore-lamp oil', 'lumar-crown': 'pine timber', 'lumar-tern': 'salt fish', 'lumar-sapphire': 'Sapphire glass', 'lumar-rose': 'spore silk' };
+  var GROUNDS = { 'lumar': [-2.4, -0.6], 'lumar-crown': [-2.3, -0.8, 0.15], 'lumar-tern': [-1.6, -2.75, -0.25], 'lumar-sapphire': [-2.1, -0.5], 'lumar-rose': [-1.3, 0.3],
+                  'lumar-cliff': [-2.6, -0.4] };
+  var GOODS = { 'lumar': 'spore-lamp oil', 'lumar-crown': 'pine timber', 'lumar-tern': 'salt fish', 'lumar-sapphire': 'Sapphire glass', 'lumar-rose': 'spore silk',
+                'lumar-cliff': 'caldera wine' };
   var BLACKSAIL = ['#3e383c', '#2c2629', '#1c1619'], WHITESAIL = ['#ece6d6', '#c8c2b2', '#9a9688'];
   // your own ship's colours (js/shipyard.js: a ship's `look` - her paint, her sails, her figurehead, chosen on the slip or
   // repainted at the holm): her paint over her topsides (js/shipkit.js `PAINT`, the deck left bare), her sails a cloth of
