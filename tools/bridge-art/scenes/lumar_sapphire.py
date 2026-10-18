@@ -279,17 +279,18 @@ V.sacks(k, 18.9, 21.75, n=3)
 for (bx, br) in ((36.3, 21.45), (36.7, 21.75)):
     P.fish_basket(k, bx, br)
 W.cart(k, 18.4, 18.9)
-for (tx, tr) in ((28.25, 17.75), (30.75, 17.75), (28.2, 19.55), (30.8, 19.55)):  # tubs at the corners of the well's flags
+for (tx, tr) in ((28.25, 17.75), (30.75, 17.75)):                          # tubs at the corners of the well's flags (row 19 is
+                                                                             # js/harbourlife.js's ropewalk: nothing on it from 20 to 31)
     HK.tub(k, tx, tr)
-k.box(25.15, 19.15, 0.0, 26.85, 19.75, 0.62, (A.WOOD, 0.14), 'trestle', bevel=0.01)      # a trestle of the morning's catch
-k.box(25.2, 19.18, 0.62, 26.8, 19.72, 0.68, ('#dfeef2', 0.06), 'ice')
+k.box(25.15, 18.1, 0.0, 26.85, 18.7, 0.62, (A.WOOD, 0.14), 'trestle', bevel=0.01)      # a trestle of the morning's catch
+k.box(25.2, 18.13, 0.62, 26.8, 18.67, 0.68, ('#dfeef2', 0.06), 'ice')
 for i in range(10):
-    k.blob(25.35 + (i % 5) * 0.32, 19.3 + (i // 5) * 0.22, 0.71, 0.11, 0.045, 0.03,
+    k.blob(25.35 + (i % 5) * 0.32, 18.25 + (i // 5) * 0.22, 0.71, 0.11, 0.045, 0.03,
            (k.rng.choice(('#9ab0b8', '#b8c4c8', '#8a9aa6', '#c87a5a', '#4a6aa0')), 0.08), 'fish', segs=8)
-k.solid(25.15, 19.15, 26.85, 19.75)
-A.crate(k, 22.0, 19.1, s=0.55, tone=A.WOOD_L, contents='apples')
-A.crate(k, 22.6, 19.2, s=0.5, tone=shade(A.WOOD_L, 0.9))
-A.crate(k, 22.3, 19.15, s=0.45, z0=0.47, tone=shade(A.WOOD_L, 1.08), solid=False)
+k.solid(25.15, 18.1, 26.85, 18.7)
+A.crate(k, 21.95, 18.05, s=0.55, tone=A.WOOD_L, contents='apples')
+A.crate(k, 22.55, 18.15, s=0.5, tone=shade(A.WOOD_L, 0.9))
+A.crate(k, 22.25, 18.1, s=0.45, z0=0.47, tone=shade(A.WOOD_L, 1.08), solid=False)
 HK.barrels(k, 33.4, 19.3)
 V.sacks(k, 36.4, 19.4, n=4, col=('#c8b890', '#d8c8a0', '#b8a880'))
 W.bunting(k, (14.5, 22.4, 2.0), (27.0, 21.6, 2.0), sag=0.45, cols=('#2a4a9a', '#e8e8f0', '#c0a040', '#4080f0'))
@@ -487,6 +488,7 @@ for r in range(ROWS):
         if (c, r) not in land and (c, r) not in PIER and (c, r) not in FPIER:
             w['collisions'][r][c] = 1
             w['tiles'][r][c] = 1
+w['collisions'][22][45] = 0                        # the way through the floating market's gate stays open
 w['collisions'][QUAY - 1][19] = 0                  # the sailors' row along the quay stays open (the barrels' foot just touches it)
 w['view'] = [-0.5, -2.0, COLS + 0.5, ROWS + 1.0]
 open(WORLD, 'w').write(json.dumps(w, indent=2) + '\n')
