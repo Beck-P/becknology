@@ -7,6 +7,9 @@
   "lumar-rose":             { "n": 9,  "wardrobe": "rose",    "busy": "day" },
   "lumar-sapphire-market":  { "n": 12, "wardrobe": "sapphire", "busy": "night" },
   "lumar-cliff":            { "n": 14, "wardrobe": "sapphire", "busy": "day" },
+  "lumar-sapphire-market":  { "n": 12, "wardrobe": "sapphire", "busy": "night" },
+  "lumar-rose-springs":     { "n": 10, "wardrobe": "rose",    "busy": "always" },
+  "lumar-rose-teahouse":    { "n": 3,  "wardrobe": "rose",    "busy": "always", "sit": 0.8 },
   "lumar-tern":             { "n": 7,  "wardrobe": "lumar",   "busy": "day", "spots": [[25, 14, "up"], [12, 17, "up"]] },
   "lumar-crimson":          { "n": 6,  "wardrobe": "pirates", "busy": "always" },
   "lumar-cinder":           { "n": 14, "wardrobe": "pirates", "busy": "always" },
@@ -49,6 +52,9 @@
   "hoarfell":               { "n": 14, "wardrobe": "hoarfell", "busy": "day" },
   "hoarfell-lodge":         { "n": 7,  "wardrobe": "hoarfell", "busy": "night", "sit": 0.8 },
   "hoarfell-skihire":       { "n": 3,  "wardrobe": "hoarfell", "busy": "day" },
+  "hoarfell-promenade":     { "n": 16, "wardrobe": "aurelle", "busy": "day" },
+  "hoarfell-aurelle":       { "n": 18, "wardrobe": "aurelle", "busy": "day" },
+  "hoarfell-chateau":       { "n": 9,  "wardrobe": "aurelle", "busy": "night", "sit": 0.5 },
 
   "sylvara":                { "n": 7,  "wardrobe": "sylvara", "busy": "always", "emerge": 4 },
   "sylvara-hall":           { "n": 4,  "wardrobe": "sylvara", "busy": "always" },
@@ -193,6 +199,15 @@
       "THEY SAY THERE'S A LIGHT PAST THE HOARSPIRE. I SAY THERE'S A BAR AT THE BOTTOM.",
       "YOU'LL WANT A THERMAL SUIT IF YOU'RE GOING UP. TRUST ME ON THIS."
     ],
+    "aurelle": [
+      "DARLING, THE SNOW IS SIMPLY TOO WHITE TODAY. I'VE HAD TO WEAR THE DARK GLASSES.",
+      "WE CAME UP ON THE TRAIN. THE VIADUCT! I SCREAMED, QUITE SINCERELY.",
+      "LOST A SMALL FORTUNE AT THE ROULETTE. WON A LARGER ONE AT THE CRAPS. DON'T TELL MOTHER EITHER.",
+      "THE THERMES BEFORE LUNCH, THE TERRACE AFTER. SKIING? OH, AT SOME POINT.",
+      "MAISON VAUTRIN HAS A SABLE IN THE WINDOW. I'VE VISITED IT EVERY DAY. LIKE A PET.",
+      "THEY SAY THE GUIDES CROSS THE GLACIER TO SOMEWHERE WARM. I SAY THE CHAMPAGNE BAR IS WARM.",
+      "THE CONCIERGE KNOWS EVERYTHING. I ASKED HIM WHAT HE DIDN'T KNOW AND HE SIMPLY SMILED."
+    ],
     "sylvara": [
       "THE LANTERNS ARE LIT. THE WOOD IS LISTENING.",
       "THE QUEEN WALKED THE MOONWELL PATH AT DAWN. THE FLOWERS TURNED TO WATCH HER.",
@@ -225,6 +240,7 @@
     "midlevels": [{ "id": "honey", "pay": 30, "ask": "IS THAT REAL {item}? FROM A FARM? I'D PAY {pay}. NOBODY UP HERE HAS SEEN A BEE." }, { "id": "sea_glass", "pay": 34 }],
     "verdance": [{ "id": "bread", "pay": 14 }, { "id": "sea_glass", "pay": 24 }],
     "hoarfell": [{ "id": "roast_chestnuts", "pay": 20 }, { "id": "summit_crystal", "pay": 90 }],
+    "aurelle":  [{ "id": "edelweiss", "pay": 60, "ask": "IS THAT AN {item}? A REAL ONE, FROM THE ROCK? {pay} - FOR MY HAT." }, { "id": "hoar_crystal", "pay": 45 }],
     "sylvara":  [{ "id": "sea_glass", "pay": 30, "ask": "THE {item} FROM THE SPORE SEA - YOU WOULDN'T HAVE ONE? I'D TRADE {pay} FOR ITS LIGHT." }]
   }
 }

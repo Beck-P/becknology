@@ -1708,6 +1708,33 @@
     ]
   },
   "nell": {
+    "name": "Nell Ashby",
+    "role": "Keeps the flower stall on the square",
+    "sheet": "npc-vfolk-a",
+    "at": [
+      {
+        "world": "verdance-village",
+        "label": "NELL"
+      }
+    ],
+    "greet": "HELLO! A POSY? FOR SOMEONE SPECIAL, OR FOR YOU? BOTH ARE ALLOWED. NAN SAYS EVERYONE SHOULD HAVE FLOWERS AT LEAST ONCE A WEEK.",
+    "again": "YOU AGAIN! I'VE KEPT YOU THE BEST SUNFLOWER. DON'T TELL PERCY.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "NAN GROWS THEM OVER THE BRIDGE, I SELL THEM ON THE SQUARE, THE BEES DO MOST OF THE WORK. NAN'S COTTAGE IS THE ONE WITH THE APPLE TREES."
+      },
+      {
+        "q": "Gifts",
+        "a": "EVERYONE HAS SOMETHING THEY LOVE. BRIDGET LOVES HONEY. WAT PRETENDS HE DOESN'T LIKE FLOWERS BUT HE KEEPS THE LAST ONE I GAVE HIM IN A JAR ON THE ANVIL. LUDD LOVES A GOOD PUMPKIN."
+      },
+      {
+        "q": "The goat",
+        "a": "NOBODY KNOWS WHOSE IT IS. IT TURNS UP, EATS SOMETHING IMPORTANT, AND LEAVES. WE PUT UP NOTICES. IT EATS THE NOTICES."
+      }
+    ]
+  },
+  "drip_nell": {
     "name": "Nell",
     "role": "Behind the bar at The Drip",
     "sheet": "npc-nell",
@@ -3491,6 +3518,14 @@
       }
     ]
   },
+  "aubert": {"name": "Monsieur Aubert", "role": "Concierge, Château Aurelle", "sheet": "npc-aubert", "at": [{"world": "hoarfell-aurelle", "label": "MONSIEUR AUBERT"}, {"world": "hoarfell-chateau", "label": "MONSIEUR AUBERT"}], "greet": "WELCOME TO AURELLE. YOU LOOK AS IF THE MOUNTAIN HAS BEEN UNKIND TO YOU. THE CHATEAU WILL BE KINDER.", "again": "AH. A PLEASURE, AS ALWAYS.", "topics": [{"q": "About you", "a": "THIRTY-ONE YEARS AT THIS DOOR. I HAVE FOUND A PRINCE'S DOG, A DUCHESS'S HUSBAND AND, ONCE, A WHOLE STRING QUARTET IN THE WRONG HOTEL. I HAVE NEVER LOST A KEY. I DO NOT INTEND TO START."}, {"q": "A room for the night", "a": "OF COURSE.", "use": {"type": "aurelle", "label": "CONCIERGE"}}, {"q": "Aurelle", "a": "MADAME HELOISE AURELLE BUILT A SANATORIUM HERE FOR THE AIR. THE AIR WAS EXCELLENT; THE PATIENTS PREFERRED CARDS. NOW THERE IS THE SALON, THE THERMES, LA TABLE, AND A TRAIN THAT BRINGS PEOPLE UP FROM FELLHAVEN TO SPEND MONEY IN ALL OF THEM."}, {"q": "Heard anything?", "a": "A GENTLEMAN WON AT THE CRAPS TABLE LAST NIGHT FOR FOUR HOURS AND THEN LOST IT ALL IN FOUR MINUTES. HE TIPPED ME BEFORE THE FOUR MINUTES. A WISE MAN. AND THE GUIDES SAY THE VALLEY BEYOND THE COL IS STEAMING AGAIN. THEY ALWAYS SAY THAT IN WINTER."}]},
+  "anouk": {"name": "Anouk Varenne", "role": "Drives the sleighs, Aurelle", "sheet": "npc-anouk", "at": [{"world": "hoarfell-aurelle", "label": "ANOUK"}], "greet": "YOU WANT TO GO ROUND THE TOWN? THE GREY'S BEEN WAITING ALL MORNING FOR SOMEBODY WORTH PULLING.", "again": "BACK FOR ANOTHER LAP?", "topics": [{"q": "A sleigh ride", "a": "UP YOU GET.", "use": {"type": "aurelle", "label": "SLEIGHS"}}, {"q": "About you", "a": "MY GRANDFATHER DROVE THE MAIL SLEIGH OVER THE COL BEFORE THERE WAS A RAILWAY. NOW I DRIVE BANKERS ROUND A FIR TREE. THE HORSES PREFER THE BANKERS. LIGHTER."}, {"q": "The horses", "a": "THE GREY IS PERLE. THE BAY IS FERNAND. PERLE IS CLEVER AND FERNAND IS HANDSOME AND THEY BOTH KNOW IT. BRING THEM AN APPLE AND YOU'LL HAVE FRIENDS FOR LIFE."}]},
+  "mathis": {"name": "Mathis Roux", "role": "Mountain guide, the bureau des guides, Aurelle", "sheet": "npc-mathis", "at": [{"world": "hoarfell-aurelle", "label": "MATHIS"}], "greet": "YOU'VE GOT THE LOOK. THE ONE THAT SAYS YOU'VE BEEN STARING AT THE GLACIER FROM THE TERRACE. SIT DOWN.", "again": "THE MOUNTAIN'S STILL THERE. SO AM I.", "topics": [{"q": "The High Route", "a": "THREE DAYS.", "use": {"type": "touring", "action": "guides"}}, {"q": "About you", "a": "I'VE CROSSED THE COL A HUNDRED AND TWELVE TIMES. FELL IN THE GLACIER TWICE. MARRIED THE WARDEN OF THE CABANE BLEUE ONCE. SHE STILL WON'T LET ME OVER WITHOUT A NIGHT'S SLEEP."}, {"q": "The hidden valley", "a": "WARM UNDER THE SNOW. HOT SPRINGS, MOSS, AN OLD MONASTERY ON A CLIFF. WOLVES ON THE OUTER SLOPES, WORSE FURTHER IN. AND THE BIG WHITE ONES - YOU'LL SEE THEM IF THEY LET YOU. BE PATIENT WITH THEM."}]},
+  "hut-odile": {"name": "Odile Roux", "role": "Warden of the Cabane Bleue", "sheet": "npc-hut-odile", "at": [{"world": "hoarfell-hut-bleue", "label": "ODILE"}], "greet": "BOOTS OFF. SKINS ON THE RACK. SOUP'S HOT. IN THAT ORDER.", "again": "STILL HERE? GOOD. EAT.", "topics": [{"q": "A bowl of soup", "a": "SIT.", "use": {"type": "touring", "action": "soup"}}, {"q": "What's ahead?", "a": "OVER THE COL AT FIRST LIGHT, BEFORE THE WIND GETS UP. THEN THE BOWL - SKI IT, DON'T WALK IT, YOU'LL BE UP TO YOUR WAIST. BRAM'S AT THE BOTTOM. TELL HIM HIS SOCKS ARE STILL HERE."}, {"q": "About you", "a": "TWENTY WINTERS UP HERE. MATHIS BRINGS THE GUESTS UP AND I SEND THEM ON. HE THINKS HE'S IN CHARGE. I LET HIM."}]},
+  "hut-bram": {"name": "Bram Holt", "role": "Warden of the Refuge du Col", "sheet": "npc-hut-bram", "at": [{"world": "hoarfell-hut-col", "label": "BRAM"}], "greet": "YOU SKIED THE BOWL? GOOD SNOW TODAY. SIT. THERE'S STEW, AND THERE'S MORE STEW.", "again": "MORE STEW?", "topics": [{"q": "Stew", "a": "OF COURSE.", "use": {"type": "touring", "action": "soup"}}, {"q": "The valley", "a": "DOWN THROUGH THE LARCHES TOMORROW, THEN THE STEAM. THE WOLVES HUNT IN THREES ON THE OUTER SLOPES. THE CAVES ARE FULL OF THINGS THAT CLICK. THE MONKS LEFT THE MONASTERY YEARS AGO AND SOMETHING COLD MOVED IN. AND AT THE HEART OF IT, UNDER THE SNOW - NOBODY'S SEEN IT. EVERYBODY'S HEARD IT."}, {"q": "About you", "a": "I WAS A CHEF IN AURELLE. LA TABLE. THREE STARS. I CAME UP HERE FOR ONE SEASON TO GET AWAY FROM THE STARS, AND STAYED FOR THE OTHER KIND."}]},
+  "stationmaster": {"name": "Petra Lind", "role": "Stationmaster, the Aurelle Line", "sheet": "npc-stationmaster", "at": [{"world": "hoarfell-promenade", "label": "STATIONMASTER"}, {"world": "hoarfell-aurelle", "label": "STATIONMASTER"}], "greet": "THE AURELLE LINE. UP THE GORGE, OVER THE VIADUCT, ROUND THE GLACIER AND THROUGH THE MOUNTAIN.", "again": "THE TRAIN'S IN. IT'S ALWAYS IN.", "topics": [{"q": "Board the train", "a": "ALL ABOARD.", "use": {"type": "railway"}}, {"q": "The line", "a": "FORTY YEARS TO BUILD, NINE TUNNELS, THE GREAT VIADUCT - TWO HUNDRED FEET OVER THE GORGE AND NOT ONE RIVET LOOSE. SIT ON THE LEFT GOING UP. YOU'LL THANK ME AT THE GLACIER."}, {"q": "About you", "a": "I DROVE THE TRAINS FOR TWENTY YEARS. NOW I WAVE THEM OFF. I STILL KNOW EVERY CURVE BY THE SOUND OF THE WHEELS."}]},
+  "kaspar": {"name": "Kaspar Imhof", "role": "Keeps the Stübli, Fellhaven's promenade", "sheet": "npc-kaspar", "at": [{"world": "hoarfell-promenade", "label": "KASPAR"}], "greet": "COME IN, COME IN, THE CHEESE IS READY AND THE CHEESE DOES NOT WAIT.", "again": "ANOTHER POT?", "topics": [{"q": "Fondue", "a": "SIT.", "use": {"type": "promenade", "label": "STUBLI"}}, {"q": "About you", "a": "MY FATHER STIRRED THIS POT, AND HIS MOTHER, AND HERS. IN FIGURES OF EIGHT. NEVER CIRCLES. CIRCLES ARE FOR TOURISTS."}, {"q": "Fellhaven", "a": "ONCE IT WAS COWS AND GUIDES. THEN THE LIFT, THEN THE TRAIN, NOW THE PROMENADE AND THE ALPENHOF AND PEOPLE IN FUR COATS ON THE RINK. STILL THE SAME SNOW. STILL THE SAME CHEESE."}]},
+  "anselm": {"name": "Brother Anselm", "role": "The last monk of the cliff monastery", "sheet": "npc-anselm", "at": [{"world": "hoarfell-monastery", "label": "BROTHER ANSELM"}], "greet": "A VISITOR. OVER THE COL, IN THIS SEASON. SIT BY THE BRAZIER. THE TEA HAS BUTTER IN IT; YOU WILL GET USED TO IT.", "again": "STILL ALIVE. GOOD. MORE TEA.", "topics": [{"q": "What happened here?", "a": "THE SPRINGS WARMED THE VALLEY AND THE VALLEY FED US, FOR A THOUSAND YEARS. THEN ONE WINTER THE GLACIER STIRRED. SOMETHING UNDER IT WOKE AND ROLLED OVER, AND THE COLD CAME UP THE STAIR. THE STONES IN THE COURTYARD GOT UP AND WALKED. MY BROTHERS LEFT. I DID NOT."}, {"q": "The cold ones", "a": "THE GOLEMS ARE RIME AND RUBBLE - SLOW, BUT WHEN THEY RAISE THEIR FISTS, STEP AWAY. FIRE CRACKS THEIR CRUST. THE WRAITHS WERE ONCE MY BROTHERS' FEARS, I THINK. THEY HATE A HOLY EDGE. CLEAR THE COURTYARD AND RING THE BELL; THE ICE ON THE GATE WILL HEAR IT."}, {"q": "The gate", "a": "THE NORTH-EAST GATE GOES OUT ONTO THE HIGH SNOW WHERE THE GLACIER BEGINS. THE HEART OF IT. WHAT WOKE IS THERE, SWIMMING UNDER THE SNOW LIKE A FISH UNDER ICE. WATCH THE SNOW. IT WILL TELL YOU WHERE IT RISES."}, {"q": "The big white ones", "a": "THE YETIS? OLD FRIENDS OF THIS HOUSE. THEY BRING US WOOD; WE LEAVE THEM BERRIES AND SALT. SHY AS DEER. NEVER RUN AT ONE. SIT STILL, OFFER SOMETHING, COME BACK TOMORROW. AND THE DAY AFTER."}]},
   "roo": {
     "name": "Mama Roo",
     "role": "Noodles in the Warrens",
@@ -5649,6 +5684,120 @@
       {
         "q": "Heard anything?",
         "a": "THE FISHING FLEET COMES IN UNDER THE QUAY AT DUSK AND THE CATCH GOES UP FOR AUCTION. GET THERE EARLY AND YOU'LL SEE THE AUCTIONEER CHEAT. GET THERE LATE AND YOU'LL SEE HIM GET CAUGHT."
+      }
+    ]
+  },
+  "rose_seren": {
+    "name": "Seren Halloway",
+    "role": "Weaves spore silk in Rosewell's groves",
+    "sheet": "npc-rose-seren",
+    "at": [
+      {
+        "world": "lumar-rose-springs",
+        "label": "SEREN"
+      }
+    ],
+    "greet": "SHH - THE MOTHS ARE SPINNING. THEY ONLY SPIN WHEN NOBODY'S SHOUTING. YOU CAN TALK. QUIETLY.",
+    "again": "BACK AMONG THE TREES. THE MOTHS REMEMBER YOU. THEY'RE NOT SURE YET WHAT THEY THINK.",
+    "topics": [
+      {
+        "q": "About spore silk",
+        "a": "THE MOTHS FEED ON THE SPORES THAT COME UP WITH THE SPRINGS' STEAM, AND WHAT THEY SPIN GLOWS. WE WAIT TILL THEY'VE FLOWN, GATHER THE EMPTY COCOONS, BOIL THEM IN SPRING WATER AND UNWIND THEM. A MILE OF THREAD IN EACH. THE ROSE SILK COMPANY SHIPS IT EVERYWHERE."
+      },
+      {
+        "q": "Can I help?",
+        "a": "THE TREES BY THE DRYING LINES HAVE EMPTY COCOONS MOST DAYS - GATHER WHAT'S RIPE. BRING ME FIVE AND I'LL PUT THEM ON THE LOOM FOR YOU: A SCARF, GLOWING. OR I'LL BUY THEM, IF YOU'D RATHER THE MONEY.",
+        "sell": [
+          {
+            "id": "silk_cocoon",
+            "price": 14
+          }
+        ]
+      },
+      {
+        "q": "Rumours",
+        "a": "A MERCHANT FROM SAPPHIRE TRIED TO BUY A MOTH. A WHOLE LIVE MOTH. TO BREED. THE MOTH FLEW OUT OF HIS HAND AND STRAIGHT BACK TO ITS TREE. THE MOTHS KNOW WHERE THEY'RE FROM."
+      }
+    ]
+  },
+  "rose_amaryllis": {
+    "name": "Mother Amaryllis",
+    "role": "Reads the steam at the foot of the terraces",
+    "sheet": "npc-rose-amaryllis",
+    "at": [
+      {
+        "world": "lumar-rose-springs",
+        "label": "MOTHER AMARYLLIS"
+      }
+    ],
+    "greet": "SIT. NO - DON'T TELL ME WHY YOU'VE COME. THE STEAM WILL. IT ALWAYS DOES, AND IT'S RUDER THAN I AM.",
+    "again": "THE STEAM'S BEEN TALKING ABOUT YOU. NOTHING BAD. NOTHING YOU'D WANT REPEATED, EITHER.",
+    "topics": [
+      {
+        "q": "About readings",
+        "a": "I READ THE STEAM OFF THE SPRINGS. IT RISES THROUGH THE CRYSTALS AND THE CRYSTALS REMEMBER THINGS - WHAT THE SEA IS DOING, WHERE THE FISH ARE, WHO'S LYING. A FEW COINS AND I'LL TELL YOU WHAT IT SAYS. IT'S USUALLY TRUE. IT'S ALWAYS INTERESTING."
+      },
+      {
+        "q": "About Rosewell",
+        "a": "MAKERS AND MYSTICS, THE CAPITAL CALLS US, AS IF THEY WERE DIFFERENT THINGS. THE WEAVER MAKES SILK FROM A MOTH'S DREAM. THE BATHHOUSE MAKES OLD SAILORS YOUNG FOR AN HOUR. LIOR MAKES TEA THAT TELLS YOU HOW YOU FEEL. WHICH OF THOSE IS NOT MAGIC?"
+      },
+      {
+        "q": "Rumours",
+        "a": "THE STEAM SAYS A CLIFF TOWN ON THE SAPPHIRE RINGS ITS BELLS TO KEEP A MOUNTAIN ASLEEP. THE STEAM THINKS THIS IS VERY FUNNY. THE STEAM HAS NEVER MET A MOUNTAIN."
+      }
+    ]
+  },
+  "rose_oda": {
+    "name": "Oda Brenn",
+    "role": "Keeps Rosewell's bathhouse",
+    "sheet": "npc-rose-oda",
+    "at": [
+      {
+        "world": "lumar-rose-bathhouse",
+        "label": "ODA"
+      }
+    ],
+    "greet": "BOOTS OFF, CARES OFF, IN YOU GO. THE WATER'S HOT AS IT COMES OUT OF THE HILL, SO GO SLOW ON THE STEPS.",
+    "again": "BACK FOR A SOAK? GOOD. YOU LOOK LIKE A CAPTAIN WHO'S BEEN STANDING IN THE RAIN.",
+    "topics": [
+      {
+        "q": "About the bath",
+        "a": "A FEW COINS AND THE WATER DOES THE REST: IT TAKES THE ACHE OUT, AND THE COLD - THE COLD STAYS OUT OF YOU FOR HOURS AFTER. THE ICE WORLD'S CLIMBERS COME ALL THIS WAY FOR IT. PRESS ON THE BATH WHEN YOU'RE READY."
+      },
+      {
+        "q": "About the springs",
+        "a": "THEY COME UP THROUGH THE ROSEITE, WHICH IS WHY THE WATER'S PINK AND WHY YOUR SKIN TINGLES. DON'T DRINK IT. WELL - DRINK A LITTLE. NOT AS MUCH AS OLD PELL FROM TERN HOLM DID. WE DON'T TALK ABOUT THAT."
+      },
+      {
+        "q": "Rumours",
+        "a": "THE TILES ARE FROM THE SAPPHIRE GLASSWORKS. THE GIRL WHO MADE THEM CAME TO BATHE HERE ONCE AND SPENT THE WHOLE HOUR COUNTING THEM. SHE SAID SHE FOUND THE ONE THAT WAS DIFFERENT. I'VE NEVER FOUND IT."
+      }
+    ]
+  },
+  "rose_lior": {
+    "name": "Master Lior",
+    "role": "Keeps the tea house over the pools",
+    "sheet": "npc-rose-lior",
+    "at": [
+      {
+        "world": "lumar-rose-teahouse",
+        "label": "MASTER LIOR"
+      }
+    ],
+    "greet": "YOU HAVE ARRIVED. THE KETTLE KNEW BEFORE I DID. SIT; THE WATER IS NEARLY READY. IT IS ALWAYS NEARLY READY.",
+    "again": "AH. THE CAPTAIN WHO DRINKS TOO FAST. SIT. TODAY YOU WILL DRINK SLOWLY.",
+    "topics": [
+      {
+        "q": "About the tea",
+        "a": "ROSEHIP FOR THE TIRED. EMBERLEAF FOR THE COLD - IT WARMS YOU FROM THE INSIDE FOR A LONG WHILE. MOONLEAF FOR THE HURT. ASK FOR A POT AT THE HEARTH. I WILL TELL YOU WHICH ONE YOU NEED, AND YOU WILL ORDER ANOTHER, AND THAT IS ALSO FINE."
+      },
+      {
+        "q": "About Rosewell",
+        "a": "THE SPRINGS MADE THE TERRACES, THE TERRACES MADE THE POOLS, THE POOLS MADE THE BATHHOUSE, THE BATHHOUSE MADE THE TOWN. NOBODY PLANNED ANY OF IT. THAT IS WHY IT IS BEAUTIFUL."
+      },
+      {
+        "q": "Rumours",
+        "a": "THE TEA IN THE PLAIN JAR CAME FROM A SAILOR WHO SAID HE HAD BEEN TO A SIXTH SEA. HE PAID FOR ONE POT WITH THE WHOLE JAR AND NEVER CAME BACK. I DRINK A LEAF OF IT ON THE LONGEST NIGHT. IT TASTES OF SOMEWHERE ELSE."
       }
     ]
   }

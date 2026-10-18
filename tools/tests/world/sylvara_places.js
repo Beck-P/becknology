@@ -48,10 +48,11 @@ const OUT = process.argv[2] || '/tmp';
   const WORLDS = ['sylvara-roots', 'sylvara-boughs', 'sylvara-crown', 'sylvara-tavern', 'sylvara-river', 'sylvara-falls', 'sylvara-fallcave', 'sylvara-lake', 'sylvara-deepwood'];
   let exits = 0;
   for (const w of WORLDS) {
+    if (!await isOpen(w)) continue;                                   // not live yet: its world isn't shipped either
     const d = await p.evaluate((w) => fetch('/bridge/assets/worlds/' + w + '.json').then(r => r.json()), w);
     for (const it of d.interactions.filter(i => i.type === 'enter_world' || (i.type === 'sylvan' && i.kind === 'lift'))) {
       exits++;
-      if (!it.spawn) continue;
+      if (!it.spawn || !await isOpen(it.target)) continue;
       if (!await walkable(it.target, it.spawn[0], it.spawn[1])) fail(w + ' → ' + it.target + ' lands on a solid tile ' + it.spawn);
     }
   }

@@ -89,6 +89,23 @@ var BridgeCombat = (function () {
                 drops: [{ id: 'drowned_locket', min: 1, max: 1, chance: 0.35 }, { id: 'moonstone', min: 1, max: 1, chance: 0.2 }] }
   };
   var UNDEAD = { shade: 1, wisp: 1, wight: 1, warden: 1, drowned: 1, spectre: 1 };
+  // Creature kinds another module brings (js/valley.js): BridgeCombat.kind(name, def) — def is a CREATURES entry plus
+  // optional hooks, each asked before the built-in branches below: draw(ctx, h, u, t, st) (st: wind, strike, eye, now;
+  // the canvas is already at the creature's feet), shadow ([half width in u, alpha], or a function of h), undead,
+  // attack(h, player) (sets h._kind, may move the target), cells(h) (its danger cells, or null for the usual ones),
+  // color(h) (the danger marks' [r, g, b]), hurt(h) (a strike's damage), fx(h, now) (its own strike effect: true if
+  // handled), tick(world, h, now, player) (a speed factor, as tick), guard(world, h, dmg, w) (the damage that gets
+  // through: armour, a body under the snow), hit(world, h, w, dmg), kill(world, h), rake (its strike's colour).
+  var KINDS = {};
+  function kind(name, def) {
+    KINDS[name] = def;
+    CREATURES[name] = def;
+    if (def.undead) UNDEAD[name] = 1;
+    if (def.shadow && !(typeof def.shadow === 'function')) SHADOW[name] = def.shadow;
+    if (def.rake) RAKE[name] = def.rake;
+    return def;
+  }
+  function K(h) { return h && h.creature ? KINDS[h.creature] : null; }
 
   function spawn(world, kind, x, y) {
     var C = CREATURES[kind];
@@ -122,7 +139,7 @@ var BridgeCombat = (function () {
                  saint: [6, 0.32], shiv: [6, 0.32], scraprat: [5, 0.3], ruin: [9, 0.4], drone: [4, 0.2], eel: [7, 0.3], husk: [6, 0.32], dredge: [14, 0.45],
                  imp: [3, 0.2], magma: [9, 0.4], drowned: [5, 0.3], spectre: [5, 0.15] };
   function feet(ctx, h, cx, footY, ts) {
-    var s = SHADOW[h.creature];
+    var kd = K(h), s = kd && typeof kd.shadow === 'function' ? kd.shadow(h) : SHADOW[h.creature];
     if (!s || typeof BridgeFX === 'undefined' || !BridgeFX.disc) return;
     var u = Math.max(1, Math.round(ts / 16)), t = h._attackTarget, lunge = h._attackPhase === 'striking' && t, r = s[0] * u;
     var bl = h._blinkAt ? Math.min(1, (performance.now() - h._blinkAt) / 350) : 1;
@@ -177,7 +194,10 @@ var BridgeCombat = (function () {
     ctx.save();
     ctx.translate(Math.round(cx), Math.round(footY));
     if (strike) ctx.translate(Math.round(((h._attackTarget ? h._attackTarget.x - h.x : 0)) * 3 * u), Math.round(((h._attackTarget ? h._attackTarget.y - h.y : 0)) * 3 * u));
-    if (h.creature === 'mite') {
+    var kd = K(h);
+    if (kd && kd.draw) {
+      kd.draw(ctx, h, u, t, { wind: wind, strike: strike, eye: eye, now: now });
+    } else if (h.creature === 'mite') {
       var hop = Math.abs(Math.sin(t * 9)) * u * (wind ? 0 : 1);
       ctx.translate(0, -Math.round(hop));
       px(ctx, -5 * u, -6 * u, 10 * u, 5 * u, '#14100e');                          // outline
@@ -498,6 +518,8 @@ var BridgeCombat = (function () {
     var px = player.getX(), py = player.getY(), d = Math.abs(px - h.x) + Math.abs(py - h.y);
     h._kind = 'hit';
     if (h.range && d > 1) h._kind = 'bolt';
+    var kd = K(h);
+    if (kd && kd.attack) { kd.attack(h, player); if (h._kind === 'toll') sfx('bell'); return; }
     if ((h.creature === 'sentinel' || h.creature === 'magma') && h._hp < h.maxHP * 0.5) h._kind = 'slam';
     if (h.slams && (h._swings = (h._swings || 0) + 1) % 2 === 0) h._kind = 'slam';     // every other blow from Saint Ruin or the Dredge
     if (h.creature === 'warden') {
@@ -510,6 +532,8 @@ var BridgeCombat = (function () {
   function dangerCells(h) {
     var t = h._attackTarget;
     if (!t) return [];
+    var kd = K(h), own = kd && kd.cells ? kd.cells(h) : null;
+    if (own) return own;
     if (h._kind === 'toll') {                                     // a ring two tiles out from the warden
       var ring = [];
       for (var x = -2; x <= 2; x++) for (var y = -2; y <= 2; y++) if (Math.max(Math.abs(x), Math.abs(y)) === 2) ring.push([h.x + x, h.y + y]);
@@ -523,7 +547,7 @@ var BridgeCombat = (function () {
     return [[t.x, t.y]];
   }
   function dangerAt(h, x, y) { return dangerCells(h).some(function (c) { return c[0] === x && c[1] === y; }); }
-  function attackDamage(h) { return Math.round((h.damage || 5) * (h._kind === 'toll' ? 0.85 : h._kind === 'slam' && h.creature === 'sentinel' ? 1.2 : h._kind === 'slam' && h.slams ? 0.9 : 1)); }
+  function attackDamage(h) { var kd = K(h); if (kd && kd.hurt) return kd.hurt(h); return Math.round((h.damage || 5) * (h._kind === 'toll' ? 0.85 : h._kind === 'slam' && h.creature === 'sentinel' ? 1.2 : h._kind === 'slam' && h.slams ? 0.9 : 1)); }
   // the strike leaves the creature: a bolt flies, a slam shakes the ground, the bell rings out, a bite or a blow rakes
   // the tile it locked onto (js/fx.js spawnStrike, in its own colour)
   var bolts = [], rings = [];
@@ -532,7 +556,8 @@ var BridgeCombat = (function () {
                saint: '#ff9a40', shiv: '#ffe0b0', scraprat: '#ffb060', ruin: '#ff7a2a', drone: '#ff4060', eel: '#60ffd0', husk: '#a0c8ff', dredge: '#ffd040' };
   var BOLT = { imp: [255, 140, 60], drone: [255, 70, 90] };                     // a bolt's colour by who threw it (the wisps' violet, else)
   function strikeFx(h, now) {
-    var t = h._attackTarget;
+    var t = h._attackTarget, kd = K(h);
+    if (kd && kd.fx && kd.fx(h, now)) return true;
     if (h._kind === 'bolt') { bolts.push({ x0: h.x + 0.5, y0: h.y - 0.1, x1: t.x + 0.5, y1: t.y + 0.4, at: now, dur: h.strikeMs || 380, col: BOLT[h.creature] }); sfx('zap'); return true; }
     if (h._kind === 'toll') { rings.push({ x: h.x + 0.5, y: h.y + 0.5, at: now }); sfx('toll'); shake(4); return true; }
     if (h._kind === 'slam') { sfx('slam'); shake(h.boss ? 5 : 3); if (typeof BridgeFX !== 'undefined' && BridgeFX.spawnSparks) BridgeFX.spawnSparks(t.x, t.y, '#b8a8d0', 10); return true; }
@@ -548,7 +573,8 @@ var BridgeCombat = (function () {
     (world.interactions || []).forEach(function (h) {
       if (h.type !== 'hostile' || !h.creature || (h._attackPhase !== 'winding' && h._attackPhase !== 'striking') || !FX) return;
       var wind = h._attackPhase === 'winding', p = wind ? Math.max(0, Math.min(1, (pn - h._attackStart) / (h._windFor || h.windupMs || 500))) : 1;
-      var col = h._kind === 'toll' ? [255, 200, 90] : h._kind === 'bolt' ? (BOLT[h.creature] || [200, 150, 255]) : [255, 70, 60], rgb = col.join(',');
+      var kc = K(h) && K(h).color ? K(h).color(h) : null;
+      var col = kc ? kc : h._kind === 'toll' ? [255, 200, 90] : h._kind === 'bolt' ? (BOLT[h.creature] || [200, 150, 255]) : [255, 70, 60], rgb = col.join(',');
       var rx = Math.round(ts * 0.42), Q = 0.5;
       ctx.save();
       dangerCells(h).forEach(function (c) {
@@ -641,6 +667,8 @@ var BridgeCombat = (function () {
       h._burnTick = now;
       if (typeof BridgeItems !== 'undefined' && BridgeItems.strike) BridgeItems.strike(world, h, 3, { dot: true });
     }
+    var kd = K(h);
+    if (kd && kd.tick) { var kf = kd.tick(world, h, now, player); return (h._frostUntil > now ? 1.7 : 1) * (kf || 1); }
     if (h.creature === 'warden' && player) {
       var d = Math.abs(player.getX() - h.x) + Math.abs(player.getY() - h.y);
       if (!h._engaged && d <= h.aggroRange) engage(h, typeof BridgeFight !== 'undefined' ? BridgeFight.company() : 1);
@@ -694,13 +722,16 @@ var BridgeCombat = (function () {
   }
 
   // a weapon's hit: holy bites the undead deeper; frost, embers, the drinking blade; heavy staggers and knocks back
+  // what of a blow gets through: a kind's own armour (BridgeItems.strike asks before it takes the health)
+  function guard(world, h, dmg, w) { var kd = K(h); return kd && kd.guard ? kd.guard(world, h, dmg, w) : dmg; }
   // implants (js/implants.js): the arm hits harder, the eyes find criticals
   function damageFor(w, h) {
     var I = typeof BridgeImplants !== 'undefined' ? BridgeImplants : null, m = I ? I.damage() * (I.crit() ? 1.75 : 1) : 1;
     return Math.round((w && w.damage || 1) * (w && w.holy && UNDEAD[h.creature] ? 1.6 : 1) * m);
   }
   function onHit(world, h, w, dmg) {
-    var now = performance.now();
+    var now = performance.now(), kd = K(h);
+    if (kd && kd.hit) kd.hit(world, h, w, dmg);
     if (!w || w.dot) return;
     if (w.frost) { h._frostUntil = now + 3200; sfx('frost'); }
     if (w.burn) { h._burnUntil = now + 3200; h._burnTick = now; sfx('burn'); }
@@ -746,6 +777,8 @@ var BridgeCombat = (function () {
     sfx('zap');
   }
   function onKill(world, h) {
+    var kd = K(h);
+    if (kd && kd.kill) kd.kill(world, h);
     if (typeof BridgeUndercity !== 'undefined' && BridgeUndercity.onKill) BridgeUndercity.onKill(world, h);
     if (h.creature === 'warden') {
       save.day = today();
@@ -834,6 +867,9 @@ var BridgeCombat = (function () {
   if (typeof BridgeWorld !== 'undefined' && BridgeWorld.registerSceneHooks) {
     BridgeWorld.registerSceneHooks('lumar', { ground: ground, items: sceneItems, over: over });
     BridgeWorld.registerSceneHooks('cave', { ground: ground, over: over });
+    // Hoarfell's hidden valley (js/valley.js): js/worlds/hoarfell.js's own hooks draw the snow, the lift and the sports —
+    // no creatures — so these add to them without drawing anything twice
+    BridgeWorld.registerSceneHooks('hoarfell', { ground: ground, items: sceneItems, over: over });
   }
 
   // ---- blacking out ------------------------------------------------------------------------------------
@@ -892,6 +928,6 @@ var BridgeCombat = (function () {
 
   return { CREATURES: CREATURES, spawn: spawn, drawCreature: drawCreature, sceneItems: sceneItems, faint: faint, decorate: decorate,
            tick: tick, attackStart: attackStart, dangerAt: dangerAt, dangerCells: dangerCells, attackDamage: attackDamage, strikeFx: strikeFx,
-           onHit: onHit, onKill: onKill, damageFor: damageFor, shake: shake, tomb: tomb, engage: engage, ground: ground, over: over, ROSTERS: ROSTERS, populate: populate,
-           _save: function () { return save; } };
+           onHit: onHit, onKill: onKill, damageFor: damageFor, guard: guard, kind: kind, shake: shake, tomb: tomb, engage: engage, ground: ground, over: over,
+           ROSTERS: ROSTERS, populate: populate, _save: function () { return save; } };
 })();
