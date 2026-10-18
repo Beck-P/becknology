@@ -9,6 +9,7 @@
   "lumar-crimson":          { "n": 6,  "wardrobe": "pirates", "busy": "always" },
   "lumar-crown":            { "n": 22, "wardrobe": "crown",   "busy": "day", "spots": [[30, 32, "down"], [26, 31, "down"], [39, 31, "down"], [47, 31, "down"]] },
   "lumar-crown-oldtown":    { "n": 24, "wardrobe": "crown",   "busy": "day", "pass": 0.5 },
+  "lumar-crown-canals":     { "n": 22, "wardrobe": "crown",   "busy": "day", "pass": 0.5 },
   "lumar-crown-exchange":   { "n": 8,  "wardrobe": "crown",   "busy": "day" },
   "lumar-crown-chapel":     { "n": 4,  "wardrobe": "crown",   "busy": "day", "sit": 0.9 },
   "lumar-crown-pub":        { "n": 9,  "wardrobe": "lumar",   "busy": "night", "sit": 0.8 },
