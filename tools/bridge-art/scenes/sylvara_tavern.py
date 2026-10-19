@@ -17,7 +17,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from scenekit import Kit, THETA, apply_world, shade  # noqa: E402
 import assets_elves as E                               # noqa: E402
 import assets_lumar as LU                              # noqa: E402
-import assets_sylvan as A                              # noqa: E402
+import assets_sylvan as A
+import assets_sylvara_rich as R                    # noqa: E402                              # noqa: E402
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
 OUT = sys.argv[1]
@@ -137,6 +138,7 @@ LU.rug(k, 9.6, 9.4, 13.6, 11.4, col='#2a5a2e', trim='#d0a040')
 LU.coat_rack(k, 14.2, 13.2)
 k.solid(14.0, 13.0, 14.4, 13.4)
 
+R.merge_parts(k)                                                  # one mesh per look: each render pass quick (assets_sylvara_rich)
 k.render(OUT, light_states={'full': {}, 'dim': {'fire': 0.7}}, light_samples=int(os.environ.get('SAMPLES', 128)), world_light=('#3a3020', 0.4))
 
 w = json.load(open(WORLD)) if os.path.exists(WORLD) else {}

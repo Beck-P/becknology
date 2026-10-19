@@ -19,7 +19,8 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from scenekit import Kit, apply_world, shade  # noqa: E402
-import assets_sylvan as A                          # noqa: E402
+import assets_sylvan as A
+import assets_sylvara_rich as R                    # noqa: E402                          # noqa: E402
 import assets_town as W                            # noqa: E402
 
 OUT = sys.argv[1]
@@ -113,8 +114,8 @@ TAVERN_DOOR = (31, 10)
 
 # ---- homes on the platforms: each on its own little deck hung off a platform's outer edge, its door toward the trunk -----
 HOMES = []
-for (name, a, roof) in (('homes', -2.2, '#5a8a3a'), ('homes', -0.9, '#8a6a3a'), ('homes', math.pi, '#4a7a6a'), ('queen', math.pi, '#6a5690'),
-                        ('queen', -2.3, '#a0703a'), ('lift', -2.45, '#5a8a3a'), ('stair', -0.7, '#4a7a6a')):
+for (name, a, roof) in (('homes', -2.2, '#b07a3c'), ('homes', -0.9, '#8a6a3a'), ('homes', math.pi, '#6a7c8a'), ('queen', math.pi, '#6a5690'),
+                        ('queen', -2.3, '#a0703a'), ('lift', -2.45, '#9a5a3a'), ('stair', -0.7, '#7a8a5a')):
     tx, tr, rad, ro = T[name]
     px, pr = tx + math.cos(a) * (ro + 0.45), tr + math.sin(a) * (ro + 0.45) * 0.92
     A.deck(k, px - 1.0, pr - 0.9, px + 1.0, pr + 0.9)
@@ -236,6 +237,7 @@ for c in range(COLS):
 
 # ---- the light: the sun high through the leaves by day; Sylvara's dusk; the lanterns at night -----------------------------------
 k.sun((0.62, 0.42, -0.62), '#fff0c8', 3.4, angle=3.0)
+R.merge_parts(k)                                                  # one mesh per look: each render pass quick (assets_sylvara_rich)
 k.render(OUT, cycle={'base': 'day', 'dusk_sun': ((0.78, 0.3, -0.36), '#ffb070', 1.8), 'dusk_sky': ('#3a5a7a', 0.55),
                      'night_sky': ('#1e3040', 0.55), 'lamps_day': 0.3},
          light_states={'full': {}}, light_samples=int(os.environ.get('SAMPLES', 96)), world_light=('#86aac0', 0.8))

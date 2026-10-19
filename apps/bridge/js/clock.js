@@ -51,7 +51,7 @@ var BridgeClock = (function () {
   ];
   // under the open sky (the rest are indoors: their windows follow the time, their light doesn't)
   var OUTDOOR = ['lumar', 'lumar-crimson', 'lumar-cinder', 'lumar-cinder-volcano', 'lumar-saltmere', 'lumar-gloaming', 'lumar-rose', 'lumar-sapphire', 'lumar-midnight', 'lumar-crown', 'lumar-holm',
-    'lumar-tern', 'lumar-square', 'verdance', 'verdance-village', 'hoarfell', 'hoarfell-face', 'hoarfell-icestep',
+    'lumar-tern', 'lumar-square', 'verdance', 'verdance-village', 'verdance-east', 'verdance-downs', 'verdance-market', 'verdance-hill', 'verdance-mill', 'hoarfell', 'hoarfell-face', 'hoarfell-icestep',
     'hoarfell-park', 'hoarfell-piste', 'hoarfell-ridge', 'hoarfell-summit', 'sylvara',
     'arcadia-street', 'arcadia-skypad', 'arcadia-alley', 'arcadia-skywalk',          // (Arcadia: always night, but it rains)
     'lumar-cliff', 'lumar-sapphire-market', 'lumar-rose-springs'];                  // (the Sapphire and Rose seas' places)

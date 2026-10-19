@@ -62,6 +62,19 @@ EXTRA = [
     ('hoarfell-summit', 'hoarfell-ridge', ['THE LAST RIDGE'], 'climb', 24, 9),   # js/expedition.js
     ('hoarfell-ridge', 'hoarfell-icestep', ['THE ICE STEP'], 'climb'),
     ('hoarfell-ridge', 'hoarfell-hollow', ['THE ICE DOOR'], 'door'),
+    ('verdance-village', 'verdance-east', ['STATION ROAD'], 'door', 45, 11),   # js/village.js: Brambleford's street runs on east
+    ('verdance-east', 'verdance-downs', ['THE DOWNS'], 'door', 18, 31),        # js/village.js: over the mended bridge
+    ('verdance-downs', 'verdance-market', ['THE LANE TO THISTLECOMBE'], 'door', 55, 20),   # js/makers.js: the lanes
+    ('verdance-downs', 'verdance-hill', ['THE LANE UP TO VINEHALLOW'], 'door', 51, 0),
+    ('verdance-downs', 'verdance-mill', ['THE LANE TO THE MILL'], 'door', 7, 39),
+    ('verdance-east', 'verdance-market', ['BRAMBLEFORD HALT'], 'train', 32, 11),   # js/makers.js: the branch line
+    ('verdance-market', 'verdance-east', ['THISTLECOMBE STATION'], 'train', 40, 11),
+    ('verdance-market', 'verdance-hill', ['THE FERRY'], 'ferry', 12, 27),        # js/makers.js: the ferry on the river
+    ('verdance-market', 'verdance-mill', ['THE FERRY'], 'ferry', 12, 27),
+    ('verdance-hill', 'verdance-market', ['VINEHALLOW LANDING'], 'ferry', 5, 34),
+    ('verdance-hill', 'verdance-mill', ['VINEHALLOW LANDING'], 'ferry', 5, 34),
+    ('verdance-mill', 'verdance-market', ['THE FERRY'], 'ferry', 6, 21),
+    ('verdance-mill', 'verdance-hill', ['THE FERRY'], 'ferry', 6, 21),
 ]
 # Arcadia's lifts, the Loop and the air cabs (assets/arcadia-lifts.json, js/transit.js): every stop leads to every
 # other stop on the same shaft, ring or rank

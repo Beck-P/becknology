@@ -35,7 +35,7 @@ var BridgeCapital = (function () {
   // lowest — the island's render decides where the edges and the quay are) and where it lands you
   var CROWN = [
     { label: 'THE OLD TOWN', to: 'lumar-crown-oldtown', spawn: [53, 19], prompt: 'PRESS E TO GO THROUGH',
-      find: function (c, r) { return r >= 17 && r <= 27 ? c * 4 + Math.abs(r - 21) : null; } },
+      find: function (c, r) { return r >= 17 && r <= 27 ? Math.abs(c - 4) * 4 + Math.abs(r - 21) : null; } },   // before the gatehouse's arch
     { label: 'THE ARSENAL', to: 'lumar-crown-arsenal', spawn: [2, 16], prompt: 'PRESS E TO GO THROUGH',
       find: function (c, r) { return r >= 20 && r <= 32 ? (63 - c) * 4 + Math.abs(r - 25) : null; } },
     { label: 'QUAY STAIRS', to: 'lumar-crown-stilts', spawn: [19, 6], prompt: 'PRESS E TO GO DOWN',

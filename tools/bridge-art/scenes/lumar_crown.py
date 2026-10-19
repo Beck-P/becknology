@@ -28,6 +28,7 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 import bpy  # noqa: E402,F401
 from scenekit import Kit, apply_world, shade  # noqa: E402
+import assets_capital as CAP           # noqa: E402
 import assets_coast as C               # noqa: E402
 import assets_crown as Q               # noqa: E402
 import assets_house as HK              # noqa: E402
@@ -126,7 +127,7 @@ def under(x, r, pad=0.0):
 
 # ---- the land: paving in the city, grass and paths beyond, the palace on its hill ---------------------------------
 TOWN = {(c, r) for (c, r) in land if 11 <= c <= 52 and 11 <= r <= QUAY}
-PATHS = [[(10.5, 30.0), (8.0, 28.0), (7.0, 25.0)], [(52.5, 30.0), (56.0, 31.0)], [(11.0, 18.0), (6.0, 21.0)],
+PATHS = [[(10.5, 30.0), (8.0, 28.0), (7.0, 25.0)], [(52.5, 30.0), (56.0, 31.0)], [(11.0, 18.0), (6.0, 21.0), (4.3, 20.5)],
          [(7.0, 25.0), (5.4, 28.6)], [(53.0, 24.6), (56.8, 25.2)]]
 YARD = (49.6, 20.8, 60.6, 33.6)                    # the Royal Yard's sawdust and packed earth
 PALACE = (16.4, 3.0, 48.4, 11.4)                   # the hill under the palace
@@ -347,15 +348,17 @@ for i in range(170):                                # weed and barnacles at the 
            (rng.choice(('#2a3a26', '#334428', '#3e4a2c', '#5a5a48')), 0.2), 'weed', segs=6)
 # steps down to the water along the wall, an iron rail
 SX0 = 44.2                                           # (east of the Crown & Anchor: the way down to the stilts below the quays)
-for i in range(6):
-    x0 = SX0 + i * 0.36
+for i in range(6):                                    # down westward from the head of the stair, by QUAY STAIRS (46, 33)
+    x0 = SX0 + (5 - i) * 0.36
     zt = -0.02 - (i + 1) * 0.1
     k.box(x0, QF + 0.06, zt - 0.14, x0 + 0.36, QF + 0.62, zt, (shade('#a8a090', rng.uniform(0.85, 1.0)), 0.14), 'steps', bevel=0.02)
     k.box(x0, QF + 0.58, zt - 0.02, x0 + 0.36, QF + 0.62, zt, shade('#a8a090', 1.15), 'step_nose')
-k.box(SX0 + 6 * 0.36, QF + 0.06, C.WZ - 0.5, SX0 + 6 * 0.36 + 0.12, QF + 0.66, -0.06, ('#7a7468', 0.15), 'steps_side')
+k.box(SX0 - 0.12, QF + 0.06, C.WZ - 0.5, SX0, QF + 0.66, -0.06, ('#7a7468', 0.15), 'steps_side')
 for i in range(5):
-    k.cyl(SX0 + 0.1 + i * 0.44, QF + 0.6, -0.12 - i * 0.12 * 1.2 * 0.85, 0.42 - i * 0.12 * 1.2 * 0.85, 0.02, A.IRON, 'rail', verts=6)
-k.tube((SX0 + 0.1, QF + 0.6, 0.42), (SX0 + 0.1 + 4 * 0.44, QF + 0.6, 0.42 - 4 * 0.122), 0.022, A.IRON, 'rail', verts=6)
+    k.cyl(SX0 + 2.06 - i * 0.44, QF + 0.6, -0.12 - i * 0.12 * 1.2 * 0.85, 0.42 - i * 0.12 * 1.2 * 0.85, 0.02, A.IRON, 'rail', verts=6)
+k.tube((SX0 + 2.06, QF + 0.6, 0.42), (SX0 + 2.06 - 4 * 0.44, QF + 0.6, 0.42 - 4 * 0.122), 0.022, A.IRON, 'rail', verts=6)
+k.tube((SX0 + 2.06, QF + 0.6, 0.42), (SX0 + 2.3, QF + 0.1, 0.42), 0.022, A.IRON, 'rail', verts=6)
+W.lantern_post(k, 46.98, QUAY + 0.45, h=2.2, energy=24)     # a lamp at the stair head (on the tile line: it blocks nothing)
 for LX in (18.6, 30.6):                             # iron ladders down the wall
     for dx in (-0.16, 0.16):
         k.tube((LX + dx, QF + 0.1, 0.32), (LX + dx, QF + 0.1, C.WZ - 0.4), 0.022, A.IRON, 'ladder', verts=6)
@@ -391,8 +394,7 @@ def line(a, b, sag=0.15, n=4):
         k.tube(p, q, 0.013, '#b8a070', 'mooring_line', verts=4)
 
 
-for (x0, x1, cr, hull, ring) in ((25.0, 27.0, QF + 0.75, '#2a4a6a', 26.2), (34.4, 36.3, QF + 0.8, '#6a3a2a', 35.8),
-                                 (47.6, 49.5, QF + 0.85, '#7a6a4a', 48.8)):
+for (x0, x1, cr, hull, ring) in ((25.0, 27.0, QF + 0.75, '#2a4a6a', 26.2), (34.4, 36.3, QF + 0.8, '#6a3a2a', 35.8)):
     since, lsince = len(k.parts), len(k.lights)
     W.rowboat(k, x0, x1, cr, beam=0.8, hull=hull, inside=A.WOOD_DD)
     C.sink(k, since, C.WZ + 0.12, lights_since=lsince)
@@ -1294,6 +1296,56 @@ for (x, r) in ((3.2, 23.0), (9.2, 33.0), (11.0, 27.6), (4.0, 33.4)):
     k.solid(x - 0.3, r - 0.6, x + 0.3, r)          # the trunk and the tile its crown hides: the cottage's yard stays open
 W.bench(k, 7.6, 9.0, 31.2)
 k.solid(7.6, 31.0, 9.0, 31.5)
+
+# ---- the ways out to the districts (js/capital.js puts their doors on these tiles) ---------------------------------
+# WEST, the Old Town: the lane past the lighthouse runs up to a gatehouse in the old town's wall, which runs on along the
+# point's shore to a round tower; its roofs and keep rise beyond. Door: THE OLD TOWN at (4, 21), in front of the arch.
+
+
+def footed(fn, *a, foot=-1.2, x0=None, r0=None, x1=None, r1=None, **kw):
+    """Build fn on a footing of big stones down into the water (the town's walls stand in the shallows here)."""
+    if x0 is not None:
+        k.box(x0, r0, foot, x1, r1, 0.02, ('#6e6a60', 0.18), 'sea_wall', bevel=0.03)
+    return fn(*a, **kw)
+
+
+footed(CAP.gatehouse, k, 4.2, 20.9, w=1.8, h=2.5, depth=1.3, name='THE OLD TOWN', banner='#1e6a42', x0=2.3, r0=19.5, x1=6.1, r1=20.9)
+footed(CAP.town_wall, k, -0.6, 2.3, 20.6, h=1.9, thick=0.9, seed=7, x0=-0.6, r0=19.6, x1=2.3, r1=20.6)
+footed(CAP.tower, k, 0.2, 19.6, R=1.0, h=3.3, roof='#44567a', flag='#1e6a42', x0=-0.9, r0=18.5, x1=1.3, r1=20.6)
+for (x0_, x1_, rb, rf, st) in ((-0.6, 1.8, 15.2, 17.6, 3), (1.8, 3.9, 15.6, 17.9, 2), (3.9, 6.0, 15.0, 17.6, 3)):   # the old town beyond
+    footed(CAP.town_house, k, x0_, x1_, rb, rf, storeys=st, rng=rng, solid=False, x0=x0_, r0=rb, x1=x1_, r1=rf + 0.1)
+footed(CAP.tower, k, 2.6, 13.6, R=1.25, h=4.6, roof='#3a4256', flag=GOLD, x0=1.2, r0=12.2, x1=4.0, r1=15.0)      # the Old Keep
+# EAST, the Arsenal: the Royal Yard's wall along the shore, a yard gate on the path out (THE ARSENAL at (60, 25)); past it
+# the Arsenal's ropewalk, its foundry stack smoking, and the sheer-legs of the next slip
+footed(CAP.wall_ns, k, 61.55, 19.2, 24.2, h=1.7, seed=9, x0=61.1, r0=19.2, x1=62.0, r1=24.2)
+footed(CAP.wall_ns, k, 61.55, 26.4, 31.2, h=1.7, seed=10, x0=61.1, r0=26.4, x1=62.0, r1=31.2)
+for pr_ in (24.0, 26.2):                              # the gate's piers, their caps and lamps
+    k.box(61.05, pr_, -1.0, 62.05, pr_ + 0.5, 2.3, (CAP.WALL_STONE, 0.14), 'gate_pier')
+    CAP.coursed(k, 61.05, 62.05, 0.0, 2.3, pr_ + 0.5, CAP.WALL_STONE, rng=rng, part='wall_block')
+    k.box(60.95, pr_ - 0.1, 2.3, 62.15, pr_ + 0.6, 2.45, (CAP.STONE_L, 0.1), 'pier_cap')
+    k.sphere(61.55, pr_ + 0.25, 2.6, 0.17, 0.17, (CAP.STONE_L, 0.1), 'pier_ball', segs=10)
+    W.wall_lantern(k, 61.2, pr_ + 0.52, z=1.6, energy=12)
+k.box(61.4, 24.0, 2.0, 61.7, 26.7, 2.2, (A.WOOD_D, 0.12), 'gate_beam')               # a beam across, the yard's board hung from it
+for hx in (61.45, 61.65):
+    k.tube((hx, 26.66, 2.0), (hx, 26.66, 1.75), 0.012, A.IRON, 'chain', verts=4)
+V.board_sign(k, 'THE ARSENAL', 'IMFellEnglishSC-Regular', 61.55, 26.68, 1.42, size=0.17, board='#2a3a30')
+footed(CAP.ropewalk, k, 62.2, 64.6, 17.6, 22.6, x0=62.2, r0=17.6, x1=64.6, r1=22.6)
+k.box(62.6, 27.4, -1.2, 64.4, 29.4, 1.3, ('#7a6e62', 0.15), 'foundry')                 # the foundry and its stack
+CAP.coursed(k, 62.6, 64.4, 0.0, 1.3, 29.4, '#7a6e62', rng=rng, part='wall_block')
+W._gable_roof(k, 62.6, 64.4, 27.4, 29.4, 1.3, 0.7, '#4a4a50', over=0.15)
+W.chimney_stack(k, 63.9, 27.6, 28.2, 1.3, 4.6, brick='#8a5a48', mortar='#5a4a42', pots=1)
+SMOKE.append([round(63.9 - 0.12, 3), round(27.9 - (4.6 + 0.3) * C45, 3)])
+k.box(62.75, 29.4, 0.2, 63.35, 29.45, 0.9, '#3a1a08', 'furnace_door', emit=('#ff7a30', 0.9))
+k.point_light(63.05, 29.9, 0.5, '#ff8a40', 14, radius=0.3, group='flicker')
+k.box(62.4, 30.2, -1.2, 64.6, 32.6, 0.02, ('#6e6a60', 0.18), 'sea_wall', bevel=0.03)   # the next slip's sheer-legs
+k.tube((62.8, 30.6, 0.0), (63.6, 31.4, 4.2), 0.08, ('#5a4024', 0.1), 'sheerleg', verts=6, smooth=False)
+k.tube((64.4, 30.6, 0.0), (63.6, 31.4, 4.2), 0.08, ('#5a4024', 0.1), 'sheerleg', verts=6, smooth=False)
+k.tube((63.6, 31.4, 4.2), (63.6, 31.4, 2.6), 0.014, '#c8b48a', 'tackle', verts=4)
+# THE QUAY, to the Stilts: below the quay wall east of the stair, shacks on a boardwalk on stilts, their tin roofs just
+# under the quay's edge (the stair above leads down to them: QUAY STAIRS at (46, 33))
+CAP.boardwalk(k, [(47, 34), (48, 34), (49, 34)], z=-0.26, deep=-1.6, rng=rng)
+CAP.shack(k, 47.3, 48.55, 34.15, 34.95, rng=rng, z=-0.26)
+CAP.shack(k, 48.75, 50.1, 34.1, 34.95, rng=rng, z=-0.26, roof='#6a7a7a')
 
 # ---- the east beyond the yard, the north gardens ------------------------------------------------------------------
 for (x, r) in ((60.0, 30.0), (61.5, 24.0), (14.0, 9.5), (49.0, 9.5), (16.0, 12.5), (48.0, 12.8), (55.0, 18.0), (9.5, 17.0)):

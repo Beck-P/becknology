@@ -508,8 +508,10 @@ var BridgeCrowd = (function () {
     }
     if (typeof BridgeFestivals !== 'undefined' && BridgeFestivals.on && planet &&
         BridgeFestivals.on(planet).some(function (fe) { return fe.world === id; })) f *= 1.4;
-    return Math.min(CAP, Math.round(cfg.n * Math.min(1.4, f)));
+    return Math.min(CAP, Math.round(cfg.n * (MORE[id] || 1) * Math.min(1.4, f)));
   }
+  // a place that's grown (js/village.js: Brambleford busier with every project the fund finishes)
+  var MORE = {};
 
   // ---- a visit ----------------------------------------------------------------------------------------------------
   // A slot's visits each run P ms (its own length); the k-th starts at k·P − phase. Its plan: in at a source (or a seat
@@ -911,6 +913,7 @@ var BridgeCrowd = (function () {
 
   return {
     gather: gather, react: react, XKEYS: XKEYS, WARDROBES: WARDROBES,
+    more: function (id, f) { MORE[id] = f; },
     _here: function () { return shown.map(function (e) { return { name: e.plan.who.name, body: e.plan.who.body, x: +e.st.x.toFixed(2), y: +e.st.y.toFixed(2), sit: !!e.st.sit, walk: e.st.walk != null, alpha: e.st.alpha, gather: e.plan.gather || null }; }); },
     _count: function (id, ms) { return CFG && CFG[id] ? countAt(id, CFG[id], ms || now()) : 0; },
     _place: function () { return W && !W.none ? { sources: W.sources.length, spots: W.spots.length, seats: W.seats.length, wander: W.wander.length, cells: W.cells } : null; },

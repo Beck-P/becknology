@@ -24,11 +24,12 @@ at her side.
 import json
 import math
 import os
+import random
 import sys
 import time
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
-from scenekit import Kit, apply_world, shade  # noqa: E402
+from scenekit import Kit, S, apply_world, shade  # noqa: E402
 import assets_elves as E               # noqa: E402
 import assets_ship as P                # noqa: E402
 import assets_sylvara_rich as R        # noqa: E402
@@ -62,6 +63,13 @@ TRAILS = [[(23.0, 7.6), (23.6, 10.5), (25.5, 13.5), (28.5, 16.5), (32.5, 20.0), 
           [(24.4, 12.0), (20.5, 13.6), (16.0, 15.8), (12.6, 18.4), (10.6, 21.6)],
           [(28.5, 16.5), (30.4, 14.6), (31.8, 12.6)]]
 PATHS = [R.spline(t) for t in TRAILS]
+# the ways on (workstream F, added on top of the rebuild): east out of the glade into the Rootmarket, the elves' city on the
+# forest floor (the Rootmarket's door is at (44, 18)), and south down to the Silverrun ((17, 31)) — js/worlds/sylvara.js
+# JOINS. Their stones and lanterns are on their own dice and the wood's undergrowth is lifted off them afterwards
+# (join_clear), so everything the rebuild placed stays where it was.
+JOIN_TRAILS = [[(32.5, 20.0), (36.6, 19.3), (40.6, 18.7), (43.8, 18.6), (46.8, 18.6)],
+               [(28.5, 16.5), (24.6, 20.4), (20.9, 24.1), (18.7, 27.7), (17.7, 31.0), (17.5, 35.6)]]
+JOIN_PATHS = [R.spline(t) for t in JOIN_TRAILS]
 GIANTS = [(7.0, 3.0, 1.7), (14.0, 4.6, 1.3), (33.0, 4.4, 1.5), (40.5, 3.0, 1.8), (2.2, 12.5, 1.3), (44.0, 13.5, 1.3),
           (2.6, 24.5, 1.4), (44.2, 22.0, 1.2), (12.0, 10.5, 1.0), (38.5, 11.0, 1.1), (5.0, 31.5, 1.2)]
 DOORS = {0: math.pi / 2, 2: math.pi / 2}                            # elves' doors in these two trunks (facing you)
@@ -132,6 +140,8 @@ def material(x, r):
     if e < 0.22 + jit:
         return 'ground_bank_stones' if noise(x, r, 4.2, 6) > 0.6 else 'ground_bank'
     if path_d(x, r) < 0.62 + 0.18 * (fbm(x, r, 1.5, 8) - 0.5):
+        return 'path'
+    if min(line_dist(x, r, p) for p in JOIN_PATHS) < 0.58 + 0.18 * (fbm(x, r, 1.5, 8) - 0.5):
         return 'path'
     n = fbm(x, r, 0.45, 7)
     under = min(math.hypot(x - gx, r - gr) - rad for (gx, gr, rad) in GIANTS + [GT])
@@ -728,6 +738,61 @@ R.moss_mounds(k, -0.5, -2.0, COLS + 0.5, ROWS + 0.5, 140, ok=lambda x, r: clear(
 
 
 stage('built')
+
+# ---- the ways on (workstream F): the undergrowth lifted off the two new paths, their stones, a lantern either side where
+# each leaves the glade and a leaf-post pointing the way
+def join_d(x, r):
+    return min(line_dist(x, r, p) for p in JOIN_PATHS)
+
+
+def join_clear(pad=0.75):
+    """Take out the ferns, bushes, saplings, flowers and mounds standing on the new paths (by each part's middle)."""
+    import bpy
+    import numpy as np
+    UNDER = ('fern', 'bush', 'berry', 'leaf', 'sapling', 'flower', 'moss_mound', 'twig', 'mushroom', 'pebble')
+    keep = []
+    for p in k.parts:
+        n = p.get('pname') or ''
+        o = p['obj']
+        if n.startswith(UNDER) and p.get('var') is None and len(o.data.vertices):
+            co = np.empty(len(o.data.vertices) * 3, dtype=np.float32)
+            o.data.vertices.foreach_get('co', co)
+            M = np.array(o.matrix_world, dtype=np.float64)
+            c = (co.reshape(-1, 3) @ M[:3, :3].T + M[:3, 3]).mean(axis=0)
+            if join_d(c[0], -c[1] / S) < pad:
+                bpy.data.objects.remove(o)
+                continue
+        keep.append(p)
+    k.parts[:] = keep
+
+
+join_clear()
+jr = random.Random(7070)
+for p in JOIN_PATHS:
+    for (x, r, dx, dr) in R.along(p, 0.5):
+        if x > COLS + 0.3 or r > ROWS + 0.5:
+            continue
+        nx, nr = -dr, dx
+        if jr.random() < 0.22:
+            o_ = jr.uniform(-0.2, 0.2)
+            sz = jr.uniform(0.2, 0.3)
+            fx, fr = x + nx * o_, r + nr * o_
+            k.rock(fx, fr, gz(fx, fr) - 0.004, sz, sz * jr.uniform(0.6, 0.85), 0.02, (shade('#948a74', jr.uniform(0.88, 1.06)), 0.3),
+                   part='path_flagstone', segs=7, jitter=0.2)
+        for side in (-1, 1):
+            if jr.random() < 0.45:
+                o_ = side * jr.uniform(0.6, 0.72)
+                sx, sr = x + nx * o_, r + nr * o_
+                sz = jr.uniform(0.06, 0.12)
+                k.rock(sx, sr, gz(sx, sr) + sz * 0.25, sz, sz * 0.8, sz * 0.55, (shade(R.STONE, jr.uniform(0.8, 1.15)), 0.3), part='path_stone', segs=7)
+for (x, r) in ((42.6, 17.4), (42.6, 19.9), (16.4, 30.6), (19.0, 30.4)):      # a lantern either side where each path leaves
+    R.lantern_post(k, x, r)
+for (x, r, toward) in ((41.4, 17.2, 0.0), (16.2, 29.4, math.pi / 2)):         # leaf-posts: a carved leaf pointing the way
+    z0 = gz(x, r)
+    k.tube((x, r, z0 - 0.05), (x, r, z0 + 1.15), 0.05, ('#c8b48a', 0.2), 'post', verts=8)
+    k.blob(x + math.cos(toward) * 0.2, r + math.sin(toward) * 0.15, z0 + 1.05, 0.24, 0.05, 0.1, (R.GOLD, 0.25), 'post_leaf',
+           rot=(0, 0, math.degrees(toward)), segs=8)
+    k.solid_post(x, r)
 
 # ---- the edges of the glade ------------------------------------------------------------------------------------------------
 k.solid(0, 0, COLS, 2)
