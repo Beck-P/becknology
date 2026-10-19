@@ -838,9 +838,26 @@ def preview():
 if PREVIEW:
     preview()
 SAMPLES = int(os.environ.get('HOLM_SAMPLES', 96))
-if os.environ.get('HOLM_RESUME'):                      # a render cut short: every pass already written is kept, the rest rendered
-    _render_pass = k._render
+if os.environ.get('HOLM_RESUME'):
+    # a render cut short: the base's passes (all written) go by without setting anything up, then only the variants not
+    # finished are rendered; the finished ones are listed again as they were (the scene is seeded, so their boxes match)
+    _assign, _settings, _render_pass, _variants = k._assign, k._settings, k._render, k._render_variants
+    k._assign = lambda *a, **kw: None
+    k._settings = lambda *a, **kw: None
     k._render = lambda path: None if os.path.exists(path) else _render_pass(path)
+
+    def _resume_variants(out, light_states, light_samples):
+        k._assign, k._settings = _assign, _settings
+        every = k.variants
+        vdir = lambda v: os.path.join(out, 'variants', v['slot'] + '__' + v['key'])        # noqa: E731
+        todo = [v for v in every if not os.path.exists(os.path.join(vdir(v), 'lit_lamps.png'))]
+        print('holm resume: rendering', [v['slot'] + ':' + v['key'] for v in todo], flush=True)
+        k.variants = todo
+        fresh = {(d['slot'], d['key']): d for d in _variants(out, light_states, light_samples)}
+        k.variants = every
+        return [fresh.get((v['slot'], v['key'])) or {'slot': v['slot'], 'key': v['key'], 'dir': os.path.relpath(vdir(v), out),
+                                                     'bbox': k._variant_bbox(v)} for v in every]
+    k._render_variants = _resume_variants
 k.render(OUT, cycle='night', light_states={'full': {'flicker': 1.0}, 'dim': {'flicker': 0.75}}, light_samples=SAMPLES,
          world_light=('#26384a', 0.8))
 if PREVIEW:
