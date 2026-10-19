@@ -47,6 +47,8 @@ const AUCTIONS = { 'lumar': 'auction_diggen', 'lumar-crown': 'auction_crown', 'l
       BridgeState.transition('world', { worldId: id, spawn: d ? { x: d.x, y: d.y - 1 } : null }); r();
     })), id);
     await p.waitForTimeout(2600);
+    // the berths are laid out once the island's shore and the boat sheet are in (a big render takes a few seconds more)
+    for (let k = 0; k < 60 && !(await ev((id) => !!BridgeSloop.harbour(id), id)); k++) await p.waitForTimeout(250);
   };
   const boats = (id) => ev((id) => BridgeSloop._harbourAt(id), id);
   const count = (L, st) => (L || []).filter(o => o.kind !== 'm_brig' && o.kind !== 'm_cutter' && (!st || o.state === st)).length;
