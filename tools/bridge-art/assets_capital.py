@@ -131,13 +131,20 @@ def slate_spire(k, x0, r0, x1, r1, z0, z1, col, bands=6, part='roof_spire'):
         k.loft([base, top], (shade(col, 1.0 if i % 2 else 0.88), 0.1), part, closed=True, smooth=False)
 
 
-def ns_roof(k, x0, x1, rb, rf, z_eave, z_ridge, col, over=0.15):
+def ns_roof(k, x0, x1, rb, rf, z_eave, z_ridge, col, over=0.15, hip=False):
     """A roof whose ridge runs back from the street (a gable end facing the camera): its east and west slopes in
-    courses of slate laid along the eaves, a ridge of half-round tiles; returns (ridge row, ridge z)."""
+    courses of slate laid along the eaves, a ridge of half-round tiles; returns (ridge row, ridge z). hip: the back end
+    hipped (the ridge stops short and a third slope runs down to the back eave), so a tall house doesn't stand its
+    gable's back corner up into the lane behind it on screen; off, it's the roof it always was."""
     cx, hw = (x0 + x1) / 2, (x1 - x0) / 2 + over
+    rk0 = rb - 0.1
+    rh = rk0 + (min(z_ridge - z_eave + 0.08, (rf - rb) * 0.45) if hip else 0.0)     # where the ridge stops, at the back
+
+    def back(t):
+        return rk0 + (rh - rk0) * t
     for sgn in (-1, 1):
         xe = cx + sgn * hw
-        k.quads([((cx, rf + 0.1, z_ridge), (xe, rf + 0.1, z_eave - 0.08), (xe, rb - 0.1, z_eave - 0.08), (cx, rb - 0.1, z_ridge))],
+        k.quads([((cx, rf + 0.1, z_ridge), (xe, rf + 0.1, z_eave - 0.08), (xe, rk0, z_eave - 0.08), (cx, rh, z_ridge))],
                 (shade(col, 0.8), 0.1), 'roof_deck')
         n = max(4, int(hw / 0.2))
         for i in range(n):                                   # courses, eave to ridge, each lapping the one above
@@ -145,9 +152,22 @@ def ns_roof(k, x0, x1, rb, rf, z_eave, z_ridge, col, over=0.15):
             xa, xb = xe + (cx - xe) * ta, xe + (cx - xe) * min(1.0, tb)
             za = z_eave - 0.08 + (z_ridge - z_eave + 0.08) * ta + 0.02
             zb = z_eave - 0.08 + (z_ridge - z_eave + 0.08) * min(1.0, tb) + 0.02
-            k.quads([((xa, rf + 0.1, za), (xb, rf + 0.1, zb), (xb, rb - 0.1, zb), (xa, rb - 0.1, za))],
+            k.quads([((xa, rf + 0.1, za), (xb, rf + 0.1, zb), (xb, back(min(1.0, tb)), zb), (xa, back(ta), za))],
                     (shade(col, (0.92, 1.0, 0.96, 1.05)[i % 4]), 0.08), 'roof_slate')
-    k.cyl_y(cx, rb - 0.12, rf + 0.14, z_ridge + 0.04, 0.06, 0.06, shade(col, 0.75), 'roof_ridge', verts=8)
+    if hip:                                                  # the hipped back slope, in courses too, and its hip tiles
+        ze = z_eave - 0.08
+        k.poly([(cx - hw, rk0, ze), (cx + hw, rk0, ze), (cx, rh, z_ridge)], (shade(col, 0.8), 0.1), 'roof_deck')
+        n = max(4, int(hw / 0.2))
+        for i in range(n):
+            ta, tb = i / n, min(1.0, (i + 1.15) / n)
+            za, zb = ze + (z_ridge - ze) * ta + 0.02, ze + (z_ridge - ze) * tb + 0.02
+            k.quads([((cx - hw * (1 - ta), back(ta), za), (cx + hw * (1 - ta), back(ta), za), (cx + hw * (1 - tb), back(tb), zb),
+                      (cx - hw * (1 - tb), back(tb), zb))], (shade(col, (0.9, 0.97, 0.93, 1.0)[i % 4]), 0.08), 'roof_slate')
+        for sgn in (-1, 1):
+            k.tube((cx + sgn * hw, rk0, ze + 0.04), (cx, rh, z_ridge + 0.04), 0.05, shade(col, 0.75), 'roof_ridge', verts=6)
+        k.cyl_y(cx, rh, rf + 0.14, z_ridge + 0.04, 0.06, 0.06, shade(col, 0.75), 'roof_ridge', verts=8)
+    else:
+        k.cyl_y(cx, rb - 0.12, rf + 0.14, z_ridge + 0.04, 0.06, 0.06, shade(col, 0.75), 'roof_ridge', verts=8)
     return (rb + rf) / 2, z_ridge
 
 
@@ -230,7 +250,8 @@ def awning(k, x0, x1, rf, z, cols=('#b23a34', '#ece0c8'), depth=0.9, drop=0.37):
 
 def town_house(k, x0, x1, r_back, r_front, storeys=2, roof=None, wall=None, ground='stone', timber=None, door_x=None,
                door_w=0.72, shop=None, awning_cols=None, wins=None, wins_down=(), chimney=None, sign=None, lanterns=(),
-               dormers=(), hoist=False, boards=False, gable_front=False, rise=None, flowers=0.7, rng=None, solid=True):
+               dormers=(), hoist=False, boards=False, gable_front=False, rise=None, flowers=0.7, rng=None, solid=True,
+               gable_hip=False):
     """A tall townhouse, its front at r_front: a ground floor of coursed stone or plaster with a door, a shop window or a
     window or two; then `storeys - 1` floors above, each oversailing the one below on corbels, plaster between timbers
     (or weatherboards), shuttered windows with flower boxes; a slate, tile or green roof with a chimney, dormers.
@@ -298,7 +319,7 @@ def town_house(k, x0, x1, r_back, r_front, storeys=2, roof=None, wall=None, grou
         k.box(door_x - door_w / 2 - 0.1, F, -0.02, door_x + door_w / 2 + 0.1, F + 0.22, 0.06, (shade(STONE_L, 0.95), 0.12), 'step')
     rise = rise if rise is not None else min(1.9, 0.55 * (x1 - x0) * 0.5 + 0.6)
     if gable_front:
-        rm, zr = _front_gable(k, x0, x1, rb, rf, wall_h, rise, roof, wall, timber, shutters)
+        rm, zr = _front_gable(k, x0, x1, rb, rf, wall_h, rise, roof, wall, timber, shutters, hip=gable_hip)
     else:
         rm, zr = W._gable_roof(k, x0, x1, rb, rf, wall_h, rise * 0.85, roof)
         for cx in dormers:
@@ -326,7 +347,7 @@ def town_house(k, x0, x1, r_back, r_front, storeys=2, roof=None, wall=None, grou
     return rm, zr
 
 
-def _front_gable(k, x0, x1, rb, rf, wall_h, rise, roof, wall, timber, shutters):
+def _front_gable(k, x0, x1, rb, rf, wall_h, rise, roof, wall, timber, shutters, hip=False):
     """A roof whose gable faces the street (the Dutch and Hanseatic look on the canals): the ridge runs back from the
     front, a stepped or plain gable wall with a loft window and a hoist beam's slot."""
     cx = (x0 + x1) / 2
@@ -337,13 +358,13 @@ def _front_gable(k, x0, x1, rb, rf, wall_h, rise, roof, wall, timber, shutters):
     k.tube((x0 - 0.02, rf + 0.03, wall_h), (cx, rf + 0.03, zr), 0.05, timber, 'timber', verts=4)
     k.tube((x1 + 0.02, rf + 0.03, wall_h), (cx, rf + 0.03, zr), 0.05, timber, 'timber', verts=4)
     W.window(k, cx, rf + 0.02, wall_h + 0.18, w=0.38, h=0.42, shutters=shutters)
-    ns_roof(k, x0, x1, rb, rf, wall_h, zr, roof, over=0.08)
+    ns_roof(k, x0, x1, rb, rf, wall_h, zr, roof, over=0.08, hip=hip)
     return (rb + rf) / 2, zr
 
 
 def row(k, x0, x1, r_back, r_front, seed, gaps=(), storeys=(2, 3), widths=(2.2, 3.6), doors=True, shops=0.3,
         ground=None, gable_front=0.0, chimneys=0.6, signs=(), skip_door=(), smoke=None, roofs=None, walls=None,
-        avoid=(), jitter=0.0):
+        avoid=(), jitter=0.0, gable_hip=False):
     """A run of townhouses from x0 to x1, each its own (width, storeys, roof, wall, shop or not), leaving the lanes in
     gaps [(xa, xb)] open. Returns [(x0, x1, door_x, (rm, zr))] for the houses built. Its own dice (seed): adding a row
     doesn't move anything else the scene's dice place."""
@@ -397,7 +418,7 @@ def row(k, x0, x1, r_back, r_front, seed, gaps=(), storeys=(2, 3), widths=(2.2, 
             rm_zr = town_house(k, xa, xb, r_back + rng.uniform(0, 0.25), rf_i, storeys=st, roof=roof, wall=wall,
                                ground=gnd, door_x=door_x, shop=shop, wins=wins, wins_down=wins_down, chimney=ch,
                                awning_cols=rng.choice((None, ('#b23a34', '#ece0c8'), ('#2e5a8a', '#ece0c8'), ('#3a6a3a', '#e8dcc0'))) if shop else None,
-                               gable_front=rng.random() < gable_front, sign=sign, rng=rng,
+                               gable_front=rng.random() < gable_front, gable_hip=gable_hip, sign=sign, rng=rng,
                                lanterns=(door_x + rng.choice((-0.6, 0.6)),) if door_x is not None and rng.random() < 0.4 else ())
             if ch is not None and smoke is not None:
                 rm, zr = rm_zr
