@@ -57,6 +57,11 @@ const PLACES = [
       ` · lift ${W.scene.heights ? 'yes' : 'no'} · spawn open ${open(sp[0], sp[1])}`);
     if (!open(sp[0], sp[1])) bad(w + ' spawn ' + sp + ' is not walkable');
     far.forEach(it => bad(`${w}: ${it.label} at ${it.x},${it.y} has nowhere to stand by it`));
+    // and walking from where you arrive gets you to every one of them (the market's gate was once boxed in by its barrels)
+    const R = new Set([sp + '']), Q = [sp];
+    while (Q.length) { const [x, y] = Q.pop(); [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(([dx, dy]) => { const k = (x + dx) + ',' + (y + dy); if (!R.has(k) && open(x + dx, y + dy)) { R.add(k); Q.push([x + dx, y + dy]); } }); }
+    W.interactions.filter(it => !far.includes(it) && ![[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, 1], [1, -1], [-1, -1]].some(d => R.has((it.x + d[0]) + ',' + (it.y + d[1]))))
+      .forEach(it => bad(`${w}: ${it.label} at ${it.x},${it.y} can't be walked to from where you arrive`));
     const people = await ev(() => fetch('/bridge/assets/people.json').then(r => r.json()));
     W.interactions.filter(it => it.type === 'dialog' && !it.dialog).forEach(it => {
       if (!Object.values(people).some(pp => (pp.at || []).some(a => a.world === w && a.label === it.label))) bad(`${w}: ${it.label} has no one in people.json`);

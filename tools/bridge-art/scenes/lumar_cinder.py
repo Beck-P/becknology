@@ -615,6 +615,9 @@ w = {'name': 'Cinder Key', 'sea': 'crimson', 'width': COLS, 'height': ROWS, 'til
               "PENNANT. CONES UP, A GALE FROM THE NORTH; CONES DOWN, FROM THE SOUTH; ONE OF EACH, SQUALLS ALL ROUND."),
      ]}
 open(WORLD, 'w').write(json.dumps(w, indent=2) + '\n')
+# ways through that props on tile lines had closed (the look-over, November 2026)
+k.blocked.discard((6, 27))          # the way into the shipwrights' yard past the dead tree's trunk (on the tile line), or the yard is walled off
+k.blocked.discard((27, 21))         # its post stands on the tile line: keep the west tile open, the way to the house door behind the barrels
 apply_world(WORLD, k, (0, 0, COLS - 1, ROWS - 1), doors=PIER + FJET, scene_id=WID,
             actors=[{'sheet': 'npc-fence', 'x': int(FENCE[0] + 2), 'y': int(FENCE[2]), 'facing': 'down'},
                     {'sheet': 'npc-kettle', 'x': KETTLE[0], 'y': KETTLE[1], 'facing': 'left'}],

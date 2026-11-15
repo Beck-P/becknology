@@ -293,6 +293,8 @@ w = {'name': 'Tern Holm', 'width': COLS, 'height': ROWS, 'tileSize': 16, 'tilese
          look('CRAB POTS', PX + 2, QUAY, 'CRAB POTS STACKED ON THE PIER. ONE OF THEM HAS A CRAB IN IT WHO DOES NOT LOOK HAPPY ABOUT ANY OF THIS.'),
      ]}
 open(WORLD, 'w').write(json.dumps(w, indent=2) + '\n')
+# ways through that props on tile lines had closed (the look-over, November 2026)
+k.blocked -= {(21, 6), (21, 7)}    # the way round the inn's east corner to the rise behind the cottages (its lawn, the washing line), else seen and never reached
 apply_world(WORLD, k, (0, 0, COLS - 1, ROWS - 1), doors=PIER, scene_id=WID,
             actors=[{'sheet': 'npc-fishwife', 'x': 29, 'y': 16, 'facing': 'left'}],
             scene_extra={'backdrop': True, 'smoke': SMOKE})

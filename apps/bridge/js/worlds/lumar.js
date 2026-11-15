@@ -2441,17 +2441,23 @@
       });
       if (sc.fountain) sceneFountain(ctx, sc.fountain, offX, offY, ts, time);
       if (sc.steam && typeof BridgeSkyline !== 'undefined') BridgeSkyline.steam(ctx, sc, offX, offY, ts, time);   // hot springs
-      if (sc.beacon) sceneBeacon(ctx, sc.beacon, offX, offY, ts, time);
+      if (sc.beacon) sceneBeacon(ctx, sc.beacon, offX, offY, ts, time, sc.id);
       if (sc.mist) sceneMist(ctx, world, offX, offY, ts, time);
     }
   });
 
   // A lighthouse lamp turning: two beams sweeping round it, flattened by the
   // view, a halo on the lamp (scene.beacon = the lamp in screen tiles).
-  function sceneBeacon(ctx, b, offX, offY, ts, time) {
+  // The beams are the night's: by day they're barely there (the live light's lamp glow, else the baked night's weight).
+  function sceneBeacon(ctx, b, offX, offY, ts, time, id) {
     var lx = offX + b[0] * ts, ly = offY + b[1] * ts;
     var a0 = time / 2400, L = ts * 26;
+    var Lt = id && typeof BridgeLit !== 'undefined' && BridgeLit.light ? BridgeLit.light(id) : null;
+    var sw = !Lt && id && typeof BridgeScene !== 'undefined' && BridgeScene.sky ? BridgeScene.sky(id) : null;
+    var dark = Lt ? Lt.glow : sw ? 1 - sw.day - sw.dusk * 0.5 : 1;
+    dark = Math.max(0.12, Math.min(1, dark));
     ctx.save();
+    ctx.globalAlpha = dark;
     ctx.globalCompositeOperation = 'lighter';
     for (var k = 0; k < 2; k++) {
       var a = a0 + k * Math.PI, sp = 0.09;

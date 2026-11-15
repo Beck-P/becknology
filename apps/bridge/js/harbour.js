@@ -29,7 +29,7 @@ var BridgeHarbour = (function () {
                         guns: [], fits: ['crystal_sails', 'roseite'] },
     'lumar-crimson':  { at: [31, 35], face: 'left', who: 'Garro', sheet: 'npc-hm-garro', yard: ['raider'],
                         guns: ['swivel', 'long_nine', 'carronade', 'chaser'], fits: ['storm_rig', 'oak'] },
-    'lumar-cinder':   { at: [33, 23], face: 'left', who: 'Scarlet Dee', sheet: 'npc-hm-dee', yard: [],
+    'lumar-cinder':   { at: [35, 23], face: 'left', who: 'Scarlet Dee', sheet: 'npc-hm-dee', yard: [],
                         guns: ['swivel', 'long_nine', 'carronade'], fits: ['storm_rig'] },
     // no harbour on the Midnight Isle: the Ferryman keeps the pier and a trade of his own (moonglass, moon salt, the
     // drowned who'd sail again) - no yard, no repairs, no contracts taken, no charts
