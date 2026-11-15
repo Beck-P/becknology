@@ -65,8 +65,9 @@ const SUITES = {
     ['world/rumours.js', SHOTS],
     ['world/events.js', SHOTS],
     ['world/boards.js', SHOTS],
-    ['world/phone_pass.js', SHOTS],
-    ['world/phone_pass_old.js', SHOTS],
+    // (each phone test once per size: both sizes in one run take longer than a test is given)
+    ['world/phone_pass.js', SHOTS, '', 'phone'], ['world/phone_pass.js', SHOTS, '', 'small'],
+    ['world/phone_pass_old.js', SHOTS, '', 'phone'], ['world/phone_pass_old.js', SHOTS, '', 'small'],
     ['world/hoarfell_e.js', SHOTS],
     ['world/hoarfell_quest.js', SHOTS],
     ['world/railway.js', SHOTS + '/railway'],
