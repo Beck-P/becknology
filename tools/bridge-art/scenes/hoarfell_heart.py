@@ -13,6 +13,7 @@ to the monastery is at the south.
 import json
 import math
 import os
+import random
 import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
@@ -100,25 +101,37 @@ while a < math.tau:                                                    # seracs 
 
 # ---- what it has eaten: ribs, a tusk, a sledge -----------------------------------------------------------------------------
 BONE = '#e2dac8'
-for (x0, r0, L, rot) in ((8.0, 12.0, 6.0, 0.3), (32.0, 31.0, 4.8, -0.2)):
+# The spine runs mostly down the rows and each rib arches across the columns, so the camera sees the curve: ribs laid
+# across the rows stacked up on screen into straight posts and read as a fence.
+for (x0, r0, L, rot, seed) in ((8.4, 11.6, 6.0, 1.28, 3), (32.4, 31.4, 4.8, -1.36, 5)):
+    br = random.Random(seed)
+    ux, ur = math.cos(rot), math.sin(rot)                               # along the spine
+    px, pr = -ur, ux                                                    # across it
+    if px < 0:
+        px, pr = -px, -pr
     n = 7
-    for i in range(n):                                                  # each rib a curve of three bones, arching over the spine
-        x = x0 + math.cos(rot) * L * i / (n - 1)
-        r = r0 + math.sin(rot) * L * i / (n - 1)
-        h = 2.8 * math.sin(math.pi * (i + 0.6) / (n + 0.2)) + 0.6
-        z0 = height(x, r)
+    xs, rs = [], []
+    for i in range(n):                                                  # each rib a curve of bones arching over the spine
+        t = (i + br.uniform(-0.15, 0.15)) / (n - 1)
+        x, r = x0 + ux * L * t, r0 + ur * L * t
+        h = (2.8 * math.sin(math.pi * (i + 0.6) / (n + 0.2)) + 0.6) * br.uniform(0.85, 1.05)
+        z0 = height(x, r) - br.uniform(0.05, 0.3)                       # half sunk, each its own depth
+        lean = br.uniform(0.1, 0.25)
         for side in (-1, 1):
-            pts = [(x, r + side * 1.1, z0 - 0.1), (x + 0.08, r + side * 0.95, z0 + h * 0.55), (x + 0.14, r + side * 0.55, z0 + h * 0.92),
-                   (x + 0.18, r + side * 0.15, z0 + h)]
-            if side > 0:
-                pts = pts[:3]                                           # the near ones broken off
+            prof = [(1.25, -0.1), (1.15, 0.5), (0.85, 0.82), (0.4, 0.98), (0.08, 1.0)]
+            pts = [(x + px * side * a + ux * lean * b, r + pr * side * a + ur * lean * b, z0 + h * b) for (a, b) in prof]
+            keep = 5 if side < 0 or i % 3 == 1 else br.choice((2, 3, 4))  # most of the near ones broken off
+            pts = pts[:keep]
             for (pa, pb) in zip(pts, pts[1:]):
                 k.tube(pa, pb, 0.13, (BONE, 0.08), 'rib', rb=0.1, verts=8)
-        k.blob(x, r - 1.1, z0, 0.45, 0.35, 0.18, (N.SNOW, 0.04), 'drift', segs=7)
-        k.blob(x + 0.18, r - 0.15, z0 + h + 0.06, 0.18, 0.14, 0.05, (N.ROOF_SNOW, 0.05), 'bone_snow', segs=6)
-    k.tube((x0 - 0.6, r0, height(x0, r0) + 0.3), (x0 + math.cos(rot) * L + 0.4, r0 + math.sin(rot) * L, height(x0, r0) + 0.25), 0.18, (BONE, 0.08),
+            xs += [q[0] for q in pts]
+            rs += [q[1] for q in pts]
+            k.blob(pts[0][0], pts[0][1], height(pts[0][0], pts[0][1]), 0.4, 0.3, 0.16, (N.SNOW, 0.04), 'drift', segs=7)
+        k.blob(x + ux * lean, r + ur * lean, z0 + h + 0.06, 0.2, 0.14, 0.05, (N.ROOF_SNOW, 0.05), 'bone_snow', segs=6)
+    xe, re_ = x0 + ux * L, r0 + ur * L
+    k.tube((x0 - ux * 0.6, r0 - ur * 0.6, height(x0, r0) + 0.3), (xe + ux * 0.4, re_ + ur * 0.4, height(xe, re_) + 0.25), 0.18, (BONE, 0.08),
            'spine', rb=0.1, verts=8)
-    k.solid(x0 - 0.6, r0 - 1.2, x0 + math.cos(rot) * L + 0.6, r0 + math.sin(rot) * L + 1.2)
+    k.solid(min(xs) - 0.1, min(rs + [r0 - 0.6, re_ - 0.6]), max(xs) + 0.1, max(rs + [r0 + 0.6, re_ + 0.6]))
 k.tube((13.6, 30.0, 0.0), (15.2, 30.6, 1.1), 0.16, (BONE, 0.08), 'tusk', rb=0.04, verts=8)
 k.solid(13, 29, 16, 31)
 k.box(29.0, 9.0, 0.0, 30.4, 9.4, 0.22, (N.LOG, 0.12), 'sledge', bevel=0.02)
@@ -187,7 +200,7 @@ w['interactions'] = [
     {'x': 23, 'y': 36, 'type': 'enter_world', 'label': 'THE GATE', 'prompt': 'PRESS E TO GO BACK', 'target': 'hoarfell-monastery', 'spawn': [38, 4]},
     {'x': 23, 'y': 6, 'type': 'dialog', 'label': 'THE SHRINE', 'prompt': 'PRESS E TO LOOK',
      'dialog': 'A CHORTEN ON A LEDGE OF ROCK, PRAYER FLAGS RAGGED IN THE WIND, AND HEAPED ROUND IT A THOUSAND YEARS OF OFFERINGS TO WHATEVER SWIMS UNDER THE SNOW: BUTTER LAMPS, COINS, BONES, A CHILD\'S WOODEN HORSE. SOMEBODY CARVED ON THE ROCK: "LET IT SLEEP."'},
-    {'x': 9, 'y': 13, 'type': 'dialog', 'label': 'RIBS', 'prompt': 'PRESS E TO LOOK',
+    {'x': 9, 'y': 17, 'type': 'dialog', 'label': 'RIBS', 'prompt': 'PRESS E TO LOOK',
      'dialog': 'RIBS AS TALL AS A HOUSE, SMOOTH AS OLD IVORY, STICKING UP OUT OF THE SNOW LIKE THE FRAME OF A BOAT. WHATEVER THIS WAS, SOMETHING BIGGER ATE IT.'},
 ]
 open(WORLD, 'w').write(json.dumps(w, indent=1) + '\n')
