@@ -4471,6 +4471,18 @@
         9,
         13
       ]
+    },
+    {
+      "x": 21,
+      "y": 39,
+      "type": "enter_world",
+      "label": "MIRROR LAKE",
+      "prompt": "PRESS E TO WALK DOWN TO THE LAKE",
+      "target": "sylvara-lake",
+      "spawn": [
+        21,
+        1
+      ]
     }
   ],
   "designTiles": [
