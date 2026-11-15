@@ -925,7 +925,7 @@ var BridgeInteractions = (function () {
     var sheet = portraitFor(inter);
     var dialogEl = dialogShell(sheet ? 'talk' : null);
     var body = reflow(text);
-    if (body.length > 600) dialogEl.classList.add('wd-long');   // a long read (Thaelin's whole song): on a phone, over the HUD, scrolling
+    if (body.length > 600 || /(^|\n\n) {2}\S/.test(String(text || ''))) dialogEl.classList.add('wd-long');   // a long read, or verse (Thaelin's song): on a phone, over the HUD
     dialogEl.innerHTML =
       (sheet ? '<canvas class="wd-portrait" width="' + PORTRAIT_PX + '" height="' + PORTRAIT_PX + '"></canvas>' : '') +
       '<div class="wd-body">' +

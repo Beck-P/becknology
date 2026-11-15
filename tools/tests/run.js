@@ -60,6 +60,7 @@ const SUITES = {
     ['world/hills_deeper.js', SHOTS],
     ['world/arcadia_deeper.js', SHOTS],
     ['world/far_deeper.js', SHOTS],
+    ['world/far_dialogs.js', SHOTS],
     ['world/lumar_deeper.js', SHOTS],
     ['world/rumours.js', SHOTS],
     ['world/events.js', SHOTS],
