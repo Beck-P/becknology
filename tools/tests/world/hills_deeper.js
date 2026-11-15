@@ -311,6 +311,85 @@ const ONLY = process.argv[3] || '';
     console.log('v5 done');
   }
 
+  // ---- H5 · Room 13 ----
+  if (part('h5')) {
+    await p.evaluate(() => { ['bridge_quests', 'bridge_quest_meta', 'bridge_letters'].forEach(k => localStorage.removeItem(k)); });
+    await p.reload(); await p.waitForTimeout(2500);
+    await p.evaluate(() => { BridgeState.setPilot({ id: 't', name: 'BECK', suit_color: 'gold' }); BridgeIntro.hide(); });
+    await coins(100);
+    await pinAt(['percy', 'aubert'], 'Percy and Aubert');
+    const has = (k) => p.evaluate((k) => BridgeQuests.has(k), k);
+    const carried = () => p.evaluate(() => BridgeKeyItems.carried().map(i => i.id).join(','));
+    // the rumour: Aubert won't let 13
+    await go('hoarfell-chateau', [15, 18]);
+    if (!(await p.evaluate(() => BridgeQuests.startsHere('hoarfell-chateau')['KEY BOARD']))) fail('no gold ! on the key board');
+    await use('MONSIEUR AUBERT');
+    await pick(/^Number 13/);
+    await shut();
+    if (!(await p.evaluate(() => (JSON.parse(localStorage.getItem('bridge_quest_meta') || '{}').heard || {})['room-13']))) fail('no rumour from Aubert');
+    // the junk pile before the board: nothing
+    await go('junk-pawn-shop', [7, 8]);
+    await p.evaluate(() => { const i = BridgeWorld.getWorld().interactions.find(i => i.label === 'JUNK PILE' && i.type === 'dialog'); BridgeInteractions.execute(i); });
+    await p.waitForTimeout(1200);
+    await shut();
+    if (await has('room-13/key')) fail('the key found before the board');
+    await go('hoarfell-chateau', [15, 18]);
+    await use('KEY BOARD');
+    if (!/NOT TO BE FORCED/.test(await said())) fail('the board\'s moment');
+    await shut();
+    if (!(await has('room-13/board'))) fail('the board not found');
+    await use('MONSIEUR AUBERT');
+    if (!(await rows()).some(r => /The guest in 13/.test(r))) fail('Aubert has nothing on the guest');
+    await shut();
+    // Arcadia: Joro's second pile
+    await go('junk-pawn-shop', [7, 8]);
+    await use('PAWNBROKER');
+    if (!(await rows()).some(r => /A hotel key\?/.test(r))) fail('Joro knows nothing of a key');
+    await shut();
+    await p.evaluate(() => { const i = BridgeWorld.getWorld().interactions.find(i => i.label === 'JUNK PILE' && i.type === 'dialog'); BridgeInteractions.execute(i); });
+    await p.waitForTimeout(1400);
+    if (!/GREEN TASSEL/.test(await said())) fail('the pile\'s moment');
+    await p.screenshot({ path: OUT + '/hd_h5_key.png' });
+    await shut(); await p.waitForTimeout(800); await shut();
+    if ((await carried()) !== 'key13') fail('carrying: ' + await carried());
+    // back to the château: the safe
+    await go('hoarfell-chateau', [15, 18]);
+    await use('MONSIEUR AUBERT');
+    await p.waitForTimeout(2500);
+    await shut(); await p.waitForTimeout(1000); await shut(); await p.waitForTimeout(800); await shut();
+    if (!(await has('room-13/safe')) || !(await has('room-13/watch')) || !(await has('room-13/slip'))) fail('the safe: ' + await p.evaluate(() => JSON.stringify(JSON.parse(localStorage.getItem('bridge_quests') || '{}')['room-13'])));
+    const c2 = await carried();
+    if (!/watch13/.test(c2) || !/slip13/.test(c2) || /key13/.test(c2)) fail('carrying after the safe: ' + c2);
+    await use('MONSIEUR AUBERT');
+    if (!(await rows()).some(r => /^Room 13$/.test(r))) fail('no Room 13 topic');
+    await shut();
+    // the cage first: not yet (Percy's watch comes first)
+    await go('arcadia-casino', [21, 26]);
+    // (the cage window, before Percy: the cage opens as ever — not driven here, so the casino's own panel isn't opened)
+    // Percy
+    await go('verdance-village', [24, 13]);
+    await use('PERCY');
+    await p.waitForTimeout(2500);
+    await shut(); await p.waitForTimeout(800); await shut();
+    if (!(await has('room-13/percy'))) fail('Percy didn\'t take the watch');
+    await use('PERCY');
+    if (!(await rows()).some(r => /The gambler's watch/.test(r))) fail('Percy has nothing to say of it');
+    await shut();
+    // the cage pays
+    await go('arcadia-casino', [21, 26]);
+    const c0 = await p.evaluate(() => window._coins);
+    await use('CAGE WINDOW');
+    await p.waitForTimeout(2500);
+    const cs = await said();
+    if (!/THE ROYALE PAYS ON ITS OWN STAMP/.test(cs)) fail('the cage said: ' + cs.slice(0, 160));
+    await p.screenshot({ path: OUT + '/hd_h5_cage.png' });
+    await shut(); await p.waitForTimeout(800); await shut();
+    if (!(await has('room-13'))) fail('Room 13 not done');
+    console.log('coins at the end', await p.evaluate(() => window._coins), 'from', c0, '(the quest pays through recordAchievement)');
+    if (await carried()) fail('still carrying: ' + await carried());
+    console.log('h5 done');
+  }
+
   console.log(errors ? 'FAILED with ' + errors + ' problem(s)' : 'OK');
   await b.close();
   process.exit(errors ? 1 : 0);
