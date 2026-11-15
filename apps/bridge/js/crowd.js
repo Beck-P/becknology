@@ -916,6 +916,16 @@ var BridgeCrowd = (function () {
     more: function (id, f) { MORE[id] = f; },
     _here: function () { return shown.map(function (e) { return { name: e.plan.who.name, body: e.plan.who.body, x: +e.st.x.toFixed(2), y: +e.st.y.toFixed(2), sit: !!e.st.sit, walk: e.st.walk != null, alpha: e.st.alpha, gather: e.plan.gather || null }; }); },
     _count: function (id, ms) { return CFG && CFG[id] ? countAt(id, CFG[id], ms || now()) : 0; },
+    // every spot the crowd uses here, [x, y, kind] (world/lookover.js draws them)
+    _spots: function () {
+      if (!W || W.none) return null;
+      var s = [];
+      W.spots.forEach(function (o) { s.push([o.at[0], o.at[1], 'spot']); });
+      W.seats.forEach(function (o) { s.push([o.at[0], o.at[1], 'seat']); });
+      W.wander.forEach(function (o) { s.push([o.at[0], o.at[1], 'wander']); });
+      W.sources.forEach(function (o) { s.push([o.at[0], o.at[1], 'source']); });
+      return { spots: s };
+    },
     _place: function () { return W && !W.none ? { sources: W.sources.length, spots: W.spots.length, seats: W.seats.length, wander: W.wander.length, cells: W.cells } : null; },
     _plan: function (id, i, ms) {
       if (!W || W.none || W.id !== id) return null;
