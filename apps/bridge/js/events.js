@@ -671,9 +671,10 @@ var BridgeEvents = (function () {
       note: 'Fireworks over Château Aurelle'
     },
     aurelle_sleigh: {
-      world: 'hoarfell-aurelle', name: 'A sleigh across the Place', len: 2, w: 2, at: [28, 12], when: function (ms, E) { return skyAt(E.worlds[0], ms).sun > 0.15; },
+      // (it runs along the top of the Place, behind the ice swan: on row 12 it drove straight through the sculpture)
+      world: 'hoarfell-aurelle', name: 'A sleigh across the Place', len: 2, w: 2, at: [28, 10], when: function (ms, E) { return skyAt(E.worlds[0], ms).sun > 0.15; },
       hint: 'Sleigh bells', loop: { name: 'jingle', every: 1.3, near: 18 },
-      items: function (L, world, offX, offY, ts, ms, sc) { return vehicle(L, 'sleigh', [[58, 12.4], [-4, 12.4]], 2.2, 5, world, offX, offY, ts, ms, sc); },
+      items: function (L, world, offX, offY, ts, ms, sc) { return vehicle(L, 'sleigh', [[58, 10.8], [-4, 10.8]], 2.2, 5, world, offX, offY, ts, ms, sc); },
       note: 'A sleigh jingled across Aurelle\'s Place'
     },
     nightskate: {
