@@ -458,6 +458,7 @@ var BridgeWorld = (function () {
         if (typeof BridgeMine !== 'undefined') BridgeMine.decorate(worldId, data);
         if (typeof BridgeFarm !== 'undefined') BridgeFarm.decorate(worldId, data);
         if (typeof BridgeHomestead !== 'undefined') BridgeHomestead.decorate(worldId, data);
+        if (typeof BridgeBoards !== 'undefined') BridgeBoards.decorate(worldId, data);       // each planet's notice boards
         if (typeof BridgeVillage !== 'undefined') BridgeVillage.decorate(worldId, data);     // Brambleford grows: Station Road's projects
         if (typeof BridgeCountryside !== 'undefined') BridgeCountryside.decorate(worldId, data);   // riding: your horse, Hobb's paddock
         if (typeof BridgeMakers !== 'undefined') BridgeMakers.decorate(worldId, data);       // the countryside's makers: the farm stand, the flowers, the cider

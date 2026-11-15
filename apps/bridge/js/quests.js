@@ -454,6 +454,7 @@ var BridgeQuests = (function () {
         if (nd.length) out.push({ tag: 'Ledger', title: nd.length === 1 ? nd[0].name : nd.length + ' things need you', text: (nd.length === 1 ? nd[0].sub.replace(/ — tap.*$| \(tap.*$|\. Tap.*$/, '') + '. ' : '') + 'See Needs you in the Ledger' + (document.documentElement.classList.contains('touch') ? '.' : ' (L).') });
       }
     }
+    if (wid && typeof BridgeBoards !== 'undefined') BridgeBoards.nextUp(wid).forEach(function (b) { out.push(b); });   // a request here you can fill now
     if (typeof BridgeInventory !== 'undefined' && BridgeInventory.freeSlots && BridgeInventory.freeSlots() === 0) {
       out.push({ tag: 'Pack', title: 'Your pack is full', text: 'Sell to a trader, or leave things in a chest: the sea chest on the bridge, the locker in your quarters.' });
     }
