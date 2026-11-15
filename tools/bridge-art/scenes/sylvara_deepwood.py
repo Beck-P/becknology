@@ -73,11 +73,13 @@ def zfn(x, r):
     return base
 
 
-GIANTS = [(30.0, 4.6, 2.0, 8.0), (44.0, 6.0, 2.2, 8.4), (47.0, 16.0, 1.8, 7.6), (34.0, 15.4, 1.5, 7.2), (6.0, 6.0, 1.8, 7.6),
+# (the heart oak stands at the grove's north edge: at (34, 15.4), in its middle, its trunk and crown stood in front of
+# the grove's path and hid whoever walked it)
+GIANTS = [(30.0, 4.6, 2.0, 8.0), (44.0, 6.0, 2.2, 8.4), (47.0, 16.0, 1.8, 7.6), (37.4, 3.4, 1.5, 7.2), (6.0, 6.0, 1.8, 7.6),
           (16.0, 5.0, 1.6, 7.4), (2.0, 23.0, 1.4, 6.8), (49.0, 30.0, 1.6, 7.0)]
 HEART = GIANTS[3]                                                # the heart oak, its cache in the roots
 PATHS = {
-    'north': [(-1.5, 13.4), (4.0, 12.6), (10.0, 12.0), (18.0, 11.6), (25.0, 12.6), (31.0, 10.0), (37.0, 10.6)],
+    'north': [(-1.5, 13.4), (4.0, 12.6), (10.0, 12.0), (18.0, 11.6), (25.0, 12.6), (31.0, 10.0), (36.0, 9.6), (37.6, 6.4)],
     'south': [(-1.5, 18.8), (5.0, 19.6), (10.0, 20.0), (15.0, 21.6), (20.0, 24.6)],
     'hollow': [(5.0, 19.6), (6.4, 24.0), (6.4, 26.6)],
     'mead': [(20.0, 24.6), (28.0, 26.4), (35.0, 26.0)],
@@ -107,7 +109,7 @@ def mat(x, r):
     return 'litter' if n > 0.72 else 'moss_dark' if n < 0.38 else 'moss'
 
 
-L = A.Land(k, zfn, mat, alb={'meadow': ('#6e9a46', 0.3)})
+L = A.Land(k, zfn, mat, alb={'meadow': ('#6e9a46', 0.3), 'gloom': ('#3a4c30', 0.36)})   # the grove's floor dim, not a black stain
 L.field(-1.5, -3.5, COLS + 1.5, ROWS + 1.5, 0.125)
 A.water(k, -1.5, -3.5, COLS + 1.5, ROWS + 1.5, lambda x, r: wet(x, r, 0.5), WZ, part='pond_water', tone='#2a5a6a')
 
@@ -124,10 +126,10 @@ k.solid(cbx - 0.35, cbr - 0.25, cbx + 0.35, cbr + 0.25)
 
 # ---- the glowing grove: giant mushrooms, clusters, spores, owlmoss on logs ----------------------------------------------
 GLOWS = ('#86f2d6', '#a8d8ff', '#e0b0ff', '#86f2d6', '#c8a8ff')
-for (x, r, h, cap) in ((33.0, 8.6, 1.6, 0.8), (36.4, 11.0, 1.2, 0.6), (40.4, 9.2, 1.9, 0.95), (42.4, 12.4, 1.3, 0.65), (38.0, 6.6, 1.1, 0.55),
+for (x, r, h, cap) in ((33.0, 8.6, 1.6, 0.8), (36.4, 11.0, 1.2, 0.6), (40.4, 9.2, 1.9, 0.95), (42.4, 12.4, 1.3, 0.65), (34.0, 13.4, 1.1, 0.55),
                        (45.4, 10.2, 1.5, 0.7), (31.0, 12.6, 1.0, 0.5), (39.6, 14.4, 0.9, 0.45)):
     if path_d(x, r) > 0.9:
-        A.giant_mushroom(k, L, x, r, h=h, cap=cap, col=rng.choice(GLOWS), light=6.0)
+        A.giant_mushroom(k, L, x, r, h=h, cap=cap, col=rng.choice(GLOWS), light=6.0, glow=0.35)
 for _ in range(26):
     x, r = rng.uniform(GROVE[0] - GROVE[2], GROVE[0] + GROVE[2]), rng.uniform(GROVE[1] - GROVE[3], GROVE[1] + GROVE[3])
     if in_grove(x, r) and path_d(x, r) > 0.8 and (int(x), int(r)) not in k.blocked:
@@ -277,7 +279,7 @@ W.meadow(k, '#6e9a46', area=(mx - mw, mr - mh, mx + mw, mr + mh), ok=('ground_me
 for c in crowns:
     c()
 with k.foliage('leaf'):                                           # the canopy closing over the grove: it's dim in there
-    for (x, r, z, s) in ((38.0, 3.0, 7.2, 1.4), (46.0, 9.0, 6.8, 1.2), (30.0, 9.0, 7.6, 1.2), (12.0, 2.0, 6.6, 1.2), (-0.5, 12.0, 5.6, 1.1),
+    for (x, r, z, s) in ((46.0, 9.0, 6.8, 1.2), (30.0, 9.0, 7.6, 1.2), (12.0, 2.0, 6.6, 1.2), (-0.5, 12.0, 5.6, 1.1),
                          (50.0, 22.0, 5.6, 1.1)):
         W.leafy_crown(k, x, r, z, 1.4 * s, 1.15 * s, 0.85 * s, shade(A.LEAF, rng.uniform(0.75, 0.95)), n=int(64 * s * s), part='canopy')
 
