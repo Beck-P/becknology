@@ -6,12 +6,19 @@
     "api/talk.mjs": {
       "includeFiles": "{api/_personas.json,apps/bridge/assets/people.json,apps/bridge/assets/quests.json,apps/bridge/assets/businesses.json}",
       "maxDuration": 20
+    },
+    "api/chess-coach.mjs": {
+      "maxDuration": 60
     }
   },
   "headers": [
     {
       "source": "/bridge/assets/scenes/(.*)\\.(png|webp)",
       "has": [{ "type": "query", "key": "v", "value": ".+" }],
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+    },
+    {
+      "source": "/chess/engine/stockfish-(.*)",
       "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
     }
   ],

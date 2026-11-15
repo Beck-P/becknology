@@ -14,6 +14,7 @@ import {
   readChessDaily,
   payChessCoins
 } from "./wizard-chess.js";
+import { archiveWizardGame, wizardOpponent } from "./review/sources.js";
 
 // The module graph loaded (three.js, chess.js): the boot watchdog in index.html can stand down
 window.__wizardChessBooted = true;
@@ -39,6 +40,14 @@ let netEscAt = 0;
 // ?theme= picks the board for where the game was opened (the Bridge opens /chess?theme=ship)
 const URL_THEME = (new URLSearchParams(window.location.search).get("theme") || "").toLowerCase();
 const LAUNCH_THEME = WIZARD_THEMES[URL_THEME] ? URL_THEME : "classic";
+// ?tab=review opens on the review board (and so does a link carrying a game or a position for it)
+const URL_PARAMS = new URLSearchParams(window.location.search);
+const LAUNCH_TAB =
+  !TF && (URL_PARAMS.get("tab") === "review" || ["fen", "pgn", "cc", "lichess"].some((k) => URL_PARAMS.get(k)))
+    ? "review"
+    : URL_PARAMS.get("tab") === "trainer" && !TF
+      ? "trainer"
+      : "wizard";
 
 const WIZARD_SUBTITLES = {
   classic: "Carved stone and obsidian sentinels clash by hearthfire. Drag to orbit, click a piece to command.",
@@ -63,8 +72,10 @@ const els = {
   // Mode tabs & views
   tabWizard: document.getElementById("tab-wizard"),
   tabTrainer: document.getElementById("tab-trainer"),
+  tabReview: document.getElementById("tab-review"),
   viewWizard: document.getElementById("view-wizard"),
   viewTrainer: document.getElementById("view-trainer"),
+  viewReview: document.getElementById("view-review"),
   pageTitle: document.getElementById("page-title"),
   pageSubtitle: document.getElementById("page-subtitle"),
 
@@ -100,6 +111,7 @@ const els = {
   wcRevNext: document.getElementById("wc-rev-next"),
   wcRevLast: document.getElementById("wc-rev-last"),
   wcRevExit: document.getElementById("wc-rev-exit"),
+  wcCoachBtn: document.getElementById("wc-coach-btn"),
   wcTheaterBtn: document.getElementById("wc-theater-btn"),
   wcStageThemeBtn: document.getElementById("wc-stage-theme-btn"),
   wcStageCamBtn: document.getElementById("wc-stage-cam-btn"),
@@ -148,6 +160,10 @@ let resumePending = null; // a saved game offered to the player, not yet resumed
 let chess = new Chess();
 let board = null;
 let trainerInitialized = false;
+let wizardStarted = false; // Wizard Chess has been set up (it waits for its tab when the page opens on another)
+let review = null;         // the review board (review/review.js), loaded the first time its tab opens
+let reviewLoading = null;
+let archivedPgn = "";      // the last finished battle filed for the review board
 let current = null;       // current opening
 let moveIndex = 0;        // index into current.line of the next move to play
 let errorCount = 0;
@@ -160,36 +176,117 @@ const stats = loadStats();
 function setupTabs() {
   els.tabWizard.addEventListener("click", () => switchTab("wizard"));
   els.tabTrainer.addEventListener("click", () => switchTab("trainer"));
+  els.tabReview.addEventListener("click", () => switchTab("review"));
 }
+
+const TAB_TITLES = {
+  trainer: ["Chess Opening Trainer", "Practice your prep by the fire."],
+  review: ["Game Review & Coach", "Your games, Stockfish's verdict, and a coach to ask why."]
+};
 
 function switchTab(tab) {
   const isWizard = tab === "wizard";
   if (!isWizard && isTheaterMode) {
     setTheaterMode(false);
   }
-  els.tabWizard.classList.toggle("active", isWizard);
-  els.tabWizard.setAttribute("aria-selected", String(isWizard));
-  els.tabTrainer.classList.toggle("active", !isWizard);
-  els.tabTrainer.setAttribute("aria-selected", String(!isWizard));
-
-  els.viewWizard.hidden = !isWizard;
-  els.viewTrainer.hidden = isWizard;
+  [
+    [els.tabWizard, els.viewWizard, "wizard"],
+    [els.tabTrainer, els.viewTrainer, "trainer"],
+    [els.tabReview, els.viewReview, "review"]
+  ].forEach(([tabEl, viewEl, id]) => {
+    tabEl.classList.toggle("active", id === tab);
+    tabEl.setAttribute("aria-selected", String(id === tab));
+    viewEl.hidden = id !== tab;
+  });
+  document.body.classList.toggle("on-review", tab === "review");
+  if (review && tab !== "review") review.hidden();
 
   if (isWizard) {
     els.pageTitle.textContent = "Wizard Chess 3D";
     els.pageSubtitle.textContent = wizardSubtitle();
-    if (wizardGame) {
+    if (!wizardStarted) {
+      startWizard(); // the page opened on another tab: the 3D board is built now that it can be seen
+    } else if (wizardGame) {
       wizardGame.activeTab = true;
       wizardGame.onResize();
     }
-  } else {
-    els.pageTitle.textContent = "Chess Opening Trainer";
-    els.pageSubtitle.textContent = "Practice your prep by the fire.";
-    if (wizardGame) wizardGame.activeTab = false;
-    if (!trainerInitialized) {
-      initTrainer();
-    }
+    return;
   }
+  els.pageTitle.textContent = TAB_TITLES[tab][0];
+  els.pageSubtitle.textContent = TAB_TITLES[tab][1];
+  if (wizardGame) wizardGame.activeTab = false;
+  if (tab === "trainer") {
+    if (!trainerInitialized) initTrainer();
+  } else {
+    openReview();
+  }
+}
+
+// The review board is its own module (and its own Stockfish): fetched when the tab is first opened
+function openReview() {
+  if (review) {
+    review.shown();
+    return Promise.resolve(review);
+  }
+  if (!reviewLoading) {
+    reviewLoading = import("./review/review.js")
+      .then((mod) => {
+        review = mod.initReview();
+        if (!els.viewReview.hidden) review.shown();
+        return review;
+      })
+      .catch((err) => {
+        console.error("The review board couldn't load", err);
+        reviewLoading = null;
+        document.getElementById("rv-game-title").textContent = "The review board couldn't load. Check the connection and open the tab again.";
+        return null;
+      });
+  }
+  return reviewLoading;
+}
+
+// ---------- Wizard Chess → the review board ----------
+
+// A battle as the review board's game list wants it (review/sources.js)
+function wizardEntry(over) {
+  if (!wizardGame) return null;
+  const c = wizardGame.chess;
+  if (!c || !c.history().length) return null;
+  const mode = wizardGame.mode;
+  const you = mode === "ai" || mode === "net" ? (wizardGame.playerColor === "b" ? "b" : "w") : null;
+  const foe = mode === "net" && TF ? TF.cfg.vs : wizardOpponent(mode, wizardGame.aiDifficulty);
+  const result = !over ? "*" : c.isCheckmate() ? (c.turn() === "w" ? "0-1" : "1-0") : "1/2-1/2";
+  const now = Date.now();
+  return {
+    id: "wz:" + now,
+    pgn: c.pgn(),
+    white: { name: you === "b" ? foe : you ? "You" : "Ivory", rating: null },
+    black: { name: you === "w" ? foe : you ? "You" : "Obsidian", rating: null },
+    result,
+    endTime: now,
+    speed: "Wizard Chess",
+    opening: "",
+    url: "",
+    me: you
+  };
+}
+
+// A finished battle is kept for the review board's "Played here" list (once)
+function archiveFinishedGame() {
+  const entry = wizardEntry(true);
+  if (!entry || entry.pgn === archivedPgn) return;
+  archivedPgn = entry.pgn;
+  archiveWizardGame(entry);
+}
+
+function askCoachAboutBattle() {
+  const entry = wizardEntry(wizardGame && wizardGame.chess.isGameOver());
+  if (!entry) return;
+  closeReviewPanel();
+  switchTab("review");
+  openReview().then((r) => {
+    if (r) r.open({ ...entry, source: "wizard" });
+  });
 }
 
 function setTheaterMode(enabled, manual = false) {
@@ -366,6 +463,7 @@ function initWizardChess() {
     );
     els.wcRevExit.addEventListener("click", closeReviewPanel);
   }
+  if (els.wcCoachBtn) els.wcCoachBtn.addEventListener("click", askCoachAboutBattle);
 
   // Click on Eval Chart to scrub through moves
   if (els.wcEvalChart) {
@@ -879,6 +977,7 @@ function renderWizardState(state) {
   }
 
   renderWizardMovesList(state.history, wizardGame && wizardGame.reviewMode ? currentReviewPly : -1);
+  if (state.isCheckmate || state.isDraw) archiveFinishedGame();
 
   const sideName = state.turn === "w" ? "Ivory Legion (White)" : "Obsidian Legion (Black)";
   if (TF && wizardGame && wizardGame.mode === "net") {
@@ -918,6 +1017,7 @@ function setupTogether() {
   hide(els.wcNewBtn);
   hide(els.wcUndoBtn);
   hide(els.wcStageUndoBtn);
+  hide(els.tabReview); // (the review board is for after the game)
   const side = TF.cfg.side === "b" ? "b" : "w";
   els.pageSubtitle.textContent =
     `You play ${side === "w" ? "Ivory" : "Obsidian"} against ${TF.cfg.vs}.` +
@@ -1327,7 +1427,13 @@ function renderStats() {
 
 // ---------- go ----------
 
+function startWizard() {
+  wizardStarted = true;
+  initWizardChess();
+  if (TF) setupTogether();
+}
+
 setupTabs();
 renderMoveList();
-initWizardChess();
-if (TF) setupTogether();
+if (LAUNCH_TAB === "wizard") startWizard();
+else switchTab(LAUNCH_TAB);
