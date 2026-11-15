@@ -565,6 +565,133 @@
       "text": "Dear farmer,\n\nI've copied Edda's pie out on a card and pinned it over the oven, and I've given every page back to whoever had it. That felt right. Ludd says his loaf page is going under his pillow. Wat says nothing, but he's framed his.\n\nThe pies sell out by ten. I keep one back for you. It's always still warm.\n\nBridget"
     }
   },
+  "admiral": {
+    "title": "The Admiral",
+    "where": "Lumar · Crownhaven",
+    "reward": 220,
+    "start": "Two notices in Crownhaven, one name: a grey cat lost in the Old Town and a parrot that swears lost at the Harbour Office. Both answer to \"Admiral\". The crier thinks that's very funny. Somebody is missing both.",
+    "rumour": "The town crier is crying a lost cat called Admiral. There's a lost parrot called Admiral on the Harbour Office's notices, too.",
+    "begin": "crier",
+    "done": "The Admiral and the Admiral are home in Captain Huxley's window over the chandler's, not speaking to each other, which he says is how they like it.",
+    "items": {
+      "cat": {
+        "name": "The Admiral (cat)",
+        "text": "A large grey cat with a torn ear and the air of a ship's officer. He'd like it known he's allowing this. Take him home - wherever home is.",
+        "to": "Captain Huxley",
+        "icon": "cat"
+      },
+      "parrot": {
+        "name": "The Admiral (parrot)",
+        "text": "A green parrot, red at the shoulder, on your shoulder. It has opinions about your stride. Take it home - wherever home is.",
+        "to": "Captain Huxley",
+        "icon": "parrot"
+      }
+    },
+    "clues": [
+      {
+        "id": "crier",
+        "on": {
+          "world": "lumar-crown-oldtown",
+          "label": "TOWN CRIER"
+        },
+        "text": "Barnaby Toll is crying a grey cat called Admiral, last seen on the roof of the Old Keep, looking smug. There's a parrot called Admiral on the Harbour Office's notices, too. \"Two Admirals! Oyez!\"",
+        "hint": "The town crier in the Old Town cries everything that's lost in Crownhaven."
+      },
+      {
+        "id": "keep",
+        "after": "crier",
+        "on": {
+          "world": "lumar-crown-oldtown",
+          "label": "THE OLD KEEP"
+        },
+        "text": "Grey hairs and a herring's bones on the Old Keep's warm stones; the cat's moved on. A fishwife says he goes where the boats are - over the Bridge Gate.",
+        "say": "THE OLD KEEP. UP ON THE WARM STONE BY THE WALL: GREY HAIRS, AND THE VERY CLEAN BONES OF A VERY GOOD HERRING. NO CAT.\n\nA FISHWIFE ON THE STEPS SEES YOU LOOKING. \"THE GREY TOM? GONE OVER THE BRIDGE GATE, LOVE. HE GOES WHERE THE BOATS ARE.\"",
+        "hint": "The crier says the cat was on the roof of the Old Keep."
+      },
+      {
+        "id": "pim",
+        "after": "crier",
+        "on": {
+          "world": "lumar-crown-office",
+          "label": "PIM"
+        },
+        "text": "Pim wrote the parrot's notice out for an old captain who left a coin at the window and no name. Pim has since heard the parrot swearing down on the Stilts.",
+        "hint": "The parrot's notice is in the Harbour Office. Somebody there wrote it out."
+      },
+      {
+        "id": "tag",
+        "after": "pim",
+        "on": {
+          "world": "lumar-crown-stilts",
+          "label": "MUDLARK"
+        },
+        "text": "Gull Molly dug a brass tag out of the mud: ADMIRAL - RETURN TO CAPT. H... - the rest worn off. The parrot was here this morning and flew off toward the Arsenal, swearing at the gulls.",
+        "hint": "Pim heard the parrot swearing down on the Stilts. The mudlark there misses nothing."
+      },
+      {
+        "id": "bosun",
+        "after": "tag",
+        "on": {
+          "world": "lumar-crown-pub",
+          "label": "BOSUN"
+        },
+        "text": "The bosun knew the tag at once: Captain Huxley of the cutter Perseverance, who sailed forty years with a cat on the binnacle and a parrot on the yard, both called Admiral so he'd only have to shout once. He's in the rooms over the chandler's in the Old Town now.",
+        "hint": "CAPT. H... The bosun from the Crown & Anchor has known every captain who ever put in here. By day he's out on Crownhaven's quay; of an evening, back in the pub."
+      },
+      {
+        "id": "cat",
+        "after": "keep",
+        "on": {
+          "world": "lumar-crown-bridge",
+          "label": "THE LOGGIA"
+        },
+        "text": "On the Old Bridge's loggia over the harbour mouth, watching the boats go under: a big grey cat. He answered to \"Admiral\" as if you were late, and let you pick him up.",
+        "get": "cat",
+        "say": "ON THE LOGGIA'S RAIL, OVER THE HARBOUR MOUTH, A LARGE GREY CAT WITH A TORN EAR IS WATCHING THE BOATS GO THROUGH UNDER HIM.\n\nYOU SAY \"ADMIRAL\". HE LOOKS AT YOU AS IF YOU'RE LATE, AND LETS YOU PICK HIM UP.",
+        "hint": "The cat goes where the boats are. Somewhere on the Old Bridge with a view of the harbour mouth."
+      },
+      {
+        "id": "parrot",
+        "after": "tag",
+        "on": {
+          "world": "lumar-crown-arsenal",
+          "label": "THE CRANE"
+        },
+        "text": "Up on the Arsenal's treadwheel crane, a green parrot was telling the lads in the wheel what it thought of their pace. It came down onto your shoulder at \"Admiral\".",
+        "get": "parrot",
+        "say": "UP ON THE TREADWHEEL CRANE'S JIB, A GREEN PARROT IS TELLING THE LADS IN THE WHEEL EXACTLY WHAT IT THINKS OF THEIR PACE.\n\nYOU SAY \"ADMIRAL\". IT SAYS SOMETHING THE CHAPLAIN WOULDN'T LIKE, AND COMES DOWN ONTO YOUR SHOULDER.",
+        "hint": "The parrot flew off toward the Arsenal, swearing at the gulls. Look up."
+      },
+      {
+        "id": "home-cat",
+        "after": "bosun",
+        "give": "cat",
+        "on": {
+          "world": "lumar-crown-oldtown",
+          "label": "THE CHANDLER'S"
+        },
+        "text": "Captain Huxley came down the chandler's stairs one at a time. The cat walked past him and up them like he owned the place.",
+        "say": "YOU KNOCK AT THE CHANDLER'S SIDE DOOR. A LONG WAIT, A STICK ON EVERY STAIR, AND AN OLD MAN IN A SEA COAT OPENS IT.\n\nTHE CAT WALKS PAST HIM AND UP THE STAIRS AS IF HE OWNS THEM. \"WELL,\" SAYS CAPTAIN HUXLEY. \"DON'T THANK ANYONE.\"",
+        "hint": "Captain Huxley lives over the chandler's in the Old Town. Take the cat home."
+      },
+      {
+        "id": "home-parrot",
+        "after": "bosun",
+        "give": "parrot",
+        "on": {
+          "world": "lumar-crown-oldtown",
+          "label": "THE CHANDLER'S"
+        },
+        "text": "The parrot flew up to the window over the chandler's and told the whole Old Town it was home.",
+        "say": "THE PARROT LEAVES YOUR SHOULDER FOR THE WINDOW BOX OVER THE CHANDLER'S AND TELLS THE WHOLE OLD TOWN IT'S HOME, IN WORDS THE CRIER WON'T BE REPEATING.\n\nCAPTAIN HUXLEY LEANS OUT. \"THAT'S HIM. THAT'S MY BOY.\"",
+        "hint": "Captain Huxley lives over the chandler's in the Old Town. Take the parrot home."
+      }
+    ],
+    "letter": {
+      "from": "crier",
+      "text": "OYEZ!\n\nThat's just habit. Captain Huxley can't hold a pen any more, so he's asked me to write, and I'm paid by the word, so here are a great many.\n\nThe cat sits on the sill. The parrot sits on the curtain rail. They have not looked at each other since Tuesday, which the Captain says is a sign of deep affection. He says you're to have the run of his window any time, and that the parrot has learned your name. I would not ask it to say it.\n\nTwo Admirals home. Best news I've cried all year.\n\nBarnaby Toll, Town Crier"
+    }
+  },
   "wren": {
     "title": "The Wren",
     "where": "Enigma Station",

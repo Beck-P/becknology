@@ -42,9 +42,9 @@ const ONLY = process.argv[3] || '';
   const ask = async (q) => { const ok = await p.evaluate((q) => { const b = [...document.querySelectorAll('.wd-opt')].find(e => e.textContent === q); if (b) b.click(); return !!b; }, q); await p.waitForTimeout(1400); if (!ok) fail('no topic "' + q + '": ' + JSON.stringify(await topics())); return ok; };
   const said = async () => {                                         // once it's typed out (it stops growing)
     let last = '', same = 0;
-    for (let i = 0; i < 60 && same < 3; i++) {
-      await p.waitForTimeout(250);
-      const t = await p.evaluate(() => ((document.querySelector('.wd-text') || document.querySelector('.world-dialog')) || {}).innerText || '');
+    for (let i = 0; i < 60 && same < 3; i++) {                       // (a big place drawn in software can stall the typing a while)
+      await p.waitForTimeout(500);
+      const t = await p.evaluate(() => document.querySelector('.world-dialog.typing') ? '' : ((document.querySelector('.wd-text') || document.querySelector('.world-dialog')) || {}).innerText || '');
       same = t && t === last ? same + 1 : 0; last = t;
     }
     return last;
@@ -132,6 +132,67 @@ const ONLY = process.argv[3] || '';
     if (!/Eat it/.test(pieUses) || !/Loved as a gift/.test(pieUses)) fail('the pie\'s uses: ' + pieUses);
     console.log('eddas-book', await has('eddas-book'), 'letter from', await mail('eddas-book'));
     if (await mail('eddas-book') !== 'Bridget Hale') fail('no letter from Bridget');
+  }
+
+  // ---- The Admiral: the crier, the Keep, Pim, the mudlark's tag, the bosun, the cat on the loggia, the parrot on the
+  // crane, both home at the chandler's ----
+  if (part('admiral')) {
+    await go('lumar-crown-oldtown', [36, 15]);
+    await use('TOWN CRIER'); await ask('The news'); await shut();
+    if ((await p.evaluate(() => BridgeQuests.rumours())).indexOf('admiral') >= 0) fail('heard as a rumour from the one who starts it, after it started');
+    if (!await has('admiral/crier')) fail('not begun at the crier');
+    await use('TOWN CRIER');
+    if ((await topics())[0] !== 'The Admirals') fail('the crier\'s first topic: ' + JSON.stringify(await topics()));
+    await shut();
+    await use('THE OLD KEEP');
+    if (!/BRIDGE GATE/.test(await said())) fail('the Keep\'s moment');
+    await shut();
+    await use("THE CHANDLER'S");
+    if (/CAPTAIN HUXLEY/.test(await said())) fail('the captain\'s home before anyone knows whose they are');
+    await shut();
+    await go('lumar-crown-office', [7, 5]);
+    await use('PIM'); await ask('The parrot'); await shut();
+    await go('lumar-crown-arsenal', [18, 31]);
+    await use('THE CRANE'); await shut();
+    if (await has('admiral/parrot')) fail('the parrot found before anyone said where');
+    await go('lumar-crown-stilts', [31, 20]);
+    await use('MUDLARK'); await ask('The brass tag'); await shut();
+    await go('lumar-crown-arsenal', [18, 31]);
+    await use('THE CRANE');
+    if (!/SHOULDER/.test(await said())) fail('the crane\'s moment');
+    await shut(); await p.waitForTimeout(800); await shut();
+    await go('lumar-crown-bridge', [30, 14]);
+    await use('THE LOGGIA');
+    if (!/PICK HIM UP/.test(await said())) fail('the loggia\'s moment');
+    await shut(); await p.waitForTimeout(800); await shut();
+    if (await carried() !== 'cat,parrot') fail('carrying: ' + await carried());
+    await p.screenshot({ path: OUT + '/ss_admiral_carrying.png' });
+    // the bosun keeps a day (assets/routines.json): on Crownhaven's quay by day, the pub of an evening, away at night
+    const bw = await p.evaluate(() => typeof BridgeRoutines !== 'undefined' ? BridgeRoutines.where('bosun') : null);
+    console.log('the bosun is', JSON.stringify(bw));
+    if (bw) { await go(bw.world, [bw.x || 12, (bw.y || 8) + 1]); await use('BOSUN'); }
+    else {                                                             // (away for the night: as he'd be at the pub of an evening)
+      await go('lumar-crown-pub', [12, 9]);
+      await p.evaluate(() => BridgeInteractions.execute({ x: 12, y: 8, type: 'dialog', label: 'BOSUN', dialog: '', home: { world: 'lumar-crown-pub', label: 'BOSUN' } }));
+      await p.waitForTimeout(1600);
+    }
+    await ask('Captain H...?');
+    if (!/CHANDLER/.test(await said())) fail('the bosun doesn\'t say where');
+    await shut();
+    await go('lumar-crown-oldtown', [49, 11]);
+    await use("THE CHANDLER'S");
+    const home = await said();
+    if (!/UP THE STAIRS/.test(home) || !/MY BOY/.test(home)) fail('both moments at the window: ' + home.slice(0, 200));
+    await p.screenshot({ path: OUT + '/ss_admiral_home.png' });
+    await shut(); await p.waitForTimeout(3000); await shut();
+    if (!await has('admiral')) fail('The Admiral not done');
+    if (await carried()) fail('still carrying: ' + await carried());
+    if (await mail('admiral') !== 'Barnaby Toll') fail('no letter from the crier: ' + await mail('admiral'));
+    await go('lumar-crown-oldtown', [49, 11]);
+    await use("THE CHANDLER'S");
+    if (!/IN THE WINDOW/.test(await said())) fail('they\'re not in the window after');
+    await shut();
+    console.log('admiral', await has('admiral'));
   }
 
   console.log('errors', errors);
