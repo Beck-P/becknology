@@ -232,31 +232,97 @@ V.board_sign(k, 'FUNICULAR', 'AlegreyaSC-Bold', FUNI_X, EDGE + 0.62, 2.0, size=0
 k.solid(sx0, EDGE - 3.0, sx0 + 0.2, EDGE + 0.5)
 k.solid(sx1 - 0.2, EDGE - 3.0, sx1, EDGE + 0.5)
 
-# the drop: a cliff of strata falling from the Belvedere to the city's roofs far below, the track going down it
+# the drop: a tall retaining wall under the Belvedere (it was a flat dark band of strata), buttressed, its stone weathered
+# and hung with ivy, weeds and a fern in its joints, drains with their stains; the funicular's cutting goes down through
+# it on stepped strata. Then the city's roofs far below, built like the capital's houses elsewhere.
+WALL_R = EDGE + 0.36
+GAP = (FUNI_X - 1.1, FUNI_X + 1.1)
 for i in range(5):
     r = EDGE + 0.3 + i * 0.25
     z1 = -i * (abs(DROP) / 5)
-    k.box(-0.6, r, z1 - abs(DROP) / 5 - 0.1, COLS + 0.6, r + 0.25, z1, (shade(('#6a6458', '#5e584e', '#726c60')[i % 3], rng.uniform(0.9, 1.05)), 0.16), 'cliff')
-for i in range(70):
+    k.box(GAP[0], r, z1 - abs(DROP) / 5 - 0.1, GAP[1], r + 0.25, z1, (shade(('#6a6458', '#5e584e', '#726c60')[i % 3], rng.uniform(0.9, 1.05)), 0.16), 'cliff')
+dr = random.Random(5607)                                  # the wall's own dice: the scene's dice place what they always did
+for (wa, wb) in ((-0.6, GAP[0]), (GAP[1], COLS + 0.6)):
+    k.box(wa, EDGE, DROP - 0.4, wb, WALL_R - 0.02, 0.0, (shade(CAP.WALL_STONE, 0.7), 0.14), 'wall_core')
+    CAP.coursed(k, wa, wb, DROP - 0.3, -0.02, WALL_R, '#7e786c', part='wall_block', rng=dr, **CAP.BIG)
+    k.box(wa, WALL_R - 0.04, -0.12, wb, WALL_R + 0.06, 0.0, (shade(CAP.WALL_STONE, 1.08), 0.1), 'wall_coping')
+    x = wa + 2.2
+    while x < wb - 1.2:                                   # buttresses, battered back toward the top
+        k.loft([[(x - 0.36, WALL_R, DROP - 0.3), (x + 0.36, WALL_R, DROP - 0.3), (x + 0.36, WALL_R + 0.62, DROP - 0.3), (x - 0.36, WALL_R + 0.62, DROP - 0.3)],
+                [(x - 0.3, WALL_R, -0.6), (x + 0.3, WALL_R, -0.6), (x + 0.3, WALL_R + 0.12, -0.6), (x - 0.3, WALL_R + 0.12, -0.6)]],
+               (shade(CAP.WALL_STONE, dr.uniform(0.86, 0.96)), 0.14), 'wall_buttress', closed=True, smooth=False)
+        k.box(x - 0.34, WALL_R, -0.68, x + 0.34, WALL_R + 0.16, -0.58, (shade(CAP.WALL_STONE, 1.05), 0.1), 'wall_coping')
+        x += dr.uniform(5.0, 7.5)
+    x = wa + 1.0
+    while x < wb - 0.5:                                   # weep holes and the stains under them
+        z = dr.uniform(DROP + 1.0, -1.4)
+        k.box(x - 0.07, WALL_R + 0.0, z, x + 0.07, WALL_R + 0.03, z + 0.12, '#1a1816', 'weep_hole')
+        k.box(x - 0.05, WALL_R + 0.012, DROP - 0.2, x + 0.05, WALL_R + 0.022, z, ('#4a463e', 0.2), 'wall_stain')
+        x += dr.uniform(2.5, 4.5)
+for _ in range(16):                                       # ivy hanging in curtains from the top
+    x = dr.uniform(-0.4, COLS + 0.4)
+    if GAP[0] - 0.4 < x < GAP[1] + 0.4:
+        continue
+    w, L = dr.uniform(0.6, 1.6), dr.uniform(1.2, 3.6)
+    with k.foliage('leaf'):
+        for j in range(int(w * L * 9)):
+            px, pz = x + dr.uniform(-w / 2, w / 2) * (1 - 0.4 * dr.random()), -dr.uniform(0, L) ** 1.1
+            k.blob(px, WALL_R + 0.05, pz, dr.uniform(0.07, 0.13), 0.04, dr.uniform(0.06, 0.1),
+                   (dr.choice(('#2e4a2a', '#3a5a32', '#34502c', '#4a6234')), 0.2), 'ivy', segs=6)
+for i in range(70):                                       # tufts, weeds and the odd fern in the joints
     x = rng.uniform(-0.6, COLS + 0.6)
-    if abs(x - FUNI_X) < 1.0:
+    u = rng.uniform(0.5, 1.4)
+    if GAP[0] - 0.1 < x < GAP[1] + 0.1:
+        rng.uniform(-4.0, -0.4), rng.uniform(0.1, 0.25), rng.uniform(0.08, 0.18), rng.choice(('#2e4a2a', '#3a5a32', '#4a5a2a'))
         continue
     with k.foliage('leaf'):
-        k.blob(x, EDGE + rng.uniform(0.5, 1.4), rng.uniform(-4.0, -0.4), rng.uniform(0.1, 0.25), 0.1, rng.uniform(0.08, 0.18),
+        k.blob(x, WALL_R + 0.04, rng.uniform(-4.0, -0.4), rng.uniform(0.1, 0.25), 0.06, rng.uniform(0.08, 0.18),
                (rng.choice(('#2e4a2a', '#3a5a32', '#4a5a2a')), 0.2), 'cliff_shrub', segs=8)
-k.box(-0.6, EDGE + 1.55, DROP - 0.4, COLS + 0.6, ROWS + 1.5, DROP, ('#3a3632', 0.12), 'ground_below')
+k.box(-0.6, WALL_R, DROP - 0.4, COLS + 0.6, ROWS + 1.5, DROP, ('#3a3632', 0.12), 'ground_below')
+k.box(-0.6, WALL_R, DROP, COLS + 0.6, WALL_R + 0.9, DROP + 0.02, ('#5a5448', 0.2), 'path_below')        # the lane at its foot
 crng = random.Random(77)
 x = -0.6
-while x < COLS + 0.6:                                     # the city's roofs, far below
+while x < COLS + 0.6:                                     # the city's roofs, far below: the capital's houses, seen from above
     w = crng.uniform(2.0, 3.6)
     r0 = EDGE + 2.0 + crng.uniform(0, 1.5)
     for (ra, rb) in ((r0, r0 + 2.6), (r0 + 4.4, r0 + 7.0), (r0 + 8.8, r0 + 11.4)):
         if rb < ROWS + 1.2 and not (FUNI_X - 1.0 < x + w / 2 < FUNI_X + 1.0 and ra < EDGE + 6):
-            k.box(x + 0.05, ra, DROP, x + w - 0.05, rb, DROP + 2.2, (crng.choice(CAP.PLASTERS), 0.1), 'house_wall')
-            W._gable_roof(k, x + 0.05, x + w - 0.05, ra, rb, DROP + 2.2, 1.0, crng.choice(CAP.ROOFS))
-            if crng.random() < 0.5:
-                k.box(x + w / 2 - 0.15, rb + 0.01, DROP + 0.9, x + w / 2 + 0.15, rb + 0.04, DROP + 1.3, '#5a3a18', 'window_glass', emit=(W.GLOW, 0.8))
+            wall = crng.choice(CAP.PLASTERS)
+            roof = crng.choice(CAP.ROOFS)
+            lit = crng.random() < 0.5
+            hr = random.Random(int(x * 1000 + ra * 37))          # each house's own dice for what's new on it
+            x0_, x1_ = x + 0.05, x + w - 0.05
+            zw = DROP + hr.choice((2.2, 2.2, 2.9))
+            k.box(x0_, ra, DROP, x1_, rb, zw, (wall, 0.1), 'house_wall')
+            k.box(x0_ - 0.02, rb - 0.02, DROP, x1_ + 0.02, rb + 0.02, DROP + 0.7, (shade(CAP.WALL_STONE, hr.uniform(0.85, 1.0)), 0.12), 'house_footing')
+            timber = hr.choice(('#3a2a1e', '#4a3828', '#2a2220'))
+            k.boxes([(x0_, rb, zz, x1_, rb + 0.03, zz + 0.07) for zz in (DROP + 0.72, zw - 0.08)], (timber, 0.12), 'timber')
+            nwin = max(1, int((x1_ - x0_) / 1.0))
+            for j in range(nwin):                                # windows on each floor, some lit
+                wx = x0_ + (j + 0.5) * (x1_ - x0_) / nwin
+                for zz in ([DROP + 1.15] + ([DROP + 1.95] if zw > DROP + 2.5 else [])):
+                    glow = hr.random() < 0.35
+                    k.box(wx - 0.17, rb, zz, wx + 0.17, rb + 0.035, zz + 0.42, '#5a3a18' if glow else '#2a3038', 'window_glass',
+                          emit=(W.GLOW, 0.8) if glow else None)
+                    k.box(wx - 0.2, rb + 0.01, zz - 0.06, wx + 0.2, rb + 0.06, zz, (CAP.STONE_L, 0.1), 'window_sill')
+            if lit:
+                k.box(x + w / 2 - 0.2, rb + 0.01, DROP, x + w / 2 + 0.2, rb + 0.05, DROP + 0.9, '#5a3a18', 'window_glass', emit=(W.GLOW, 0.8))
+            else:
+                k.box(x + w / 2 - 0.2, rb + 0.01, DROP, x + w / 2 + 0.2, rb + 0.05, DROP + 0.9, (hr.choice(('#3a2a1e', '#2e4a3a', '#4a2a2a')), 0.12), 'door')
+            if hr.random() < 0.3:                                # a gable to the street now and then
+                CAP.ns_roof(k, x0_, x1_, ra, rb, zw, zw + min(1.6, (x1_ - x0_) * 0.5), roof, over=0.08)
+                k.poly([(x0_ - 0.02, rb, zw), (x1_ + 0.02, rb, zw), ((x0_ + x1_) / 2, rb, zw + min(1.6, (x1_ - x0_) * 0.5))], (wall, 0.08), 'house_wall')
+            else:
+                W._gable_roof(k, x0_, x1_, ra, rb, zw, 1.0, roof)
+                if x1_ - x0_ > 2.6 and hr.random() < 0.5:
+                    W.dormer(k, (x0_ + x1_) / 2, rb + 0.25, (ra + rb) / 2, zw - 0.06, zw + 1.0, roof, wall, hr.choice(CAP.SHUTTERS))
+            if hr.random() < 0.75:
+                cx_ = hr.uniform(x0_ + 0.4, x1_ - 0.4)
+                W.chimney_stack(k, cx_, (ra + rb) / 2 - 0.35, (ra + rb) / 2 + 0.05, zw, zw + 1.3, roof_z=zw + 0.9)
     x += w
+for (lx, lr) in ((6.0, 33.6), (17.0, 34.0), (39.0, 33.4), (50.0, 33.9), (11.0, 38.0), (44.0, 38.4)):   # street lamps below
+    k.sphere(lx, lr, DROP + 1.4, 0.08, 0.08, '#5a3a18', 'lamp_glass', emit=(W.GLOW, 1.0), segs=8)
+    k.point_light(lx, lr + 0.3, DROP + 1.2, '#ffc070', 10, radius=0.1, group='flicker')
 # the track: rails on sleepers down the cliff and away south
 for i in range(16):
     r = EDGE - 2.6 + i * 0.6
