@@ -237,6 +237,7 @@ var BridgeMap = (function () {
       if (t.treasure) out.push('treasure maps');
       if (t.pet) out.push('companions');
       if (t.peddler) out.push('odd things, somewhere new each day');
+      if (t.offer) out.push(t.offer);                                  // a topic's own word for what it opens (Lady Perpetua's Eights)
     });
     if (p.crew) out.push('would join your crew');
     if (buys.length) out.unshift('buys ' + names(buys, 2));

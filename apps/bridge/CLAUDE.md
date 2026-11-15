@@ -1387,6 +1387,24 @@ code. `js/arcadia-deep.js` (BridgeArcadiaDeep) holds the glue; each item's data 
   **LUMEN** a designer piece's confirm has a second row when you carry a chrome part: *a chrome part down*, 120 off
   (a shop's `deposit: { item, off, sub }`, js/spires.js; not on top of Iris's favour; `install(id, { price, deposit })`).
   Sallow's *Steadier chrome?* explains it; the chrome part's and the circuit board's cards say so (`USES`).
+- **A6 · The Orrery, worth joining** (`arcadia-members`; an interaction type `orrery` with `act`, from people's topics'
+  `use` — and a topic's `offer` is what the Map's marker says it opens, js/map.js `offers`). State in localStorage
+  `bridge_orrery` (`bets`, `firsts`; cloud-saved).
+  **Lady Perpetua** (*A hand of Eights?*) deals Eights heads up for 25 or 100 a side, or for nothing: js/eights.js's new
+  `BridgeEights.at(table, stake)` — `table: { title, rivals: [{ id, name, sheet, style, say }], onOver({ won, stake, pot }) }`;
+  a rival's own `style` and sayings, its face from `sheet`, *Another hand* keeps the same table; the mess's game is as it
+  was. She hoards her eights and switches the suit on you (`style: { hoard, spite }`).
+  **Sir Augustin** (*Your wager book*) keeps a book on the week (Sunday to Saturday, Eastern): **the Emerald Regatta's
+  last start** (Friday 11:45pm: which of the five Emerald sloops in it wins — `BridgeRace.fleetFor`, the fastest, the
+  same boats and speeds the race itself sails) and **the Pit's big bout** (Saturday 10pm: Tally's house bout,
+  `BridgeUndercity._bout`). Odds are 0.9 over each one's chance, 1.2 to 50 (the regatta's from the sloops' form over a
+  fixed set of draws, not the day's luck, so the book doesn't give the winner away); one bet a race, 50 or 200, taken
+  until the gun or the bell, settled and paid the next time you open his book (`settle`, once). The spec's derby and
+  Undercroft wagers aren't in it: Lantern Tide's derby is autumn only and the Undercroft has nobody else going down.
+  **The members' book** (THE MEMBERS' BOOK, made an `orrery` interaction by `decorate`) lists your firsts in Mr Ashdown's
+  hand, newest first: elected, every quest seen through (dated), Saint Ruin, the Dredge, the Pit's three rounds, the
+  Regatta Cup, legendary fish, beating Perpetua for money, a wager won (dated from the day the book first saw what the
+  game keeps no date for). Mr Ashdown's *The members' book* says so.
 
 ### Homes and furniture
 `js/home.js` (BridgeHome). Places of your own: **the White House** on Sapphire Port's square (`lumar-home`, `scenes/lumar_home.py`: hearth, two windows on the sea, bare boards; 1500 coins) and a **capsule apartment** over the District's Capsule Hotel (`arcadia-home`, `scenes/arcadia_home.py`: a strip window onto the live skyline and rain — the `'*'` behind hook draws them in `scene.sky` — the sleeping capsule, a kitchenette; 600 coins). **The farmhouse** on Verdance (`verdance-home`, `scenes/verdance_home.py`: Edda's kitchen in daylight — whitewash over green wainscot, the black range, a dresser of blue-and-white plates, two windows on the field, her kitchen table with the ledger) comes with the farm's deed (`HOMES[id].farm`: `owns` asks `BridgeHomestead.owned()`; the FARMHOUSE door goes in once it's yours, and Edda's rocking chair and bed are waiting the first time). Their doors are `home_door` interactions set on the street as worlds load (`HOMES[id].door`: the WHITE HOUSE door at 38,13 on Sapphire; the CAPSULE HOTEL on the street): the first time they offer the place for sale (`wagerCoins`, a menu option `home_buy`), then let you in. Each comes with two pieces to start. Aboard, **your quarters and the bridge** are yours already. The rooms are rendered empty; everything else is what you put in them. The legacy homes (*Legacy* below) are rendered furnished with their architecture and fixed pieces — the Penthouse's inside and roof deck, Ashcombe House's five rooms, the Starling — with open floor left round them for yours: a home can be several worlds (`part: '<home id>'` in HOMES: owned with that home, furnished on its own, no toast of its own), and a world can be a hotel you own (`resort`: owned once the holm's Starling is built).

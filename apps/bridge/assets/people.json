@@ -5367,6 +5367,10 @@
       {
         "q": "Heard anything?",
         "a": "I HEAR EVERYTHING. I REPEAT NOTHING. ASK LADY PERPETUA - SHE HEARS LESS AND REPEATS MORE."
+      },
+      {
+        "q": "The members' book",
+        "a": "EVERY MEMBER SINCE THE CLUB WAS A HILL. WHEN A MEMBER DOES A THING FOR THE FIRST TIME - SINKS A MONSTER, WINS A CUP, BEATS LADY PERPETUA AT CARDS - I WRITE IT IN UNDER THEIR NAME. YOURS IS ON THE LECTERN. IT HAS ROOM."
       }
     ]
   },
@@ -5394,6 +5398,16 @@
       {
         "q": "The Duchess",
         "a": "WE WERE AT SCHOOL TOGETHER. SHE CHEATED AT CARDS EVEN THEN. SHE'S THE ONLY PERSON IN ARCADIA I'VE NEVER BEATEN."
+      },
+      {
+        "q": "A hand of Eights?",
+        "a": "",
+        "offer": "Eights for stakes",
+        "use": {
+          "type": "orrery",
+          "label": "LADY PERPETUA",
+          "act": "eights"
+        }
       }
     ]
   },
@@ -5413,6 +5427,16 @@
       {
         "q": "The smog",
         "a": "I OWNED IT, YOU KNOW. ALL OF IT. BOUGHT IT FOR A SONG WHEN NOBODY THOUGHT AIR COULD BE OWNED. SOLD IT TO HALCYON FOR A FORTUNE. BEST AND WORST THING I EVER DID. MOSTLY WORST."
+      },
+      {
+        "q": "Your wager book",
+        "a": "",
+        "offer": "a wager book on the week",
+        "use": {
+          "type": "orrery",
+          "label": "SIR AUGUSTIN",
+          "act": "wager"
+        }
       },
       {
         "q": "About you",

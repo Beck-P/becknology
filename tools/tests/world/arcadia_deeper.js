@@ -256,6 +256,75 @@ const ONLY = process.argv[3] || '';
     await b.contexts()[0].close();
   }
 
+  // ---- A6 · The Orrery, worth joining -----------------------------------------------------------------------------------
+  // a member: Lady Perpetua's Eights for 25 (a hand won, the pot paid, her face at the table), Sir Augustin's book on the
+  // week (a bet on the regatta's last start and on the Pit's big bout, the clock moved past both, settled once at the odds,
+  // the same winners js/race.js and js/undercity.js give), the members' book listing the firsts
+  if (part('orrery')) {
+    const H = await open(), p = H.p;
+    await H.ev(() => { localStorage.setItem('bridge_spires', JSON.stringify({ member: true, since: Date.now() - 86400000, how: 'bought' })); BridgeClock._at(Date.parse('2026-11-16T17:00:00Z')); });
+    await H.go('arcadia-members', [14, 9]);
+    await H.use('LADY PERPETUA');
+    await H.ask('A hand of Eights?'); await p.waitForTimeout(500);
+    const c0 = await H.coins();
+    await H.pickRow('Sit down for 25'); await p.waitForTimeout(1200);
+    const g = await H.ev(() => { const g = BridgeEights._g(); return g && { n: g.players.length, hand: g.players[0].hand.length, pot: g.pot, title: document.querySelector('#eights .e8-title').textContent, rival: g.players[1].name }; });
+    console.log('the table:', JSON.stringify(g));
+    if (!g || g.n !== 2 || g.hand !== 7 || g.pot !== 50 || g.title !== 'Eights at the Orrery' || g.rival !== 'Lady Perpetua') fail('the table: ' + JSON.stringify(g));
+    await p.screenshot({ path: OUT + '/ad_orrery_eights.png' });
+    // let her play a card or two, then lay out our last card
+    await H.ev(() => { const g = BridgeEights._g(); g.turn = 0; g.drew = false; g.players[0].hand = ['8s']; });
+    await H.ev(() => BridgeEights._lay('8s', 'h')); await p.waitForTimeout(800);
+    const over = await H.ev(() => { const g = BridgeEights._g(); return g && g.over; });
+    if (!over || over.winner !== 0) fail('the hand not won: ' + JSON.stringify(over));
+    if ((await H.coins()) - c0 !== 25) fail('the pot: ' + ((await H.coins()) - c0));
+    if (!await H.ev(() => !!BridgeArcadiaDeep._st().firsts.eights)) fail('the first Eights win not kept');
+    await p.screenshot({ path: OUT + '/ad_orrery_eights_won.png' });
+    await H.ev(() => BridgeEights._close());
+    // the wager book
+    await H.use('SIR AUGUSTIN');
+    await H.ask('Your wager book'); await p.waitForTimeout(500);
+    const rows = await H.rows(); console.log('the book:', rows.length, 'rows ·', JSON.stringify(rows.slice(0, 2)), '…', JSON.stringify(rows.slice(-2)));
+    const W = await H.ev(() => BridgeArcadiaDeep.wagers().map(w => ({ key: w.key, win: w.win, at: w.at, picks: w.picks })));
+    console.log('this week:', JSON.stringify(W.map(w => ({ key: w.key, win: w.win, at: new Date(w.at).toISOString(), odds: w.picks.map(x => x.name + ' ' + x.odds).join(', ') }))));
+    if (W.length !== 2) fail('two wagers a week, not ' + W.length);
+    const reg = W.find(w => /^regatta/.test(w.key)), bout = W.find(w => /^bout/.test(w.key));
+    // the regatta's winner is the fastest of the start's fleet, as js/race.js races them
+    const fastest = await H.ev((k) => { const slot = +k.split('-')[1]; const f = BridgeRace.fleetFor(slot, Date.now()); return f.sort((a, b) => b.v - a.v)[0].name; }, reg.key);
+    if (fastest !== reg.win) fail('the book\'s regatta winner ' + reg.win + ' isn\'t the fleet\'s fastest, ' + fastest);
+    const tally = await H.ev((at) => BridgeUndercity._bout(at).win, bout.at);
+    if (tally !== bout.win) fail('the book\'s bout winner isn\'t Tally\'s');
+    const pr = reg.picks.reduce((a, x) => a + 0.9 / x.odds, 0);
+    if (pr < 0.8 || pr > 1.15) fail('the regatta odds don\'t add up: ' + pr.toFixed(2));
+    const lose = bout.picks.find(x => x.name !== bout.win);
+    await H.pickRow('^' + reg.win + ' for 50'); await H.shut();
+    await H.use('SIR AUGUSTIN'); await H.ask('Your wager book'); await p.waitForTimeout(400);
+    await H.pickRow('^' + lose.name + ' for 200'); await H.shut();
+    const c1 = await H.coins();
+    if (c0 + 25 - 250 !== c1) fail('the stakes: ' + (c0 + 25 - c1));
+    // a second bet on the same race isn't offered
+    await H.use('SIR AUGUSTIN'); await H.ask('Your wager book'); await p.waitForTimeout(400);
+    if ((await H.rows()).some(r => / for 50 /.test(r))) fail('more bets offered after one each');
+    await H.shut();
+    // Sunday, after both: settled once
+    await H.ev(() => BridgeClock._at(Date.parse('2026-11-22T04:00:00Z')));
+    await H.use('SIR AUGUSTIN'); await H.ask('Your wager book'); await p.waitForTimeout(600);
+    const txt = await H.ev(() => (document.querySelector('.world-dialog') || {}).innerText || '');
+    console.log('settled:', txt.replace(/\n+/g, ' / ').slice(0, 400));
+    await p.screenshot({ path: OUT + '/ad_orrery_book.png' });
+    await H.shut();
+    const won = Math.round(50 * reg.picks.find(x => x.name === reg.win).odds);
+    if ((await H.coins()) - c1 !== won) fail('paid ' + ((await H.coins()) - c1) + ', not ' + won);
+    await H.ev(() => BridgeArcadiaDeep.settle());
+    if ((await H.coins()) - c1 !== won) fail('paid twice');
+    await H.use("THE MEMBERS' BOOK", "i.act === 'book'");
+    const mb = await H.rows(); console.log('the members\' book:', JSON.stringify(mb));
+    if (!mb.some(r => /Beat Lady Perpetua/.test(r)) || !mb.some(r => /Won a wager off Sir Augustin/.test(r)) || !mb.some(r => /Elected to the Orrery/.test(r))) fail('the members\' book');
+    await p.screenshot({ path: OUT + '/ad_orrery_members.png' });
+    await H.shut();
+    await b.contexts()[0].close();
+  }
+
   console.log(errors ? errors + ' FAILED' : 'arcadia_deeper OK');
   await b.close();
   process.exit(errors ? 1 : 0);
