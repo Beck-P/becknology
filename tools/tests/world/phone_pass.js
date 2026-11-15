@@ -200,8 +200,8 @@ const SCREENS = global.PHONE_SCREENS || [   // (world/phone_pass_old.js hands in
     const box = await p.evaluate((sel) => {
       const vis = (e) => { const s = getComputedStyle(e), r = e.getBoundingClientRect(); return s.display !== 'none' && s.visibility !== 'hidden' && r.width > 4 && r.height > 4; };
       const pns = [...document.querySelectorAll(sel)].filter(vis), pn = pns.find(e => e.matches('.world-dialog')) || pns.pop();   // a dialog over a panel first
-      const els = [...pn.querySelectorAll('button, .wd-opt, .wd-btn, .wd-hint, .qj-close, [data-act], .gm-x, .gm-close, .wd-sell-row.pick')].filter(vis);
-      const e = els.find(e => /^(✕|×|close|goodbye|leave|done|back|not now|walk away|never mind|cancel|stand up|quit|that's all|bye|got it|keep sailing)\b/i.test(e.textContent.trim()) || /close/i.test(e.getAttribute('aria-label') || '') || e.classList.contains('wd-hint') || e.classList.contains('qj-close'))
+      const els = [...pn.querySelectorAll('button, .wd-opt, .wd-btn, .wd-hint, .qj-close, [data-act], [role=button], .gm-x, .gm-close, .wd-sell-row.pick')].filter(vis);
+      const e = els.find(e => /^(✕|×|close|goodbye|leave|done|back|not now|walk away|never mind|cancel|stand up|quit|that's all|bye|got it|keep sailing)\b/i.test(e.textContent.trim()) || /close|^back/i.test(e.getAttribute('aria-label') || '') || e.classList.contains('wd-hint') || e.classList.contains('qj-close'))
         || els.find(e => /(✕|×|close|goodbye|leave|done|not now|walk away|never mind|cancel)\s*$/i.test(e.textContent.trim()));
       document.querySelectorAll('[data-pp-closing]').forEach(x => x.removeAttribute('data-pp-closing')); pn.setAttribute('data-pp-closing', '1');
       const t = e || pn;
@@ -209,7 +209,7 @@ const SCREENS = global.PHONE_SCREENS || [   // (world/phone_pass_old.js hands in
       const r = t.getBoundingClientRect();
       return { x: r.x + Math.min(r.width / 2, 40), y: r.y + Math.min(r.height / 2, 20), what: e ? e.textContent.trim().slice(0, 20) || e.className : 'the card' };
     }, PANELS);
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < 8; i++) {                                         // (a long line: a page a tap)
       await tapAt(p, box.x, box.y); await p.waitForTimeout(700);
       const gone = await p.evaluate(() => { const e = document.querySelector('[data-pp-closing]'); if (!e || !e.isConnected) return true; const c = getComputedStyle(e); return c.display === 'none' || c.visibility === 'hidden' || +c.opacity < 0.05 || e.getBoundingClientRect().width < 4; });
       if (gone) return box.what;                                            // (that screen: a panel under it, the fishing, may stay)

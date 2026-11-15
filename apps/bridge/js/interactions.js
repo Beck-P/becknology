@@ -942,6 +942,7 @@ var BridgeInteractions = (function () {
     var sheet = portraitFor(inter);
     var dialogEl = dialogShell(sheet ? 'talk' : null);
     var body = reflow(text);
+    if (TOUCH) body = body.replace(/\bPRESS E\b/g, 'TAP A');   // a line that names the key says the button on a phone (the A on the right)
     dialogEl.innerHTML =
       (sheet ? '<canvas class="wd-portrait" width="' + PORTRAIT_PX + '" height="' + PORTRAIT_PX + '"></canvas>' : '') +
       '<div class="wd-body">' +

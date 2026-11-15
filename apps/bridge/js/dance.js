@@ -264,10 +264,11 @@ var BridgeDance = (function () {
     if (!hud) {
       hud = document.createElement('div');
       hud.id = 'dance-hud';
-      hud.innerHTML = '<div class="dn-top"><b class="dn-name"></b></div><div class="dn-cols"></div>' +
+      hud.innerHTML = '<div class="dn-top"><b class="dn-name"></b><button type="button" class="dn-stop" aria-label="Close: stop dancing">\u2715</button></div><div class="dn-cols"></div>' +
         '<div class="dn-pads">' + LANES.map(function (l, i) { return '<button data-lane="' + i + '">' + ['←', '↓', '↑', '→'][i] + '</button>'; }).join('') + '</div>' +
         '<div class="dn-help">← ↓ ↑ → (or WASD) as the arrows reach the top · Esc stop</div>';
       document.body.appendChild(hud);
+      hud.querySelector('.dn-stop').addEventListener('click', function (e) { e.preventDefault(); if (run) quit(false); });   // a phone's way off the floor (Esc on a keyboard)
       hud.querySelectorAll('.dn-pads button').forEach(function (bt) {
         bt.addEventListener('pointerdown', function (e) { e.preventDefault(); if (run) hit(run.players[0], +bt.dataset.lane); });
       });

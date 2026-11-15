@@ -97,7 +97,7 @@ var BridgeStarmap = (function () {
     var h = here();
     selected = h >= 0 ? (h + 1) % WORLDS.length : 0;
     var visited = getVisited();
-    var html = '<div class="nav-head"><span class="ip-key">Esc</span> Bridge<span class="nav-title">NAVIGATION</span></div>';
+    var html = '<div class="nav-head" role="button" aria-label="Back to the bridge"><span class="ip-key">Esc</span> Bridge<span class="nav-title">NAVIGATION</span></div>';
     for (var i = 0; i < WORLDS.length; i++) {
       var w = WORLDS[i];
       var status = i === h ? 'You are here' : visited[w.id] ? 'Charted' : 'Uncharted';

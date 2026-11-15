@@ -9,7 +9,7 @@ const HOLM = JSON.stringify({ owned: true, name: 'Starling Holm', built: { house
 const FLEET = JSON.stringify({ ships: [{ id: 'gull', type: 'sloop', name: 'Little Gull', at: null, hull: 1, hold: {}, guns: [], fits: [] }, { id: 'c2', type: 'cutter', name: 'Swift', at: 'lumar', hull: 0.6, hold: { timber: 2, salt_fish: 4 }, guns: [], fits: [] }], sailing: 'gull', n: 2, crew: [], cn: 0, hired: {} });
 global.PHONE_PREFIX = 'po_';
 global.PHONE_PANELS = '#splice.visible .sp-panel, #pachinko.visible .pk-panel, #letter-rack.visible .lr-panel, #fell-dice.visible .fd-panel, #quest-journal.visible .qj-panel, ' +
-  '#sloop-menu, #starmap-overlay .nav-panel, #locker-overlay, #catalog-overlay, #stats-overlay, #cabinet-modal-overlay, #sea-chart, #gear-dialog, #treasure-map, #trade-panel, #view-panel, #tank-view, #glassblow, #dance-hud, #home-tray';
+  '#sloop-menu, #starmap-overlay, #locker-overlay, #catalog-overlay, #stats-overlay, #cabinet-modal-overlay, #sea-chart, #gear-dialog, #treasure-map, #trade-panel, #view-panel, #tank-view, #glassblow, #dance-hud, #home-tray';
 global.PHONE_SCREENS = [
   // ---- the menu, every tab, a full pack ----
   { id: 'm_pack', menu: 'backpack', world: 'lumar', at: [9, 16], prep: fillPack },
@@ -61,7 +61,7 @@ global.PHONE_SCREENS = [
   { id: 'chess', world: 'quarters', at: [4, 7], use: 'CHESS TABLE' },
   { id: 'holdem', world: 'arcadia-casino-cards', at: [4, 7], use: "TEXAS HOLD'EM" },
   { id: 'dance', world: 'arcadia-club', at: [9, 7], use: 'DANCE FLOOR' },
-  { id: 'dance_game', world: 'arcadia-club', at: [9, 7], use: 'DANCE FLOOR', then: ['Easy'], wait: 3000 },
+  { id: 'dance_game', world: 'arcadia-club', at: [9, 7], use: 'DANCE FLOOR', then: ['on the beat'], wait: 3000 },
   // ---- getting around ----
   { id: 'lift', world: 'arcadia-skywalk', at: [2, 5], use: 'LIFT · STREET' },
   { id: 'aircab', world: 'arcadia-skypad', at: [18, 12], use: 'AIR CAB' },
