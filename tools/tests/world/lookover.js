@@ -67,7 +67,10 @@ function arrivals(id) {
     });
     const ok = await p.evaluate((w) => new Promise((r) => { const t = setTimeout(() => r(false), 15000); BridgeWorld.load(w, () => { clearTimeout(t); BridgeState.transition('world', { worldId: w }); r(true); }); }), WORLD);
     if (!ok) { errs++; console.log('lookover: ERROR', WORLD, 'did not load'); await p.close(); continue; }
-    await p.evaluate(() => { if (typeof BridgeHoarfell !== 'undefined') BridgeHoarfell.warm(600); });   // no frost over the picture
+    await p.evaluate(() => {
+      if (typeof BridgeHoarfell !== 'undefined') BridgeHoarfell.warm(600);       // no frost over the picture
+      if (typeof BridgeExpedition !== 'undefined' && BridgeExpedition._wx) { const x = BridgeExpedition._wx(); x.end = 0; x.next = Infinity; }   // nor a whiteout
+    });
     const info = await p.evaluate(() => {
       const w = BridgeWorld.getWorld(), sc = w.scene && BridgeScene.get(w.scene.id);
       const m = sc && sc.meta;
