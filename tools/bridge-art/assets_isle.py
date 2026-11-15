@@ -121,7 +121,7 @@ def ground(k, cells, material, albedo, step=0.125, bump=0.012, seed=7, height=No
 
 
 def ridge(k, cells, top=3.0, slope=1.1, seed=5, rock='#3a3034', strata=('#4a3c3e', '#352a2e', '#5a4642'),
-          moss='#5a2a2a', notches=(), step=0.125, foot=0.0, ground=None, patchy=True):
+          moss='#5a2a2a', notches=(), step=0.125, foot=0.0, ground=None, patchy=True, bounds=None):
     """A rock massif over `cells`: rising `slope` tiles in from its edge to
     about `top`, cliffs banded in strata, a mossy crown. notches: rects
     (x0, r0, x1, r1) kept at ground level (a cave mouth cut into the face).
@@ -129,8 +129,16 @@ def ridge(k, cells, top=3.0, slope=1.1, seed=5, rock='#3a3034', strata=('#4a3c3e
     so it doesn't run along the tile grid; ground: (material, albedo) of
     the land round it (assets_isle.ground) for the flat strip that leaves.
     patchy=False keeps the crown one material (snow) instead of breaking it
-    with bare rock. Returns height(x, r)."""
+    with bare rock. bounds: (cols, rows) of the map: off the map counts as
+    more massif, so it keeps rising to the edge instead of dropping in a cliff
+    there (a rim that walls the whole map). Returns height(x, r)."""
     cellset = set(cells)
+    if bounds:
+        W_, R_ = bounds
+        for c in range(-4, W_ + 4):
+            for r in range(-4, R_ + 4):
+                if not (0 <= c < W_ and 0 <= r < R_):
+                    cellset.add((c, r))
 
     def inside_dist(x, r):
         # distance to the nearest cell outside the massif (cheap: search a small window)
