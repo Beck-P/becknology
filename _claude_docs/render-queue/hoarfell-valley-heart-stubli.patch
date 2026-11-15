@@ -1,0 +1,178 @@
+diff --git a/tools/bridge-art/scenes/hoarfell_heart.py b/tools/bridge-art/scenes/hoarfell_heart.py
+index 57cac44..f16a970 100644
+--- a/tools/bridge-art/scenes/hoarfell_heart.py
++++ b/tools/bridge-art/scenes/hoarfell_heart.py
+@@ -13,6 +13,7 @@ to the monastery is at the south.
+ import json
+ import math
+ import os
++import random
+ import sys
+ 
+ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+@@ -100,25 +101,37 @@ while a < math.tau:                                                    # seracs
+ 
+ # ---- what it has eaten: ribs, a tusk, a sledge -----------------------------------------------------------------------------
+ BONE = '#e2dac8'
+-for (x0, r0, L, rot) in ((8.0, 12.0, 6.0, 0.3), (32.0, 31.0, 4.8, -0.2)):
++# The spine runs mostly down the rows and each rib arches across the columns, so the camera sees the curve: ribs laid
++# across the rows stacked up on screen into straight posts and read as a fence.
++for (x0, r0, L, rot, seed) in ((8.4, 11.6, 6.0, 1.28, 3), (32.4, 31.4, 4.8, -1.36, 5)):
++    br = random.Random(seed)
++    ux, ur = math.cos(rot), math.sin(rot)                               # along the spine
++    px, pr = -ur, ux                                                    # across it
++    if px < 0:
++        px, pr = -px, -pr
+     n = 7
+-    for i in range(n):                                                  # each rib a curve of three bones, arching over the spine
+-        x = x0 + math.cos(rot) * L * i / (n - 1)
+-        r = r0 + math.sin(rot) * L * i / (n - 1)
+-        h = 2.8 * math.sin(math.pi * (i + 0.6) / (n + 0.2)) + 0.6
+-        z0 = height(x, r)
++    xs, rs = [], []
++    for i in range(n):                                                  # each rib a curve of bones arching over the spine
++        t = (i + br.uniform(-0.15, 0.15)) / (n - 1)
++        x, r = x0 + ux * L * t, r0 + ur * L * t
++        h = (2.8 * math.sin(math.pi * (i + 0.6) / (n + 0.2)) + 0.6) * br.uniform(0.85, 1.05)
++        z0 = height(x, r) - br.uniform(0.05, 0.3)                       # half sunk, each its own depth
++        lean = br.uniform(0.1, 0.25)
+         for side in (-1, 1):
+-            pts = [(x, r + side * 1.1, z0 - 0.1), (x + 0.08, r + side * 0.95, z0 + h * 0.55), (x + 0.14, r + side * 0.55, z0 + h * 0.92),
+-                   (x + 0.18, r + side * 0.15, z0 + h)]
+-            if side > 0:
+-                pts = pts[:3]                                           # the near ones broken off
++            prof = [(1.25, -0.1), (1.15, 0.5), (0.85, 0.82), (0.4, 0.98), (0.08, 1.0)]
++            pts = [(x + px * side * a + ux * lean * b, r + pr * side * a + ur * lean * b, z0 + h * b) for (a, b) in prof]
++            keep = 5 if side < 0 or i % 3 == 1 else br.choice((2, 3, 4))  # most of the near ones broken off
++            pts = pts[:keep]
+             for (pa, pb) in zip(pts, pts[1:]):
+                 k.tube(pa, pb, 0.13, (BONE, 0.08), 'rib', rb=0.1, verts=8)
+-        k.blob(x, r - 1.1, z0, 0.45, 0.35, 0.18, (N.SNOW, 0.04), 'drift', segs=7)
+-        k.blob(x + 0.18, r - 0.15, z0 + h + 0.06, 0.18, 0.14, 0.05, (N.ROOF_SNOW, 0.05), 'bone_snow', segs=6)
+-    k.tube((x0 - 0.6, r0, height(x0, r0) + 0.3), (x0 + math.cos(rot) * L + 0.4, r0 + math.sin(rot) * L, height(x0, r0) + 0.25), 0.18, (BONE, 0.08),
++            xs += [q[0] for q in pts]
++            rs += [q[1] for q in pts]
++            k.blob(pts[0][0], pts[0][1], height(pts[0][0], pts[0][1]), 0.4, 0.3, 0.16, (N.SNOW, 0.04), 'drift', segs=7)
++        k.blob(x + ux * lean, r + ur * lean, z0 + h + 0.06, 0.2, 0.14, 0.05, (N.ROOF_SNOW, 0.05), 'bone_snow', segs=6)
++    xe, re_ = x0 + ux * L, r0 + ur * L
++    k.tube((x0 - ux * 0.6, r0 - ur * 0.6, height(x0, r0) + 0.3), (xe + ux * 0.4, re_ + ur * 0.4, height(xe, re_) + 0.25), 0.18, (BONE, 0.08),
+            'spine', rb=0.1, verts=8)
+-    k.solid(x0 - 0.6, r0 - 1.2, x0 + math.cos(rot) * L + 0.6, r0 + math.sin(rot) * L + 1.2)
++    k.solid(min(xs) - 0.1, min(rs + [r0 - 0.6, re_ - 0.6]), max(xs) + 0.1, max(rs + [r0 + 0.6, re_ + 0.6]))
+ k.tube((13.6, 30.0, 0.0), (15.2, 30.6, 1.1), 0.16, (BONE, 0.08), 'tusk', rb=0.04, verts=8)
+ k.solid(13, 29, 16, 31)
+ k.box(29.0, 9.0, 0.0, 30.4, 9.4, 0.22, (N.LOG, 0.12), 'sledge', bevel=0.02)
+@@ -187,7 +200,7 @@ w['interactions'] = [
+     {'x': 23, 'y': 36, 'type': 'enter_world', 'label': 'THE GATE', 'prompt': 'PRESS E TO GO BACK', 'target': 'hoarfell-monastery', 'spawn': [38, 4]},
+     {'x': 23, 'y': 6, 'type': 'dialog', 'label': 'THE SHRINE', 'prompt': 'PRESS E TO LOOK',
+      'dialog': 'A CHORTEN ON A LEDGE OF ROCK, PRAYER FLAGS RAGGED IN THE WIND, AND HEAPED ROUND IT A THOUSAND YEARS OF OFFERINGS TO WHATEVER SWIMS UNDER THE SNOW: BUTTER LAMPS, COINS, BONES, A CHILD\'S WOODEN HORSE. SOMEBODY CARVED ON THE ROCK: "LET IT SLEEP."'},
+-    {'x': 9, 'y': 13, 'type': 'dialog', 'label': 'RIBS', 'prompt': 'PRESS E TO LOOK',
++    {'x': 9, 'y': 14, 'type': 'dialog', 'label': 'RIBS', 'prompt': 'PRESS E TO LOOK',
+      'dialog': 'RIBS AS TALL AS A HOUSE, SMOOTH AS OLD IVORY, STICKING UP OUT OF THE SNOW LIKE THE FRAME OF A BOAT. WHATEVER THIS WAS, SOMETHING BIGGER ATE IT.'},
+ ]
+ open(WORLD, 'w').write(json.dumps(w, indent=1) + '\n')
+diff --git a/tools/bridge-art/scenes/hoarfell_promenade.py b/tools/bridge-art/scenes/hoarfell_promenade.py
+index 658966d..d968931 100644
+--- a/tools/bridge-art/scenes/hoarfell_promenade.py
++++ b/tools/bridge-art/scenes/hoarfell_promenade.py
+@@ -112,8 +112,11 @@ SMOKE = []
+ rm, zr = N.chalet(k, 3.6, 10.4, 5.0, 9.4, wall_h=2.1, rise=1.6, door_x=7.0, windows=[(4.6, 0.85), (9.4, 0.85)],
+                   windows_up=[(5.6, 1.7), (8.4, 1.7)], chimney=4.4, balcony=True, lanterns=(6.3, 7.7))
+ SMOKE.append(screen(4.4, rm - 0.15, zr + 0.7))
+-k.box(5.0, 9.4, 2.15, 9.0, 9.46, 2.8, ('#3a2416', 0.05), 'sign_board')          # big enough to read from the promenade
+-G.letters(k, 'Stübli', 'Pacifico', 7.0, 9.46, 2.2, size=0.46, col='#ffd890', lit=True, energy=5)
++# the name on a board standing on the eave, clear of the snow on the roof (lower down, the snow buried the letters)
++k.box(5.2, 9.4, 2.5, 8.8, 9.46, 3.1, ('#3a2416', 0.05), 'sign_board')
++for x in (5.5, 8.5):
++    k.box(x - 0.04, 9.38, 1.95, x + 0.04, 9.44, 2.52, ('#3a2416', 0.05), 'post')
++G.letters(k, 'Stübli', 'Pacifico', 7.0, 9.46, 2.6, size=0.42, col='#ffd890', lit=True, energy=5)
+ N.hanging_sign(k, 10.2, 9.36, 1.4, 'mug')
+ for (x, r) in ((4.5, 11.4), (9.5, 11.4), (4.5, 13.3)):        # on tile centres, clear of the lane from the door
+     A.fondue_table(k, x, r)
+diff --git a/tools/bridge-art/scenes/hoarfell_valley.py b/tools/bridge-art/scenes/hoarfell_valley.py
+index fe3785c..ce921a4 100644
+--- a/tools/bridge-art/scenes/hoarfell_valley.py
++++ b/tools/bridge-art/scenes/hoarfell_valley.py
+@@ -14,6 +14,7 @@ with a fire. Tile units: x = column, r = row (toward the camera), z = height.
+ """
+ import json
+ import math
++import random
+ import os
+ import sys
+ 
+@@ -46,7 +47,7 @@ def sm(a, b, t):
+ # ---- warmth: where the springs are, the snow gives out --------------------------------------------------------------------
+ SPRINGS = [(26.0, 17.0, 4), (33.4, 22.0, 3), (20.6, 25.4, 3)]           # each terrace's top pool (x, r) and how many steps
+ WARM = [(26.0, 19.0, 7.0), (33.4, 23.0, 5.0), (20.6, 27.0, 5.0), (25.0, 31.0, 6.0)]
+-STREAM = [(26.0, 21.0), (25.2, 24.0), (24.4, 28.0), (25.6, 32.0), (24.8, 36.0), (26.2, 40.0), (25.6, 46.0)]
++STREAM = [(26.0, 21.0), (25.2, 24.0), (24.4, 28.0), (25.6, 32.0), (24.8, 36.0), (26.6, 40.5), (27.0, 46.0)]   # (clear of the shelter)
+ 
+ 
+ def warmth(x, r):
+@@ -96,16 +97,18 @@ def material(x, r):
+         return 'grass'
+     if w > 0.5:
+         return 'moss'
++    if w > 0.45:                                    # wet, flattened grass coming through: the edge in steps, not a cliff
++        return 'thaw_grass'
+     if w > 0.36:
+         return 'thaw'
+     return 'snow'
+ 
+ 
+ cells = [(c, r) for c in range(-1, COLS + 1) for r in range(-10, ROWS + 1)]
+-I.ground(k, cells, material, {'snow': (N.SNOW, 0.04), 'thaw': ('#c8d0c4', 0.08), 'moss': ('#5a7a42', 0.14), 'grass': ('#4a7a3a', 0.12),
++I.ground(k, cells, material, {'snow': (N.SNOW, 0.04), 'thaw': ('#d2d9cc', 0.08), 'thaw_grass': ('#8c9a72', 0.12), 'moss': ('#5a7a42', 0.14), 'grass': ('#4a7a3a', 0.12),
+                               'path': ('#8a7a5e', 0.12), 'trodden': (N.PACKED, 0.06), 'stream_bed': ('#6a6a5a', 0.12),
+                               'scree': ('#8a8c94', 0.2)},
+-         step=0.25 if QUICK else 0.125, bump=0.012, seed=61, height=height, dither=0.08)
++         step=0.25 if QUICK else 1 / 12, bump=0.012, seed=61, height=height, dither=0.11)
+ # the grass and moss grow over the warm ground (the meadow's tufts, flowers where it's warmest)
+ warm_cells = [(c, r) for c in range(COLS) for r in range(ROWS) if warmth(c + 0.5, r + 0.5) > 0.55 and stream_d(c + 0.5, r + 0.5) > 0.6]
+ I.tufts(k, warm_cells, '#4a7a3a', per_cell=0.6 if QUICK else 1.4, avoid=lambda x, r: trail_d(x, r) < 0.6 or stream_d(x, r) < 0.5, flowers=0.5)
+@@ -208,14 +211,39 @@ for _ in range(60 if not QUICK else 30):                                # junipe
+                 k.blob(x + k.rng.uniform(-0.35, 0.35), r + k.rng.uniform(-0.25, 0.25), height(x, r) + 0.08, k.rng.uniform(0.18, 0.3),
+                        k.rng.uniform(0.14, 0.24), 0.12, (shade('#2e4a34', k.rng.uniform(0.85, 1.2)), 0.18), 'juniper', segs=7)
+ # a mani wall beside the path to the stair: a long low wall of carved stones, each one a prayer
++# (one wall at its own angle, built along the line — square stones stepped along a diagonal read as a white staircase)
++MA, MB = (27.6, 23.6), (30.6, 17.6)
++mr = random.Random(211)
++segs_ = 7
++for i in range(segs_):                                                   # the wall in a few lengths, each sitting on the ground
++    t0, t1 = i / segs_, (i + 1) / segs_
++    xa, ra = MA[0] + (MB[0] - MA[0]) * t0, MA[1] + (MB[1] - MA[1]) * t0
++    xb, rb = MA[0] + (MB[0] - MA[0]) * t1, MA[1] + (MB[1] - MA[1]) * t1
++    z = min(height(xa, ra), height(xb, rb))
++    k.bar(xa, ra, xb, rb, z - 0.05, z + 0.4 + mr.uniform(-0.03, 0.03), 0.42, (shade('#8a8478', mr.uniform(0.92, 1.06)), 0.18), 'mani_wall', bevel=0.03)
++L_ = math.hypot(MB[0] - MA[0], MB[1] - MA[1])
++ux_, ur_ = (MB[0] - MA[0]) / L_, (MB[1] - MA[1]) / L_
++nx_, nr_ = ur_, -ux_                                                     # its face toward the south-west, where the path is
++if nr_ < 0:
++    nx_, nr_ = -nx_, -nr_
++d_ = 0.15
++while d_ < L_ - 0.15:                                                    # the carved stones leant along its face, each its own
++    x, r = MA[0] + ux_ * d_, MA[1] + ur_ * d_
++    z = height(x, r)
++    w_ = mr.uniform(0.18, 0.3)
++    k.bar(x + nx_ * 0.22, r + nr_ * 0.22, x + nx_ * 0.22 + ux_ * w_, r + nr_ * 0.22 + ur_ * w_, z + 0.06, z + mr.uniform(0.26, 0.38), 0.05,
++          (mr.choice(('#b0a890', '#9aa6a8', '#a89a84', '#c0b49a')), 0.15), 'mani_stone')
++    d_ += w_ + mr.uniform(0.03, 0.08)
++d_ = 0.1
++while d_ < L_ - 0.1:                                                     # snow lying along the top in lumps, not a slab
++    x, r = MA[0] + ux_ * d_, MA[1] + ur_ * d_
++    k.blob(x, r, height(x, r) + 0.42, mr.uniform(0.2, 0.32), 0.2, mr.uniform(0.04, 0.07), (N.ROOF_SNOW, 0.05), 'mani_snow', segs=7)
++    d_ += mr.uniform(0.3, 0.55)
+ for i in range(14):
+     t = i / 13
+-    x, r = 27.6 + (30.6 - 27.6) * t, 23.6 + (17.6 - 23.6) * t
+-    z = height(x, r)
+-    k.box(x - 0.24, r - 0.2, z, x + 0.24, r + 0.2, z + 0.42, (shade('#8a8478', k.rng.uniform(0.9, 1.08)), 0.18), 'mani_wall', bevel=0.03)
+-    k.box(x - 0.2, r + 0.2, z + 0.12, x + 0.2, r + 0.22, z + 0.36, (k.rng.choice(('#b0a890', '#9aa6a8', '#a89a84')), 0.15), 'mani_stone')
+-    k.box(x - 0.25, r - 0.21, z + 0.42, x + 0.25, r + 0.21, z + 0.5, (N.ROOF_SNOW, 0.05), 'mani_snow')
++    x, r = MA[0] + (MB[0] - MA[0]) * t, MA[1] + (MB[1] - MA[1]) * t
+     k.solid(x - 0.2, r - 0.2, x + 0.2, r + 0.2)
++    k.rng.uniform(0.9, 1.08), k.rng.choice((0, 1, 2))       # the dice the old wall threw, so everything after it stays put
+ 
+ 
+ # ---- trees: larches on the west slopes, pines on the east, a few birches by the warm water ---------------------------------
