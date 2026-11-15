@@ -10,7 +10,10 @@
  * stockpot's always on: a mug of broth, once a watch, and once a ship's day something wrapped to take with you.
  *
  * Give Dorrie a fish from your pack and it's the next meal's special: whatever that meal does, and a lighter step
- * (+6% speed, BridgeGear.speed) while it lasts. Greens from the greenhouse deck (when it's fitted: js/greenhouse.js
+ * (+6% speed, BridgeGear.speed) while it lasts. Or something from the other worlds, from your pack or the ship's two
+ * chests (W2, `SPECIALS`): Verdance cheese (steadier: +15 most health on top), Arcadia's noodles (a second wind: +20
+ * most energy on top) or Hoarfell fondue (warm: the cold can't touch you while the meal lasts, BridgeHoarfell.warm).
+ * `state.kind` says which (an older save's special, with none, was a fish). Greens from the greenhouse deck (when it's fitted: js/greenhouse.js
  * hands them over with `greens()`) make every meal last half as long again.
  *
  * Dorrie is at the pass from 05:00 to 21:00; after that the galley's dark but there's bread and cheese under a cloth.
@@ -31,6 +34,17 @@ var BridgeGalley = (function () {
   ];
   var COOK_FROM = 5, COOK_TO = 21;
   var SPECIAL_SPEED = 0.06;
+  // what else she'll cook with (W2), each a different lasting bit on the meal
+  var SPECIALS = {
+    cheese:  { ids: ['farm_cheese', 'wold_cheese', 'wold_blue', 'goat_cheese'], hp: 15, short: 'steadier', bit: 'steadier: +15 most health', dish: 'a cheese course',
+               says: 'A PROPER CHEESEBOARD, BEFORE OR AFTER, I DON\'T CARE WHICH. IT SITS YOU DOWN.' },
+    noodles: { ids: ['shoyu_ramen', 'spore_ramen', 'sump_laksa', 'neon_udon'], energy: 20, short: 'a second wind', bit: 'a second wind: +20 most energy', dish: 'noodles in the broth',
+               says: 'NOODLES IN THE STOCKPOT, THE ARCADIA WAY. YOU\'LL BE UP ALL NIGHT. IN A GOOD WAY.' },
+    fondue:  { ids: ['fondue'], warm: true, short: 'warm through', bit: 'warm through: the cold can\'t touch you', dish: 'a fondue pot',
+               says: 'A FONDUE POT IN THE MIDDLE OF THE TABLE, EVERYONE FIGHTING OVER THE BREAD. WARMS YOU TO THE BOOTS.' }
+  };
+  function kindOf(id) { for (var k in SPECIALS) if (SPECIALS[k].ids.indexOf(id) >= 0) return k; return null; }
+  function bitOf(kind) { return kind && SPECIALS[kind] ? SPECIALS[kind].bit : 'a lighter step'; }
 
   var state = load();
   function load() {
@@ -64,17 +78,20 @@ var BridgeGalley = (function () {
     state.ate[ateKey(m, c)] = Date.now();
     // only today's ship-days are kept
     Object.keys(state.ate).forEach(function (k) { if (+k.split(':')[0] < c.day - 1) delete state.ate[k]; });
-    state.fed = { id: m.id, name: m.name, dish: m.dish, until: Date.now() + FED_MS * mul, hp: m.fx.hp || 0, energy: m.fx.energy || 0,
-                  speed: special ? SPECIAL_SPEED : 0, special: special || null, greens: !!long };
-    if (special) state.special = null;
+    var K = special && SPECIALS[state.kind] || null, fish = special && !K;
+    state.fed = { id: m.id, name: m.name, dish: m.dish, until: Date.now() + FED_MS * mul, hp: (m.fx.hp || 0) + (K && K.hp || 0), energy: (m.fx.energy || 0) + (K && K.energy || 0),
+                  speed: fish ? SPECIAL_SPEED : 0, special: special || null, kind: special ? state.kind || 'fish' : null, warm: !!(K && K.warm), greens: !!long };
+    if (K && K.warm && has('BridgeHoarfell') && BridgeHoarfell.warm) BridgeHoarfell.warm(FED_MS * mul / 60000);
+    if (special) { state.special = null; state.kind = null; }
     if (long) state.greens = 0;
     save();
     refreshBars(true);
     sfx('pickup');
     var bits = [];
-    if (m.fx.energy) bits.push('+' + m.fx.energy + ' most energy');
-    if (m.fx.hp) bits.push('+' + m.fx.hp + ' most health');
-    if (special) bits.push('a lighter step');
+    if (state.fed.energy) bits.push('+' + state.fed.energy + ' most energy');
+    if (state.fed.hp) bits.push('+' + state.fed.hp + ' most health');
+    if (fish) bits.push('a lighter step');
+    if (K && K.warm) bits.push('warm through');
     toast('The galley', m.name + (special ? ' with ' + special : ''), bits.join(', ') + ' for ' + Math.round(FED_MS * mul / 60000) + ' min');
   }
   // top up to the new most (as a meal does) or just take the bonus off when it's over
@@ -119,7 +136,7 @@ var BridgeGalley = (function () {
     var m = Math.max(1, Math.round((f.until - Date.now()) / 60000));
     chip.style.display = '';
     chip.textContent = 'FED · ' + f.name.toUpperCase() + (f.special ? ' +' : '') + ' · ' + (m >= 60 ? Math.floor(m / 60) + 'h ' + (m % 60) + 'm' : m + 'm');
-    chip.title = f.dish + (f.special ? ', with ' + f.special : '') + (f.hp ? ' · +' + f.hp + ' most health' : '') + (f.energy ? ' · +' + f.energy + ' most energy' : '') + (f.speed ? ' · a lighter step' : '');
+    chip.title = f.dish + (f.special ? ', with ' + f.special : '') + (f.hp ? ' · +' + f.hp + ' most health' : '') + (f.energy ? ' · +' + f.energy + ' most energy' : '') + (f.speed ? ' · a lighter step' : '') + (f.warm ? ' · warm through' : '');
   }
 
   // ---- Dorrie at the pass -----------------------------------------------------------------------------------------
@@ -134,6 +151,35 @@ var BridgeGalley = (function () {
     });
     return out;
   }
+  // the other worlds' things she'll cook with, in your pack or the ship's two chests: [{ id, name, n, kind, where }]
+  function goodsAboard() {
+    var out = [], seen = {};
+    function add(id, n, where) {
+      var k = kindOf(id); if (!k || !n) return;
+      if (seen[id]) { seen[id].n += n; return; }
+      var it = has('BridgeItems') && BridgeItems.get(id);
+      out.push(seen[id] = { id: id, name: it ? it.name : id, n: n, kind: k, where: where });
+    }
+    if (has('BridgeInventory') && BridgeInventory.getAll) { var all = BridgeInventory.getAll() || {}; Object.keys(all).forEach(function (id) { add(id, all[id], 'pack'); }); }
+    if (has('BridgeStorage') && BridgeStorage.chest) ['wayfarer-chest', 'wayfarer-locker'].forEach(function (cid) {
+      var c = BridgeStorage.chest(cid);
+      (c && c.slots || []).forEach(function (sl) { if (sl) add(sl.id, sl.count, cid); });
+    });
+    return out;
+  }
+  function takeGood(x) {                                  // from the pack first, else out of a chest
+    if (has('BridgeInventory') && BridgeInventory.getCount(x.id) > 0) return BridgeInventory.removeItem(x.id, 1);
+    if (!has('BridgeStorage') || !BridgeStorage.chest) return false;
+    var ids = ['wayfarer-chest', 'wayfarer-locker'];
+    for (var i = 0; i < ids.length; i++) {
+      var c = BridgeStorage.chest(ids[i]);
+      for (var j = 0; c && j < c.slots.length; j++) {
+        var sl = c.slots[j];
+        if (sl && sl.id === x.id) { sl.count--; if (sl.count <= 0) c.slots[j] = null; c.save(); return true; }
+      }
+    }
+    return false;
+  }
   function cook(note) {
     var c = clock();
     if (!cookIn(c)) {
@@ -147,9 +193,9 @@ var BridgeGalley = (function () {
     var text = (typeof note === 'string' ? note + '\n\n' : '') + (m
       ? (ate ? 'YOU\'VE HAD YOUR ' + m.name.toUpperCase() + '. ' : m.says + '\n\n') + m.name.toUpperCase() + ': ' + m.dish.toUpperCase() + '.'
       : 'NOTHING ON THE PASS JUST NOW. ' + nx.meal.name.toUpperCase() + ' AT ' + pad(nx.meal.from) + ':00, IN ' + W().hm(nx.ms).toUpperCase() + '.') +
-      (state.special ? '\n\nYOUR ' + state.special.toUpperCase() + ' IS ON FOR THE NEXT MEAL.' : '');
+      (state.special ? '\n\nYOUR ' + state.special.toUpperCase() + ' IS ON FOR THE NEXT MEAL: ' + bitOf(state.kind).toUpperCase() + '.' : '');
     if (m && !ate) rows.push({ label: 'Have your ' + m.name.toLowerCase(), sub: m.dish + (state.special ? ', with your ' + state.special : ''),
-      note: effectText(m.fx, !!state.special), icon: 'bowl_of_stew', pick: function () { eat(m, state.special || null); } });
+      note: effectText(m.fx, state.special ? state.kind || 'fish' : null), icon: 'bowl_of_stew', pick: function () { eat(m, state.special || null); } });
     var broth = state.broth !== c.day + ':' + Math.floor(c.h / 4);
     rows.push({ label: 'A mug of broth', sub: broth ? 'from the stockpot: always on' : 'you\'ve had one this watch', note: '+15 energy', icon: 'mug_of_ale', disabled: !broth,
       pick: function () { state.broth = c.day + ':' + Math.floor(c.h / 4); save(); BridgeInventory.restoreEnergy(15); sfx('pickup'); cook('HOT AND SALTY. +15 ENERGY.'); } });
@@ -162,6 +208,9 @@ var BridgeGalley = (function () {
     var fish = fishInPack();
     rows.push({ label: 'Give her a fish for the pot', sub: state.special ? 'she has your ' + state.special : fish.length ? fish.map(function (x) { return x.name.toLowerCase(); }).slice(0, 3).join(', ') : 'you\'ve no fish on you',
       note: 'next meal: a lighter step', icon: fish[0] ? fish[0].id : 'silverfin', disabled: !fish.length || !!state.special, pick: function () { giveFish(fish); } });
+    var goods = goodsAboard();
+    rows.push({ label: 'Something from the other worlds', sub: state.special ? 'she has your ' + state.special : goods.length ? goods.map(function (x) { return x.name.toLowerCase(); }).slice(0, 3).join(', ') : 'cheese, noodles or fondue, in your pack or the ship\'s chests',
+      note: 'next meal: something that lasts', icon: goods[0] ? goods[0].id : 'fondue', disabled: !goods.length || !!state.special, pick: function () { giveGood(goods); } });
     BridgeInteractions.choose({ title: 'Dorrie Kettle, the cook', face: face, text: text, rows: rows, closeLabel: 'Thanks, Dorrie' });
   }
   function giveFish(fish) {
@@ -170,17 +219,27 @@ var BridgeGalley = (function () {
       rows: fish.map(function (x) { return { label: x.name, sub: 'you have ' + x.n, icon: x.id, pick: function () { takeFish(x); } }; }),
       buttons: [{ label: 'Back', act: cook }], closeLabel: 'Leave' });
   }
+  function giveGood(goods) {
+    BridgeInteractions.choose({ title: 'For the next meal', face: face, text: 'SHE TURNS EACH ONE OVER. "OH, I CAN DO SOMETHING WITH THAT. CHEESE SITS YOU DOWN, NOODLES KEEP YOU GOING, AND A FONDUE POT KEEPS THE COLD OUT. FOR AS LONG AS THE MEAL LASTS, MIND."',
+      rows: goods.map(function (x) { return { label: x.name, sub: SPECIALS[x.kind].short, note: (x.where === 'pack' ? 'pack' : 'ship\'s chest') + ' · ' + x.n, icon: x.id, pick: function () {
+        if (!takeGood(x)) return cook();
+        state.special = SPECIALS[x.kind].dish; state.kind = x.kind; save(); sfx('give');
+        cook('"' + x.name.toUpperCase() + '!" ' + SPECIALS[x.kind].says);
+      } }; }),
+      buttons: [{ label: 'Back', act: cook }], closeLabel: 'Leave' });
+  }
   function takeFish(x) {
     if (!BridgeInventory.removeItem(x.id, 1)) return cook();
-    state.special = x.name.toLowerCase(); save();
+    state.special = x.name.toLowerCase(); state.kind = 'fish'; save();
     sfx('give');
     cook('"' + x.name.toUpperCase() + '! THAT\'LL DO NICELY." IT GOES IN THE COLD BOX FOR THE NEXT MEAL.');
   }
-  function effectText(fx, sp) {
-    var b = [];
-    if (fx.energy) b.push('+' + fx.energy + ' energy');
-    if (fx.hp) b.push('+' + fx.hp + ' health');
-    if (sp) b.push('+6% speed');
+  function effectText(fx, kind) {
+    var b = [], K = kind && SPECIALS[kind];
+    if (fx.energy || (K && K.energy)) b.push('+' + ((fx.energy || 0) + (K && K.energy || 0)) + ' energy');
+    if (fx.hp || (K && K.hp)) b.push('+' + ((fx.hp || 0) + (K && K.hp || 0)) + ' health');
+    if (kind === 'fish') b.push('+6% speed');
+    if (K && K.warm) b.push('warm');
     return b.join(' · ');
   }
   function pad(h) { return (h < 10 ? '0' : '') + h; }
@@ -206,6 +265,7 @@ var BridgeGalley = (function () {
   setTimeout(function () { refreshBars(false); }, 0);
 
   return { MEALS: MEALS, mealNow: mealNow, nextMeal: nextMeal, fed: fed, cookIn: cookIn, eat: eat,
-           greens: function () { state.greens = Date.now(); save(); }, special: function () { return state.special || null; },
+           greens: function () { state.greens = Date.now(); save(); }, special: function () { return state.special || null; }, kind: function () { return state.special ? state.kind || 'fish' : null; },
+           SPECIALS: SPECIALS, USES: Object.keys(SPECIALS).reduce(function (a, k) { return a.concat(SPECIALS[k].ids.map(function (id) { return { id: id, p: 4, t: '<b>Dorrie</b> aboard the Wayfarer cooks it into the next meal: ' + SPECIALS[k].bit + ' while you\'re fed' }; })); }, []),
            _state: function () { return state; }, _reset: function () { state = { ate: {} }; save(); refreshBars(false); } };
 })();

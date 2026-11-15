@@ -268,6 +268,57 @@ const ONLY = process.argv[3] || '';
     console.log('s1 done');
   }
 
+  // ---- W2 · Dorrie's specials ----
+  if (part('w2')) {
+    await p.evaluate(() => { BridgeClock._at('2026-10-16T13:00'); localStorage.removeItem('bridge_galley'); BridgeGalley._reset(); });   // ship's 06:00: breakfast
+    await go('ship-galley', [9, 6]);
+    await p.evaluate(() => { BridgeCharacter.setFacing('left');
+      const c = BridgeStorage.chest('wayfarer-chest'); const k = c.slots.findIndex(x => !x); c.slots[k] = { id: 'fondue', count: 1 }; c.save();
+      BridgeInventory.addItem('shoyu_ramen', 1); });
+    const pass = async () => { await p.evaluate(() => BridgeInteractions.execute(BridgeWorld.getWorld().interactions.find(i => i.type === 'galley' && i.part === 'cook'))); await p.waitForTimeout(900); };
+    await pass();
+    let r = await rows(); console.log('the pass:', JSON.stringify(r.filter(t => /other worlds|fish/.test(t))));
+    await pick(/other worlds/);
+    r = await rows(); console.log('for the next meal:', JSON.stringify(r));
+    if (!r.some(t => /Fondue.*ship/.test(t)) || !r.some(t => /Shoyu Ramen.*pack/.test(t))) fail('the goods aboard: ' + r.join(' | '));
+    await shot('w2_goods');
+    await pick(/^Fondue/);
+    const left = await p.evaluate(() => BridgeStorage.chest('wayfarer-chest').slots.filter(x => x && x.id === 'fondue').length);
+    if (left) fail('the fondue still in the chest');
+    if (await p.evaluate(() => BridgeGalley.kind()) !== 'fondue') fail('special kind: ' + await p.evaluate(() => BridgeGalley.kind()));
+    await pick(/Have your breakfast/);
+    const f1 = await p.evaluate(() => { const f = BridgeGalley.fed(); return f && { warm: f.warm, energy: f.energy, kind: f.kind, special: f.special, warmNow: BridgeHoarfell.isWarm() }; });
+    console.log('fed (fondue):', JSON.stringify(f1));
+    if (!f1 || !f1.warm || f1.kind !== 'fondue') fail('breakfast with the fondue didn\'t warm you');
+    const chip = await p.evaluate(() => (document.getElementById('wf-fed') || {}).title || '');
+    console.log('chip:', chip);
+    await shut();
+    // dinner with Arcadia's noodles: a second wind
+    await p.evaluate(() => BridgeClock._at('2026-10-16T14:00'));
+    await pass(); await pick(/other worlds/); await pick(/Shoyu Ramen/);
+    await pick(/Have your dinner/);
+    const f2 = await p.evaluate(() => { const f = BridgeGalley.fed(); return f && { hp: f.hp, energy: f.energy, kind: f.kind, speed: f.speed }; });
+    console.log('fed (noodles):', JSON.stringify(f2));
+    if (!f2 || f2.energy !== 20 || f2.hp !== 25 || f2.speed) fail('dinner with noodles: ' + JSON.stringify(f2));
+    await shut();
+    // supper with your own farmhouse cheese: steadier
+    await p.evaluate(() => { BridgeClock._at('2026-10-16T15:00'); BridgeInventory.addItem('farm_cheese', 1); });
+    await pass(); await pick(/other worlds/); await pick(/Farmhouse Cheese/);
+    await pick(/Have your supper/);
+    const f3 = await p.evaluate(() => { const f = BridgeGalley.fed(); return f && { hp: f.hp, energy: f.energy, kind: f.kind }; });
+    console.log('fed (cheese):', JSON.stringify(f3));
+    if (!f3 || f3.hp !== 30 || f3.kind !== 'cheese') fail('supper with cheese: ' + JSON.stringify(f3));
+    await shut();
+    // an older save's special (no kind) is still a fish
+    await p.evaluate(() => { const s = BridgeGalley._state(); s.special = 'silverfin'; delete s.kind; s.fed = null; });
+    if (await p.evaluate(() => BridgeGalley.kind()) !== 'fish') fail('an old special isn\'t a fish');
+    const u = await p.evaluate(() => BridgeUses.lines('fondue').map(l => l.t.replace(/<[^>]+>/g, '')));
+    console.log('fondue uses:', JSON.stringify(u));
+    if (!u.some(t => /Dorrie/.test(t))) fail('no Dorrie line on the fondue');
+    await p.evaluate(() => { BridgeClock._at(null); BridgeGalley._reset(); });
+    console.log('w2 done');
+  }
+
   console.log(errors ? errors + ' FAILED' : 'far_deeper OK');
   await b.close();
   process.exit(errors ? 1 : 0);
