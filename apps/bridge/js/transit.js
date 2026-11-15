@@ -623,36 +623,243 @@ var BridgeTransit = (function () {
     });
   }
 
-  // the carriage's windows: what's close by — a station's platform, a tower's face whipping past — over the city
+  // ---- aboard: the carriage as a set piece -----------------------------------------------------------------------------
+  // The car is a slice of the train out in the city (its render covers the rows loopcar.shell, default -0.4 … 6.8); round
+  // it js/transit.js draws what's outside, all of it moving with how far she's gone (motion()): above the roof the
+  // skyline's towers (js/skyline.js, setMotion 'loop') and the near towers flashing past at full height; below the floor
+  // her skirt, the guideway on its piers whipping by and the city far down in the haze; through the glass, now and then a
+  // tower she threads straight through (BORE: its face slides over everything, inside it's dark with lamps flicking past,
+  // then the city opens up again) and the other train flashing past the other way (MEET), and the stations sliding in
+  // with their canopies and name signs over the car. On the glass: her own lamps reflected (stronger in the dark) and, in
+  // Arcadia's rain, drops beading when she's still and streaming back when she runs. Sounds: `bore`, `passby`.
+  var REDUCE = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var MEET = 0.62, BORE = 0.3, BOREW = 620, PIER = 300;
+  var cue = { meet: null, bore: null };
+  function boreLeg(k) { return k % 3 !== 2; }                   // two legs in three thread a tower
+  function along(d, s, W) { return Math.round(W / 2 + d - s); }  // screen x of a point d px along the line
+  function rainK() {
+    var w = typeof BridgeWeather !== 'undefined' && BridgeWeather.here ? BridgeWeather.here('arcadia-loop') : null;
+    return w && (w.kind === 'rain' || w.kind === 'storm') ? Math.max(0.3, w.k) : 0;
+  }
+  function shellOf(c, offY, ts) { var sh = c.shell || [-0.4, 6.8]; return [Math.round(offY + sh[0] * ts), Math.round(offY + sh[1] * ts)]; }
+  // what she's passing now: { bore: [x0, x1] | null, meet: x | null, dark: 0..1 (how far into a bore the glass is) }
+  function passing(s, W) {
+    var out = { bore: null, meet: null, dark: 0 }, k0 = Math.floor(s / LEG);
+    for (var k = k0 - 1; k <= k0 + 1; k++) {
+      if (k >= 0 && boreLeg(k)) {
+        var bx = along(k * LEG + BORE * LEG, s, W) - BOREW / 2;
+        if (bx < W && bx + BOREW > 0) {
+          out.bore = [bx, bx + BOREW];
+          out.dark = Math.max(0, Math.min(1, Math.min(W / 2 - bx, bx + BOREW - W / 2) / 60));
+          if (cue.bore !== k && bx < W / 2) { cue.bore = k; sfx('bore'); }
+        }
+      }
+      var mx = Math.round(W / 2 + 2 * (k * LEG + MEET * LEG - s));     // she comes the other way as fast: twice the closing speed
+      if (k >= 0 && mx > -1000 && mx < W + 60) {
+        out.meet = mx;
+        if (cue.meet !== k && mx < W + 40) { cue.meet = k; sfx('passby'); }
+      }
+    }
+    return out;
+  }
+  // faces drawn once and kept (a near tower at each stretch of speed, a bored tower at the screen's height)
+  var FACES = {}, faceN = 0;
+  function face(key, w, h, paint) {
+    var f = FACES[key];
+    if (f) return f;
+    if (++faceN > 24) { FACES = {}; faceN = 1; }
+    f = document.createElement('canvas'); f.width = Math.max(1, w); f.height = Math.max(1, h);
+    paint(f.getContext('2d'), w, h);
+    return (FACES[key] = f);
+  }
+  function towerFace(i, tw, hgt, sq) {
+    return face('t' + i + ':' + hgt + ':' + sq, tw, hgt, function (g) {
+      g.fillStyle = hash(i + 5) > 0.5 ? '#120e20' : '#181428'; g.fillRect(0, 0, tw, hgt);
+      g.fillStyle = hash(i + 6) > 0.5 ? '#f078a8' : '#5cc8d0'; g.fillRect(tw - 3, 0, 1, hgt);   // a neon edge up its corner
+      g.fillStyle = '#2a2440'; g.fillRect(0, 0, tw, 3);                                            // its parapet
+      var ww = 6 + sq * 5;                                                                         // windows stretched with speed
+      for (var r = 8; r < hgt - 10; r += 10) for (var q = 6; q < tw - 8; q += 12) {
+        var h = hash(i * 131 + r * 3 + q);
+        if (h < 0.5) continue;
+        g.fillStyle = h > 0.94 ? '#f078a8' : h > 0.88 ? '#80e0e8' : '#ffd890';
+        g.fillRect(q, r, Math.min(ww, tw - q), 4);
+      }
+    });
+  }
   function carriageBehind(ctx, world, offX, offY, ts, now) {
     if (!world.loopcar || !trip) return;
     var c = world.loopcar, s = motion(now), v = speed(now);
     var W = ctx.canvas.width, H = ctx.canvas.height, top = Math.round(offY + c.window[0] * ts), bot = Math.round(offY + c.window[1] * ts);
-    ctx.fillStyle = '#16141f';                                // the car's shell round the glass: no city under the floor
-    ctx.fillRect(0, 0, W, Math.max(0, top - 2)); ctx.fillRect(0, bot + 2, W, H - bot - 2);
-    // towers passing close, every so often, a blur at speed
+    var sh = shellOf(c, offY, ts), roof = sh[0], floor = sh[1];
+    var P = passing(s, W);
+    // towers passing close, every so often, full height behind the car (their windows stretched with speed)
     var gap = 900;
     for (var i = Math.floor((s - W) / gap); i <= Math.floor((s + W * 2) / gap); i++) {
       if (hash(i * 7) < 0.45) continue;
       var x = Math.round(i * gap - s * 1.6 + hash(i) * 300);
       var tw = 120 + Math.round(hash(i + 3) * 160);
       if (x > W || x + tw < 0) continue;
-      ctx.fillStyle = hash(i + 5) > 0.5 ? '#120e20' : '#181428';
-      ctx.fillRect(x, top - 40, tw, bot - top + 80);
-      for (var r = top - 36; r < bot + 30; r += 10) for (var q = x + 6; q < x + tw - 8; q += 12) {
-        var h = hash(i * 131 + r * 3 + q);
-        if (h < 0.5) continue;
-        ctx.fillStyle = h > 0.94 ? '#f078a8' : h > 0.88 ? '#80e0e8' : '#ffd890';
-        ctx.fillRect(q, r, Math.max(2, Math.round(6 + v * 14)), 4);    // stretched with speed
-      }
+      var t0 = Math.max(0, roof - 60 - Math.round(hash(i + 8) * 200));
+      ctx.drawImage(towerFace(i, tw, bot + 40 - t0, Math.round(v * 3)), x, t0);
     }
-    // the station: its platform slides in and stops outside the windows (it stands at each leg's end)
+    // below the floor: the city far down in the haze, the guideway on its piers, her skirt
+    belowCar(ctx, W, H, floor, s, v, now);
+    // the station: it stands at each leg's end; its platform slides in behind the glass, its canopy and sign over the car
     var stop = Math.round(s / LEG) * LEG, dx = Math.round(stop - s);
-    if (Math.abs(dx) < W * 1.5) platform(ctx, W / 2 + dx, top, bot, W, stationAt(trip.at + (stop > trip.base + 1 ? 1 : 0)), now, ts);
+    if (Math.abs(dx) < W * 1.5) platform(ctx, W / 2 + dx, top, bot, W, stationAt(trip.at + (stop > trip.base + 1 ? 1 : 0)), now, ts, roof, floor, H);
+    // the other train, the other way, flashing past the glass
+    if (P.meet != null) meetTrain(ctx, P.meet, top, bot, v, now);
+    // a tower she threads through: its face over everything outside, its bore dark with lamps
+    if (P.bore) bore(ctx, P.bore[0], P.bore[1], top, bot, roof, floor, W, H, s);
     // the dark between the glass: motion lines at speed
     if (v > 0.5) {
       ctx.fillStyle = 'rgba(200,220,255,' + (0.08 * v).toFixed(2) + ')';
       for (var m = 0; m < 10; m++) ctx.fillRect(Math.round(((hash(m) * W - now * 1.4) % W + W) % W), Math.round(top + hash(m + 9) * (bot - top)), 30, 1);
+    }
+    glass(ctx, offX, top, bot, v, P.dark, now, ts);
+  }
+  // under the car: her skirt and running light, the guideway's beam with its joints, the piers, the city down below
+  function belowCar(ctx, W, H, floor, s, v, now) {
+    if (floor >= H) return;
+    ctx.fillStyle = '#0c0818'; ctx.fillRect(0, floor, W, H - floor);
+    var L = typeof BridgeSkyline !== 'undefined' && BridgeSkyline.layers ? BridgeSkyline.layers() : null;
+    var beam = floor + 9, deep = beam + 14;
+    if (L && L.low && L.low.width) {                         // the roofs far below, deeper rows slower and hazier
+      var lw = L.low.width, lh = L.low.height, y = deep - 12;
+      for (var band = 0; y < H && band < 5; band++) {
+        var p = 0.32 + band * 0.07, px = -(((s * p) + band * 371) % lw + lw) % lw;
+        for (var x = px; x < W; x += lw) ctx.drawImage(L.low, Math.round(x), y);
+        if (band) { ctx.fillStyle = 'rgba(14,6,26,' + (0.12 * band).toFixed(2) + ')'; ctx.fillRect(0, y, W, lh); }   // deeper, darker
+        y += lh - 40;
+      }
+    }
+    ctx.fillStyle = 'rgba(56,18,74,0.55)'; ctx.fillRect(0, deep, W, 40);            // haze in flat bands, thickest nearest the line
+    ctx.fillStyle = 'rgba(56,18,74,0.35)'; ctx.fillRect(0, deep + 40, W, 60);
+    ctx.fillStyle = 'rgba(40,12,56,0.2)'; ctx.fillRect(0, deep + 100, W, Math.max(0, H - deep - 100));
+    for (var ln = 0; ln < 3; ln++) {                         // traffic down there, lane by lane
+      var ly = deep + 34 + ln * 46, dir = ln % 2 ? -1 : 1;
+      if (ly > H) break;
+      for (var j = 0; j < 12; j++) {
+        var span = W + 60, lx = ((hash(ln * 40 + j) * span - s * (0.36 + ln * 0.07) + now * 0.03 * dir) % span + span) % span - 30;
+        ctx.fillStyle = dir > 0 ? 'rgba(255,90,110,0.85)' : 'rgba(230,240,255,0.9)';
+        ctx.fillRect(Math.round(lx), ly, 2, 1);
+      }
+    }
+    for (var i = Math.floor((s - W) / PIER); i <= Math.floor((s + W) / PIER) + 1; i++) {   // the piers, whipping past
+      var x = along(i * PIER, s, W);
+      if (x < -20 || x > W + 20) continue;
+      ctx.fillStyle = '#14111e'; ctx.fillRect(x - 7, beam, 14, H - beam);
+      ctx.fillStyle = '#2a2640'; ctx.fillRect(x - 7, beam, 2, H - beam);
+      ctx.fillStyle = '#5cc8d0'; ctx.fillRect(x - 1, beam + 22, 2, 2);
+    }
+    ctx.fillStyle = '#24222f'; ctx.fillRect(0, beam, W, deep - beam);               // the guideway
+    ctx.fillStyle = '#3c3a4c'; ctx.fillRect(0, beam, W, 2);
+    ctx.fillStyle = 'rgba(92,200,208,0.8)'; ctx.fillRect(0, deep - 1, W, 1);
+    ctx.fillStyle = '#16141e';
+    for (var jx = Math.floor((s - W) / 96); jx <= Math.floor((s + W) / 96) + 1; jx++) { var xj = along(jx * 96, s, W); if (xj >= 0 && xj < W) ctx.fillRect(xj, beam + 2, 1, deep - beam - 3); }
+    ctx.fillStyle = '#0e0c16'; ctx.fillRect(0, floor, W, beam - floor);             // her skirt, the running light along it
+    ctx.fillStyle = v > 0 ? 'rgba(92,200,208,0.9)' : 'rgba(92,200,208,0.5)'; ctx.fillRect(0, floor + 3, W, 1);
+  }
+  function meetTrain(ctx, x, top, bot, v, now) {
+    var mid = Math.round((top + bot) / 2);
+    ctx.save();
+    ctx.beginPath(); ctx.rect(0, top - 2, ctx.canvas.width, bot - top + 4); ctx.clip();
+    loadTrain();
+    if (trainMeta && train.complete && train.width) {
+      var w = train.width * 2, h = train.height * 2;
+      ctx.imageSmoothingEnabled = false;
+      ctx.save(); ctx.translate(x * 2 + w, 0); ctx.scale(-1, 1);                  // facing the other way
+      ctx.drawImage(train, x, mid - Math.round(h * 0.7), w, h);
+      ctx.restore();
+    } else {
+      ctx.fillStyle = '#8a86c8'; ctx.fillRect(x, top - 2, 900, bot - top + 4);
+      ctx.fillStyle = '#ffd890'; for (var q = 0; q < 900; q += 22) ctx.fillRect(x + q + 4, mid - 4, 14, 8);
+    }
+    ctx.fillStyle = 'rgba(230,236,255,0.25)';                 // a blur of her at the closing speed
+    for (var m = 0; m < 6; m++) ctx.fillRect(Math.round(x + hash(m) * 900), Math.round(top + hash(m + 3) * (bot - top)), 60, 1);
+    ctx.restore();
+  }
+  function bore(ctx, x0, x1, top, bot, roof, floor, W, H, s) {
+    var a = Math.max(0, x0), b = Math.min(W, x1);
+    if (b <= a) return;
+    var seed = Math.round(x0 - (W / 2 - s)) % 997;          // (the same tower every time she passes it)
+    var FH = H + 18;                                           // (anchored to the car, so it holds still as you walk)
+    ctx.drawImage(face('b' + seed + ':' + FH, BOREW, FH, function (g) {
+      g.fillStyle = '#100c1c'; g.fillRect(0, 0, BOREW, FH);
+      for (var r = 4; r < FH; r += 9) {                        // floor by floor: slabs, each floor lit its own way
+        var fl = Math.floor(r / 9), dens = hash(fl * 13 + seed), warm = hash(fl * 7 + seed) > 0.35;
+        g.fillStyle = '#1c1630'; g.fillRect(0, r + 6, BOREW, 1);
+        if (dens < 0.18) continue;                            // a dark floor
+        for (var q = 5; q < BOREW - 6; q += 10) {
+          var h = hash(r * 7 + q * 3 + seed);
+          if (h > dens * 1.1) continue;
+          g.fillStyle = h < 0.04 ? '#f078a8' : warm ? (h < 0.5 ? '#ffe0a0' : '#c8a060') : (h < 0.5 ? '#a8e8f0' : '#6aa8c0');
+          g.fillRect(q, r, 6, 4);
+        }
+      }
+    }), x0, ((roof % 9) + 9) % 9 - 9);
+    var brand = ['HALCYON', 'KAIJU', 'NOVA', 'OMNI', 'ZENITH', 'AURA'][seed % 6], bw = brand.length * 8;   // its name over the car
+    var bxx = Math.round((x0 + x1) / 2 - bw / 2), byy = Math.max(2, roof - 22);
+    ctx.fillStyle = '#0a0814'; ctx.fillRect(bxx - 4, byy - 3, bw + 6, 16);
+    word(ctx, brand, bxx, byy, 2, seed % 2 ? '#f078a8' : '#5cc8d0');
+    ctx.fillStyle = '#07060c'; ctx.fillRect(a, top - 4, b - a, bot - top + 8);   // inside the bore
+    for (var lp = x0 + 30; lp < x1 - 20; lp += 70) {           // its lamps and ribs flicking past
+      if (lp < -20 || lp > W + 20) continue;
+      ctx.fillStyle = '#1a1626'; ctx.fillRect(lp - 35, top - 4, 4, bot - top + 8);
+      ctx.fillStyle = 'rgba(255,214,140,0.25)'; ctx.fillRect(lp - 8, top + 2, 18, bot - top - 4);
+      ctx.fillStyle = '#ffe0a0'; ctx.fillRect(lp - 4, top + 3, 10, 2);
+    }
+    ctx.fillStyle = '#2a2440';                                 // the portals
+    [x0, x1 - 6].forEach(function (px) { if (px > -6 && px < W) ctx.fillRect(px, 0, 6, H); });
+    ctx.fillStyle = '#f078a8'; if (x0 > -8 && x0 < W) ctx.fillRect(x0 + 6, 0, 1, H);
+    ctx.fillStyle = '#5cc8d0'; if (x1 > 0 && x1 < W + 8) ctx.fillRect(x1 - 7, 0, 1, H);
+  }
+  // on the glass: her lamps reflected, a sheen; in the rain, drops
+  function glass(ctx, offX, top, bot, v, dark, now, ts) {
+    var hh = bot - top, carW = 24 * ts;
+    ctx.fillStyle = 'rgba(210,220,255,' + (0.035 + 0.05 * dark).toFixed(3) + ')';   // two slanted sheens, fixed to the car
+    for (var k = 0; k < 6; k++) {
+      var sx = Math.round(offX + (2 + k * 4.1) * ts);
+      for (var y = 0; y < hh; y += 2) ctx.fillRect(sx + (y >> 1), top + y, 7, 2);
+    }
+    ctx.fillStyle = 'rgba(255,230,190,' + (0.12 + 0.25 * dark).toFixed(3) + ')';   // the cabin's lamps in the glass
+    for (var lx = 1; lx < 24; lx += 2) ctx.fillRect(Math.round(offX + lx * ts), top + 3, 8, 1);
+    if (dark > 0.3) {                                         // in the dark: the riders' heads in the glass, faintly
+      ctx.fillStyle = 'rgba(200,190,230,' + (0.1 * dark).toFixed(3) + ')';
+      [3, 10, 13, 21].forEach(function (cx) { ctx.fillRect(Math.round(offX + cx * ts + 10), bot - 12, 9, 10); });
+    }
+    var rk = rainK();
+    if (!rk) return;
+    var n = Math.round(46 * rk);
+    for (var i = 0; i < n; i++) {
+      var span = carW, bx = hash(i * 5) * span;
+      var x = offX + ((bx - now * (0.004 + 0.3 * v) * (0.7 + hash(i) * 0.6)) % span + span) % span;
+      var y = top + 2 + ((hash(i * 9) * (hh - 4) + now * 0.003 * (1 - v) * (0.5 + hash(i + 1))) % (hh - 4));
+      var len = 1 + Math.round(v * (5 + hash(i + 2) * 6));
+      ctx.fillStyle = 'rgba(210,222,255,' + (0.28 + 0.2 * hash(i + 4)).toFixed(2) + ')';
+      ctx.fillRect(Math.round(x), Math.round(y), len, 1);
+      if (v < 0.2) { ctx.fillStyle = 'rgba(255,255,255,0.3)'; ctx.fillRect(Math.round(x), Math.round(y) - 1, 1, 1); }
+    }
+  }
+  // over the carriage: the bore's lamps sweeping through the car, the dark of it; the other train's windows flickering by
+  function carriageOver(ctx, world, offX, offY, ts, now) {
+    if (!world.loopcar || !trip) return;
+    var c = world.loopcar, W = ctx.canvas.width, s = motion(now), P = passing(s, W);
+    var sh = shellOf(c, offY, ts), roof = sh[0], floor = sh[1];
+    if (P.dark > 0) {
+      ctx.fillStyle = 'rgba(6,4,14,' + (0.3 * P.dark).toFixed(3) + ')'; ctx.fillRect(0, roof, W, floor - roof);
+      if (!REDUCE) {
+        ctx.save(); ctx.globalCompositeOperation = 'lighter';
+        ctx.fillStyle = 'rgba(255,200,130,' + (0.07 * P.dark).toFixed(3) + ')';
+        for (var lp = P.bore[0] + 30; lp < P.bore[1] - 20; lp += 70) if (lp > -40 && lp < W + 40) ctx.fillRect(Math.round(lp - 20), roof, 40, floor - roof);
+        ctx.restore();
+      }
+    }
+    if (P.meet != null && !REDUCE && P.meet < W && P.meet > -920) {
+      ctx.save(); ctx.globalCompositeOperation = 'lighter';
+      ctx.fillStyle = 'rgba(255,220,160,0.035)';
+      for (var q = 0; q < 900; q += 44) { var x = Math.round(P.meet + q); if (x > -30 && x < W) ctx.fillRect(x, roof, 22, floor - roof); }
+      ctx.restore();
     }
   }
   var LET = { A: '111101111101101', B: '110101110101110', C: '111100100100111', D: '110101101101110', E: '111100110100111', F: '111100110100100', G: '111100101101111',
@@ -666,30 +873,53 @@ var BridgeTransit = (function () {
       for (var j = 0; j < 15; j++) if (m[j] === '1') ctx.fillRect(x + i * 4 * s + (j % 3) * s, y + Math.floor(j / 3) * s, s, s);
     }
   }
-  function platform(ctx, cx, top, bot, W, st, now, ts) {
+  // a station, centred on cx: behind the glass its back wall, columns and platform with people waiting; over the car its
+  // canopy with a row of lamps and the big name sign (where the window's mullions can't cut it); under it the station deck
+  function platform(ctx, cx, top, bot, W, st, now, ts, roof, floor, H) {
     var y0 = bot - Math.round((bot - top) * 0.32), x0 = Math.round(cx - W), x1 = Math.round(cx + W);
-    ctx.fillStyle = '#1c1a26'; ctx.fillRect(x0, top - 30, x1 - x0, y0 - top + 30);             // the station's back wall
-    ctx.fillStyle = '#2a2838'; for (var p = x0; p < x1; p += 96) ctx.fillRect(p, top - 30, 10, y0 - top + 30);   // its columns
+    roof = roof == null ? top - 30 : roof; floor = floor == null ? bot + 20 : floor;
+    var ct = Math.max(0, roof - 40);                           // the canopy's top
+    ctx.fillStyle = '#1c1a26'; ctx.fillRect(x0, ct, x1 - x0, y0 - ct);             // the station's back wall, up past the roof
+    ctx.fillStyle = '#2a2838'; for (var p = x0; p < x1; p += 96) ctx.fillRect(p, ct, 10, y0 - ct);   // its columns
+    for (var ad = x0 + 22; ad < x1 - 60; ad += 96) {           // lightbox posters between the columns
+      var hue = ['#f078a8', '#5cc8d0', '#e8c040', '#a070f0'][Math.abs(Math.round((ad - x0) / 96)) % 4];
+      ctx.fillStyle = '#0c0a14'; ctx.fillRect(ad, top + 10, 54, Math.max(6, y0 - top - 14));
+      ctx.fillStyle = hue; ctx.fillRect(ad + 2, top + 12, 50, Math.max(2, y0 - top - 18));
+      ctx.fillStyle = 'rgba(10,8,20,0.55)'; ctx.fillRect(ad + 6, top + 15, 30, 2); ctx.fillRect(ad + 6, top + 19, 20, 1);
+    }
     ctx.fillStyle = '#5cc8d0'; ctx.fillRect(x0, top + 6, x1 - x0, 2);                            // a cyan strip light
     ctx.fillStyle = '#34323e'; ctx.fillRect(x0, y0, x1 - x0, bot - y0 + 20);                   // the platform, its yellow edge
     ctx.fillStyle = '#e0c040'; ctx.fillRect(x0, y0, x1 - x0, 2);
-    for (var lp = x0 + 48; lp < x1; lp += 96) {               // lamps, pools of light
-      var gl = ctx.createRadialGradient(lp, y0, 2, lp, y0, 40);
-      gl.addColorStop(0, 'rgba(160,230,240,0.3)'); gl.addColorStop(1, 'rgba(160,230,240,0)');
-      ctx.fillStyle = gl; ctx.fillRect(lp - 40, y0 - 40, 80, 60);
-    }
-    if (st) {                                                 // the name board
-      var name = String(st.name).toUpperCase().replace(/[^A-Z0-9 ]/g, ''), s = 2, w = name.length * 4 * s + 12;
-      var bx = Math.round(cx - w / 2), by = top + 14;
-      ctx.fillStyle = '#0a0c14'; ctx.fillRect(bx, by, w, 5 * s + 10);
-      ctx.fillStyle = '#5cc8d0'; ctx.fillRect(bx, by, w, 1); ctx.fillRect(bx, by + 5 * s + 9, w, 1);
-      word(ctx, name, bx + 6, by + 5, s, '#f0f4ff');
+    for (var lp = x0 + 48; lp < x1; lp += 96) {               // lamps, pools of light on the platform (flat, two steps)
+      ctx.fillStyle = 'rgba(160,230,240,0.12)'; ctx.fillRect(lp - 30, y0 - 22, 60, 26);
+      ctx.fillStyle = 'rgba(160,230,240,0.14)'; ctx.fillRect(lp - 14, y0 - 12, 28, 16);
     }
     for (var q = 0; q < 6; q++) {                             // people waiting, a few
       var px = Math.round(cx - W * 0.6 + hash(q + (st ? st.id.length : 0)) * W * 1.2), py = y0 - 14;
       ctx.fillStyle = ['#2a2440', '#3a1c40', '#1c2c40'][q % 3];
       ctx.fillRect(px, py, 5, 12); ctx.fillRect(px + 1, py - 4, 3, 4);
       ctx.fillStyle = q % 2 ? '#f078a8' : '#80e0e8'; ctx.fillRect(px + 1, py + 3, 3, 1);
+    }
+    // over the car: the canopy and its lamps
+    ctx.fillStyle = '#121019'; ctx.fillRect(x0, ct, x1 - x0, Math.max(0, roof - ct - 6));
+    ctx.fillStyle = '#2c2a3a'; ctx.fillRect(x0, roof - 8, x1 - x0, 3);
+    ctx.fillStyle = 'rgba(92,200,208,0.9)';
+    for (var cl = x0 + 24; cl < x1; cl += 48) ctx.fillRect(cl, roof - 5, 8, 1);
+    if (st) {                                                 // the name sign, hung from the canopy over the car
+      var name = String(st.name).toUpperCase().replace(/[^A-Z0-9 ]/g, ''), s = 2, w = name.length * 4 * s + 14;
+      var bx = Math.round(cx - w / 2), by = Math.max(1, roof - 8 - (5 * s + 12));
+      ctx.fillStyle = '#0a0c14'; ctx.fillRect(bx, by, w, 5 * s + 10);
+      ctx.fillStyle = '#5cc8d0'; ctx.fillRect(bx, by, w, 1); ctx.fillRect(bx, by + 5 * s + 9, w, 1);
+      ctx.fillRect(bx + 3, by - 6, 1, 6); ctx.fillRect(bx + w - 4, by - 6, 1, 6);
+      word(ctx, name, bx + 7, by + 5, s, '#f0f4ff');
+    }
+    // under the car: the station deck, its fascia and the station's name in small lights
+    if (H != null && floor < H) {
+      ctx.fillStyle = '#26242f'; ctx.fillRect(x0, floor + 6, x1 - x0, 30);
+      ctx.fillStyle = '#e0c040'; ctx.fillRect(x0, floor + 6, x1 - x0, 1);
+      ctx.fillStyle = '#18161f'; ctx.fillRect(x0, floor + 36, x1 - x0, 10);
+      ctx.fillStyle = 'rgba(92,200,208,0.8)'; ctx.fillRect(x0, floor + 46, x1 - x0, 1);
+      ctx.fillStyle = '#ffd890'; for (var dl = x0 + 12; dl < x1; dl += 32) ctx.fillRect(dl, floor + 40, 2, 2);
     }
   }
 
@@ -778,7 +1008,7 @@ var BridgeTransit = (function () {
     BridgeWorld.registerSceneHooks('arcadia', {
       behind: function (ctx, world, offX, offY, ts, now) { carriageBehind(ctx, world, offX, offY, ts, now); streetBehind(ctx, world, offX, offY, ts, now); },
       items: stationItems,
-      over: streetOver
+      over: function (ctx, world, offX, offY, ts, now) { carriageOver(ctx, world, offX, offY, ts, now); streetOver(ctx, world, offX, offY, ts, now); }
     });
   }
   // the carriage sways and hums at speed (its own little shake, never more than a pixel)
@@ -807,5 +1037,12 @@ var BridgeTransit = (function () {
            ride: ride, built: built, fare: fare, stations: stations,
            _trip: function () { return trip ? { at: trip.at, dest: trip.dest, phase: trip.phase, station: stationAt(trip.at) && stationAt(trip.at).id, dist: motion(performance.now()) } : null; },
            _skipLeg: function () { if (trip) trip.t0 = performance.now() - (trip.phase === 'run' ? RUN : (trip.boarding ? 4500 : DWELL)); },   // to the end of this leg or stop, now
+           _runTo: function (d) {                                     // tests: running, d px into this leg (in the cruise)
+             if (!trip) return;
+             trip.phase = 'run'; trip.boarding = false;
+             trip.t0 = performance.now() - (ACC + (d - VMAX * ACC / 2) / VMAX);
+           },
+           _passing: function () { return trip ? passing(motion(), BridgeWorld.getView().w || 640) : null; },
+           LEG: LEG, BORE: BORE, MEET: MEET,
            _crossing: crossing, _close: closeRide };
 })();

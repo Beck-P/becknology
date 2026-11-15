@@ -378,6 +378,6 @@ w['cameraLead'] = -2.0
 w['royale'] = {'beams': [[47.4, 2.8], [54.6, 2.8]]}            # the Neon Royale's searchlights (js/worlds/casino.js)
 w['skyline'] = {'baseRow': 5.2, 'railRow': 14.3, 'centerCol': COLS / 2,
                 'rain': {'drops': 150, 'splash': [0, RF + 0.3, COLS, 13.8]},
-                'loop': {'row': 3.7, 'from': -12, 'to': COLS + 12, 'scale': 0.5}}   # the Loop's viaduct over the street (js/transit.js)
+                'loop': {'row': 0.3, 'from': -12, 'to': COLS + 12, 'scale': 0.5}}   # the Loop's viaduct over the street, above its roofs (js/transit.js)
 open(WORLD, 'w').write(json.dumps(w, indent=2) + '\n')
 print('street done')
