@@ -908,6 +908,7 @@ var BridgeInventory = (function () {
     BridgeProgression.awardCoins(total, 'sell:' + buyer.label).then(function (bal) {
       if (bal === null || bal === undefined) { say('No way to pay you right now - keep it.'); refresh(); return; }
       removeItem(id, n);
+      if (typeof BridgeQuests !== 'undefined' && BridgeQuests.did) BridgeQuests.did('sell');   // a deed (the first hour)
       if (typeof BridgeAudio !== 'undefined' && BridgeAudio.sfx) BridgeAudio.sfx('coin');
       say('Sold ' + n + ' ' + itemName(id) + ' for ' + total + ' coins.');
       refresh();

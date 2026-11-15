@@ -53,6 +53,7 @@ const SUITES = {
     ['world/sylvara_places.js', SHOTS + '/sylvara'],
     ['world/canoe.js', SHOTS + '/canoe'],
     ['world/quest_tracker.js', SHOTS],
+    ['world/firsthour.js', SHOTS],
     ['world/events.js', SHOTS],
     ['world/hoarfell_e.js', SHOTS],
     ['world/railway.js', SHOTS + '/railway'],

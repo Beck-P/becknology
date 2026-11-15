@@ -123,6 +123,7 @@ var BridgeMap = (function () {
       if (!q) return;
       q.clues.forEach(function (c) {
         if (c.id !== p[1]) return;
+        if (!c.on) return;                                     // (a deed: nowhere in particular)
         var w = c.on.world;
         if (w === wid || (w.slice(-1) === '*' && wid.indexOf(w.slice(0, -1)) === 0)) out[c.on.label] = q.title;
       });
