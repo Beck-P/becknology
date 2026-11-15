@@ -195,6 +195,7 @@ STALLS = [  # x0, x1, row, awning, stripe, goods
 for (x0, x1, r, a1, a2, g) in STALLS:
     A.leaf_stall(k, L, x0, x1, r, awning=a1, awning2=a2, kind=g)
 MERROW = (16, 16)                                                # behind the fruit stall                                                # behind the fruit stall
+WREN_AT, MERROW_AT = (2, 28), (MERROW[0], MERROW[1] + 2)          # Wren at the workshop's west end (in front, the trees hid her)
 for (x0, x1, r) in ((18.6, 20.2, 25.4), (23.8, 25.4, 25.4)):
     A.bench(k, L, x0, x1, r)
 for (x, r) in ((15.4, 20.0), (28.8, 21.6), (19.6, 24.2), (24.6, 24.2), (25.6, 18.0)):
@@ -374,7 +375,7 @@ w['interactions'] = [
     {'x': STAIR_FOOT[0], 'y': STAIR_FOOT[1], 'type': 'enter_world', 'label': 'THE STAIR', 'prompt': 'PRESS E TO CLIMB TO THE BOUGHS',
      'target': 'sylvara-boughs', 'spawn': [31, 22]},
     {'x': CORIN[0], 'y': CORIN[1], 'type': 'dialog', 'label': 'BOWYER', 'prompt': 'PRESS E TO TALK', 'dialog': 'CORIN LOOKS UP FROM A STAVE.'},
-    {'x': WREN[0], 'y': WREN[1] + 2, 'type': 'dialog', 'label': 'LANTERN MAKER', 'prompt': 'PRESS E TO TALK', 'dialog': 'WREN HOLDS A LANTERN UP TO THE LIGHT.'},
+    {'x': WREN_AT[0], 'y': WREN_AT[1], 'type': 'dialog', 'label': 'LANTERN MAKER', 'prompt': 'PRESS E TO TALK', 'dialog': 'WREN HOLDS A LANTERN UP TO THE LIGHT.'},
     {'x': LOOMER[0], 'y': LOOMER[1] + 1, 'type': 'dialog', 'label': 'WEAVER', 'prompt': 'PRESS E TO TALK', 'dialog': 'THE SHUTTLE GOES ACROSS AND BACK.'},
     {'x': MERROW[0], 'y': MERROW[1] + 2, 'type': 'dialog', 'label': 'FRUIT STALL', 'prompt': 'PRESS E TO TALK', 'dialog': 'MERROW WEIGHS A PEAR IN HIS HAND.'},
     {'x': int(LIFT[0]) + 2, 'y': int(LIFT[1]) + 1, 'type': 'dialog', 'label': 'LIFTKEEPER', 'prompt': 'PRESS E TO TALK', 'dialog': 'OLD BRANNOC LEANS ON THE WINCH.'},
@@ -385,14 +386,16 @@ w['interactions'] = [
 for x in range(RANGE['x0'], RANGE['x1'] + 1, 3):
     w['interactions'].append({'x': x, 'y': line, 'type': 'sylvan', 'kind': 'range', 'label': 'THE LINE', 'prompt': 'PRESS E TO SHOOT A ROUND', 'noBeacon': True})
 open(WORLD, 'w').write(json.dumps(w, indent=2) + '\n')
-for (x, y) in (CORIN, WREN, LOOMER, MERROW, (int(LIFT[0]) + 2, int(LIFT[1])), AERIN):
+# Wren and Merrow stand out in front of their counters, at their talk points: behind them the lantern roof and the fruit
+# stall's awning hid them completely (the spots behind stay blocked)
+for (x, y) in (CORIN, WREN, LOOMER, MERROW, (int(LIFT[0]) + 2, int(LIFT[1])), AERIN, WREN_AT, MERROW_AT):
     k.solid(x, y, x + 1, y + 1)
 apply_world(WORLD, k, (0, 0, COLS - 1, ROWS - 1), scene_id=WID,
             doors=[(0, 20), (23, ROWS - 2), (COLS - 2, 8), (COLS - 1, 8)],
             actors=[{'sheet': 'npc-elf-bowyer', 'x': CORIN[0], 'y': CORIN[1], 'facing': 'down'},
-                    {'sheet': 'npc-elf-lanternmaker', 'x': WREN[0], 'y': WREN[1], 'facing': 'down'},
+                    {'sheet': 'npc-elf-lanternmaker', 'x': WREN_AT[0], 'y': WREN_AT[1], 'facing': 'right'},
                     {'sheet': 'npc-elf-loomer', 'x': LOOMER[0] + 0.5, 'y': LOOMER[1] + 0.1, 'facing': 'up', 'pose': 'sit'},
-                    {'sheet': 'npc-elf-grocer', 'x': MERROW[0], 'y': MERROW[1], 'facing': 'down'},
+                    {'sheet': 'npc-elf-grocer', 'x': MERROW_AT[0], 'y': MERROW_AT[1], 'facing': 'down'},
                     {'sheet': 'npc-elf-liftkeeper', 'x': int(LIFT[0]) + 2, 'y': int(LIFT[1]), 'facing': 'down'},
                     {'sheet': 'npc-elf-warden', 'x': AERIN[0], 'y': AERIN[1], 'facing': 'right', 'id': 'aerin-range'}],
             scene_extra={})

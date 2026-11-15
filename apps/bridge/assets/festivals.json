@@ -7,7 +7,7 @@
     "line": "Tubs of flowers on the green, and Nell and Marigold with a clipboard each",
     "poster": "THE BLOSSOM SHOW ON THE GREEN, SATURDAY AND SUNDAY. FLOWERS, HONEY AND THINGS THAT SMELL NICE. JUDGES: NELL ASHBY, MARIGOLD LARKIN. NO GOATS.",
     "hours": ["morning", "evening"], "music": "fair",
-    "props": [["table", 12, 20], ["table", 13, 20], ["flowers", 10, 20], ["flowers", 15, 20], ["stall", 18, 19], ["flowers", 19, 21], ["flowers", 11, 22]],
+    "props": [["table", 12, 20], ["table", 13, 20], ["flowers", 10, 20], ["flowers", 15, 20], ["stall", 17, 18], ["flowers", 20, 21], ["flowers", 11, 22]],
     "contest": {
       "kind": "show", "at": [12, 20], "label": "FLOWER TABLE", "judge": "Nell and Marigold",
       "title": "the flower show", "judging": "NELL AND MARIGOLD LEAN IN, SNIFF, AND WRITE ON THEIR CLIPBOARDS WITHOUT LETTING THE OTHER SEE.",
@@ -16,9 +16,9 @@
       "rivals": [["Hollin Ashby", "sunflower"], ["Percy Pennyworth", "sunflower"], ["Mags Tolley", "honey"], ["Wat Coldridge", "posy"]],
       "prizes": [[600, "blue_rosette"], [250, "red_rosette"], [100, "yellow_rosette"]]
     },
-    "stall": { "at": [18, 19], "label": "BLOSSOM STALL", "items": [{ "id": "blossom_tea", "price": 4 }, { "id": "violet_creams", "price": 5 }, { "id": "posy", "price": 10 }] },
+    "stall": { "at": [17, 18], "label": "BLOSSOM STALL", "items": [{ "id": "blossom_tea", "price": 4 }, { "id": "violet_creams", "price": 5 }, { "id": "posy", "price": 10 }] },
     "crowd": {
-      "nell": [12, 19, "down"], "marigold": [13, 19, "down"], "hollin": [18, 18, "down"], "percy": [14, 21, "up"], "hobb": [10, 21, "up"], "juniper": [17, 21, "left"]
+      "nell": [12, 19, "down"], "marigold": [13, 19, "down"], "hollin": [17, 17, "down"], "percy": [14, 21, "up"], "hobb": [10, 21, "up"], "juniper": [17, 21, "left"]
     }
   },
 
@@ -70,7 +70,7 @@
     "line": "The casks come up from the cellar, and Rosalind Vane tastes what's in them",
     "poster": "THE CELLAR FAIR AT VINEHALLOW, THIS WEEKEND, UNDER THE PLANE TREE. WINE BY ITS AGE, CHEESE FROM YOUR OWN MILK, CIDER, CROCKS. ROSALIND VANE TASTES. THE HILL IS STEEP; THE WINE IS WORTH IT.",
     "hours": ["morning", "late"], "music": "fair",
-    "props": [["table", 14, 18], ["table", 15, 18], ["casks", 18, 20], ["casks", 17, 18], ["stall", 24, 18], ["casks", 23, 20], ["hay", 10, 21]],
+    "props": [["table", 14, 18], ["table", 15, 18], ["casks", 18, 20], ["casks", 17, 18], ["stall", 24, 18], ["casks", 26, 18], ["hay", 10, 21]],
     "contest": {
       "kind": "show", "at": [14, 18], "label": "TASTING TABLE", "judge": "Rosalind Vane",
       "title": "the tasting", "judging": "ROSALIND SWIRLS IT, HOLDS IT UP TO THE WINTER LIGHT, AND WRITES SOMETHING VERY SMALL IN HER BOOK.",
@@ -119,7 +119,7 @@
     "planet": "sylvara", "when": "fullmoon", "world": "sylvara", "place": "the Moonwell",
     "line": "The full moon in the Moonwell, lanterns in the glade, and Mirelle judging the brews",
     "hours": ["sunset", "dawn"], "music": "sylvara",
-    "props": [["table", 13, 22], ["table", 14, 22], ["leaf_lantern", 11, 23], ["leaf_lantern", 16, 23], ["leaf_lantern", 7, 22], ["leaf_lantern", 12, 19], ["stall", 19, 22]],
+    "props": [["table", 13, 22], ["table", 14, 22], ["leaf_lantern", 11, 23], ["leaf_lantern", 18, 23], ["leaf_lantern", 9, 23], ["leaf_lantern", 13, 19], ["stall", 19, 22]],
     "contest": {
       "kind": "show", "at": [13, 22], "label": "BREW TABLE", "judge": "Mirelle",
       "title": "the brews", "judging": "MIRELLE UNSTOPPERS IT, HOLDS IT TO THE MOON, AND LETS ONE DROP FALL ON HER TONGUE. SHE HAS OPINIONS.",
@@ -130,7 +130,7 @@
     },
     "stall": { "at": [19, 22], "label": "MOON STALL", "items": [{ "id": "moon_cake", "price": 6 }, { "id": "starpear_cider", "price": 5 }, { "id": "waybread", "price": 9 }] },
     "crowd": {
-      "elf_herbalist": [13, 21, "down"], "elf_grocer": [19, 21, "down"], "elf_bard": [11, 21, "right"], "elf_warden": [16, 21, "left"], "elf_lanternmaker": [12, 24, "up"], "elf_bowyer": [15, 24, "up"]
+      "elf_herbalist": [13, 21, "down"], "elf_grocer": [19, 21, "down"], "elf_bard": [14, 21, "down"], "elf_warden": [16, 21, "left"], "elf_lanternmaker": [12, 24, "up"], "elf_bowyer": [15, 24, "up"]
     }
   },
 

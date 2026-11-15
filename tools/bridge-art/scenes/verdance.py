@@ -562,6 +562,7 @@ k.solid(0, 0, COLS, 2)
 k.solid(0, 0, 1, ROWS)
 k.solid(COLS - 1, 0, COLS, ROWS)
 k.solid(0, ROWS - 2, 32, ROWS)
+k.solid(38, 22, 43, 23)              # behind Hollin's roof: Meadow Lane comes in along the yard above it, rows 19-21
 
 # the water: no wading — the pond (but the jetty), the stream (but the lane's bridge)
 for r in range(ROWS):
@@ -582,14 +583,14 @@ k.render(OUT, cycle='day', light_states={'full': {}}, light_samples=96, world_li
 w = json.load(open(WORLD)) if os.path.exists(WORLD) else {}
 w.pop('shuttle', None)                                # no pad here: the shuttle lands in Brambleford, up Meadow Lane
 w.update({'name': 'Verdance', 'width': COLS, 'height': ROWS, 'tileSize': 16, 'tileset': 'verdance',
-          'spawns': {'player': [42, 21]}, 'tiles': [[1] * COLS for _ in range(ROWS)], 'collisions': [[1] * COLS for _ in range(ROWS)],
+          'spawns': {'player': [42, 20]}, 'tiles': [[1] * COLS for _ in range(ROWS)], 'collisions': [[1] * COLS for _ in range(ROWS)],
           'shipExit': False, 'view': [0.0, -1.5, COLS, ROWS],
           'farm': {'plot': list(FARM)}})
 MAIL = ["A SEED CATALOGUE, DOG-EARED AT THE PUMPKINS.", "A POSTCARD FROM LUMAR: \"THE SEA GLOWS. WISH YOU WERE HERE.\" NO NAME.",
         "A BILL FOR ONE (1) SCARECROW HAT. PAID.", "NOTHING TODAY. A SNAIL HAS MOVED IN."]
 w['interactions'] = [
-    {'x': 43, 'y': 21, 'type': 'enter_world', 'label': 'MEADOW LANE', 'prompt': 'PRESS E TO WALK TO BRAMBLEFORD', 'target': 'verdance-village', 'spawn': [10, 32]},
-    {'x': 43, 'y': 22, 'type': 'enter_world', 'label': 'MEADOW LANE', 'prompt': 'PRESS E TO WALK TO BRAMBLEFORD', 'target': 'verdance-village', 'spawn': [11, 32]},
+    {'x': 43, 'y': 20, 'type': 'enter_world', 'label': 'MEADOW LANE', 'prompt': 'PRESS E TO WALK TO BRAMBLEFORD', 'target': 'verdance-village', 'spawn': [10, 32]},
+    {'x': 43, 'y': 21, 'type': 'enter_world', 'label': 'MEADOW LANE', 'prompt': 'PRESS E TO WALK TO BRAMBLEFORD', 'target': 'verdance-village', 'spawn': [11, 32]},
     {'x': 6, 'y': 7, 'type': 'dialog', 'label': 'FARMHOUSE', 'prompt': 'PRESS E TO LOOK',
      'dialog': 'YOUR FARMHOUSE. WHITEWASHED, A RED ROOF, SMOKE FROM THE CHIMNEY. THE DOOR STICKS IN SUMMER - HOLLIN SAYS IT ALWAYS HAS.'},
     {'x': 16, 'y': 7, 'type': 'dialog', 'label': 'BARN', 'prompt': 'PRESS E TO LOOK',
@@ -609,7 +610,7 @@ w['interactions'] = [
     {'x': 35, 'y': 25, 'type': 'dialog', 'label': 'NOTICE BOARD', 'prompt': 'PRESS E TO READ',
      'dialog': 'NOTICES:\n\n"TILL WITH THE HOE, PLANT, THEN WATER - WATERED GROUND GROWS FOR TWENTY MINUTES, THEN DRIES OUT."\n\n'
                '"MARLO BUYS EVERYTHING. EVERYTHING."\n\n"LOST: ONE GOAT. ANSWERS TO NOTHING."'},
-    {'x': 41, 'y': 24, 'type': 'dialog', 'label': "HOLLIN'S COTTAGE", 'prompt': 'PRESS E TO LOOK',
+    {'x': 41, 'y': 27, 'type': 'dialog', 'label': "HOLLIN'S COTTAGE", 'prompt': 'PRESS E TO LOOK',
      'dialog': "HOLLIN'S COTTAGE. A PIE COOLS ON THE SILL. YOU ARE NOT GOING TO TOUCH IT."},
 ]
 open(WORLD, 'w').write(json.dumps(w, indent=2) + '\n')
