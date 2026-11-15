@@ -3752,6 +3752,33 @@
       }
     ]
   },
+  "elf_hermit": {
+    "name": "Sorrel",
+    "role": "Forager of the Deepwood",
+    "sheet": "npc-elf-hermit",
+    "at": [
+      {
+        "world": "sylvara-deepwood",
+        "label": "FORAGER"
+      }
+    ],
+    "greet": "OH! A VISITOR. I DON'T GET MANY. I DON'T WANT MANY, BUT ONE NOW AND THEN IS NICE. YOU'LL BE AFTER HERBS, THEN. EVERYONE IS, EVENTUALLY.",
+    "again": "THE WOOD SAID YOU'D BE BACK. IT DIDN'T, REALLY. BUT IT LOOKED LIKE IT MIGHT.",
+    "topics": [
+      {
+        "q": "Herbs",
+        "a": "EMBERROOT UNDER THE OLDEST TREES - DIG BY THE ROOTS, IT'S WARM WHEN YOU'RE CLOSE. OWLMOSS ON THE LOGS IN THE GROVE, IT GLOWS. DREAMCAPS IN THE GROVE TOO, THE LITTLE VIOLET ONES. WINDTHISTLE IN THE MEADOW. TAKE THEM TO MIRELLE; SHE KNOWS WHAT TO DO WITH THEM. I JUST KNOW WHERE THEY ARE."
+      },
+      {
+        "q": "The Mossback",
+        "a": "SHE'S BEEN ASLEEP SINCE BEFORE THE CITY. ONCE A HUNDRED YEARS OR SO SHE WAKES, HAS A GOOD LOOK ROUND, EATS AN ENTIRE MEADOW, AND GOES BACK TO SLEEP. ON FULL MOON NIGHTS SHE DREAMS OUT LOUD. IT'S WORTH STAYING UP FOR."
+      },
+      {
+        "q": "About you",
+        "a": "I WAS A WARDEN. I CAME OUT HERE ON PATROL ONE SPRING AND THE MEADOW WAS IN FLOWER AND I THOUGHT, NO. I'M STAYING. AERIN STILL SENDS ME A LETTER EVERY YEAR ASKING WHEN I'M COMING BACK. I SEND HER DREAMCAPS."
+      }
+    ]
+  },
   "elf_tavernkeeper": {
     "name": "Fennick",
     "role": "Keeper of the Hollow Bough",

@@ -4483,6 +4483,18 @@
         21,
         1
       ]
+    },
+    {
+      "x": 49,
+      "y": 12,
+      "type": "enter_world",
+      "label": "THE DEEPWOOD",
+      "prompt": "PRESS E TO FOLLOW THE DEEP RUN",
+      "target": "sylvara-deepwood",
+      "spawn": [
+        1,
+        14
+      ]
     }
   ],
   "designTiles": [

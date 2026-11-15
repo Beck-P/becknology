@@ -25,21 +25,8 @@ cores, an interior much less.
 ## The queue
 Empty: the Old Bridge, the Terraces and the Hill landed in November 2026.
 
-## Sylvara's closed places (one still to open)
-The Boughs, the Hollow Bough tavern, the falls, the cave behind them and Mirror Lake are live. Still closed (`BridgeSylvara.OPEN` in `apps/bridge/js/worlds/sylvara.js` lists what's open): the Deepwood
-(`sylvara-deepwood`) — scripted, never rendered at full samples (about 25 minutes each outdoors on four free cores — the falls took 24;
-preview first at low samples, fix what the preview shows — the Boughs needed crowns lowered off the walkways, bridges
-moved out from behind trunks and two houses off bridge ends — then render in full). `apps/bridge/CLAUDE.md`, *Sylvara's
-city, the Silverrun and the Deepwood (workstream F)*, says how a place opens: render, `scene_post.py`, the ways in put
-back into the open worlds, its people and crowd line, `OPEN`, `atlas.py`. Two helpers for that are in `sylvara/` here
-(run from the repo root; they read commit `e93d7dc`, where the closed places' doors and people were kept — a shallow
-clone needs `git fetch --unshallow` first):
-```
-python3 _claude_docs/render-queue/sylvara/restore_doors.py sylvara-deepwood    # the doors that lead to it, back into the open worlds' JSON
-python3 _claude_docs/render-queue/sylvara/restore_person.py <person-id>        # e.g. Fennick (the tavern), Sorrel — ids as in e93d7dc's people.json
-```
-`tools/tests/world/sylvara_places.js` walks the city and goes into the tavern for Fennick's cider; extend it for each
-place as it opens.
+## Sylvara's places: all open
+The Boughs, the Hollow Bough tavern, the falls, the cave behind them, Mirror Lake and the Deepwood are live (`BridgeSylvara.OPEN` in `apps/bridge/js/worlds/sylvara.js`). The helpers that put their doors and people back from `e93d7dc` are kept in `sylvara/` for reference. What's still worth doing there is in `apps/bridge/CLAUDE.md`, *Sylvara's city, the Silverrun and the Deepwood (workstream F)*: the river reaches are plainer than the Look Book — a rebuild, not a re-render.
 
 ## Found, not yet written (each needs a script fix first)
 Ranked by how much a player would notice; details and images were in the look-over's findings.
