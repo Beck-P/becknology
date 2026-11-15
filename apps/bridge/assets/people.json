@@ -785,7 +785,8 @@
       {
         "q": "Station dispatches",
         "a": "READ ME WHAT YOU'VE GOT.",
-        "use": { "type": "okafor_dispatches" }
+        "use": { "type": "okafor_dispatches" },
+        "lead": "enigma-dispatches"
       },
       {
         "q": "Heard anything?",

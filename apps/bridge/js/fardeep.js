@@ -262,7 +262,6 @@ var BridgeFarDeep = (function () {
   });
   function dispatches() {
     var got = s.dispatches.length;
-    if (typeof BridgeQuests !== 'undefined' && BridgeQuests.lead) BridgeQuests.lead('enigma-dispatches', 'Dami Okafor');
     if (!got) return say('OKAFOR', '"THE CIPHER TERMINAL ON THE RELAY DECK? IT\'S STILL CHEWING THROUGH THE OLD TRAFFIC. EVERY CODE YOU CRACK, SOMETHING DULL FALLS OUT. SHIFT SWAPS. PEACHES. BRING ME THE GOSSIP."');
     say('OKAFOR', 'SHE READS THEM OFF YOUR COPY, GRINNING.\n\n' + DISPATCHES.slice(0, got).map(function (D) { return (D[0] + ': ' + D[1]).toUpperCase(); }).join('\n\n') +
       (got < DISPATCHES.length ? '\n\n"MORE WHERE THOSE CAME FROM. THE TERMINAL\'S GOT YEARS OF IT."' : '\n\n"THAT\'S THE LOT. I MISS THE PEACHES."'));

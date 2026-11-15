@@ -22,16 +22,20 @@ const ONLY = process.argv[3] || '';
     await p.evaluate(() => {
       ['bridge_quests', 'bridge_quest_meta', 'bridge_fardeep', 'bridge_fish'].forEach(k => localStorage.removeItem(k));
       BridgeQuests.reset();
-      BridgeState.setPilot({ id: 't', name: 'BECK', suit_color: 'gold' }); if (typeof BridgeIntro !== 'undefined') BridgeIntro.hide();
-      ['verdance', 'hoarfell', 'lumar', 'arcadia', 'sylvara'].forEach((r) => BridgeWeather._pin && BridgeWeather._pin(r, 'clear'));
-      window._coins = 5000;
-      BridgeProgression.awardCoins = (k) => { window._coins += k; return Promise.resolve(window._coins); };
-      BridgeProgression.wagerCoins = (k) => Promise.resolve(window._coins >= k ? (window._coins -= k, { ok: true, balance: window._coins }) : { ok: false, reason: 'insufficient' });
-      BridgeProgression.recordAchievement = (k, n) => { window._coins += n; return Promise.resolve(true); };
-      if (BridgeProgression.getBalance) BridgeProgression.getBalance = () => Promise.resolve(window._coins);
     });
+    await prep(p);
     return p;
   };
+  // the pilot, the weather pinned and the coins stood in for: again after any reload
+  const prep = (pg) => pg.evaluate(() => {
+    BridgeState.setPilot({ id: 't', name: 'BECK', suit_color: 'gold' }); if (typeof BridgeIntro !== 'undefined') BridgeIntro.hide();
+    ['verdance', 'hoarfell', 'lumar', 'arcadia', 'sylvara'].forEach((r) => BridgeWeather._pin && BridgeWeather._pin(r, 'clear'));
+    window._coins = 5000;
+    BridgeProgression.awardCoins = (k) => { window._coins += k; return Promise.resolve(window._coins); };
+    BridgeProgression.wagerCoins = (k) => Promise.resolve(window._coins >= k ? (window._coins -= k, { ok: true, balance: window._coins }) : { ok: false, reason: 'insufficient' });
+    BridgeProgression.recordAchievement = (k, n) => { window._coins += n; return Promise.resolve(true); };
+    if (BridgeProgression.getBalance) BridgeProgression.getBalance = () => Promise.resolve(window._coins);
+  });
   const p = await page(false);
   // into a world, standing on open ground beside a label (never on its tile), or at a tile
   const go = async (w, at, pg) => {
@@ -148,7 +152,7 @@ const ONLY = process.argv[3] || '';
     const ph = await page(true);
     await ph.evaluate((Q) => { const s = { [Q]: { clues: { ask: 1, lookout: 2, stage: 3 }, started: 1 } }; localStorage.setItem('bridge_quests', JSON.stringify(s)); }, Q);
     await ph.reload(); await ph.waitForTimeout(2500);
-    await ph.evaluate((Q) => { BridgeState.setPilot({ id: 't', name: 'BECK', suit_color: 'gold' }); if (typeof BridgeIntro !== 'undefined') BridgeIntro.hide(); BridgeQuests.track(Q); }, Q);
+    await prep(ph); await ph.evaluate((Q) => BridgeQuests.track(Q), Q);
     await go('sylvara-river', 'BOATWRIGHT', ph);
     await ph.waitForTimeout(6000);                                                   // (the weather's toast gone)
     const trk = await ph.evaluate(() => (document.getElementById('quest-tracker') || {}).innerText || '');
@@ -225,7 +229,7 @@ const ONLY = process.argv[3] || '';
     // a save that's done things: a quest (and the main story's, which mustn't show), a festival placing, a sea legend
     const fresh0 = async () => {
       await p.reload(); await p.waitForTimeout(2500);
-      await p.evaluate(() => { BridgeState.setPilot({ id: 't', name: 'BECK', suit_color: 'gold' }); if (typeof BridgeIntro !== 'undefined') BridgeIntro.hide(); });
+      await prep(p);
     };
     await p.evaluate(() => {
       localStorage.setItem('bridge_quests', JSON.stringify({ 'eddas-book': { clues: {}, started: 1, done: Date.now() - 5 * 86400000 }, signal: { clues: {}, started: 1, done: Date.now() - 86400000 } }));
@@ -449,6 +453,36 @@ const ONLY = process.argv[3] || '';
     for (const id of ['warden_cloak', 'silk_cocoon']) console.log(id, 'uses:', JSON.stringify(await p.evaluate((id) => BridgeUses.lines(id).map(l => l.t.replace(/<[^>]+>/g, '')), id)));
     if (!(await p.evaluate(() => BridgeUses.lines('warden_cloak').map(l => l.t).join(' '))).includes('notice you later')) fail('the cloak\'s card');
     console.log('y5 done');
+  }
+
+  // ---- the screens of their own, at a phone's size ----
+  if (part('phone')) {
+    const ph = await page(true);
+    const tap = async (re) => { const ok = await ph.evaluate((src) => { const r = new RegExp(src, 'i'); const b = [...document.querySelectorAll('#world-overlay .wd-opt, #world-overlay .wd-sell-row, #world-overlay button')].find(e => r.test(e.innerText) && !e.disabled); if (b) b.click(); return !!b; }, re.source); if (!ok) fail('phone: no row ' + re); await ph.waitForTimeout(1000); };
+    const useP = async (l) => { await ph.evaluate((l) => BridgeInteractions.execute(BridgeWorld.getWorld().interactions.find(i => i.label === l)), l); await ph.waitForTimeout(1200); };
+    const fits = async (name) => { const r = await ph.evaluate(() => { const d = document.querySelector('#world-overlay .world-dialog'); if (!d) return null; const b = d.getBoundingClientRect(); return { top: Math.round(b.top), bottom: Math.round(b.bottom), h: innerHeight, scroll: d.scrollHeight > d.clientHeight }; });
+      console.log('phone ' + name + ':', JSON.stringify(r)); if (!r || r.top < 0 || r.bottom > r.h + 1) fail('phone ' + name + ' off the screen'); };
+    // the Brink's scrapbook
+    await ph.evaluate(() => { localStorage.setItem('bridge_quests', JSON.stringify({ 'eddas-book': { clues: {}, started: 1, done: Date.now() }, 'admiral': { clues: {}, started: 1, done: Date.now() - 3e8 } })); });
+    await ph.reload(); await ph.waitForTimeout(2500);
+    await prep(ph);
+    await go('singularity', 'RING GATE', ph); await useP('RING GATE'); await fits('ring gate'); await shot('phone_ring', ph); await shut(ph);
+    // Thaelin's whole song
+    await ph.evaluate(() => { const q = JSON.parse(localStorage.getItem('bridge_quests')); q['thaelins-verse'] = { clues: { ask: 1, lookout: 1, stage: 1, falls: 1, lake: 1, deep: 1, song: 1 }, started: 1, done: Date.now() }; localStorage.setItem('bridge_quests', JSON.stringify(q)); });
+    await ph.reload(); await ph.waitForTimeout(2500);
+    await prep(ph);
+    await go('sylvara', 'BARD', ph); await useP('BARD'); await tap(/Play The Long Way Home/); await said(ph); await fits('the song'); await shot('phone_song', ph); await shut(ph);
+    // Dorrie's other worlds, the observing log
+    await ph.evaluate(() => { BridgeClock._at('2026-10-16T13:00'); BridgeInventory.addItem('fondue', 1); });
+    await go('ship-galley', [9, 6], ph);
+    await ph.evaluate(() => BridgeInteractions.execute(BridgeWorld.getWorld().interactions.find(i => i.type === 'galley' && i.part === 'cook'))); await ph.waitForTimeout(900);
+    await tap(/other worlds/); await fits('Dorrie'); await shot('phone_dorrie', ph); await shut(ph);
+    await go('ship-observatory', [8, 9], ph);
+    await ph.evaluate(() => BridgeInteractions.execute(BridgeWorld.getWorld().interactions.find(i => i.part === 'log'))); await ph.waitForTimeout(900);
+    await fits('the log'); await shot('phone_log', ph); await shut(ph);
+    await ph.evaluate(() => BridgeClock._at(null));
+    await ph.context().close();
+    console.log('phone done');
   }
 
   console.log(errors ? errors + ' FAILED' : 'far_deeper OK');

@@ -925,6 +925,7 @@ var BridgeInteractions = (function () {
     var sheet = portraitFor(inter);
     var dialogEl = dialogShell(sheet ? 'talk' : null);
     var body = reflow(text);
+    if (body.length > 600) dialogEl.classList.add('wd-long');   // a long read (Thaelin's whole song): on a phone, over the HUD, scrolling
     dialogEl.innerHTML =
       (sheet ? '<canvas class="wd-portrait" width="' + PORTRAIT_PX + '" height="' + PORTRAIT_PX + '"></canvas>' : '') +
       '<div class="wd-body">' +
@@ -1494,6 +1495,7 @@ var BridgeInteractions = (function () {
         return;
       }
       if (t.use && OWN[t.use.type]) {                                 // a topic that does what a thing in the world does (a sleigh ride, a room)
+        if (t.lead && typeof BridgeQuests !== 'undefined' && BridgeQuests.lead) BridgeQuests.lead(t.lead, person.name);   // (and can still point somewhere: Okafor's dispatches)
         close();
         OWN[t.use.type](Object.assign({}, t.use));
         return;
