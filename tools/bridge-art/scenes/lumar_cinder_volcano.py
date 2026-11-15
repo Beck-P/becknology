@@ -195,7 +195,8 @@ def look(label, x, y, text, prompt='PRESS E TO LOOK'):
     return {'x': x, 'y': y, 'type': 'dialog', 'label': label, 'prompt': prompt, 'dialog': text}
 
 
-w = {'name': 'The Crater', 'sea': 'crimson', 'width': COLS, 'height': ROWS, 'tileSize': 16, 'tileset': 'lumar', 'fixedCamera': True,
+# the camera follows you (44 × 38: a fixed camera centred on the crater's middle on a desktop, off the screen on the trail)
+w = {'name': 'The Crater', 'sea': 'crimson', 'width': COLS, 'height': ROWS, 'tileSize': 16, 'tileset': 'lumar', 'fixedCamera': False,
      'spawns': {'player': [22, 35]}, 'shipExit': True, 'tiles': [], 'collisions': [], 'tileNames': {}, 'interactions': [
          {'x': x, 'y': ROWS - 1, 'type': 'leave_world', 'leaveTo': 'lumar-cinder', 'leaveSpawn': [37, 9], 'label': 'THE TRAIL DOWN',
           'prompt': 'PRESS E TO GO DOWN'} for x in (21, 22, 23)] + [
