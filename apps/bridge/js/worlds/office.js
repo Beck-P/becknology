@@ -434,8 +434,9 @@
     });
     (S.log || []).forEach(function (l) { rows.push({ label: '· ' + String(l.text || '').replace(/\.$/, ''), sub: ago(l.at), info: true }); });
     choose({ title: 'The workshop book', text: note || ('THE WORKSHOP ON ' + holm + ': ' + S.line + '. ' + S.made + ' MADE IN ALL' + (S.next ? '; NEXT DONE, ' + S.next.name + ', IN ' + hm(S.next.at - Date.now()) : '') +
-             (S.smiths.length ? '.' : '. NO SMITHS: HIRE THEM AT THE WORKSHOP ITSELF.')).toUpperCase(),
-             rows: rows, buttons: [{ label: 'Queue more', act: function () { queueMore(); } }], closeLabel: 'Done' });
+             (S.smiths.length ? '.' : '. NO SMITHS YET: HIRE ONE (BELOW) AND THEY WORK THE QUEUE WHILE YOU\'RE AWAY.')).toUpperCase(),
+             rows: rows, buttons: [{ label: 'Queue more', act: function () { queueMore(); } },
+                                   { label: S.smiths.length ? 'The workshop' : 'Hire smiths', act: function () { W.open(); } }], closeLabel: 'Done' });   // its own screens (smiths, your bench, the racks) from here too
   }
   var GROUPS = [['materials', 'Materials'], ['guns', 'Guns'], ['fittings', 'Fittings'], ['tools', 'Tools'], ['home', 'For your homes']];
   function shortOf(r, k) { var R = BridgeWorkshop.RECIPES[r]; return Object.keys(R.in).filter(function (id) { return BridgeWorkshop.have(id) < R.in[id] * (k || 1); }); }
@@ -533,8 +534,11 @@
     var rows = [];
     if (pr.owed.total > 0) rows.push({ label: 'Pay what\'s owed', sub: pr.owed.people.map(function (p) { return p.name + (p.missed ? ' (missed a payday)' : ''); }).join(', '),
       note: coins(pr.owed.total), pick: function () {
-        B.payAll(); sfx('coin');
-        setTimeout(function () { var left = B.owing().total; accounts(left ? 'PAID WHAT THERE WAS. ' + coins(left) + ' STILL OWED.' : 'EVERYONE PAID: FROM THE TAKINGS FIRST, THEN YOUR PURSE.'); }, 600);
+        Promise.resolve(B.payAll()).then(function (r) {
+          var left = r && r.left != null ? r.left : B.owing().total;
+          if (r && r.paid) sfx('coin');
+          accounts(r && r.why === 'offline' ? 'NO WAY TO MOVE COINS RIGHT NOW. TRY AGAIN IN A MOMENT.' : left ? (r && r.paid ? 'PAID ' + coins(r.paid) + '. ' : 'NOT ENOUGH COINS IN YOUR PURSE. ') + coins(left) + ' STILL OWED.' : 'EVERYONE PAID: FROM THE TAKINGS FIRST, THEN YOUR PURSE.');
+        });
       } });
     mine.forEach(function (o) {
       var st = o.status, where = placeOf(o.world);

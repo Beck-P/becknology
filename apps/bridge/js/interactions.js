@@ -1065,7 +1065,7 @@ var BridgeInteractions = (function () {
       busy = true;
       if (a.act === 'buy') B.buy(id).then(function (r) {
         if (r.ok && typeof BridgeQuests !== 'undefined' && BridgeQuests.toast) BridgeQuests.toast('Business', biz.name, 'Yours now');
-        reopen(r.ok ? (st.needsManager ? "IT'S YOURS. IT WON'T OPEN WITHOUT A MANAGER: HIRE ONE." : "IT'S YOURS. HIRE A HAND TO KEEP IT OPEN.") : fail(r));
+        reopen(r.ok ? (st.needsManager ? "IT'S YOURS. IT WON'T OPEN WITHOUT A MANAGER: WHO'S LOOKING FOR WORK TODAY IS BELOW." : "IT'S YOURS. HIRE A HAND TO KEEP IT OPEN: WHO'S LOOKING FOR WORK TODAY IS BELOW.") : fail(r), r.ok ? { v: 'hire' } : null);   // straight on to hiring
       });
       else if (a.act === 'hire') B.hire(id, a.cand).then(function (r) {
         reopen(r.ok ? a.cand.name.toUpperCase() + ' STARTS NOW.' : fail(r));

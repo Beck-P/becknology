@@ -335,6 +335,14 @@ var BridgeQuests = (function () {
       var ripe = BridgeFarm.journal().rows.reduce(function (a, r) { return a + (r.ripe || 0); }, 0);
       if (ripe) out.push({ tag: 'Farm', title: ripe + ' ready to pick', text: 'in your field on Verdance.', world: 'verdance' });
     }
+    if (typeof BridgeLedger !== 'undefined') {                     // what you run: the next first step, or what needs you
+      var fs = BridgeLedger.firstStep ? BridgeLedger.firstStep() : null;
+      if (fs) out.push({ tag: 'Empire', title: fs.name, text: fs.sub.replace(/ Tap to .*$/, ' The Ledger (' + (document.documentElement.classList.contains('touch') ? 'in the menu' : 'L') + ') has it.'), world: fs.world || null });
+      else {
+        var nd = BridgeLedger.needs ? BridgeLedger.needs().filter(function (n) { return n.alert; }) : [];
+        if (nd.length) out.push({ tag: 'Ledger', title: nd.length === 1 ? nd[0].name : nd.length + ' things need you', text: (nd.length === 1 ? nd[0].sub.replace(/ — tap.*$| \(tap.*$|\. Tap.*$/, '') + '. ' : '') + 'See Needs you in the Ledger' + (document.documentElement.classList.contains('touch') ? '.' : ' (L).') });
+      }
+    }
     if (typeof BridgeInventory !== 'undefined' && BridgeInventory.freeSlots && BridgeInventory.freeSlots() === 0) {
       out.push({ tag: 'Pack', title: 'Your pack is full', text: 'Sell to a trader, or leave things in a chest: the sea chest on the bridge, the locker in your quarters.' });
     }

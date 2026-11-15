@@ -2557,6 +2557,11 @@ html.menu-open #bridge-toast, html.menu-open #quarters-toast { visibility: hidde
 .lg-dim { opacity: 0.5; }
 .lg-dim b { letter-spacing: 3px; }
 .lg-alert .lg-main b, .lg-alert .lg-fig { color: var(--gm-bad); }
+/* the next step for someone just starting out (BridgeLedger.firstStep) */
+.lg-first { margin-bottom: 4px; }
+.lg-step { padding-left: 8px; border-left: 3px solid var(--gm-good); }
+.lg-step .lg-main b { color: var(--gm-good); }
+.lg-first + .lg-list .lg-row:first-child { border-top: 1px dashed var(--gm-line); }
 .lg-total { margin-top: 8px; font-size: 12px; color: var(--gm-dim); text-align: right; }
 .lg-total.lg-left { margin: 0 0 4px; text-align: left; }
 /* the treasury's little bars, a day each: up for what came in clear, down for what went out (js/ledger.js) */

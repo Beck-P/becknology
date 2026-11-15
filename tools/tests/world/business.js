@@ -43,6 +43,22 @@ const H = 3600000;
   for (let i = 0; i < 24; i++) { if (await ev(() => BridgeBusiness.openNow('fish-stall'))) open++; await ahead(1); }
   const s1 = await st('fish-stall');
   console.log('24h with a hand: open', open, 'of 24 sampled hours; pending', s1.pending, '(rate 75 a 1.0 skill-ish hand; capped at', await ev(() => Math.round(75 * 1.6 * BridgeBusiness.cap('fish-stall'))) + ')');
+  // "full" means it has really stopped earning: a hand holds cap hours at a manager's rate (×1.6), so past cap hours at
+  // their own rate it still earns, and the ledger mustn't say it's stopped (it did, at perHour × cap)
+  let fails = 0;
+  const check = (what, ok, got) => { if (!ok) { fails++; console.log('FAIL', what, got !== undefined ? JSON.stringify(got) : ''); } else console.log('ok', what); };
+  const fullCase = await ev(async () => {
+    const id = 'fish-stall', b = BridgeBusiness._state().biz[id], ph = BridgeBusiness.perHour(id), cap = BridgeBusiness.cap(id);
+    b.held = Math.round(ph * cap * 1.1); b.last = Date.now();
+    const row = BridgeLedger.needs().find(n => n.name === BridgeBusiness.get(id).name);
+    // an open hour later, still earning?
+    let k = 0; while (!BridgeBusiness.openNow(id) && k++ < 48) { window._off += 1800000; BridgeBusiness._tick(); }
+    const p0 = BridgeBusiness.pending(id); window._off += 1800000; BridgeBusiness._tick(); const p1 = BridgeBusiness.pending(id);
+    return { held: b.held, limit: Math.round(BridgeBusiness.heldCap(id)), said: row ? row.sub : 'nothing', full: BridgeBusiness.full(id), stillEarning: p1 > p0, p0, p1 };
+  });
+  check('past cap hours at a hand\'s rate the ledger doesn\'t say it\'s stopped earning', !/stopped/.test(fullCase.said) && fullCase.stillEarning, fullCase);
+  const atCap = await ev(() => { const id = 'fish-stall', b = BridgeBusiness._state().biz[id]; b.held = BridgeBusiness.heldCap(id); b.last = Date.now(); const row = BridgeLedger.needs().find(n => n.name === BridgeBusiness.get(id).name); return { full: BridgeBusiness.full(id), said: row && row.sub, act: !!(row && row.act) }; });
+  check('at the real cap it says so, with a tap to collect', atCap.full && /stopped/.test(atCap.said) && atCap.act, atCap);
   // payday: the next ET day's wage comes out of what the stall's holding
   const owe0 = await ev(() => BridgeBusiness.owing().total);
   console.log('wages owed after the day turned', owe0, 'staff', JSON.stringify(await ev(() => BridgeBusiness.staff().map(x => [x.name, Math.ceil(x.owe), x.missed]))));
@@ -57,6 +73,9 @@ const H = 3600000;
     console.log('payday', d + 1, 'unpaid: owing', JSON.stringify(await ev(() => BridgeBusiness.owing())));
   }
   await ev(() => { BridgeBusiness._state().biz['fish-stall'].last = Date.now(); });
+  // paying from the ledger says what happened (payAll resolves what was paid and what's still owed)
+  const payRes = await ev(async () => { window._coins = 0; const S = BridgeBusiness._state(); S.owed['crewtest'] = { owe: 50, missed: 1 }; const a = await BridgeBusiness.payAll(); window._coins = 1000; const b2 = await BridgeBusiness.payAll(); delete S.owed['crewtest']; return [a, b2]; });
+  check('paying with no coins says what\'s still owed; with coins, what was paid', payRes[0] && payRes[0].left >= 50 && !payRes[0].paid && payRes[1] && payRes[1].paid >= 50 && payRes[1].left === 0, payRes);
   console.log('three paydays, two unpaid: staff', JSON.stringify(await ev(() => BridgeBusiness.staff().map(x => x.name))), 'log:', await ev(() => BridgeBusiness.log()[0].t));
   // a venue: a hand alone won't open it; a manager does, and banks to you
   await ev(() => { window._coins = 200000; });
@@ -64,6 +83,8 @@ const H = 3600000;
   const vc = await ev(() => BridgeBusiness.candidates('hayloft'));
   await ev((c) => BridgeBusiness.hire('hayloft', c), vc.find(c => c.tier === 'hand'));
   console.log('venue with a hand', JSON.stringify(await st('hayloft')));
+  const vneed = await ev(() => BridgeLedger.needs().filter(n => /Hayloft/.test(n.name)).map(n => n.sub));
+  check('a venue with only a hand shows up under Needs you as shut for want of a manager', vneed.some(t => /manager/.test(t)), vneed);
   await ev((c) => BridgeBusiness.hire('hayloft', c), vc.find(c => c.tier === 'manager'));
   const before = await ev(() => window._coins);
   await ahead(12);
@@ -120,5 +141,6 @@ const H = 3600000;
   console.log('Percy topics:', talk);
   console.log('after asking:', (await ev(() => (document.querySelector('.world-dialog') || {}).innerText || 'none')).replace(/\n+/g, ' / ').slice(0, 300));
   await p.screenshot({ path: SHOTS + '/biz_percy.png' });
+  console.log('errors:', fails);
   await b.close();
 })();

@@ -135,13 +135,19 @@ var BridgeBusiness = (function () {
   function here(id) { return typeof BridgeWorld !== 'undefined' && BridgeWorld.getWorldId && BridgeWorld.getWorldId() === defs[id].world; }
   // an engineer on the crew keeps everything running: twice the hours before takings stop piling up
   function cap(id) { return defs[id].cap * (typeof BridgeCrew !== 'undefined' && BridgeCrew.has('engineer') ? 2 : 1); }
+  // what a hand can hold for you before the takings stop piling up: `cap` hours at a manager's rate (×1.6), so about
+  // cap × 1.6 hours at a hand's own. The ledger's "full" and the perk line read this, so they say what really happens.
+  function heldCap(id) { return defs[id].rate * upgradeMult(id) * 1.6 * cap(id); }
+  function heldHours(id) { return Math.round(cap(id) * 1.6); }
+  /** Stopped earning for want of collecting (a hand's takings at the cap). */
+  function full(id) { return owned(id) && pending(id) >= heldCap(id) * 0.98; }
 
   // ---- the takings: worked out from the clock, ten minutes at a time ----------------------------------------------
   function accrue(id, now) {
     var b = B(id), d = defs[id];
     if (!b || !d) return;
     var from = Math.max(b.last || now, now - BACK), t = from, inHere = here(id);
-    var held = b.held || 0, bank = b.bank || 0, limit = d.rate * upgradeMult(id) * 1.6 * cap(id), made = 0;
+    var held = b.held || 0, bank = b.bank || 0, limit = heldCap(id), made = 0;
     while (t < now) {
       var dt = Math.min(STEP, now - t), mid = t + dt / 2;
       var c = crewOf(id, mid, inHere && mid > now - 2 * STEP), o = c.run ? openAt(id, mid) : 0;
@@ -223,12 +229,12 @@ var BridgeBusiness = (function () {
     settle();
   }
   /** Pays what's owed: out of each business's own takings, then your coins, one person at a time. */
-  var settling = false;
+  var settling = null, retry = 0, tries = 0;
   function settle() {
-    if (settling) return;
+    if (settling) return settling;
     var who = state.staff.filter(function (p) { return p.owe > 0; }).map(function (p) { return { p: p }; })
       .concat(Object.keys(state.owed).filter(function (id) { return crewOwed(id).owe > 0; }).map(function (id) { return { crew: id, p: crewOwed(id) }; }));
-    if (!who.length) return;
+    if (!who.length) return Promise.resolve({ paid: 0, left: 0 });
     who.forEach(function (x) {                                                          // the takings first
       var b = x.p.at ? B(x.p.at) : null;
       if (!b) return;
@@ -239,23 +245,30 @@ var BridgeBusiness = (function () {
     });
     save();
     var left = who.filter(function (x) { return x.p.owe > 0; });
-    if (!left.length || !P() || !P().wagerCoins) return;
-    settling = true;
+    if (!left.length || !P() || !P().wagerCoins) return Promise.resolve({ paid: 0, left: owedNow() });
     var total = 0;
-    (function next(i) {
-      if (i >= left.length) {
-        settling = false;
-        if (total) note('Wages paid: ' + total + ' coins');
-        save();
-        return;
-      }
-      var x = left[i], amt = Math.ceil(x.p.owe);
-      pay(amt, 'wages').then(function (r) {
-        if (r.ok) { x.p.owe = 0; x.p.missed = 0; total += amt; next(i + 1); }
-        else if (r.reason === 'no_pilot' || r.reason === 'no_client' || r.reason === 'error' || r.reason === 'offline') { settling = false; save(); }   // try again later
-        else next(i + 1);                                                                // not enough coins: they wait
-      });
-    })(0);
+    settling = new Promise(function (done) {
+      function end(why) { settling = null; if (total) note('Wages paid: ' + total + ' coins'); save(); done({ paid: total, left: owedNow(), why: why || null }); }
+      (function next(i) {
+        if (i >= left.length) { end(); return; }
+        var x = left[i], amt = Math.ceil(x.p.owe);
+        pay(amt, 'wages').then(function (r) {
+          if (r.ok) { x.p.owe = 0; x.p.missed = 0; total += amt; tries = 0; next(i + 1); }
+          else if (r.reason === 'no_pilot' || r.reason === 'no_client' || r.reason === 'error' || r.reason === 'offline') {   // try again soon (the purse may not be up yet)
+            if (!retry && tries++ < 8) retry = setTimeout(function () { retry = 0; settle(); }, 8000);
+            end('offline');
+          }
+          else next(i + 1);                                                              // not enough coins: they wait
+        });
+      })(0);
+    });
+    return settling;
+  }
+  function owedNow() {
+    var n = 0;
+    state.staff.forEach(function (p) { n += p.owe > 0 ? Math.ceil(p.owe) : 0; });
+    Object.keys(state.owed).forEach(function (id) { var o = state.owed[id]; if (o && o.owe > 0) n += Math.ceil(o.owe); });
+    return n;
   }
   function note(t) { state.log.unshift({ at: Date.now(), t: t }); state.log = state.log.slice(0, 20); }
   /** Crew who've gone a payday without wages don't work their perk till paid (js/crew.js). */
@@ -274,8 +287,8 @@ var BridgeBusiness = (function () {
         .map(function (id) { return { name: nameOfOwed(id, all), owe: Math.ceil(state.owed[id].owe), missed: state.owed[id].missed, crew: id }; }));
     return { total: people.reduce(function (a, p) { return a + p.owe; }, 0), people: people };
   }
-  /** Pay everything owed now (the ledger's button). */
-  function payAll() { settle(); }
+  /** Pay everything owed now (the ledger's button): resolves { paid, left (still owed), why }. */
+  function payAll() { return settle(); }
 
   // ---- banking what managers take in ------------------------------------------------------------------------------
   var banking = false;
@@ -337,7 +350,7 @@ var BridgeBusiness = (function () {
     var d = defs[id] || {}, sk = Math.round((p.skill || 1) * 100) + '%';
     if (p.tier === 'manager') return 'runs it at ×1.6 and banks the takings to you · works at ' + sk;
     if (p.tier === 'specialist') return (p.trade === d.trade ? '+60% here, in their own trade' : '+20% (their trade is ' + (TRADE[p.trade] || p.trade) + ')') + ' · works at ' + sk;
-    return 'keeps it open; holds ' + (d.cap || 8) + 'h of takings for you to collect · works at ' + sk;
+    return 'keeps it open; holds about ' + (defs[id] ? heldHours(id) : 13) + 'h of takings for you to collect · works at ' + sk;
   }
   /** How to draw their face (js/look.js): dressed for where they work, coloured by their place in it. */
   var DRESS = { lumar: 'coat', arcadia: 'runner', hoarfell: 'thermal', verdance: 'ranger', sylvara: 'mystic', singularity: 'plate' };
@@ -520,7 +533,7 @@ var BridgeBusiness = (function () {
            upgrade: upgrade, collect: collect, freeCrew: freeCrew, assign: assign, summary: summary, status: status,
            candidates: candidates, hire: hire, engage: engage, dismiss: dismiss, move: move, room: room, staff: function (id) { return id ? staffAll(id) : state.staff.slice(); },
            openNow: function (id) { return openAt(id, Date.now()) > 0; }, hoursText: hoursText, stockable: stockable, restock: restock, stockOf: stockOf, supply: supply, sellTo: sellTo, unitsOf: unitsOf, PER: PER, BOUGHT: BOUGHT, perkOf: perkOf, faceOf: faceOf, unpaid: unpaid, owing: owing, payAll: payAll, handOwed: handOwed, crewWage: crewWage,
-           get: function (id) { return defs[id] || null; }, ofOwner: ofOwner, TIERS: TIERS, SLOTS: SLOTS, log: function () { return state.log; },
+           get: function (id) { return defs[id] || null; }, ofOwner: ofOwner, full: full, heldCap: heldCap, heldHours: heldHours, TIERS: TIERS, SLOTS: SLOTS, log: function () { return state.log; },
            state: function (id) { return state.biz[id] || null; }, _tick: tick, _state: function () { return state; },
            all: function () { return Object.keys(defs).map(function (id) { return defs[id]; }); } };     // every business there is (js/ledger.js)
 })();

@@ -415,7 +415,8 @@ var BridgeWorkshop = (function () {
         if (st.bench.done >= st.bench.need) { fin.push(finish(st.bench, 'you', at)); st.bench = null; }
       }
       crew.forEach(function (p) {
-        if (!working(p, t) || at <= (p.hired || 0)) return;                              // (not before they were taken on)
+        if (!working(p, t)) { st.queue.forEach(function (q) { if (q.by === p.id) q.by = null; }); return; }   // downed tools: their job goes back for whoever's working
+        if (at <= (p.hired || 0)) return;                                                  // (not before they were taken on)
         var left = Math.min(dt, at - (p.hired || 0)) * pace(p, t);
         while (left > 0) {
           var j = st.queue.filter(function (q) { return q.by === p.id; })[0] || st.queue.filter(function (q) { return !q.by; })[0];

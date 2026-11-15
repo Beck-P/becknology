@@ -34,5 +34,17 @@ const { chromium } = require('playwright');
   console.log('  turnips Odile brought in:', JSON.stringify(r.picked), '· seed left in the box:', r.seedsLeft);
   console.log('  in the bin for Marlo:', JSON.stringify(r.bin));
   console.log('  in the ground now:', r.growing);
+  // the seed box runs dry: what Odile brings in then is left bare, and the ledger says so (it used to just go quiet)
+  const bare = await p.evaluate(() => {
+    const f = BridgeFarm._save(), h = BridgeHomestead._s(), H = 3600000;
+    h.seeds = {};
+    Object.values(f.tiles).forEach(t => { if (t.crop) { t.crop.g = t.crop.need; t.crop.ripeAt = Date.now() - 2 * 60000; } });
+    f.worked = Date.now() - 20 * 60000;
+    BridgeFarm.journal();                                                // (works the field up to now)
+    const j = BridgeFarm.journal(), row = BridgeLedger.needs().find(n => /Bare rows/.test(n.name));
+    return { bare: j.bare, of: j.bareOf, said: row ? row.sub : 'nothing', hired: BridgeHomestead.until('odile') > Date.now() };
+  });
+  console.log('  the seed box empty:', JSON.stringify(bare));
+  console.log('errors:', bare.bare > 0 && /seed box/.test(bare.said) ? 0 : 1);
   await b.close();
 })();

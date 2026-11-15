@@ -172,6 +172,11 @@ var BridgeHarbour = (function () {
       { label: 'Hands', sub: crew.length ? crew.map(function (c) { return c.name + ' (' + f.ROLES[c.role].name.toLowerCase() + ')'; }).join(', ') : 'none',
         note: crew.length + '/' + base.crew + ' needed', pick: function () { crewCard(worldId, s); } }
     ];
+    if (s.type !== 'sloop' && typeof BridgeOrders !== 'undefined') {     // her captain and standing orders, from here too
+      var cp = BridgeOrders.captainOf(s.id), od = BridgeOrders.get(s.id);
+      rows.push({ label: 'Captain & orders', sub: cp ? cp.name + (od ? ' · ' + BridgeOrders.orderName(od) : ' · no orders yet') : 'no captain: hire one and she trades while you\'re away',
+                  note: cp ? (od ? 'on orders' : 'give orders') : 'hire', pick: function () { BridgeOrders.ship(s.id); } });
+    }
     var buttons = [];
     if (hereNow && s.id !== f.active().ship.id) buttons.push({ label: 'Take her out', act: function () { f.sail(s.id); sfx('click'); shipCard(worldId, s, 'SHE\'S THE ONE YOU\'LL SAIL. GO SAILING FROM THE PIER.'); } });
     if (!f.canOrder(s)) buttons.push({ label: 'Send her to…', act: function () { send(s, function (msg) { shipCard(worldId, s, msg); }); } });
@@ -267,7 +272,8 @@ var BridgeHarbour = (function () {
                      f.buy(type, worldId).then(function (r) {
                        if (!r.ok) { yard(worldId, why(r)); return; }
                        toast('New ship', r.ship.name, sp.name + ', at the pier'); sfx('coin');
-                       shipCard(worldId, r.ship, 'SHE\'S YOURS. SHE\'S TIED UP AT THE PIER.' + (sp.crew ? ' SHE NEEDS ' + sp.crew + ' HAND' + (sp.crew > 1 ? 'S' : '') + ' BEFORE SHE SAILS.' : ''));
+                       shipCard(worldId, r.ship, 'SHE\'S YOURS. SHE\'S TIED UP AT THE PIER.' + (sp.crew ? ' SHE NEEDS ' + sp.crew + ' HAND' + (sp.crew > 1 ? 'S' : '') + ' BEFORE SHE SAILS: SIGN THEM ON HERE.' : '') +
+                                                ' A CAPTAIN (CAPTAIN & ORDERS, BELOW) SAILS HER ON A TRADE LOOP WHILE YOU\'RE AWAY.');
                      });
                    } }, { label: 'Back', act: function () { yard(worldId); } }] });
         } };
