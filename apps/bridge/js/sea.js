@@ -80,6 +80,12 @@ var BridgeSea = (function () {
   function rgb(c, a) { return a == null ? 'rgb(' + Math.round(c[0]) + ',' + Math.round(c[1]) + ',' + Math.round(c[2]) + ')' : 'rgba(' + Math.round(c[0]) + ',' + Math.round(c[1]) + ',' + Math.round(c[2]) + ',' + a + ')'; }
   function nums(s) { return s.split(',').map(Number); }
   function worldId() { return typeof BridgeWorld !== 'undefined' && BridgeWorld.getWorldId ? BridgeWorld.getWorldId() : null; }
+  // the scene of the place you're in, when it's lit live (null otherwise: the sea then follows the sky as before)
+  function hereScene() {
+    var w = typeof BridgeWorld !== 'undefined' && BridgeWorld.getWorld ? BridgeWorld.getWorld() : null;
+    var sc = w && w.scene && w.scene.id && typeof BridgeScene !== 'undefined' ? BridgeScene.get(w.scene.id) : null;
+    return sc && sc.lit && typeof BridgeLit !== 'undefined' && BridgeLit.light && BridgeLit.light(sc.id) ? sc : null;
+  }
 
   // ---- the light on the water now: the sky's blend (day, dusk, night), golden hour, which side the sun is on, the moon,
   // the weather. The scene's own when it has one (its live light when that's composed: BridgeLit's hour, so a preview
@@ -460,8 +466,11 @@ var BridgeSea = (function () {
 
   /** The open sea, filling the frame (native px), scrolling with the world. */
   function drawSea(ctx, w, h, now, palette) {
-    var name = PALETTES[palette] ? palette : 'emerald', P = PALETTES[name], W = skyFor(name), k = bloomK();
-    var L = lightOn(name, null), C = colours(name, L);
+    // behind a scene with live light, the open sea takes the scene's own light (its hour, as the island's water does),
+    // or past the render's edge it could be noon while the harbour is at dusk (and a preview's _force left it behind)
+    var sc = camOverride ? null : hereScene();
+    var name = PALETTES[palette] ? palette : 'emerald', P = PALETTES[name], W = skyFor(name, sc), k = bloomK();
+    var L = lightOn(name, sc), C = colours(name, L);
     waves(ctx, w, h, now, name, L, C);
     if (k > 0.01) bloomWater(ctx, 0, 0, w, h, 0, 0, now, name, k);
     skyLight(ctx, w, h, now, L, C, null);
