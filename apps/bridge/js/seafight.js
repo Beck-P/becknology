@@ -43,6 +43,10 @@ var BridgeSeaFight = (function () {
                guns: ['swivel', 'swivel', 'chaser'], fighters: 3, loot: [70, 170], cargo: ['ember_rum', 'salt_fish'], cloth: BLACK, tint: 'rgba(24,14,16,0.62)' },
     raider:  { name: 'a pirate raider', spec: { L: 4.8, beam: 1.42, sheet: 'raider', vmax: 5.0, nogo: 0.74, turn: 0.85 }, hull: 105,
                guns: ['long_nine', 'long_nine', 'carronade', 'chaser'], fits: ['storm_rig'], fighters: 5, loot: [160, 340], cargo: ['blackpowder', 'ember_rum'], cloth: BLACK, tint: 'rgba(40,8,10,0.25)' },
+    // a privateer gone bad (the brigantines that prowl the Crimson's edges in js/sloop.js's traffic, in their colours):
+    // only ever one on Cinder Key's WANTED board, hunting you on the Emerald lanes (js/lumar-deep.js `hunting`)
+    privateer: { name: 'a privateer', spec: { L: 6.0, beam: 1.92, sheet: 'brigantine', vmax: 4.4, nogo: 0.8, turn: 0.7 }, hull: 120,
+               guns: ['carronade', 'long_nine', 'chaser'], fighters: 5, loot: [180, 320], cargo: ['ember_rum', 'spore_silk'], cloth: ['#c8946a', '#a2744e', '#764e32'], tint: 'rgba(96,24,28,0.28)' },
     drowned: { name: 'a drowned ship', spec: { L: 6.0, beam: 1.92, sheet: 'brigantine', vmax: 3.9, nogo: 0.9, turn: 0.6 }, hull: 120,
                guns: ['ghostfire', 'ghostfire', 'ghostfire'], fighters: 6, loot: [120, 280], cargo: ['moon_salt'], cloth: GHOST, ghost: true, tint: 'rgba(150,220,190,0.55)' },
     // the monsters (drawn in code, no sails): spec.L is how big a target they are
@@ -82,8 +86,12 @@ var BridgeSeaFight = (function () {
     if (api.blessed && api.blessed()) p *= 0.5;                        // a candle at St Brendan's: they think twice
     if (midnight && typeof BridgeWonders !== 'undefined') p *= BridgeWonders.deep();         // the Ferryman's Bell: the deep turns away
     if (typeof BridgeWeather !== 'undefined' && BridgeWeather.pirates) p *= BridgeWeather.pirates();   // a storm keeps them in port
+    // a ship off Cinder Key's WANTED board, hunting you on her own sea once you've read it (js/lumar-deep.js)
+    var W = !midnight && typeof BridgeLumarDeep !== 'undefined' && BridgeLumarDeep.hunting ? BridgeLumarDeep.hunting(seas) : null;
+    if (W) p = Math.max(p, 0.3);
     if (api.rand() > p) return;
     var kind = midnight ? deep() : seas.indexOf('crimson') >= 0 ? (api.rand() < 0.6 ? 'raider' : 'cutter') : (api.rand() < 0.15 ? 'raider' : 'cutter');
+    if (W && api.rand() < 0.6) kind = W.kind; else W = null;
     if (KINDS[kind].monster) {                                         // they come up from anywhere round you
       for (var t2 = 0; t2 < 10; t2++) {
         var a = api.rand() * Math.PI * 2, R = 17 + api.rand() * 4, mx = b.x + Math.cos(a) * R, mr = b.r + Math.sin(a) * R;
@@ -96,9 +104,13 @@ var BridgeSeaFight = (function () {
     var dx = ex[0] - b.x, dr = ex[1] - b.r, n = Math.hypot(dx, dr) || 1;
     for (var tries = 0; tries < 8; tries++) {
       var off = side * (7 + tries), x = b.x + dx * f - dr / n * off, r = b.r + dr * f + dx / n * off;
-      if (api.offshore(x, r)) { spawn(kind, x, r, Math.atan2(b.r - r, b.x - x)); return; }
+      if (api.offshore(x, r)) { spawn(kind, x, r, Math.atan2(b.r - r, b.x - x)); if (W) wantedFoe(foes[foes.length - 1], W); return; }
       side = -side;
     }
+  }
+  function wantedFoe(o, W) {                                         // her name over her, and the bounty's id on her
+    o.wanted = W.id;
+    o.K = Object.assign({}, o.K, { name: W.ship + ', wanted' });
   }
   function spawn(kind, x, r, h) {
     var K = KINDS[kind];
@@ -528,7 +540,8 @@ var BridgeSeaFight = (function () {
     say((K.ghost ? 'The drowned ship comes apart into mist and green light. ' : 'She strikes her colours and goes down by the stern. ') + coins + ' coins' +
             (got ? ' and ' + got + ' ' + (T ? T.name(good) : good) + ' hauled aboard' : '') + '!', 5200);
     if (typeof BridgeQuests !== 'undefined' && BridgeQuests.toast) BridgeQuests.toast('At sea', K.ghost ? 'A drowned ship sent home' : 'Pirates beaten', '+' + coins + ' coins' + (C && !K.ghost && C.marque() ? ' (the Crown\'s bounty, doubled)' : ''));
-    tellCrew('sf-prize', { coins: coins, kind: o.kind });
+    if (o.wanted && typeof BridgeLumarDeep !== 'undefined') BridgeLumarDeep.beaten(o.wanted);       // off Cinder Key's WANTED board: Scarlet Dee pays
+    tellCrew('sf-prize', { coins: coins, kind: o.kind, wanted: o.wanted || null });
   }
   function board(o) {
     if (o.boarded) return;
@@ -684,6 +697,7 @@ var BridgeSeaFight = (function () {
     n.on('sf-prize', function (d, from) {
       if (!fromCaptain(from) || !d) return;
       var coins = Math.max(0, Math.round(+d.coins || 0)), K = KINDS[d.kind];
+      if (d.wanted && typeof BridgeLumarDeep !== 'undefined') BridgeLumarDeep.beaten(d.wanted);   // a wanted ship sunk with you aboard: yours to claim too
       if (coins && typeof BridgeProgression !== 'undefined' && BridgeProgression.awardCoins) BridgeProgression.awardCoins(coins, 'sea:crew');
       if (K && K.monster) {                                         // a monster: your share, and trophies of your own
         var got = trophies(K);

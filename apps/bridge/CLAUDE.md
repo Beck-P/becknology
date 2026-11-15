@@ -829,6 +829,79 @@ The empire plan's chunk 5 ("magic things are the prize": the Workshop's highest 
 - **Plans**: the three people's are `workshop` topics in assets/people.json (`keeper`, `registrar`, `tern_pell`; js/workshop.js `SHOPS`); a relic's waking is known as soon as you've found the relic (`wakes`, js/trophies.js `has`).
 - **The cabinet** is two glazed walnut cabinets in the hall's back corners, three shelves each (`scenes/lumar_holm_hall.py`, spots of kind `shelf`): js/trophies.js draws each wonder on its shelf once made (from its own pixel art, `wonder_<id>` items) behind a pane of glass, its plate says what it does and when it was made; an empty shelf names what goes there and whose plan it is. A woken relic stays in its case in the hall, its plate saying it's been woken.
 
+### Lumar, deeper (L4–L7, L9)
+Beck: "wide but not very deep… not super clear on what to actually do with everything." The rest of
+`_claude_docs/spec-deeper-worlds.md`'s Lumar items (L1 boards, L2 glass and lantern, L3 the Admiral and L8 the scarf were
+built before): the capital's yards, Cinder Key's posters, the dragon's room and the Old Bridge's booths given something to
+come back for. No new people, no renders, no scene-script edits: the people in these are the ones already there or
+spoken of in the text (the Arsenal's clerk, the booth keepers). `js/lumar-deep.js` (BridgeLumarDeep) holds it all;
+interactions of type `lumardeep` (`act`), set by `decorate` on the labels already drawn. State in localStorage
+`bridge_lumar_deep` (`sov`, `bounty`, `riddle`, `line`; cloud-saved). Test: `world/lumar_deeper.js`
+(`node world/lumar_deeper.js <shots> sovereign|bounty|riddle|booths` for one part; shots `ld_*.png`).
+- **L7 · The Sovereign II.** THE ARSENAL (the office at 52, 14 in `lumar-crown-arsenal`) is the clerk of the cheque's
+  ledger of what the galleon on the stocks still wants — your share, the same for every pilot (`NEEDS`: 12 oak planks,
+  8 iron bars, 10 rope, 6 pitch, 4 sailcloth: all things the Workshop makes; never logs). *Put in* takes from your pack,
+  then the holds of your ships lying at Crownhaven (not the holm's store: the Arsenal's lighters fetch from the quay).
+  With all 40 in (`sov.done`) she launches **on the next regatta Friday** (js/race.js `REGATTA`'s day and hours): a
+  happening at the Arsenal, js/events.js `sovereign`, `due` from `BridgeLumarDeep.launchDue(slot)` — every twenty-minute
+  slot of a regatta Friday after your share went in, until you've seen her go (and the slot she went in, so the crowd
+  stays to cheer). Agnes Rook (`npc-smith`) and Commodore Harrow (`npc-academy`) on the quay south of the stocks
+  (45, 29 / 51, 29), the yard's crowd gathered round 48, 30.6 (r 2.2, so none stands on it), THE LAST SHORE (48, 28: *Knock out*) and ON THE STOCKS taken over:
+  *knock out the last shore* (`shore`) — or stay to the end and a shipwright does it for you (`watched`, the event's
+  `end`). Either way, once: 600 coins (`PAY`), your name in the Arsenal's book (THE ARSENAL becomes the book: the
+  Crown's friends and you, dated), and the yard's plan for the first of `PLANS` you don't know (long nine, bow chaser,
+  copper sheathing, carronade). After, ON THE STOCKS is her sister's keel and FITTING OUT is the Sovereign herself
+  (the warship already drawn alongside). Led to by Commodore Harrow's *Heard anything?* (lead `sovereign`, moot once
+  your share's in: a lead's `unless: 'gate:<name>'` asks a gate a module registered with `BridgeQuests.gate`), the
+  Journal's *Next up* (your count, then the launch), the Map's *Come back for*; the materials' cards say so.
+  **Two pilots** each put in their own share; the needs are the same, the launch is each one's own (two pilots both
+  ready see it in the same slot; a partner whose share isn't in sees nothing at the Arsenal).
+- **L6 · Cinder Key's bounties.** The WANTED posters in Cinder Key's square (28, 21 in `lumar-cinder`; the Salt Rat's
+  stay the pirates' own) are this week's three (`bounties(ms)`: Sunday to Saturday, Eastern, seeded by the week — the
+  same three on every page): a black-sailed **raider** on the Crimson (450, a plunder idol), a **privateer** gone bad on
+  the Emerald lanes (350, plunder rings), a Crimson **cutter** (250, a plunder plate) — each named from js/sloop.js's
+  traffic names, with a captain. Reading the board (`bounty.read` = the week) puts the word out: from then on a passage
+  through a wanted ship's sea (js/seafight.js `plan`, `BridgeLumarDeep.hunting(seas)`) has at least a 0.3 chance of
+  trouble, and the trouble is her six times in ten (`wantedFoe`: her name over her, *THE GRIN, WANTED*, and `o.wanted`).
+  A new pilot who never reads it is never hunted, so the Emerald stays calm for them. The privateer is a seafight kind
+  of its own (`KINDS.privateer`: a brigantine in the privateers' colours, carronade, long nine and chaser, five
+  fighters), only ever met as a wanted ship. **Sunk** (`sink`, by guns or a boarding won) → `beaten(id)`: a toast and
+  the journal; sailing together the captain's `sf-prize` carries `wanted`, so the crewmate's counts too. **Claimed**
+  from Scarlet Dee (her *The bounties*, a topic `use` of type `lumardeep`, `act: 'claim'`; the Map: *pays the WANTED
+  board's bounties*): the coins and the plunder piece (Vesper buys them), once, any week after. Led to by Cutter Joss's
+  *Bounties?* in the Crown & Anchor (lead `bounties`, moot once you've read this week's), *Next up* when one's sunk and
+  unclaimed, *Come back for* on Cinder Key. **Two pilots** chase the same three; each one's sinkings and claims are
+  their own (a crewmate aboard when she goes down claims too).
+- **L5 · The dragon's riddle.** The DRAGON in the cave under Crimson Reach (14, 5 in `lumar-crimson-cave`) asks one
+  riddle a Lumar day (`riddle(ms)`: by js/boards.js `dayKey('lumar')`, the same for everyone that day): eight
+  (`RIDDLES`), each answered by a thing on Lumar's islands (`ANSWERS`: the Sapphire light, St Brendan's bell, the moon
+  pool, the floating market, Lanternfall's zigzag, the Old Bridge, the Rose Mine, Old Wick's stormwatch) — never the
+  egg, never what she's listening for. Four to choose from (the answer and three others, shuffled by the day); one
+  guess a day. Right: one heron coin from the hoard (Percy, Pip and the Cabinet want them). Wrong: she tells you what
+  it was. Led to by Corra Vane's *The dragon* (lead `dragon-riddle`), *Next up* once you've answered one and a new
+  day's come, *Come back for* in the cave. **Two pilots** read the same riddle; each guesses and is paid their own.
+- **L4 · The Old Bridge's booths open** (`BOOTHS`, matched by label as `lumar-crown-bridge` loads — never in its scene
+  or world JSON, which a re-render owns; today FLOWER BOOTH 10, 13, TACKLE BOOTH 39, 13, SWEET BOOTH 49, 13, served from
+  the lane's row 12). Each keeps its old words and gains a keeper in the text (no sprite) and a row to buy: the tackle
+  booth's **silk line** (`silk_line`, 30: *use* it from your pack and for 8 hours — a Lumar day — the rare fish come up a
+  quarter more often wherever you fish: js/fishing.js's rare weights ask `lineOn()`; another use adds 8 hours), the
+  flower booth's **posy** (10, as Nell's), the sweet booth's **toffee ship** (`toffee_ship`, 6, a new item drawn in code:
+  +8 energy eaten, loved by both Pips and Gull Molly, liked by the crier — js/gifts.js). The items are `BridgeItems.add`ed
+  here, their uses in `USES`. Led to by Salt Annie's *Advice for a captain* (lead `bridge-booths`), and *Come back for*
+  on the bridge. **Two pilots**: each buys their own; each one's line is their own.
+- **L9 · Lanternfall's people** (js/sapphire.js, which keeps Lanternfall; state in its `bridge_sapphire`). **Yannis's
+  donkeys**: THE DONKEYS' chooser has *Tip Yannis* (2 coins, once a day by the game's clock — `tday`); three days running
+  (`streak`) and `donkeyFree` is set for good: the ride up or down is free from then on. **Despina's sunset plate**: a
+  fourth dish at her taverna (`sunset: true` in `DISHES.taverna`, 22 coins, +25 health +35 energy) offered only from two
+  Lumar hours before the sun goes down to three after (`sunsetHour`, js/clock.js `sky` on `lumar-cliff`); it warms you
+  through the cold for two hours (js/worlds/hoarfell.js `warm`, as the church lamps do). Their own *About the donkeys* and
+  *About the taverna* say so. **Not built:** Aris painting your ship (a picture for a home drawn from her colours needs a
+  furniture piece drawn live through `BridgeHome.add`, as the fish tanks are; js/sloop.js `portrait` draws a ship in her
+  `look` but only into a dialog's canvas while it's on screen, at sea scale with the sea behind her — it would want a
+  still, room-scale mode, and the piece's layout entry would have to carry the look so a visiting partner sees the same
+  picture; left for later). **Two pilots**: tips, the free ride and the
+  plate are each pilot's own.
+
 ### The Peddler, magic things and the curios
 `js/magic.js` (BridgeMagic; localStorage `bridge_magic`). **Wendel Crane, Peddler of Oddments** (`npc-peddler`, a witch-hatted Blender NPC; people.json `peddler`, found by the label PEDDLER in any of his worlds) sets up somewhere different each day (`PLACES`, by the date: the Market Square, the District street, Verdance's farm road, Fellhaven, Sapphire's quay, Enigma's docking bay) — added to that world's interactions and actors as it loads. *What have you got?* opens his wares (`BridgeInteractions.choose`):
 - **Moonlit Wand** (weapon): F casts a bolt of moonlight seven tiles the way you face, through the first creature it meets (30, via `BridgeItems.strike`), 2 energy a cast (most of it back after a breath — see *Energy and the second wind* under Fighting); bolts are drawn and moved in a `'*'` scene `over` hook.

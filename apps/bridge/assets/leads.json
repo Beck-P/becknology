@@ -40,6 +40,22 @@
     "title": "Drowned lockets", "where": "Lumar · Saltmere", "kind": "fight", "world": "lumar-saltmere", "label": "THE DROWNED STREET",
     "text": "The drowned in Saltmere's sunken street carry lockets, and so does the ghost ship on the Midnight Sea. Vesper Quick, the fence on Cinder Key, buys every one."
   },
+  "sovereign": {
+    "title": "The Sovereign II", "where": "Lumar · Crownhaven's Arsenal", "kind": "place", "world": "lumar-crown-arsenal", "label": "THE ARSENAL", "unless": "gate:sovereign-in",
+    "text": "The Arsenal's clerk keeps a ledger of what the galleon on the stocks still wants: rope, oak planks, iron bars, pitch, sailcloth. Put in your share and she launches on regatta day."
+  },
+  "bounties": {
+    "title": "Cinder Key's bounties", "where": "Lumar · Cinder Key", "kind": "fight", "world": "lumar-cinder", "label": "WANTED", "unless": "gate:bounties-read",
+    "text": "Three wanted ships a week on the board in Cinder Key's square. Sink one at sea and Scarlet Dee pays the bounty, with something from the captain's cabin."
+  },
+  "dragon-riddle": {
+    "title": "The dragon's riddle", "where": "Lumar · Crimson Reach", "kind": "secret", "world": "lumar-crimson-cave", "label": "DRAGON",
+    "text": "Down the cave on Crimson Reach, the dragon asks a riddle once a Lumar day. The answer's always somewhere on Lumar's islands. Guess it for a coin from her hoard."
+  },
+  "bridge-booths": {
+    "title": "The Old Bridge's booths", "where": "Lumar · Crownhaven's Old Bridge", "kind": "shop", "world": "lumar-crown-bridge", "label": "TACKLE BOOTH",
+    "text": "The tackle booth on the Old Bridge sells a silk line that brings the rare fish up more for a day. The flower booth has posies, the sweet booth toffee ships."
+  },
   "stormwatch": {
     "title": "Old Wick's barometer", "where": "Lumar · Cinder Key", "kind": "place", "world": "lumar-cinder-stormwatch", "label": "BAROMETER BOARD",
     "text": "Up in the Stormwatch on Cinder Key, Old Wick's barometer board reads what every sea will do for the next few hours."
