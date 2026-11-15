@@ -621,10 +621,10 @@ def balustrade(k, xa, xb, r, h=0.7, tone=STONE_L):
     k.solid(xa, r - 0.15, xb, r + 0.15)
 
 
-def flagged(k, x0, r0, x1, r1, tone='#8a8478', rng=None, part='flagstone'):
-    """Big flags a hair apart (a square or a pavement), batched."""
+def flagged(k, x0, r0, x1, r1, tone='#8a8478', rng=None, part='flagstone', z=0.0):
+    """Big flags a hair apart (a square or a pavement), batched; z lifts them (over a lawn laid level with them)."""
     rng = rng or k.rng
-    k.box(x0, r0, -0.14, x1, r1, -0.03, ('#2a2724', 0.15), 'grout')
+    k.box(x0, r0, -0.14 + z, x1, r1, -0.03 + z, ('#2a2724', 0.15), 'grout')
     bt = Batch(k)
     r = r0 + 0.02
     while r < r1 - 0.02:
@@ -632,7 +632,7 @@ def flagged(k, x0, r0, x1, r1, tone='#8a8478', rng=None, part='flagstone'):
         h = rng.choice((0.36, 0.4, 0.44))
         while x < x1:
             w = rng.choice((0.48, 0.56, 0.62, 0.7))
-            bt.box(max(x0, x) + 0.02, r + 0.02, -0.05, min(x1, x + w) - 0.02, min(r1, r + h) - 0.02, 0.0,
+            bt.box(max(x0, x) + 0.02, r + 0.02, -0.05 + z, min(x1, x + w) - 0.02, min(r1, r + h) - 0.02, z,
                    tone, rng.uniform(0.86, 1.1), (0.86, 1.1), part, 0.12)
             x += w
         r += h
