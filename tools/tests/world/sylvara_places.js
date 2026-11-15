@@ -170,6 +170,7 @@ const OUT = process.argv[2] || '/tmp';
   const rack = fw.river && fw.river.racks && fw.river.racks[0];
   if (!rack || !near(cells, rack[0], rack[1])) fail('the canoe rack at the pool can\'t be reached (down the stair)');
   if (!cells.some(c => +c.split(',')[1] >= 30)) fail('the path on down below the falls can\'t be reached');
+  if (!cells.some(c => +c.split(',')[0] >= 34 && +c.split(',')[1] >= 24)) fail('the gorge east of the low river can\'t be reached (the footbridge below the pool)');
   const ledge = fw.interactions.find(i => i.label === 'BEHIND THE FALLS');
   if (await isOpen('sylvara-fallcave') && (!ledge || !near(cells, ledge.x, ledge.y))) fail('the ledge behind the falls can\'t be reached');
   await stand(post.x, post.y + 1, 'up'); await press();

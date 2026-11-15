@@ -270,6 +270,15 @@ for x in (20.2, 23.0, 25.8):
     for r in (FB_R - 0.5, FB_R + 0.5):
         k.cyl(x, r, WZ - 0.4, 0.4, 0.07, (A.ELFWOOD_D, 0.3), 'pile', verts=6)
 
+# ---- and a second below the pool, over the low river, so the gorge's east side can be walked too -------------------------
+LB_R = 31.3                                                      # its world rows LB_R..LB_R+1 show on tile row 33
+LB_Z = LZ + 0.42
+A.deck(k, 21.4, LB_R, 27.6, LB_R + 1.0, z=LB_Z, rail_sides='ns', tone='#8a6a48')
+for x in (22.4, 24.6, 26.8):
+    for r in (LB_R + 0.1, LB_R + 0.9):
+        k.cyl(x, r, LWZ - 0.4, LB_Z, 0.07, (A.ELFWOOD_D, 0.3), 'pile', verts=6)
+LB_T = round(LB_R - C45 * LB_Z)                                   # the tile row it's walked on
+
 # ---- the wood: above the falls as anywhere, below only far from where you walk (nothing down there may hide you) ------------
 crowns = []
 for i, (x, r, rad, h) in enumerate(((5.0, 4.0, 1.6, 7.0), (36.0, 4.0, 1.7, 7.4), (46.0, 4.6, 1.4, 6.8), (8.0, 14.0, 1.4, 6.6), (31.0, 9.0, 1.2, 6.4))):
@@ -286,6 +295,8 @@ def clear(x, r, pad=0.8):
     if 17.4 < x < 22.0 and 14.5 < r < 18.5:
         return False
     if 19.0 < x < 27.0 and FB_R - 1.2 < r < FB_R + 1.2:
+        return False
+    if 20.6 < x < 28.4 and LB_R - 1.0 < r < LB_R + 2.0:
         return False
     return True
 
@@ -345,9 +356,17 @@ for c in crowns:
 def tile_to_world(x, t):
     """The world row whose ground shows on tile row t (screen row = r − z·cos 45°), or None on the cliff's face (no
     ground there shows at that row: you'd be standing on air)."""
-    r = t
-    for _ in range(12):
-        r = t + C45 * zfn(x, r)
+    # The screen row r − z·cos 45° only ever rises with r (the land falls away southward), so one world row shows on
+    # each tile row: found by halving (iterating r = t + z·cos 45° oscillated and never settled on the stair's slope,
+    # which blocked the stair and cut the gorge off from the land above).
+    lo, hi = t - 2.5, t + 0.6
+    for _ in range(30):
+        mid = (lo + hi) / 2
+        if mid - C45 * zfn(x, mid) < t:
+            lo = mid
+        else:
+            hi = mid
+    r = (lo + hi) / 2
     return r if abs(r - (t + C45 * zfn(x, r))) < 0.08 else None
 
 
@@ -377,9 +396,19 @@ for (x0, r0, x1, r1) in (LANDING, (19.6, FB_R - 0.6, 26.4, FB_R + 0.6)):
     for c in range(int(x0), int(math.ceil(x1))):
         for t in range(int(r0), int(math.ceil(r1))):
             walk.add((c, t))
+for c in range(21, 28):
+    walk.add((c, LB_T))
 LEDGE_T = int(FOOT + 0.3 + SH)                                   # the ledge behind the falls, in tile rows
 for c in range(19, 24):
     walk.add((c, LEDGE_T))
+reached, todo = {(16, 1)}, [(16, 1)]                            # only what you can walk to from the way in: the east bank
+while todo:                                                      # between the Deep Run and the cliff, and the gorge east of the
+    c, t = todo.pop()                                            # low river, are across water (seen, never stood on)
+    for n in ((c + 1, t), (c - 1, t), (c, t + 1), (c, t - 1)):
+        if n in walk and n not in reached:
+            reached.add(n)
+            todo.append(n)
+walk = reached
 for c in range(COLS):
     for t in range(ROWS):
         if (c, t) not in walk:
@@ -407,7 +436,7 @@ flow_deep = [to_tile(x, r) + [0.4] for (x, r) in DEEP[2::3]]
 w['river'] = {'water': water_rows, 'flow': flow + flow_low, 'flows': [flow_deep], 'width': 3.0,
               'down': {'edge': 'bottom', 'target': 'sylvara-lake', 'at': [24, 1]},
               'forks': [{'edge': 'right', 'target': 'sylvara-deepwood', 'at': [1, 16]}],
-              'landings': [[19, 16], [18, 16], [19, int(23.4)], [26, 23], [20, LEDGE_T]],
+              'landings': [[19, 16], [18, 16], [19, int(23.4)], [20, LEDGE_T]],
               'racks': [[int(rx), int(rr_ + SH) + 1]]}
 w['interactions'] = [
     {'x': 16, 'y': 0, 'type': 'enter_world', 'label': 'THE SILVERRUN', 'prompt': 'PRESS E TO WALK UP THE RIVER', 'target': 'sylvara-river', 'spawn': [21, 38]},
