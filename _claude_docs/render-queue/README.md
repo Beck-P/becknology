@@ -23,9 +23,7 @@ One render at a time on a machine; a big outdoor place with live light takes one
 cores, an interior much less.
 
 ## The queue
-| Patch | Scene scripts | What it fixes | Look at afterwards |
-|---|---|---|---|
-| `lumar-crown-hill.patch` | `scenes/lumar_crown_hill.py` → `lumar-crown-hill` (needs `assets_capital.py`'s `flagged(z=)`, already in) | The gravel walks, the parade ground and the observatory terrace come out striped because the gravel sits exactly level with the grass; the gravel is raised a touch. | The Hill's parade ground, the walks and the terrace. `world/capital.js`. |
+Empty: the Old Bridge, the Terraces and the Hill landed in November 2026.
 
 ## Sylvara's closed places (five still to open)
 The Boughs are live. Still closed (`BridgeSylvara.OPEN` in `apps/bridge/js/worlds/sylvara.js` lists what's open): the

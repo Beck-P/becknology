@@ -51,13 +51,18 @@ DROP = -5.0                            # how far down the city is
 # ---- ground: gravel walks, lawns, the drop -----------------------------------------------------------------------------
 k.box(-0.6, -3.5, -0.3, COLS + 0.6, EDGE + 0.4, -0.06, ('#3a3632', 0.12), 'ground')
 W.grass(k, -0.6, -3.5, COLS + 0.6, EDGE + 0.2, tone='#3a5a32')
-k.box(-0.6, WALK_R[0], -0.03, COLS + 0.6, EDGE, 0.0, ('#b8a888', 0.3), 'path_gravel')                  # the lime walk and the Belvedere
-k.box(PARADE[0], PARADE[2], -0.03, PARADE[1], PARADE[3], 0.0, ('#a89878', 0.3), 'path_parade')          # the parade ground
-for (x0, r0, x1, r1) in ((GARDEN[0], GARDEN[2], GARDEN[1], GARDEN[2] + 1.2), (27.0, GARDEN[2], 29.0, WALK_R[0]),
+# the gravel stands a hair above the turf: level with it the two fought, striping the walks and the parade ground,
+# and the grass grew through them
+PZ = 0.012
+k.box(-0.6, WALK_R[0], -0.03, COLS + 0.6, EDGE, PZ, ('#b8a888', 0.3), 'path_gravel')                  # the lime walk and the Belvedere
+k.box(PARADE[0], PARADE[2], -0.03, PARADE[1], PARADE[3], PZ, ('#a89878', 0.3), 'path_parade')          # the parade ground
+# (each walk meets the next edge to edge: two gravel tops overlapping at one height render as a black patch)
+for (x0, r0, x1, r1) in ((GARDEN[0], GARDEN[2], GARDEN[1], GARDEN[2] + 1.2),
+                         (27.0, GARDEN[2] + 1.2, 29.0, 12.4), (27.0, 13.6, 29.0, GARDEN[3] - 1.2),
                          (GARDEN[0], 12.4, GARDEN[1], 13.6), (GARDEN[0], GARDEN[3] - 1.2, GARDEN[1], WALK_R[0]),
                          (12.0, 13.0, 13.0, 14.0), (43.0, 8.0, 46.0, 9.4), (46.0, 8.0, 52.0, WALK_R[0])):
-    k.box(x0, r0, -0.03, x1, r1, 0.0, ('#b8a888', 0.3), 'path_gravel')
-CAP.flagged(k, 44.0, 7.6, 54.0, 11.0, tone='#a09684')                                               # the observatory's terrace
+    k.box(x0, r0, -0.03, x1, r1, PZ, ('#b8a888', 0.3), 'path_gravel')
+CAP.flagged(k, 44.0, 7.6, 54.0, 11.0, tone='#a09684', z=PZ + 0.004)                                               # the observatory's terrace
 W.meadow(k, '#3a5a32', area=(-0.6, -3.5, COLS + 0.6, WALK_R[0]), density=0.6)
 
 # ---- the palace's garden front -----------------------------------------------------------------------------------------
