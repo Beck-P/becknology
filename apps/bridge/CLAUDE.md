@@ -870,6 +870,14 @@ interactions of type `lumardeep` (`act`), set by `decorate` on the labels alread
   *Bounties?* in the Crown & Anchor (lead `bounties`, moot once you've read this week's), *Next up* when one's sunk and
   unclaimed, *Come back for* on Cinder Key. **Two pilots** chase the same three; each one's sinkings and claims are
   their own (a crewmate aboard when she goes down claims too).
+- **L5 · The dragon's riddle.** The DRAGON in the cave under Crimson Reach (14, 5 in `lumar-crimson-cave`) asks one
+  riddle a Lumar day (`riddle(ms)`: by js/boards.js `dayKey('lumar')`, the same for everyone that day): eight
+  (`RIDDLES`), each answered by a thing on Lumar's islands (`ANSWERS`: the Sapphire light, St Brendan's bell, the moon
+  pool, the floating market, Lanternfall's zigzag, the Old Bridge, the Rose Mine, Old Wick's stormwatch) — never the
+  egg, never what she's listening for. Four to choose from (the answer and three others, shuffled by the day); one
+  guess a day. Right: one heron coin from the hoard (Percy, Pip and the Cabinet want them). Wrong: she tells you what
+  it was. Led to by Corra Vane's *The dragon* (lead `dragon-riddle`), *Next up* once you've answered one and a new
+  day's come, *Come back for* in the cave. **Two pilots** read the same riddle; each guesses and is paid their own.
 
 ### The Peddler, magic things and the curios
 `js/magic.js` (BridgeMagic; localStorage `bridge_magic`). **Wendel Crane, Peddler of Oddments** (`npc-peddler`, a witch-hatted Blender NPC; people.json `peddler`, found by the label PEDDLER in any of his worlds) sets up somewhere different each day (`PLACES`, by the date: the Market Square, the District street, Verdance's farm road, Fellhaven, Sapphire's quay, Enigma's docking bay) — added to that world's interactions and actors as it loads. *What have you got?* opens his wares (`BridgeInteractions.choose`):

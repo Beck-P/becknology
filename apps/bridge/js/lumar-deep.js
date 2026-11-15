@@ -291,7 +291,7 @@ var BridgeLumarDeep = (function () {
   }
   function answered() { return st.riddle.day === lumarDay(); }
   function dragon(inter) {
-    var R = riddle(), open = (inter && inter.flavour ? inter.flavour.replace(/\\n/g, '\n') + '\n\n' : '');
+    var R = riddle(), open = (inter && inter.flavour && !st.riddle.tries ? inter.flavour.replace(/\\n/g, '\n') + '\n\n' : '');   // (her old greeting, the first time)
     if (answered()) {
       return say('DRAGON', open + (st.riddle.ok ? 'SHE IS COUNTING HER HOARD AGAIN, ONE COIN SHORT, AND LOOKS AT YOU AS IF YOU MIGHT KNOW WHY. "TOMORROW, LITTLE PILOT. ANOTHER."'
         : 'ONE GOLD EYE, HALF OPEN. "YOU HAD YOUR GUESS. THE ISLANDS WILL STILL BE THERE TOMORROW. SO WILL I."'));
