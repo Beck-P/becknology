@@ -253,13 +253,7 @@ var BridgeHomestead = (function () {
   function todays() {
     var day = today();
     if (s.orders.day !== day) { s.orders = { day: day, done: [] }; store(); }
-    var seed = day.split('-').reduce(function (a, b) { return a * 31 + +b; }, 7), picks = [], i = 0;
-    while (picks.length < 3 && i < 40) {
-      var j = Math.abs((seed * 9301 + 49297 * (i + 1)) % 233280) % ORDERS.length;
-      if (picks.indexOf(j) < 0) picks.push(j);
-      i++;
-    }
-    return picks.map(function (j) { return ORDERS[j]; });
+    return BridgeBoards.daily(day, ORDERS.length, 3, 7).map(function (j) { return ORDERS[j]; });   // (js/boards.js: the same pick as ever)
   }
   function board() {
     var P = prices(), list = todays();
@@ -278,16 +272,10 @@ var BridgeHomestead = (function () {
   }
   function plural(w, n) { return n === 1 ? w : /y$/.test(w) ? w.slice(0, -1) + 'ies' : /s$/.test(w) ? w : w + 's'; }
   function fill(o, payN, who) {
-    BridgeInventory.removeItem(o.item, o.n);
-    pay(payN, 'farm:order:' + o.who).then(function (bal) {
-      if (bal === null || bal === undefined) { BridgeInventory.addItem(o.item, o.n); say('ORDER BOARD', 'MARLO CAN\'T TAKE IT TODAY - NO WAY TO PAY YOU. TRY AGAIN LATER.'); return; }
-      s.orders.done.push(o.who + ':' + o.item);
-      s.ledger.orders++; s.ledger.coins += payN;
-      store();
-      if (typeof BridgeTalk !== 'undefined' && BridgeTalk.nudge) BridgeTalk.nudge(o.who, 1, 'They grew ' + o.n + ' ' + nameOf(o.item).toLowerCase() + ' on their farm on Verdance and sent them to me');
-      toast('Order filled', who, '+' + payN + ' coins');
-      sfx('coin');
-    });
+    BridgeBoards.fill({ item: o.item, n: o.n, pay: payN, reason: 'farm:order:' + o.who, who: o.who, name: who, toast: 'Order filled',
+      memory: 'They grew ' + o.n + ' ' + nameOf(o.item).toLowerCase() + ' on their farm on Verdance and sent them to me',
+      failTitle: 'ORDER BOARD', failText: 'MARLO CAN\'T TAKE IT TODAY - NO WAY TO PAY YOU. TRY AGAIN LATER.',
+      done: function () { s.orders.done.push(o.who + ':' + o.item); s.ledger.orders++; s.ledger.coins += payN; store(); } });
   }
 
   // ---- the farmhouse ---------------------------------------------------------------------------------------------

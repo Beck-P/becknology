@@ -218,7 +218,10 @@ var BridgeLodge = (function () {
     lines.push('FELL DICE · ' + st.won + ' WON OF ' + st.played + (st.best ? ' · BIGGEST POT ' + st.best : ''));
     var ex = saved('bridge_expedition');
     if (ex.lantern) lines.push('\nPINNED IN THE CORNER, IN METTE\'S HAND: "SOMEONE CAME BACK FROM PAST THE HOARSPIRE WITH A LIGHT."');
-    BridgeInteractions.choose({ title: 'The board', text: 'CARDS PINNED IN ROWS, TIMES IN CHALK, NAMES SCRATCHED OUT AND WRITTEN OVER.\n\n' + lines.join('\n'), rows: [], closeLabel: 'Done' });
+    var B = typeof BridgeBoards !== 'undefined' ? BridgeBoards : null;      // and in the corner, Hoarfell's requests (js/boards.js)
+    if (B) lines.push('\n' + B.head('hoarfell'));
+    BridgeInteractions.choose({ title: 'The board', text: 'CARDS PINNED IN ROWS, TIMES IN CHALK, NAMES SCRATCHED OUT AND WRITTEN OVER.\n\n' + lines.join('\n'),
+                                rows: B ? B.rows('hoarfell', board) : [], closeLabel: 'Done' });
   }
 
   // ---- Fell Dice --------------------------------------------------------------------------------------------------------

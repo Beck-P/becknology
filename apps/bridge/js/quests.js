@@ -335,6 +335,7 @@ var BridgeQuests = (function () {
       var ripe = BridgeFarm.journal().rows.reduce(function (a, r) { return a + (r.ripe || 0); }, 0);
       if (ripe) out.push({ tag: 'Farm', title: ripe + ' ready to pick', text: 'in your field on Verdance.', world: 'verdance' });
     }
+    if (wid && typeof BridgeBoards !== 'undefined') BridgeBoards.nextUp(wid).forEach(function (b) { out.push(b); });   // a request here you can fill now
     if (typeof BridgeInventory !== 'undefined' && BridgeInventory.freeSlots && BridgeInventory.freeSlots() === 0) {
       out.push({ tag: 'Pack', title: 'Your pack is full', text: 'Sell to a trader, or leave things in a chest: the sea chest on the bridge, the locker in your quarters.' });
     }
