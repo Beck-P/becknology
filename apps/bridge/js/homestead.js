@@ -504,7 +504,7 @@ var BridgeHomestead = (function () {
              tam: active('tam') ? s.hands.tam : 0, odile: active('odile') ? s.hands.odile : 0, bin: binWorth(), sprinklers: s.sprinklers.length };
   }
 
-  return { reload: function () { s = load(); }, decorate: decorate, use: use, items: items, over: over, canWork: canWork, starterEdge: starterEdge, keptWet: keptWet,
+  return { ORDERS: ORDERS, reload: function () { s = load(); }, decorate: decorate, use: use, items: items, over: over, canWork: canWork, starterEdge: starterEdge, keptWet: keptWet,
            sprinklerAt: sprinklerAt, placeSprinkler: placeSprinkler, liftSprinkler: liftSprinkler, active: active, activeAt: activeAt, hire: hire,
            toBin: toBin, takeSeed: takeSeed, owned: owned, name: farmName, journal: journal, HANDS: HANDS,
            _s: function () { return s; }, _round: function () { s.round = 1; round(); } };

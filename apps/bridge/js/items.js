@@ -199,7 +199,7 @@ var BridgeItems = (function () {
   // reference — keep behavior and the inventory-detail display in sync.
   function consumableUse(inv) {
     if (!this.effects) return false;
-    var far = this.type === 'food' && typeof BridgeCodex !== 'undefined' && BridgeCodex.bonus('food') ? 1.25 : 1;      // the Collection's food and drink, all found: it goes further
+    var far = (this.type === 'food' && typeof BridgeCodex !== 'undefined' && BridgeCodex.bonus('food')) || (this.type === 'drink' && typeof BridgeCodex !== 'undefined' && BridgeCodex.bonus('night')) ? 1.25 : 1;      // the Collection's food and drink (drinks: Arcadia by night), all found: it goes further
     if (this.effects.hp)     inv.restoreHP(Math.round(this.effects.hp * far));
     if (this.effects.energy) inv.restoreEnergy(Math.round(this.effects.energy * far));
     if (typeof BridgeFX !== 'undefined' && typeof BridgeCharacter !== 'undefined') {

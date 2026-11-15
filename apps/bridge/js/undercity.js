@@ -179,6 +179,7 @@ var BridgeUndercity = (function () {
     else if (r < 0.75) { got = ['circuit', 1]; line = 'A CIRCUIT BOARD, MOSTLY WHOLE, UNDER A DEAD SCREEN.'; }
     else if (r < 0.88) { got = ['chrome_part', 1]; line = 'A CHROME KNEE JOINT, STILL OILED. SOMEBODY WILL WANT THAT.'; }
     else { got = null; line = 'SOMETHING IN THE HEAP MOVES. A SCRAP RAT, ALL TEETH AND CABLE, COMES OUT AT YOU.'; }
+    if (got && typeof BridgeCodex !== 'undefined' && BridgeCodex.bonus('below')) got[1]++;                                    // the Collection's below-the-street set, all found: a piece more
     if (got && !BridgeInventory.addItem(got[0], got[1])) return say('SCRAP PILE', 'YOU FIND SOMETHING, BUT YOUR PACK IS FULL.');
     if (!got && typeof BridgeCombat !== 'undefined') {
       var world = BridgeWorld.getWorld(), px = BridgeCharacter.getX(), py = BridgeCharacter.getY();
@@ -433,6 +434,6 @@ var BridgeUndercity = (function () {
   }
   if (typeof BridgeWorld !== 'undefined' && BridgeWorld.registerSceneHooks) BridgeWorld.registerSceneHooks('arcadia', { ground: ground, items: items, over: over });
 
-  return { decorate: decorate, use: use, onKill: onKill, SHOPS: SHOPS, ROSTER: ROSTER,
+  return { decorate: decorate, use: use, onKill: onKill, SHOPS: SHOPS, ROSTER: ROSTER, ROUNDS: ROUNDS, ENTRY: ENTRY, BUYS: BUYS,
            _roster: roster, _save: function () { return save; }, _bout: boutAt, _ring: function () { return bout; } };
 })();

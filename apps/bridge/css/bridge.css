@@ -2501,6 +2501,20 @@ html.menu-open #bridge-toast, html.menu-open #quarters-toast { visibility: hidde
 .bp-d-fx { font-size: 12px; color: var(--gm-good); margin-top: 6px; }
 .bp-d-worth { font-size: 12px; line-height: 1.45; color: var(--gm-dim); margin-top: 6px; }
 .bp-d-worth b { color: var(--gm-ink); font-weight: 600; }
+/* what it is for (js/uses.js): a few short lines, the most useful first, "and N more" folded */
+.uses { font-size: 12px; line-height: 1.4; color: var(--gm-dim, #b8ac94); margin-top: 7px; padding: 6px 8px 6px; border-radius: 4px; background: var(--gm-cell, rgba(0,0,0,0.18)); border: 1px solid var(--gm-cell-line, rgba(255,255,255,0.08)); }
+.uses b { color: var(--gm-ink, #f0e6d0); font-weight: 600; }
+.uses-h { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--gm-accent, #e0c060); margin-bottom: 3px; }
+.uses ul { list-style: none; margin: 0; padding: 0; }
+.uses li { position: relative; padding-left: 11px; margin: 2px 0; }
+.uses li::before { content: ""; position: absolute; left: 1px; top: 0.6em; width: 4px; height: 4px; border-radius: 1px; background: var(--gm-accent, #e0c060); opacity: 0.8; }
+.uses-more summary { cursor: pointer; color: var(--gm-accent, #e0c060); margin: 3px 0 0 11px; list-style: none; font-size: 11px; }
+.uses-more summary::-webkit-details-marker { display: none; }
+.uses-more[open] summary { display: none; }
+.uses-sale { color: var(--gm-dim, #b8ac94); }
+.wd-item-uses { font-size: 11px; line-height: 1.35; margin-top: 2px; color: inherit; opacity: 0.9; }
+.wd-item-uses::before { content: "Uses: "; opacity: 0.7; }
+.cx-detail .uses { margin-top: 8px; }
 .bp-d-hint { font-size: 11px; color: var(--gm-dim); margin-top: 8px; padding-top: 6px; border-top: 1px solid var(--gm-line); }
 .bp-stats { display: flex; flex-direction: column; gap: 6px; }
 .bp-bar { display: grid; grid-template-columns: 52px 1fr 58px; align-items: center; gap: 8px; font-size: 11px; color: var(--gm-dim); }
@@ -2738,6 +2752,8 @@ html.touch #quest-tracker { top: calc(100px + env(safe-area-inset-top)); right: 
 .mp-place-name { font-size: 18px; color: var(--gm-ink); line-height: 1.15; }
 .mp-place-where { font-size: 12px; color: var(--gm-dim); margin-top: 2px; }
 .mp-place-where b { color: var(--gm-accent); font-weight: 600; }
+.mp-renew { font-size: 12px; line-height: 1.4; color: var(--gm-ink); margin-top: 6px; }
+.mp-renew span { display: block; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--gm-accent); margin-bottom: 1px; }
 .mp-info { min-height: 52px; padding: 8px 10px; border-radius: 5px; background: var(--gm-hi); border: 1px solid var(--gm-line); font-size: 13px; line-height: 1.4; }
 .mp-info-head { color: var(--gm-ink); font-weight: 600; }
 .mp-info-sub { color: var(--gm-dim); margin-bottom: 6px; }

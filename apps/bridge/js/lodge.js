@@ -615,6 +615,6 @@ var BridgeLodge = (function () {
   // walking away from a table played together (*Stop playing*, js/together.js): as if you'd pressed Esc
   function leave() { if (g && g.net && !g.headless) close(false); }
 
-  return { use: use, isOpen: function () { return (!!g && !g.headless) || climbing; }, together: together, verdict: verdict, gone: gone, rivalFor: rivalFor, leave: leave,
+  return { STAKES: STAKES, use: use, isOpen: function () { return (!!g && !g.headless) || climbing; }, together: together, verdict: verdict, gone: gone, rivalFor: rivalFor, leave: leave,
            _g: function () { return g; }, _chance: chance, _act: act };
 })();

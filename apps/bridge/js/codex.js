@@ -1,13 +1,17 @@
 /**
  * BridgeCodex — the Collection: everything there is to find, set by set.
  *
- * Ten sets (`SETS`): fish, the sea legends, crystals and ore, the farm,
+ * Sixteen sets (`SETS`): fish, the sea legends, crystals and ore, the farm,
  * materials (the workshop's), magic things, treasures, gear, food and drink,
- * treasure maps. Anything that lands in
+ * treasure maps — and since October's: the countryside, the wood, below the
+ * street, the valley, Arcadia by night, Fellhaven fare. Anything that lands in
  * your pack counts (BridgeInventory.addItem is wrapped, and the pack is
  * looked over every few seconds for anything that came in another way);
  * what's in it the first time you open the game counts quietly. A new find
- * gets a toast; a finished set pays its reward once (`codex_<set>`).
+ * gets a toast; a finished set pays its reward once (`codex_<set>`). When
+ * sets are added (`SINCE`), what a pilot already keeps — the pack and the
+ * ship's two chests — counts quietly on the next start, and the sets that
+ * finish pay once, all under one toast.
  *
  * The game menu's Collection tab (js/menu.js): a page per set, a grid of
  * icons — found ones in colour with their names, the rest as dark
@@ -16,7 +20,7 @@
  * caught with how many and the biggest, the rest as shadows with where to
  * look — and the messages from the bottles you've fished up.
  *
- * localStorage bridge_codex: {found: {id: time}, paid: {set: time}}.
+ * localStorage bridge_codex: {found: {id: time}, paid: {set: time}, since: n}.
  *   BridgeCodex.count() / .total() / .render(el, back) / .note(id)
  */
 var BridgeCodex = (function () {
@@ -84,8 +88,35 @@ var BridgeCodex = (function () {
     { id: 'maps', name: 'Treasure maps', reward: 200, items: [
       ['tmap_lighthouse', 'Ilsa Venn, the cartographer'], ['tmap_windmill', 'Ilsa Venn, the cartographer'], ['tmap_memorial', 'Ilsa Venn, the cartographer'],
       ['tmap_beacon', 'Under rocks in the Rose Mine'], ['tmap_heron', 'At the end of another map'], ['tmap_watchtower', 'At the end of another map'],
-      ['tmap_graves', 'Under rocks in the Rose Mine'], ['tmap_abbey', 'At the end of another map']] }
+      ['tmap_graves', 'Under rocks in the Rose Mine'], ['tmap_abbey', 'At the end of another map']] },
+    // ---- since October (spec-deeper-worlds X4): each planet's newer things, so the Collection leads everywhere ----------
+    { id: 'country', name: 'The countryside', reward: 250, items: [
+      ['wine', 'The Vane Estate, up the lane to Vinehallow'], ['cider', 'Cobb\'s Cider, on the Downs'], ['farm_cider', 'Press a dozen of your own apples at Cobb\'s'],
+      ['wold_cheese', 'Hester\'s Wold Dairy, once Brambleford has a cheesemaker'], ['wold_blue', 'Hester\'s Wold Dairy'], ['farm_cheese', 'Leave four pails of your milk with Hester'],
+      ['flour', 'Wend Mill, down the lane by the river'], ['country_loaf', 'The Bakehouse by Wend Mill'], ['coffee_beans', 'Ember & Bean, in Thistlecombe'],
+      ['jam', 'Left in your farm stand\'s honesty box, now and then'], ['beeswax_candles', 'Wick & Comb, in Thistlecombe'], ['honey_crock', 'Thistle Pottery, or Silas for your honey'],
+      ['pottery_mug', 'Thistle Pottery, in Thistlecombe'], ['stoneware_jug', 'Thistle Pottery, in Thistlecombe']] },
+    { id: 'wood', name: 'The wood', reward: 300, items: [
+      ['moonpetal', 'By the Moonwell, in Sylvara; Mirelle sells a few'], ['emberroot', 'Under the Deepwood\'s oldest trees'], ['owlmoss', 'The Deepwood\'s mushroom groves'],
+      ['windthistle', 'The wood\'s flowering meadows'], ['silverleaf', 'The Silverrun\'s banks; Mirelle sells it'], ['dreamcap', 'The Deepwood\'s smallest glowing mushrooms'],
+      ['hearthfire_draught', 'Brew it with Mirelle'], ['owl_eye_tincture', 'Brew it with Mirelle'], ['swiftwater_tonic', 'Brew it with Mirelle'],
+      ['tidecalm_elixir', 'Brew it with Mirelle'], ['silverleaf_salve', 'Brew it with Mirelle'], ['dreamcap_draught', 'Brew it with Mirelle'],
+      ['elven_bow', 'Corin\'s Bows, in Elderglade'], ['heartwood_bow', 'Corin\'s Bows, if you can afford it']] },
+    { id: 'below', name: 'Below the street', reward: 300, items: [
+      ['scrap_metal', 'The scrap piles in the Undercity\'s yard'], ['circuit', 'Under dead screens in the scrap piles'], ['chrome_part', 'Deep in a scrap pile, now and then'],
+      ['sump_pearl', 'What lives in the Sump\'s black water'], ['ruin_knuckles', 'Saint Ruin, who runs the Undercity\'s yard'], ['dredge_heart', 'The Dredge, down in the Sump']] },
+    { id: 'valley', name: 'The valley', reward: 400, items: [
+      ['wolf_pelt', 'The ice wolves of Hoarfell\'s hidden valley'], ['rime_shell', 'The rime beetles in the valley'], ['bat_wing', 'The ice bats in the valley\'s caves'],
+      ['golem_core', 'The rime golems in the valley'], ['wraith_essence', 'The frost wraiths in the valley'], ['wyrm_scale', 'The Glacier Wyrm, under the snow at the valley\'s heart']] },
+    { id: 'night', name: 'Arcadia by night', reward: 200, items: [
+      ['char_skewers', 'The Hawker Hall\'s grill'], ['sump_laksa', 'Teo\'s curry stall'], ['shoyu_ramen', 'Hoshi Ramen, in the Old Quarter'],
+      ['spacer_stew', 'The Last Bar, at the spaceport'], ['moonglow_old_fashioned', 'Moonglow, the jazz bar'], ['halo_skewers', 'Halo Grill, on the Terraces'],
+      ['champagne', 'The champagne bar, high up'], ['gold_leaf_sushi', 'Aurum, the Neon Royale\'s dining room']] },
+    { id: 'fell', name: 'Fellhaven fare', reward: 150, items: [
+      ['rosti', 'The Stubli on the promenade, or Le Refuge in Aurelle'], ['raclette', 'The Stubli, or Le Refuge'], ['vin_chaud', 'Le Refuge, or the terrace bar'],
+      ['macarons', 'The pâtisserie in Aurelle'], ['mille_feuille', 'The pâtisserie in Aurelle'], ['truffles', 'The pâtisserie, or Bar Étoile']] }
   ];
+  var SINCE = 2;                                                   // bump when sets are added: what a pilot keeps counts once, quietly
   var IN = {};
   SETS.forEach(function (s) { s.items.forEach(function (x) { IN[x[0]] = s; }); });
   var st = load(), ready = false;
@@ -104,6 +135,7 @@ var BridgeCodex = (function () {
   function total() { return Object.keys(IN).length; }
 
   // something came into your pack: is it new to the collection?
+  var batch = null;                                                // while a whole pack is counted at once: the sets it finishes, for one toast
   function note(id, quiet) {
     var s = IN[id];
     if (!s || st.found[id]) return;
@@ -116,6 +148,7 @@ var BridgeCodex = (function () {
         BridgeProgression.awardCoins(s.reward, 'codex:' + s.id);
         BridgeProgression.recordAchievement('codex_' + s.id, 0, { source: 'codex' });
       }
+      if (batch) { batch.push(s); return; }
       if (typeof BridgeAudio !== 'undefined') BridgeAudio.sfx('quest');
       if (typeof BridgeQuests !== 'undefined' && BridgeQuests.toast) BridgeQuests.toast('Collection', s.name + ' complete', '+' + s.reward + ' coins');
       return;
@@ -139,11 +172,31 @@ var BridgeCodex = (function () {
       if (ok) note(id);
       return ok;
     };
+    batch = [];
     scan(true);                                                      // what you've got already counts, quietly
     if (typeof BridgeFishing !== 'undefined' && BridgeFishing.journal) {  // and every fish you've ever landed
       BridgeFishing.journal().fish.forEach(function (f) { if (f.id) note(f.id, true); });
     }
+    if ((st.since || 0) < SINCE) {                                   // sets added since this pilot last played: the ship's chests count too
+      held().forEach(function (id) { note(id, true); });
+      st.since = SINCE; store();
+    }
+    var paid = batch; batch = null;
+    if (paid.length) {                                               // a set you'd in effect finished pays once, one toast for the lot
+      if (typeof BridgeAudio !== 'undefined') BridgeAudio.sfx('quest');
+      if (typeof BridgeQuests !== 'undefined' && BridgeQuests.toast) {
+        BridgeQuests.toast('Collection', paid.length === 1 ? paid[0].name + ' complete' : paid.length + ' sets complete',
+          '+' + paid.reduce(function (a, x) { return a + x.reward; }, 0) + ' coins' + (paid.length > 1 ? ' · ' + paid.map(function (x) { return x.name; }).join(', ') : ''));
+      }
+    }
     setInterval(function () { scan(false); }, 4000);
+  }
+  // what a pilot keeps that's in a set and not yet counted: the pack, the ship's two chests (js/storage.js)
+  function held() {
+    var out = Object.keys(BridgeInventory.getAll() || {});
+    var S = typeof BridgeStorage !== 'undefined' && BridgeStorage._state ? BridgeStorage._state() : null;
+    if (S && S.chests) Object.keys(S.chests).forEach(function (k) { (S.chests[k] || []).forEach(function (x) { if (x && x.id) out.push(x.id); }); });
+    return out.filter(function (id) { return IN[id] && !st.found[id]; });
   }
 
   // ---- the pages: the Collection and the Fish (tabs of the game menu, js/menu.js) ------------------------------------
@@ -196,8 +249,11 @@ var BridgeCodex = (function () {
         cell.classList.add('sel');
         var rar = typeof BridgeFishArt !== 'undefined' && BridgeFishArt.has(id) ? BridgeFishArt.TIERS[BridgeFishArt.tier(id)] : null;
         detail.innerHTML = found && it ? '<b>' + esc(it.name) + '</b>' + (rar ? ' <span style="color:' + rar.col + '">' + rar.name + '</span>' : '') + ' — ' + esc(it.desc || '') + ' <em>' + esc(x[1]) + '.</em>' +
-          (typeof BridgeArms !== 'undefined' && BridgeArms.stats(it) ? BridgeArms.card(it, {}) : '')
+          (typeof BridgeArms !== 'undefined' && BridgeArms.stats(it) ? BridgeArms.card(it, {}) : '') +
+          (typeof BridgeUses !== 'undefined' ? BridgeUses.html(id, { skip: { set: 1 } }) : '')          // what it's for (js/uses.js), less the set you're looking at
                                        : '<b>Not found yet.</b> <em>' + esc(x[1]) + '.</em>';
+        var more = detail.querySelector('.uses-more');
+        if (more) more.addEventListener('click', function (e) { e.stopPropagation(); });
       };
       cell.addEventListener('mouseenter', show);
       cell.addEventListener('click', show);
@@ -296,8 +352,14 @@ var BridgeCodex = (function () {
     fish: 'fish bite a little sooner, wherever you cast', legends: 'the rare fish come up more often', stones: 'now and then the rock gives a piece more',
     farm: 'crops grow a tenth quicker', materials: 'your workshop works a tenth quicker', magic: 'a bolt or a wand costs one less energy',
     finds: 'treasure chests hold a fifth more coins', gear: 'every weapon hits a twentieth harder', food: 'food goes a quarter further',
-    maps: 'Ilsa sells her maps for a quarter less'
+    maps: 'Ilsa sells her maps for a quarter less',
+    country: 'your farm stand\'s honesty box takes a tenth more', wood: 'a brew lasts a fifth longer', below: 'a scrap pile gives a piece more',
+    valley: 'the valley\'s creatures drop what they carry a fifth more often', night: 'drinks go a quarter further, as food does', fell: 'warming up lasts a fifth longer'
   };
   function bonus(id) { return !!st.paid[id]; }
-  return { SETS: SETS, BONUS: BONUS, bonus: bonus, count: count, total: total, render: render, renderFish: renderFish, note: note, init: init, _st: function () { return st; } };
+  /** A loot drop's chance, scaled: the valley's set, all found, makes its creatures drop things more often (js/interactions.js). */
+  function dropK(id) { return IN[id] && IN[id].id === 'valley' && st.paid.valley ? 1.2 : 1; }
+  /** The set an item's in and how far along it is (js/uses.js): { id, name, have, of, found, done } | null. */
+  function setOf(id) { var s = IN[id]; return s ? { id: s.id, name: s.name, have: have(s), of: s.items.length, found: !!st.found[id], done: !!st.paid[s.id] } : null; }
+  return { SETS: SETS, BONUS: BONUS, bonus: bonus, dropK: dropK, setOf: setOf, count: count, total: total, render: render, renderFish: renderFish, note: note, init: init, _st: function () { return st; } };
 })();

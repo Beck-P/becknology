@@ -83,7 +83,7 @@ var BridgeMakers = (function () {
       var honest = hash01('honest:' + t);
       if (honest < 0.04) continue;                                             // the odd one doesn't pay
       if (honest < 0.09) { var L = LEFT[Math.floor(hash01('left:' + t) * LEFT.length)]; st.left.push(L[0]); if (st.left.length > 6) st.left.shift(); st.note = L[1]; continue; }
-      st.tin += (STAND[id] || 10) * n;
+      st.tin += Math.round((STAND[id] || 10) * n * (typeof BridgeCodex !== 'undefined' && BridgeCodex.bonus('country') ? 1.1 : 1));   // the Collection's countryside, all found: a tenth more
     }
     st.t = t;
     if (changed) store();
@@ -497,6 +497,8 @@ var BridgeMakers = (function () {
     BridgeInteractions.register('bakehouse', bakehouse, 'Go in');
   }
   if (typeof BridgeWorld !== 'undefined' && BridgeWorld.registerSceneHooks) BridgeWorld.registerSceneHooks('verdance', { items: items });
-  return { decorate: decorate, vintage: vintage, PLACES: PLACES, stand: stand, standTick: standTick, stallTick: stallTick, marketDay: marketDay, todays: todays, ORDERS: ORDERS, MARKET: MARKET, journal: function () { return { stand: s.stand, casks: s.casks.length, ledger: s.ledger }; },
+  return { decorate: decorate, vintage: vintage, PLACES: PLACES, stand: stand, standTick: standTick, stallTick: stallTick, marketDay: marketDay, todays: todays, ORDERS: ORDERS, MARKET: MARKET, MAKERS: MAKERS,
+           MAKES: [{ in: 'apple', n: APPLES, out: 'farm_cider', where: 'Ezra Cobb\'s cider press' }, { in: 'honey', n: WAX, out: 'beeswax_candles', where: 'Wick & Comb, in Thistlecombe' },   // what the makers make of yours (js/uses.js)
+                   { in: 'grapes', n: GRAPES, out: 'wine', where: 'the Vane Estate\'s cellar' }, { in: 'wheat', n: GRIND, out: 'flour', where: 'Wend Mill' }, { in: 'flour', n: 1, out: 'country_loaf', where: 'the Bakehouse' }], journal: function () { return { stand: s.stand, casks: s.casks.length, ledger: s.ledger }; },
            _s: function () { return s; }, reload: function () { s = load(); } };
 })();

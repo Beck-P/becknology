@@ -1655,6 +1655,7 @@ var BridgeInteractions = (function () {
         info.className = 'wd-item-info';
         info.innerHTML = '<div class="wd-item-name">' + esc(item.name) + '</div>' +
                          '<div class="wd-item-desc">' + esc(item.desc) + '</div>' +
+                         (typeof BridgeUses !== 'undefined' && BridgeUses.short(entry.id) ? '<div class="wd-item-uses">' + esc(BridgeUses.short(entry.id)) + '</div>' : '') +   // what it's for (js/uses.js)
                          weaponCard(item, { compare: true, compact: true });
         row.appendChild(info);
         var canAfford = currentBalance >= entry.price;
@@ -1942,7 +1943,7 @@ var BridgeInteractions = (function () {
       for (var i = 0; i < table.length; i++) {
         var row = table[i];
         if (!row || !row.id) continue;
-        if (typeof row.chance === 'number' && Math.random() > row.chance) continue;
+        if (typeof row.chance === 'number' && Math.random() > row.chance * (typeof BridgeCodex !== 'undefined' && BridgeCodex.dropK ? BridgeCodex.dropK(row.id) : 1)) continue;   // (the valley's Collection set: its drops come more often)
         var min = (typeof row.min === 'number') ? row.min : 1;
         var max = (typeof row.max === 'number') ? row.max : min;
         var n = Math.floor(min + Math.random() * (max - min + 1));

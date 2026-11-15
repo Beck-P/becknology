@@ -34,7 +34,7 @@ var BridgeHoarfell = (function () {
 
   // ---- the cold ------------------------------------------------------------------------------------------------
   function suited() { return typeof BridgeGear !== 'undefined' && BridgeGear.has('cold'); }
-  function warm(minutes) { save.warm = Date.now() + minutes * 60000; store(); coldSince = 0; }
+  function warm(minutes) { save.warm = Date.now() + minutes * 60000 * (typeof BridgeCodex !== 'undefined' && BridgeCodex.bonus('fell') ? 1.2 : 1);  store(); coldSince = 0; }   // (Fellhaven fare in the Collection, all found: a fifth longer)
   function chilled(world, now) {
     // a blizzard (js/weather.js) bites through a Thermal Suit too, and twice as hard without one: get indoors
     var wx = typeof BridgeWeather !== 'undefined' && BridgeWeather.cold ? BridgeWeather.cold(BridgeWorld.getWorldId()) : { rate: 1, suited: 0 };

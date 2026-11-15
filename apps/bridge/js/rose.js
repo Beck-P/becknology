@@ -173,5 +173,6 @@ var BridgeRose = (function () {
     if (!data.interactions.some(function (it) { return it.target === SPRINGS_PATH.target; })) data.interactions.push(Object.assign({}, SPRINGS_PATH));
   }
 
-  return { use: use, decorate: decorate, SPRINGS_PATH: SPRINGS_PATH, READINGS: READINGS };
+  return { use: use, decorate: decorate, SPRINGS_PATH: SPRINGS_PATH, READINGS: READINGS,
+           MAKES: [{ in: 'silk_cocoon', n: SCARF, out: 'silk_scarf', where: 'Seren\'s looms, by Rose Cove\'s springs' }] };   // (js/uses.js)
 })();

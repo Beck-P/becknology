@@ -364,5 +364,6 @@ var BridgeVillage = (function () {
   function absent(id) { return !!WHO[id] && !done(WHO[id]); }
 
   return { decorate: decorate, done: done, state: state, stage: stage, absent: absent, roadSouth: roadSouth, journal: journal, PROJECTS: PROJECTS,
+           MAKES: [{ in: 'milk', n: CHEESE_MILK, out: 'farm_cheese', where: 'Hester\'s Wold Dairy' }],   // what someone here makes of yours (js/uses.js)
            reload: function () { s = load(); }, _s: function () { return s; }, _finish: function (id) { s.fund[id] = project(id).cost; s.paid[id] = Date.now() - BUILD - 1; store(); } };
 })();

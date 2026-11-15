@@ -705,6 +705,7 @@ var BridgeInventory = (function () {
     var arms = typeof BridgeArms !== 'undefined' && BridgeArms.stats(item) ? BridgeArms.card(item, { compare: !inChest }) : '';   // a weapon: its stats
     var usable = typeof item.onUse === 'function';
     var worth = S() && S().worthLine ? S().worthLine(s.id) : '';
+    var uses = typeof BridgeUses !== 'undefined' ? BridgeUses.html(s.id, { skip: { eat: !!effects && !item.works, use: !!arms } }) : '';   // what it's for (js/uses.js)
     var buyer = !inChest && S() && S().buyerHere ? S().buyerHere() : null, price = buyer ? S().priceAt(buyer, s.id) : 0;
     var acts = [];
     if (!inChest && !offerNow) {
@@ -723,7 +724,7 @@ var BridgeInventory = (function () {
       '</div></div>' +
       '<div class="bp-d-desc">' + esc(item.desc || '') + '</div>' +
       (arms || (effects ? '<div class="bp-d-fx">' + esc(effects) + '</div>' : '')) +
-      (worth ? '<div class="bp-d-worth">' + worth + '</div>' : '') +
+      (worth ? '<div class="bp-d-worth">' + worth + '</div>' : '') + uses +
       (buyer ? '<div class="bp-d-worth bp-d-buyer">' + (price ? esc(buyer.label) + ' pays <b>' + price + '</b> here.' : esc(buyer.label) + ' doesn\'t buy these.') + '</div>' : '') +
       (acts.length ? '<div class="bp-d-acts">' + acts.map(function (a) {
         return '<button type="button" class="gm-btn gm-btn-sm' + (a[0] === 'bin' && binArmed === idx ? ' bp-danger' : '') + '" data-d="' + a[0] + '">' + esc(a[1]) + '</button>';
@@ -742,6 +743,8 @@ var BridgeInventory = (function () {
     menuDetailEl.querySelectorAll('[data-d]').forEach(function (b) {
       b.addEventListener('click', function (e) { e.stopPropagation(); slotAction(b.getAttribute('data-d'), idx, buyer, price); });
     });
+    var more = menuDetailEl.querySelector('.uses-more');
+    if (more) more.addEventListener('click', function (e) { e.stopPropagation(); });
   }
 
   function refreshMenuStats() {

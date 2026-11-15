@@ -146,8 +146,8 @@ var BridgeMap = (function () {
     if (it._piece && t !== 'chest') return null;                       // furniture you put down (bar the chests)
     var person = (t === 'dialog' || t === 'random_dialog') && P && P.find(wid, label);
     if (person) {
-      var met = P.met(person.id);
-      return { cat: 'person', name: met ? person.name : 'Someone', sub: met ? person.role : 'You haven\'t met yet' + (clues[label] ? ' · a clue in ' + clues[label] : '') };
+      var met = P.met(person.id), does = offers(person);
+      return { cat: 'person', name: met ? person.name : 'Someone', sub: (met ? person.role : 'You haven\'t met yet' + (clues[label] ? ' · a clue in ' + clues[label] : '')) + (does ? ' · ' + does : '') };
     }
     if ((t === 'express_lift' || t === 'air_cab' || t === 'loop_station') && typeof BridgeTransit !== 'undefined' && BridgeTransit.links) {   // js/transit.js
       var lk = BridgeTransit.links(it);
@@ -175,7 +175,7 @@ var BridgeMap = (function () {
     if (t === 'fish') return { cat: 'fish', name: 'Fishing spot', sub: title(label) };
     if (t === 'forage') {
       var rd = typeof BridgeForage !== 'undefined' && BridgeForage.ready ? BridgeForage.ready(it) : true;
-      return { cat: 'forage', name: title(label), sub: rd ? 'Ready to gather' : 'Growing back' };
+      return { cat: 'forage', name: title(label), sub: rd ? 'Ready to gather · grows back' : 'Growing back' };
     }
     if (t === 'casino') {
       var csub = CASINO[it.game] || 'a game';
@@ -183,17 +183,99 @@ var BridgeMap = (function () {
       if (it.stakes === 'high') csub += ', high stakes';
       return { cat: 'game', name: title(label), sub: csub.charAt(0).toUpperCase() + csub.slice(1) };
     }
-    if (GAME[t]) return { cat: 'game', name: title(label), sub: t === 'dance' ? 'the dance floor' : t === 'splice' ? 'jobs' : 'a game' };
+    if (t === 'dice') {                                               // the dice tables (js/lodge.js): what a game costs and pays
+      var S = typeof BridgeLodge !== 'undefined' && BridgeLodge.STAKES;
+      return { cat: 'game', name: title(label), sub: S ? 'Dice, ' + S[0] + '–' + S[S.length - 1] + ' a game · the last with dice takes the pot' : 'A game of dice' };
+    }
+    if (t === 'under') {                                              // the Undercity's (js/undercity.js)
+      var U = typeof BridgeUndercity !== 'undefined' ? BridgeUndercity : null;
+      if (it.act === 'search') return { cat: 'forage', name: title(label), sub: 'Rummage once a day: scrap, circuits, now and then chrome' };
+      if (it.act === 'ring' && U && U.ROUNDS) return { cat: 'game', name: title(label), sub: U.ROUNDS.length + ' rounds in the cage, ' + U.ENTRY + ' to enter · pays up to ' + U.ROUNDS[U.ROUNDS.length - 1].pay + ' a round' };
+      if (it.act === 'bets') return { cat: 'game', name: title(label), sub: 'Bet on the cage' };
+      if (it.act === 'scrap' && U && U.BUYS) return { cat: 'shop', name: title(label), sub: 'Buys ' + names(U.BUYS.map(function (b) { return b[0]; }), 3) };
+    }
+    if (t === 'maker' && typeof BridgeMakers !== 'undefined' && BridgeMakers.MAKERS && BridgeMakers.MAKERS[it.maker]) {   // Thistlecombe's makers
+      return { cat: 'shop', name: title(label), sub: 'Sells ' + names(BridgeMakers.MAKERS[it.maker].sell.map(function (m) { return m.id; }), 3) };
+    }
+    if (GAME[t]) return { cat: 'game', name: title(label), sub: t === 'dance' ? 'The dance floor' : t === 'splice' ? 'Jobs on the rig, for coins' : t === 'pachinko' ? 'Pachinko: balls in, prizes out' :
+                                                             t === 'cabinet' || t === 'game_slot' ? 'An arcade game: play for a high score' : 'A game' };
     if (SHOP[t]) {
       var sub = SHOP[t];
-      if (t === 'vendor' && it.items && it.items.length && typeof BridgeItems !== 'undefined') {
-        sub = 'Sells ' + it.items.slice(0, 3).map(function (x) { var i = BridgeItems.get(x.id); return i ? i.name.toLowerCase() : x.id; }).join(', ') + (it.items.length > 3 ? '…' : '');
-      }
+      if (t === 'vendor' && it.items && it.items.length && typeof BridgeItems !== 'undefined') sub = 'Sells ' + names(it.items.map(function (x) { return x.id; }), 3);
+      if (t === 'trader' && it.rate) sub = 'Buys anything worth something, at ' + Math.round(it.rate * 10) + '/10' + (it.items && it.items.length ? ' · sells on what it\'s sold' : '');
       return { cat: 'shop', name: title(label), sub: sub.charAt(0).toUpperCase() + sub.slice(1) };
     }
     if (USE[t]) return { cat: 'use', name: title(label), sub: USE[t].charAt(0).toUpperCase() + USE[t].slice(1) };
     if (clues[label]) return { cat: 'clue', name: title(label), sub: 'A clue in ' + clues[label] };
+    // anything else a module brings (a type this map has never heard of — a notice board, say): a plain marker, named
+    // by its label, with what it does from its prompt ("PRESS E TO SKATE" → Skate). Scenery, fights and seats stay off.
+    if (!PLAIN_SKIP[t] && label && !(it.action && /^(sit|sleep|view)$/.test(it.action)) && !it.noBeacon) {
+      var verb = String(it.prompt || '').replace(/^PRESS [A-Z0-9]+ (TO )?/i, '').toLowerCase().trim();
+      return { cat: 'use', name: title(label), sub: verb ? verb.charAt(0).toUpperCase() + verb.slice(1) : '' };
+    }
     return null;
+  }
+  var PLAIN_SKIP = { dialog: 1, random_dialog: 1, hostile: 1, rock: 1, trophy: 1, curio: 1, yeti: 1, loot: 1, look: 1 };
+  // a few things by name, lower-case: "silverfin, sea glass, bread…"
+  function names(ids, max) {
+    var I = typeof BridgeItems !== 'undefined' ? BridgeItems : null;
+    return ids.slice(0, max).map(function (id) { var i = I && I.get(id); return i ? i.name.toLowerCase() : String(id).replace(/_/g, ' '); }).join(', ') + (ids.length > max ? '…' : '');
+  }
+  // what a person offers, from their conversation (assets/people.json topics): who they buy from you, what they teach
+  var offerMemo = {};
+  function offers(p) {
+    if (offerMemo[p.id] != null) return offerMemo[p.id];
+    var buys = [], out = [];
+    (p.topics || []).forEach(function (t) {
+      (t.sell || []).forEach(function (s) { if (buys.indexOf(s.id) < 0) buys.push(s.id); });
+      if (t.workshop) out.push('materials and Workshop plans');
+      if (t.harbour) out.push('fits and mends ships');
+      if (t.outfit) out.push('clothes');
+      if (t.charts) out.push('sea charts');
+      if (t.treasure) out.push('treasure maps');
+      if (t.pet) out.push('companions');
+      if (t.peddler) out.push('odd things, somewhere new each day');
+    });
+    if (p.crew) out.push('would join your crew');
+    if (buys.length) out.unshift('buys ' + names(buys, 2));
+    out = out.filter(function (x, i) { return out.indexOf(x) === i; });
+    return (offerMemo[p.id] = out.slice(0, 2).join(', '));
+  }
+
+  // what renews here, for the place's panel ("Come back for"): things that grow back, fights that come back, the daily
+  // boss, a trader's changing stock, someone's daily supply, a board's requests, a festival or a happening that's on,
+  // takings at a business of yours. Each from the module that keeps it; one that isn't loaded is left out.
+  function comeBack(wid, data, markers) {
+    var out = [], ints = data.interactions || [], has = function (t) { return ints.some(function (i) { return i.type === t; }); };
+    var cname = function (k) { var C = typeof BridgeCombat !== 'undefined' && BridgeCombat.CREATURES && BridgeCombat.CREATURES[k]; return C && C.label ? title(C.label).replace(/^The /, 'the ') : null; };
+    var grow = markers.filter(function (m) { return m.cat === 'forage' && !/once a day/.test(m.sub || ''); }).length;
+    if (grow) out.push(grow === 1 ? 'something to gather that grows back' : grow + ' things to gather that grow back');
+    var piles = ints.filter(function (i) { return i.type === 'under' && i.act === 'search'; }).length;
+    if (piles) out.push(piles + ' scrap pile' + (piles > 1 ? 's' : '') + ', once a day each');
+    var U = typeof BridgeUndercity !== 'undefined' && BridgeUndercity.ROSTER && BridgeUndercity.ROSTER[wid];
+    var V = typeof BridgeValley !== 'undefined' && BridgeValley.ROSTER && BridgeValley.ROSTER[wid];
+    var L = typeof BridgeCombat !== 'undefined' && BridgeCombat.ROSTERS && BridgeCombat.ROSTERS[wid];
+    var boss = U && U.boss ? U.boss : V && Object.keys(V).filter(function (k) { var C = typeof BridgeCombat !== 'undefined' && BridgeCombat.CREATURES && BridgeCombat.CREATURES[k]; return C && C.boss; })[0];
+    if (boss) out.push((cname(boss) || 'its boss') + ', once a day');
+    if ((U && U.gang) || (V && Object.keys(V).some(function (k) { return k !== boss; })) || L || has('hostile')) out.push('fights, back each time you come');
+    if (has('trader')) out.push('a trader\'s stock, which changes with what\'s sold');
+    var P = typeof BridgePeople !== 'undefined' ? BridgePeople : null, S = typeof BridgeWorkshop !== 'undefined' && BridgeWorkshop.SHOPS;
+    if (P && S) ints.forEach(function (i) {                         // someone's supply, a few a day (js/workshop.js SHOPS: [item, price, a day's])
+      var p = (i.type === 'dialog' || i.type === 'random_dialog') && P.find(wid, i.label);
+      if (!p) return;
+      (p.topics || []).forEach(function (t) {
+        ((t.workshop && S[t.workshop] && S[t.workshop].sells) || []).forEach(function (x) {
+          if (x[2]) { var it = typeof BridgeItems !== 'undefined' && BridgeItems.get(x[0]); out.push((P.met(p.id) ? p.name.split(' ')[0] + '\'s ' : '') + (it ? it.name.toLowerCase() : x[0]) + ', a few a day'); }
+        });
+      });
+    });
+    if (has('board')) out.push('the board\'s requests');
+    if (typeof BridgeFestivals !== 'undefined' && BridgeFestivals.on) BridgeFestivals.on().forEach(function (f) { if (f.world === wid) out.push(f.name + ', on now'); });
+    if (typeof BridgeEvents !== 'undefined' && BridgeEvents.live && wid === here()) BridgeEvents.live(wid).forEach(function (e) { if (e.name) out.push(e.name + ', on now'); });
+    if (typeof BridgeBusiness !== 'undefined' && BridgeBusiness.all) BridgeBusiness.all().forEach(function (d) {
+      if (d.world === wid && BridgeBusiness.owned(d.id)) out.push('takings at your ' + d.name.replace(/^The /, ''));
+    });
+    return out.filter(function (x, i) { return out.indexOf(x) === i; }).slice(0, 5);
   }
 
   // the markers for a world: one per thing (a door three tiles wide is one door)
@@ -327,6 +409,8 @@ var BridgeMap = (function () {
       if (!root || !body.isConnected) return;
       if (!data) { body.querySelector('.mp-loading').textContent = 'No map of this place.'; return; }
       mk = markersFor(wid, data);
+      var back = comeBack(wid, data, mk);
+      if (back.length) place.insertAdjacentHTML('beforeend', '<div class="mp-renew"><span>Come back for</span>' + back.map(esc).join(' · ') + '</div>');
       if (live && typeof BridgeCharacter !== 'undefined') {
         var p = BridgeCharacter.getRenderPos ? BridgeCharacter.getRenderPos() : { x: BridgeCharacter.getX(), y: BridgeCharacter.getY() };
         mk.push({ cat: 'you', name: 'You', sub: 'You are here', x: p.x, y: p.y, n: 1 });

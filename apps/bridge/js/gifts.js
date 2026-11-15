@@ -326,5 +326,5 @@ var BridgeGifts = (function () {
     if (counts && t === 'love' && typeof BridgeQuests !== 'undefined' && BridgeQuests.toast) BridgeQuests.toast('Gift', person.name + ' loved it', it.name);
   }
 
-  return { can: can, open: open, taste: taste, _given: function () { return given; } };
+  return { can: can, open: open, taste: taste, TASTES: TASTES, _given: function () { return given; } };
 })();

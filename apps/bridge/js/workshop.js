@@ -825,7 +825,7 @@ var BridgeWorkshop = (function () {
   // the clock runs on whether the screen's open or not
   if (typeof window !== 'undefined') setInterval(function () { if (st.bench || st.queue.length) advance(); }, 30000);
 
-  return { RECIPES: RECIPES, CRATES: CRATES, FROM: FROM, GRADES: GRADES, open: open, shop: shop, start: start, queue: function (r, n) { var out = null; for (var i = 0; i < (n || 1); i++) out = start(r, false); return out; },
+  return { RECIPES: RECIPES, SHOPS: SHOPS, CRATES: CRATES, FROM: FROM, GRADES: GRADES, open: open, shop: shop, start: start, queue: function (r, n) { var out = null; for (var i = 0; i < (n || 1); i++) out = start(r, false); return out; },
            cancel: cancel, known: known, learn: learn, have: have, take: take, summary: summary, smithRow: smithRow, smithCard: smithCard, candidates: candidates,
            parts: parts, takePart: takePart, partsFor: partsFor, usePart: usePart, maybeFind: maybeFind, chestFind: chestFind, salvage: salvage,
            decorate: decorate, built: built, name: rname, looked: function () { st.seen = Date.now(); save(); },   // (read in the office's workshop book)

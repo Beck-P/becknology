@@ -114,7 +114,7 @@ var BridgeBrewing = (function () {
     if (!I) return false;
     if (p.effects) { if (p.effects.hp) I.restoreHP(p.effects.hp); if (p.effects.energy) I.restoreEnergy(p.effects.energy); }
     if (p.potion) {
-      st.active[p.potion] = Date.now() + p.mins * MIN; store();
+      st.active[p.potion] = Date.now() + p.mins * MIN * (typeof BridgeCodex !== 'undefined' && BridgeCodex.bonus('wood') ? 1.2 : 1); store();   // the Collection's wood, all found: a fifth longer
       toast('Potion', p.name, p.works);
     } else toast('Potion', p.name, p.works);
     sfx('drink');
