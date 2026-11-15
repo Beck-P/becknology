@@ -172,6 +172,11 @@ var BridgeFarDeep = (function () {
     if (/^sylvara/.test(wid || '') && typeof BridgeQuests !== 'undefined' && BridgeQuests.has('queens-favour') && !BridgeQuests.has(VQ + '/ask') &&
         !(BridgeQuests.rumours && BridgeQuests.rumours().indexOf(VQ) >= 0))
       out.push({ tag: 'Here', title: 'Thaelin\'s old song', text: 'Fennick at the Hollow Bough, up in the Boughs, says the bard has lost the words to his best song.', world: 'sylvara-tavern' });
+    // W1: tonight's sight not logged yet, with the observatory fitted
+    if (typeof BridgeObservatory !== 'undefined' && typeof BridgeWayfarer !== 'undefined' && BridgeWayfarer.fitted('observatory')) {
+      var S = BridgeObservatory.tonight();
+      if (S && BridgeObservatory.seen().indexOf(S.id) < 0) out.push({ tag: 'Aboard', title: 'Something new in the sky', text: 'The observatory\'s telescope has tonight\'s sight. Log every sight over a world and its star chart is yours.', world: 'ship-observatory' });
+    }
     var nw = fresh();
     if (nw && typeof BridgeQuests !== 'undefined' && BridgeQuests.visited && BridgeQuests.visited().singularity)
       out.push({ tag: 'Brink', title: nw === 1 ? 'A new echo at the Brink' : nw + ' new echoes at the Brink', text: 'Things you\'ve finished, hanging in the ring gate at the Singularity like threads of light.', world: 'singularity' });

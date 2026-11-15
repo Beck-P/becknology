@@ -319,6 +319,47 @@ const ONLY = process.argv[3] || '';
     console.log('w2 done');
   }
 
+  // ---- W1 · Sights that add up ----
+  if (part('w1')) {
+    await p.evaluate(() => { localStorage.setItem('bridge_ship_location', 'sylvara'); const s = BridgeObservatory._state(); s.seen = { canopy: 1, elflights: 2 }; s.charts = {}; });
+    // a ship's day whose sight is the one Sylvara's sky still wants
+    const day = await p.evaluate(() => { const t0 = Date.now(); for (let k = 0; k < 60; k++) { BridgeClock._at(t0 + k * 4 * 3600000); if (BridgeObservatory.tonight().id === 'greenmoon') return k; } return -1; });
+    console.log('greenmoon on ship-day +', day);
+    if (day < 0) fail('the moon never came up over Sylvara');
+    await go('ship-observatory', [8, 9]);
+    const c0 = await p.evaluate(() => window._coins);
+    await p.evaluate(() => BridgeInteractions.execute(BridgeWorld.getWorld().interactions.find(i => i.part === 'scope')));
+    await p.waitForTimeout(3600);
+    await shot('w1_scope');
+    await p.keyboard.press('Escape'); await p.waitForTimeout(500);
+    if (await count('sky_chart_sylvara') !== 1) fail('no star chart of Sylvara\'s sky');
+    console.log('coins', (await p.evaluate(() => window._coins)) - c0, '| set:', JSON.stringify(await p.evaluate(() => BridgeCodex.setOf('sky_chart_sylvara'))));
+    const tst = await p.evaluate(() => BridgeQuests.log().slice(0, 3).map(l => l.t).join(' / '));
+    console.log('log:', tst);
+    if (!/star chart of Sylvara/i.test(tst)) fail('no word of the chart');
+    await p.evaluate(() => BridgeItems.get('sky_chart_sylvara').onUse()); const t1 = await said(); await shut();
+    if (!/SILVER-GREEN MOON/.test(t1)) fail('the chart reads: ' + t1.slice(0, 80));
+    await p.evaluate(() => BridgeInteractions.execute(BridgeWorld.getWorld().interactions.find(i => i.part === 'log'))); await p.waitForTimeout(800);
+    const lg = await rows(); console.log('log rows:', lg.length, JSON.stringify(lg.filter(t => /Sylvara/.test(t))));
+    if (!lg.some(t => /Sylvara · charted/.test(t))) fail('the log doesn\'t show Sylvara charted');
+    await shot('w1_log');
+    await shut();
+    // every world's sky: The night sky complete, and the log pays double
+    await p.evaluate(() => { const s = BridgeObservatory._state(); BridgeObservatory.SIGHTS.forEach(S => { if (S.sky !== 'deep') s.seen[S.id] = 1; }); BridgeObservatory.charts(true); });
+    await p.waitForTimeout(1500);
+    console.log('night sky:', JSON.stringify(await p.evaluate(() => BridgeCodex.setOf('sky_chart_lumar'))));
+    if (!await p.evaluate(() => BridgeCodex.bonus('sky'))) fail('The night sky not complete');
+    const c1 = await p.evaluate(() => window._coins);
+    await p.evaluate(() => { localStorage.setItem('bridge_ship_location', 'deep-space'); const s = BridgeObservatory._state(); delete s.seen[BridgeObservatory.tonight().id]; });
+    await p.evaluate(() => BridgeInteractions.execute(BridgeWorld.getWorld().interactions.find(i => i.part === 'scope')));
+    await p.waitForTimeout(1500); await p.keyboard.press('Escape'); await p.waitForTimeout(400);
+    const paid = (await p.evaluate(() => window._coins)) - c1;
+    console.log('a deep-sky sight logged, with the set:', paid);
+    if (paid !== 80) fail('the log didn\'t pay double: ' + paid);
+    await p.evaluate(() => { BridgeClock._at(null); localStorage.setItem('bridge_ship_location', 'lumar'); });
+    console.log('w1 done');
+  }
+
   console.log(errors ? errors + ' FAILED' : 'far_deeper OK');
   await b.close();
   process.exit(errors ? 1 : 0);

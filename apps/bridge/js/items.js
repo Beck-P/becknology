@@ -428,6 +428,29 @@ var BridgeItems = (function () {
     ctx.fillRect(x + 10*u, y + 8*u, 1*u, 1*u); ctx.fillRect(x + 12*u, y + 8*u, 1*u, 1*u);
   }
 
+  // a star chart of one world's sky (js/observatory.js, W1): navy paper in a brass rule, gold stars joined in that world's
+  // own figure (seeded by its name), the world's colour in the corner
+  function skyChartIcon(seed, col) {
+    return function (ctx, x, y, s) {
+      var u = s / 16, h = 0;
+      for (var i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
+      function r(n) { h = (h * 1103515245 + 12345) >>> 0; return (h >>> 16) % n; }
+      ctx.fillStyle = '#0a0810'; ctx.fillRect(x + 1*u, y + 2*u, 14*u, 12*u);
+      ctx.fillStyle = '#a08040'; ctx.fillRect(x + 2*u, y + 3*u, 12*u, 10*u);
+      ctx.fillStyle = '#16233e'; ctx.fillRect(x + 3*u, y + 4*u, 10*u, 8*u);
+      ctx.fillStyle = col; ctx.fillRect(x + 3*u, y + 10*u, 2*u, 2*u);
+      var pts = [];
+      for (var k = 0; k < 5; k++) pts.push([4 + r(8), 5 + r(5)]);
+      ctx.fillStyle = '#5a6aa8';
+      for (k = 1; k < pts.length; k++) {                     // the figure's lines, a pixel at a time
+        var a = pts[k - 1], b = pts[k], n = Math.max(Math.abs(b[0] - a[0]), Math.abs(b[1] - a[1]));
+        for (var t = 1; t < n; t++) ctx.fillRect(x + Math.round(a[0] + (b[0] - a[0]) * t / n) * u, y + Math.round(a[1] + (b[1] - a[1]) * t / n) * u, u, u);
+      }
+      ctx.fillStyle = '#ffe080';
+      pts.forEach(function (p) { ctx.fillRect(x + p[0]*u, y + p[1]*u, u, u); });
+    };
+  }
+
   function moonstoneIcon(ctx, x, y, s) {
     var u = s / 16;
     ctx.fillStyle = '#0c0a14'; ctx.fillRect(x + 4*u, y + 4*u, 8*u, 9*u); ctx.fillRect(x + 3*u, y + 6*u, 10*u, 5*u);
@@ -1617,6 +1640,21 @@ var BridgeItems = (function () {
                      type: 'tool', stackable: false, draw: stormGlassIcon, value: 120, onUse: charmUse },
     ember_glass:   { id: 'ember_glass', name: 'Ember Glass', desc: 'Black volcanic glass from the crater on Cinder Key, a red glow deep in it. The fence buys it; so does any trader, cheaper.', type: 'material', stackable: true,
                      draw: emberGlassIcon, value: 40, fence: 55 },
+    // star charts of each world's sky, drawn up at the observatory once every sight over it is logged (js/observatory.js, W1)
+    sky_chart_lumar: { id: 'sky_chart_lumar', name: 'Star Chart: Lumar', desc: 'The sky over Lumar, every sight in it logged from the Wayfarer\'s observatory and inked in by your own hand. Use it to read it.', type: 'material',
+                     stackable: false, draw: skyChartIcon('lumar', '#2a7050'), value: 0, onUse: function () { if (typeof BridgeObservatory !== 'undefined') BridgeObservatory.read('lumar'); return false; } },
+    sky_chart_arcadia: { id: 'sky_chart_arcadia', name: 'Star Chart: Arcadia', desc: 'The sky over Arcadia, every sight in it logged from the Wayfarer\'s observatory and inked in by your own hand. Use it to read it.', type: 'material',
+                     stackable: false, draw: skyChartIcon('arcadia', '#e870c0'), value: 0, onUse: function () { if (typeof BridgeObservatory !== 'undefined') BridgeObservatory.read('arcadia'); return false; } },
+    sky_chart_enigma: { id: 'sky_chart_enigma', name: 'Star Chart: Enigma', desc: 'The sky over Enigma, every sight in it logged from the Wayfarer\'s observatory and inked in by your own hand. Use it to read it.', type: 'material',
+                     stackable: false, draw: skyChartIcon('enigma', '#40c8d8'), value: 0, onUse: function () { if (typeof BridgeObservatory !== 'undefined') BridgeObservatory.read('enigma'); return false; } },
+    sky_chart_singularity: { id: 'sky_chart_singularity', name: 'Star Chart: The Singularity', desc: 'The sky over the Singularity, every sight in it logged from the Wayfarer\'s observatory and inked in by your own hand. Use it to read it.', type: 'material',
+                     stackable: false, draw: skyChartIcon('singularity', '#a080e0'), value: 0, onUse: function () { if (typeof BridgeObservatory !== 'undefined') BridgeObservatory.read('singularity'); return false; } },
+    sky_chart_verdance: { id: 'sky_chart_verdance', name: 'Star Chart: Verdance', desc: 'The sky over Verdance, every sight in it logged from the Wayfarer\'s observatory and inked in by your own hand. Use it to read it.', type: 'material',
+                     stackable: false, draw: skyChartIcon('verdance', '#7ac040'), value: 0, onUse: function () { if (typeof BridgeObservatory !== 'undefined') BridgeObservatory.read('verdance'); return false; } },
+    sky_chart_hoarfell: { id: 'sky_chart_hoarfell', name: 'Star Chart: Hoarfell', desc: 'The sky over Hoarfell, every sight in it logged from the Wayfarer\'s observatory and inked in by your own hand. Use it to read it.', type: 'material',
+                     stackable: false, draw: skyChartIcon('hoarfell', '#b8e0f8'), value: 0, onUse: function () { if (typeof BridgeObservatory !== 'undefined') BridgeObservatory.read('hoarfell'); return false; } },
+    sky_chart_sylvara: { id: 'sky_chart_sylvara', name: 'Star Chart: Sylvara', desc: 'The sky over Sylvara, every sight in it logged from the Wayfarer\'s observatory and inked in by your own hand. Use it to read it.', type: 'material',
+                     stackable: false, draw: skyChartIcon('sylvara', '#a8e0d8'), value: 0, onUse: function () { if (typeof BridgeObservatory !== 'undefined') BridgeObservatory.read('sylvara'); return false; } },
     // treasure maps (js/treasure.js)
     tmap_lighthouse: { id: 'tmap_lighthouse', name: 'Map: Under the Old Light', desc: 'A treasure map. Use it to unfold the sketch - the landmarks are real. Somewhere on Lumar.', type: 'map',
                 stackable: false, draw: mapIcon, onUse: function () { if (typeof BridgeTreasure !== 'undefined') BridgeTreasure.view('lighthouse'); return false; } },

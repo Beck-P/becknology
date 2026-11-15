@@ -116,9 +116,14 @@ var BridgeCodex = (function () {
       ['champagne', 'The champagne bar, high up'], ['gold_leaf_sushi', 'Aurum, the Neon Royale\'s dining room']] },
     { id: 'fell', name: 'Fellhaven fare', reward: 150, items: [
       ['rosti', 'The Stubli on the promenade, or Le Refuge in Aurelle'], ['raclette', 'The Stubli, or Le Refuge'], ['vin_chaud', 'Le Refuge, or the terrace bar'],
-      ['macarons', 'The pâtisserie in Aurelle'], ['mille_feuille', 'The pâtisserie in Aurelle'], ['truffles', 'The pâtisserie, or Bar Étoile']] }
+      ['macarons', 'The pâtisserie in Aurelle'], ['mille_feuille', 'The pâtisserie in Aurelle'], ['truffles', 'The pâtisserie, or Bar Étoile']] },
+    // W1: the observatory's star charts, one a world's sky, each drawn up once every sight over it is logged (js/observatory.js)
+    { id: 'sky', name: 'The night sky', reward: 300, items: [
+      ['sky_chart_lumar', 'Log every sight over Lumar from the Wayfarer\'s observatory'], ['sky_chart_arcadia', 'Log every sight over Arcadia'],
+      ['sky_chart_enigma', 'Log every sight over Enigma'], ['sky_chart_singularity', 'Log every sight over the Singularity'],
+      ['sky_chart_verdance', 'Log every sight over Verdance'], ['sky_chart_hoarfell', 'Log every sight over Hoarfell'], ['sky_chart_sylvara', 'Log every sight over Sylvara']] }
   ];
-  var SINCE = 2;                                                   // bump when sets are added: what a pilot keeps counts once, quietly
+  var SINCE = 3;                                                   // bump when sets are added: what a pilot keeps counts once, quietly
   var IN = {};
   SETS.forEach(function (s) { s.items.forEach(function (x) { IN[x[0]] = s; }); });
   var st = load(), ready = false;
@@ -356,7 +361,8 @@ var BridgeCodex = (function () {
     finds: 'treasure chests hold a fifth more coins', gear: 'every weapon hits a twentieth harder', food: 'food goes a quarter further',
     maps: 'Ilsa sells her maps for a quarter less',
     country: 'your farm stand\'s honesty box takes a tenth more', wood: 'a brew lasts a fifth longer', below: 'a scrap pile gives a piece more',
-    valley: 'the valley\'s creatures drop what they carry a fifth more often', night: 'drinks go a quarter further, as food does', fell: 'warming up lasts a fifth longer'
+    valley: 'the valley\'s creatures drop what they carry a fifth more often', night: 'drinks go a quarter further, as food does', fell: 'warming up lasts a fifth longer',
+    sky: 'the observatory\'s log pays double'
   };
   function bonus(id) { return !!st.paid[id]; }
   /** A loot drop's chance, scaled: the valley's set, all found, makes its creatures drop things more often (js/interactions.js). */
