@@ -172,22 +172,50 @@ var BridgeSea = (function () {
     function h(i, j) { return hash(((i % px) + px) % px * 57 + ((j % py) + py) % py * 131 + seed * 977); }
     return h(xi, yi) * (1 - u) * (1 - v) + h(xi + 1, yi) * u * (1 - v) + h(xi, yi + 1) * (1 - u) * v + h(xi + 1, yi + 1) * u * v;
   }
-  // fbm over a W × H tile that wraps: `base` cells down it, as many across as keep them `stretch` times wider than tall
-  function tfbm(x, y, W, H, base, seed, stretch, oct) {
-    var n = 0, amp = 0.5, tot = 0;
-    for (var o = 0, f = 1; o < oct; o++, f *= 2) {
-      var cy = base * f, cx = Math.max(1, Math.round(cy * W / H / stretch));
-      n += periodicNoise(x / W * cx, y / H * cy, cx, cy, seed + o) * amp;
-      tot += amp; amp *= 0.5;
+  // The swells' field over a W × H tile that wraps: a sum of waves, each a whole number of cycles across the tile and
+  // down it (so it tiles without a seam by construction, with no lattice at all), pointing every way but along a row or
+  // a column, their lengths stretched `stretch` times wider than tall, the longer ones stronger (amplitude ∝ r^-1.9), a
+  // random two thirds of them kept so no regular weave shows. It used to be value noise on a lattice (2 × 3 cells, three
+  // octaves on the same grid lines): its contours ran dead straight along the lattice lines — a ruler line right across
+  // the sea now and then, in every sea. Then ranked onto the old field's spread (`SWELL_Q`, its quantiles at sixteenths),
+  // so each sea has the same share of deeper water, body and lighter swell, and the same wavelets on them, as before.
+  // Each wave is cos(a + b) = cos a cos b - sin a sin b, a row's and a column's worth made once: ~0.1 s for all three
+  // maps, once (the old field took several times that).
+  var SWELL_Q = [[0.14, 0.259, 0.325, 0.387, 0.429, 0.471, 0.508, 0.538, 0.571, 0.598, 0.613, 0.631, 0.65, 0.669, 0.692, 0.719, 0.777],
+                 [0.28, 0.358, 0.383, 0.414, 0.461, 0.498, 0.531, 0.558, 0.578, 0.602, 0.628, 0.657, 0.691, 0.724, 0.747, 0.768, 0.855],
+                 [0.327, 0.436, 0.48, 0.505, 0.523, 0.538, 0.555, 0.568, 0.58, 0.592, 0.604, 0.615, 0.627, 0.639, 0.652, 0.674, 0.75]];
+  function swellField(W, H, seed, stretch, Q) {
+    var KMAX = 12, out = new Float32Array(W * H), cx = new Float32Array(W), sx = new Float32Array(W), x, y;
+    for (var ky = 1; ky <= KMAX; ky++) for (var kx = -2 * KMAX; kx <= 2 * KMAX; kx++) {
+      if (!kx) continue;                                                   // nothing that runs along a row or a column
+      var r = Math.sqrt(Math.pow(kx / W * stretch, 2) + Math.pow(ky / H, 2)) * H;   // cycles down the tile, swells stretched
+      if (r < 1.2 || r > KMAX || hash(seed * 7919 + (kx + 100) * 131 + ky * 17) > 0.6) continue;
+      var a = Math.pow(r, -1.9) * (0.6 + 0.8 * hash(seed * 31 + kx * 7 + ky * 13)), ph = hash(seed * 53 + kx * 3 + ky * 29) * 2 * Math.PI;
+      for (x = 0; x < W; x++) { var t = 2 * Math.PI * kx * x / W + ph; cx[x] = Math.cos(t) * a; sx[x] = Math.sin(t) * a; }
+      for (y = 0; y < H; y++) {
+        var u = 2 * Math.PI * ky * y / H, c = Math.cos(u), sn = Math.sin(u), row = y * W;
+        for (x = 0; x < W; x++) out[row + x] += cx[x] * c - sx[x] * sn;
+      }
     }
-    return n / tot;
+    // rank onto the old spread: this field's own quantiles (from every third value), mapped piecewise onto Q
+    var smp = [];
+    for (var i = 0; i < out.length; i += 3) smp.push(out[i]);
+    smp.sort(function (p, q) { return p - q; });
+    var q = [];
+    for (i = 0; i <= 16; i++) q.push(smp[Math.min(smp.length - 1, Math.floor(i / 16 * smp.length))]);
+    for (i = 0; i < out.length; i++) {
+      var v = out[i], lo = 0, hi = 16;
+      while (hi - lo > 1) { var m = (lo + hi) >> 1; if (v < q[m]) hi = m; else lo = m; }
+      var f = q[hi] > q[lo] ? Math.max(0, Math.min(1, (v - q[lo]) / (q[hi] - q[lo]))) : 0;
+      out[i] = Q[lo] + (Q[hi] - Q[lo]) * f;
+    }
+    return out;
   }
   function waveMap(n) {
     if (maps[n]) return maps[n];
     var M = MAPS[n], W = M.w, H = M.h, s = M.seed * 100, out = new Uint8Array(W * H).fill(n ? 255 : 1), x, y;
-    var sw = new Float32Array(W * H);
+    var sw = swellField(W, H, s + 1, 3.2, SWELL_Q[n]);
     for (y = 0; y < H; y++) for (x = 0; x < W; x++) {
-      sw[y * W + x] = tfbm(x, y, W, H, 3, s + 1, 3.2, 3);
       if (!n) out[y * W + x] = sw[y * W + x] < 0.4 ? 0 : sw[y * W + x] < 0.61 ? 1 : 2;     // the swells
     }
     // the wavelets: short dashes, a light crest with its shadow a row under it, the ends a row lower (a little arc);
@@ -1038,6 +1066,11 @@ var BridgeSea = (function () {
   function reset() { tex = {}; shores = {}; bands = {}; gtex = {}; }
 
   return { _shore: function (id) { return shores[id] || null; },
+           // the swells' bands (0 deeper, 1 body, 2 lighter) as the body's map lays them, made again and timed: world/sea_edge.js
+           // checks they have no ruler lines and no seam where the map repeats
+           _swells: function () { var t0 = performance.now(), M = MAPS[0], sw = swellField(M.w, M.h, M.seed * 100 + 1, 3.2, SWELL_Q[0]), b = [];
+             for (var i = 0; i < sw.length; i++) b.push(sw[i] < 0.4 ? 0 : sw[i] < 0.61 ? 1 : 2);
+             return { w: M.w, h: M.h, d: b, ms: performance.now() - t0 }; },
            _light: function (name, id) { var sc = id && typeof BridgeScene !== 'undefined' ? BridgeScene.get(id) : null; var L = lightOn(name || 'emerald', sc); return { L: L, C: colours(name || 'emerald', L) }; },
            drawSea: drawSea, drawSeaAt: drawSeaAt, drawWater: drawWater, waterAt: waterAt, drawWaterAt: drawWaterAt, palettes: PALETTES, forget: forget, reset: reset, setSeaCycles: setSeaCycles };
 })();

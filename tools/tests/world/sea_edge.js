@@ -23,6 +23,27 @@ const MAX_D = 16;          // how far apart the still water's colour and the ope
   await p.addInitScript(() => { localStorage.setItem('bridge_railway', JSON.stringify({ seen: 1 })); });
   await p.goto('http://127.0.0.1:8766/bridge/?at=2026-10-14T03:20'); await p.waitForTimeout(2500);
   await p.evaluate(() => { BridgeState.setPilot({ id: 't', name: 'BECK', suit_color: 'gold' }); BridgeIntro.hide(); BridgeWeather._pin && BridgeWeather._pin('lumar', 'clear'); BridgeBloom._force(0); });
+  // the open sea's swells (js/sea.js swellField): no band edge running dead straight along a row or a column (the old
+  // lattice noise drew ruler lines: 83 px along a row, 20 down a column in the body's map), the same shares of deeper
+  // water, body and lighter swell as before, and no seam where the map repeats
+  const sw = await p.evaluate(() => {
+    const S = BridgeSea._swells(), W = S.w, H = S.h, b = S.d;
+    let rh = 0, rv = 0, cur;
+    for (let y = 0; y < H; y++) { cur = 0; for (let x = 0; x < 2 * W; x++) { const X = x % W; cur = b[y * W + X] !== b[((y + 1) % H) * W + X] ? cur + 1 : 0; if (cur > rh) rh = cur; } }
+    for (let x = 0; x < W; x++) { cur = 0; for (let y = 0; y < 2 * H; y++) { const Y = y % H; cur = b[Y * W + x] !== b[Y * W + (x + 1) % W] ? cur + 1 : 0; if (cur > rv) rv = cur; } }
+    // the edges crossing the wrap, against the most crossing any other column / row boundary
+    const across = (k) => { let n = 0; for (let y = 0; y < H; y++) if (b[y * W + k] !== b[y * W + (k + 1) % W]) n++; return n; };
+    const down = (k) => { let n = 0; for (let x = 0; x < W; x++) if (b[k * W + x] !== b[((k + 1) % H) * W + x]) n++; return n; };
+    let mx = 0, my = 0; for (let k = 0; k < W - 1; k++) mx = Math.max(mx, across(k)); for (let k = 0; k < H - 1; k++) my = Math.max(my, down(k));
+    const share = [0, 0, 0]; b.forEach((v) => share[v]++);
+    return { rh, rv, seamX: across(W - 1), seamY: down(H - 1), mx, my, share: share.map((n) => n / b.length), ms: S.ms };
+  });
+  console.log('sea_edge: the swells · longest straight edge', sw.rh, 'px along a row,', sw.rv, 'down a column · across the repeat', sw.seamX, '/', sw.mx, 'and', sw.seamY, '/', sw.my,
+    '· shares', sw.share.map((v) => v.toFixed(3)).join('/'), '· made in', sw.ms.toFixed(0), 'ms');
+  if (sw.rh > 60) bad('a swell\'s edge runs ' + sw.rh + ' px dead straight along a row (a ruler line across the sea)');
+  if (sw.rv > 16) bad('a swell\'s edge runs ' + sw.rv + ' px dead straight down a column');
+  if (sw.seamX > sw.mx || sw.seamY > sw.my) bad('the swells jump where the map repeats (a seam)');
+  if (Math.abs(sw.share[0] - 0.206) > 0.02 || Math.abs(sw.share[2] - 0.389) > 0.02) bad('the swells\' shares moved: ' + sw.share.map((v) => v.toFixed(3)).join('/') + ' (were 0.206/0.405/0.389)');
   let loaded = null;
   for (const [world, at, hour] of CASES) {
     if (loaded !== world) {
