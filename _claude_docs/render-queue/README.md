@@ -25,7 +25,6 @@ cores, an interior much less.
 ## The queue
 | Patch | Scene scripts | What it fixes | Look at afterwards |
 |---|---|---|---|
-| `arcadia-terraces.patch` | `scenes/arcadia_terraces.py` → `arcadia-terraces` | Cascade Tower's front was rows of big white window squares: darker glass, slimmer bars, fewer and dimmer lit offices with desks, screens, blinds and plants; the flats across the gap and the lit floors over the train tunnel toned down the same way. The script replays the old random rolls so nothing placed after the tower moves. Also in it (world JSON): Halo's two patio heaters and Cirrus's three cocktail tables, which you could walk through, are solid. | The tower front (the top sections of the look-over); `world/arcadia_terraces.js`. |
 | `lumar-crown-hill.patch` | `scenes/lumar_crown_hill.py` → `lumar-crown-hill` (needs `assets_capital.py`'s `flagged(z=)`, already in) | The gravel walks, the parade ground and the observatory terrace come out striped because the gravel sits exactly level with the grass; the gravel is raised a touch. | The Hill's parade ground, the walks and the terrace. `world/capital.js`. |
 
 ## Sylvara's closed places (five still to open)
