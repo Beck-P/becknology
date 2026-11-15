@@ -4416,6 +4416,10 @@
     ],
     "landings": [
       [
+        21,
+        15
+      ],
+      [
         19,
         16
       ],
@@ -4453,6 +4457,30 @@
       ]
     },
     {
+      "x": 49,
+      "y": 12,
+      "type": "enter_world",
+      "label": "THE DEEPWOOD",
+      "prompt": "PRESS E TO FOLLOW THE DEEP RUN",
+      "target": "sylvara-deepwood",
+      "spawn": [
+        1,
+        14
+      ]
+    },
+    {
+      "x": 21,
+      "y": 39,
+      "type": "enter_world",
+      "label": "MIRROR LAKE",
+      "prompt": "PRESS E TO WALK DOWN TO THE LAKE",
+      "target": "sylvara-lake",
+      "spawn": [
+        21,
+        1
+      ]
+    },
+    {
       "x": 20,
       "y": 17,
       "type": "dialog",
@@ -4470,30 +4498,6 @@
       "spawn": [
         9,
         13
-      ]
-    },
-    {
-      "x": 21,
-      "y": 39,
-      "type": "enter_world",
-      "label": "MIRROR LAKE",
-      "prompt": "PRESS E TO WALK DOWN TO THE LAKE",
-      "target": "sylvara-lake",
-      "spawn": [
-        21,
-        1
-      ]
-    },
-    {
-      "x": 49,
-      "y": 12,
-      "type": "enter_world",
-      "label": "THE DEEPWOOD",
-      "prompt": "PRESS E TO FOLLOW THE DEEP RUN",
-      "target": "sylvara-deepwood",
-      "spawn": [
-        1,
-        14
       ]
     }
   ],

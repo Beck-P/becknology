@@ -314,7 +314,9 @@ w.update({'name': 'the Deepwood', 'width': COLS, 'height': ROWS, 'tileSize': 16,
           'shipExit': False, 'view': [0.0, -3.4, COLS, ROWS]})
 w['river'] = {'water': water_rows, 'flow': [[round(x, 2), round(r, 2), 0.25] for (x, r) in RUN[::2]], 'width': 2.0,
               'up': {'edge': 'left', 'target': 'sylvara-falls', 'at': [47, 14]},
-              'landings': [[int(LANDING[0]) + 1, int(LANDING[1]) + 1], [int(px_) - 1, int(pr_ - ph) - 1]], 'racks': []}
+              # (14, 18) and (11, 15): the bank right beside the pool's water — the deck's far end and the north shore were
+              # out of reach from a canoe (stepping ashore wants a landing within a tile and a half)
+              'landings': [[14, 18], [11, 15], [int(LANDING[0]) + 1, int(LANDING[1]) + 1], [int(px_) - 1, int(pr_ - ph) - 1]], 'racks': []}
 w['interactions'] = [
     {'x': 0, 'y': 13, 'type': 'enter_world', 'label': 'THE FALLS', 'prompt': 'PRESS E TO FOLLOW THE RUN BACK', 'target': 'sylvara-falls', 'spawn': [48, 12]},
     {'x': 0, 'y': 19, 'type': 'enter_world', 'label': 'THE ROOTMARKET', 'prompt': 'PRESS E TO WALK BACK TO THE CITY', 'target': 'sylvara-roots', 'spawn': [46, 8]},

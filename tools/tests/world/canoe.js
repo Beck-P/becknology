@@ -78,13 +78,20 @@ const OUT = process.argv[2] || '/tmp';
   let passed = { bridge: false, weir: false, island: false };
   const t0 = Date.now();
   let shotBridge = false;
-  while (Date.now() - t0 < 90000 && await wid() === 'sylvara-river') {
-    const s = await steer(null, 1500);
-    const c = await canoe();
-    if (!c) break;
-    if (c.y > 13 && c.y < 16) { passed.bridge = true; if (!shotBridge) { shotBridge = true; await p.screenshot({ path: OUT + '/canoe_bridge.png' }); } }
+  // (where it's been is noted at every steering step, not once a stretch: a fast canoe went through a 3-row window between
+  // looks; and off the river's end the canoe is between stretches for a moment — wait for the next one to take it)
+  const note = (c) => {
+    if (c.y > 13 && c.y < 16) passed.bridge = true;
     if (c.y > 21 && c.y < 23) passed.weir = true;
     if (c.y > 27 && c.y < 30) passed.island = true;
+    return false;
+  };
+  while (Date.now() - t0 < 90000 && await wid() === 'sylvara-river') {
+    await steer(null, 1500, (s) => s.w === 'sylvara-river' && note(s));
+    const c = await canoe();
+    if (!c) { await hold({}); await p.waitForTimeout(3500); break; }   // keys held through the change of stretch aren't
+                                                                       // seen once controls come back: let go, press afresh
+    if (passed.bridge && !shotBridge) { shotBridge = true; await p.screenshot({ path: OUT + '/canoe_bridge.png' }); }
   }
   console.log('river: passed', JSON.stringify(passed), 'now in', await wid(), 'still in a canoe', !!await canoe());
   if (await wid() !== 'sylvara-falls') fail('didn\'t reach the falls by canoe');
@@ -93,7 +100,7 @@ const OUT = process.argv[2] || '/tmp';
   // ---- the rapids, down to the landing above the falls, ashore --------------------------------------------------------------
   await p.screenshot({ path: OUT + '/canoe_rapids.png' });
   await steer(null, 30000, (s) => s.y > 14.2);
-  const landed = await steer([19, 16], 15000, (s) => Math.hypot(s.x - 19.5, s.y - 16.5) < 1.4);
+  const landed = await steer([21, 15], 15000, (s) => Math.hypot(s.x - 21.5, s.y - 15.5) < 1.4);
   await p.screenshot({ path: OUT + '/canoe_above_falls.png' });
   await p.keyboard.press('e'); await p.waitForTimeout(800);
   if (await canoe()) fail('couldn\'t step ashore above the falls (' + JSON.stringify(landed) + ')');
@@ -102,12 +109,13 @@ const OUT = process.argv[2] || '/tmp';
 
   // ---- the fork: back out, up the Deep Run into the Deepwood --------------------------------------------------------------
   await useKind('launch');
+  await steer([24, 13], 8000, (s) => s.y < 14.2);                     // up to the Run's mouth (row 13): south of it is bank
   await steer([30, 14], 12000, (s) => s.x > 28);
   await steer([49, 15], 30000, (s) => s.w !== 'sylvara-falls');
   await p.waitForTimeout(2500);
   if (await wid() !== 'sylvara-deepwood') fail('the Deep Run didn\'t carry on into the Deepwood (in ' + await wid() + ')');
   else {
-    await steer([14, 18], 30000, (s) => Math.hypot(s.x - 14.5, s.y - 18.5) < 2.0);
+    await steer([13, 17], 30000, (s) => Math.hypot(s.x - 14.5, s.y - 18.5) < 1.3);   // alongside the landing at (14, 18)
     await p.screenshot({ path: OUT + '/canoe_deepwood.png' });
     await p.keyboard.press('e'); await p.waitForTimeout(800);
     if (await canoe()) fail('couldn\'t land at the frogs\' pool');
