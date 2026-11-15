@@ -40,6 +40,27 @@ var BridgeKeyItems = (function () {
     // anything without its own art: a gold star
     // the Gloaming's stern lantern (Midnight, js/midnight.js): an iron cage, cracked glass, a cold green flame still in it
     lantern: function (ctx, x, y, u) { grid(ctx, x, y, u, LANTERN, { o: '#0a0e10', I: '#3a4048', i: '#5a6470', G: '#2a6a5a', g: '#7ad0c8', w: '#e0fff8' }); },
+    // Edda's kitchen book (eddas-book): loose pages tied up in a ribbon, flour on the corners
+    book: function (ctx, x, y, u) {
+      px(ctx, x, y, u, '#2a1a0a', [[2, 3, 12, 11]]);
+      px(ctx, x, y, u, '#e8dcc0', [[3, 4, 10, 9]]); px(ctx, x, y, u, '#d0c098', [[3, 6, 10, 1], [3, 9, 10, 1], [4, 11, 9, 1]]);
+      px(ctx, x, y, u, '#f8f0e0', [[4, 5, 3, 1], [4, 8, 5, 1]]);
+      px(ctx, x, y, u, '#c03a3a', [[7, 3, 2, 11], [3, 8, 10, 1]]); px(ctx, x, y, u, '#ff7a6a', [[7, 4, 1, 3]]);
+    },
+    // the Admiral, feline (admiral): a big grey cat sitting up, a torn ear, green eyes
+    cat: function (ctx, x, y, u) {
+      px(ctx, x, y, u, '#1a1a20', [[4, 2, 2, 3], [10, 2, 2, 3], [4, 4, 8, 6], [3, 9, 10, 6], [12, 11, 3, 2]]);
+      px(ctx, x, y, u, '#7a7a86', [[5, 3, 1, 2], [10, 4, 1, 1], [5, 5, 6, 4], [4, 10, 8, 4], [13, 12, 2, 1]]);
+      px(ctx, x, y, u, '#a0a0ac', [[6, 7, 4, 1], [6, 11, 4, 3]]);
+      px(ctx, x, y, u, '#80d060', [[6, 6, 1, 1], [9, 6, 1, 1]]); px(ctx, x, y, u, '#e0a0a0', [[7, 7, 2, 1]]);
+    },
+    // the Admiral, avian (admiral): a green parrot, red at the shoulder, a hooked bill
+    parrot: function (ctx, x, y, u) {
+      px(ctx, x, y, u, '#0e1a0e', [[6, 1, 5, 4], [5, 4, 6, 7], [6, 11, 3, 4], [10, 2, 3, 3]]);
+      px(ctx, x, y, u, '#3aa040', [[7, 2, 3, 2], [6, 5, 4, 5], [7, 11, 1, 3]]);
+      px(ctx, x, y, u, '#d03a2a', [[6, 6, 1, 3]]); px(ctx, x, y, u, '#f0d040', [[8, 3, 1, 1]]);
+      px(ctx, x, y, u, '#e8e0c8', [[10, 3, 2, 1]]); px(ctx, x, y, u, '#5a3a1a', [[3, 14, 10, 1]]);
+    },
     star: function (ctx, x, y, u) {
       px(ctx, x, y, u, '#3a2a10', [[7, 1, 2, 14], [1, 6, 14, 3], [4, 4, 8, 8]]);
       px(ctx, x, y, u, '#d0a040', [[7, 2, 2, 12], [2, 7, 12, 1], [5, 5, 6, 6]]);

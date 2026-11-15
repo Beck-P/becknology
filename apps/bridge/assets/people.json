@@ -1021,6 +1021,11 @@
       {
         "q": "Heard anything?",
         "a": "SOMEBODY'S GOAT IS LOOSE AGAIN. AND THE CROWS HAVE TAKEN AGAINST THE SCARECROW'S SHIRT. CAN'T SAY I BLAME THEM."
+      },
+      {
+        "q": "Edda's page",
+        "when": "eddas-book/hollin",
+        "a": "HER HENS. SHE NAMED EVERY ONE AND TALKED TO THEM OVER THE GATE. 'TALK TO THEM OR THEY SULK AND LAY SMALL.' I THOUGHT THAT WAS NONSENSE FOR THIRTY YEARS. IT ISN'T.\n\nON THE BACK: 'BRUSH WITH A BROWN EGG.' NO IDEA. EDDA WROTE ON EVERYTHING."
       }
     ]
   },
@@ -1636,6 +1641,29 @@
             "price": 6
           }
         ]
+      },
+      {
+        "q": "Edda's book",
+        "when": "eddas-book/bridget",
+        "until": "eddas-book/bake",
+        "a": "EDDA GAVE HER BOOK AWAY A PAGE AT A TIME, TO WHOEVER IT SUITED. MINE'S THE HONEY CAKE - THAT'S WHERE THE TRICK CAME FROM. NELL'S GOT ONE. HOLLIN, WAT, OLD LUDD. MAGS, I'D BET MY OVEN ON IT. BRING THEM BY AND WE'LL HAVE HER BOOK BACK TOGETHER."
+      },
+      {
+        "q": "The backs of the pages",
+        "when": ["eddas-book/nell", "eddas-book/hollin", "eddas-book/wat", "eddas-book/ludd", "eddas-book/mags"],
+        "until": "eddas-book/bake",
+        "a": "HONEY IN WITH THE APPLES. PASTRY RUBBED COLD. LATTICE IT LIKE THE GARDEN GATE. BRUSH WITH A BROWN EGG. OVEN AS HOT AS WAT'S FORGE. OH, EDDA. HER APPLE PIE. SHE NEVER GAVE THAT ONE TO ANYBODY - SHE GAVE IT TO ALL OF US.\n\nFOUR GOOD APPLES OFF HER OWN TREES, DOWN MEADOW LANE. NOBODY MINDS IF YOU PICK THEM. BRING ME THOSE AND THE BOOK."
+      },
+      {
+        "q": "Edda's pie",
+        "when": "eddas-book",
+        "a": "EDDA'S APPLE PIE, STILL WARM. I'M NOT GIVING OUT THE RECIPE EITHER. IT'S ON A CARD OVER THE OVEN, AND I'M STANDING IN FRONT OF IT.",
+        "stores": [
+          {
+            "id": "eddas_pie",
+            "price": 30
+          }
+        ]
       }
     ]
   },
@@ -1695,6 +1723,11 @@
       {
         "q": "Iron",
         "a": "BRING ME ORE FROM THAT MINE ON LUMAR AND I'LL TELL YOU IF IT'S ANY GOOD. MOSTLY IT ISN'T. NOW AND THEN IT SINGS."
+      },
+      {
+        "q": "Edda's page",
+        "when": "eddas-book/wat",
+        "a": "KEEP IT IN THE FORGE. THAT'S WHY IT'S SCORCHED. A HOT BRAN MASH FOR PARSNIP, HER OLD PLOUGH HORSE, ON A COLD NIGHT. I SHOD HIM TO THE END. GOOD HORSE.\n\nON THE BACK IT SAYS 'OVEN AS HOT AS WAT'S FORGE.' CHEEK."
       }
     ]
   },
@@ -1722,6 +1755,11 @@
       {
         "q": "The stream",
         "a": "COMES DOWN FROM THE HILLS COLD AS A COIN. THERE'S PERCH IN THE FARM POND THAT CAME DOWN IT AS EGGS. DON'T TELL NELL I SAID SO, SHE THINKS THEY'RE HERS."
+      },
+      {
+        "q": "Edda's page",
+        "when": "eddas-book/ludd",
+        "a": "EH? OH - THE FIRST LOAF. FROM HER FIRST GRAIN, EVERY SUMMER. I'VE BAKED IT EVERY YEAR SINCE AND IT'S NEVER AS GOOD. MIND THE FLOUR ON IT.\n\nON THE BACK, SOMETHING ABOUT PASTRY: 'RUB IT COLD. COLD HANDS, LUDD.' MY HANDS ARE ALWAYS COLD. IT'S THE STREAM."
       }
     ]
   },
@@ -1749,6 +1787,11 @@
       {
         "q": "The goat",
         "a": "NOBODY KNOWS WHOSE IT IS. IT TURNS UP, EATS SOMETHING IMPORTANT, AND LEAVES. WE PUT UP NOTICES. IT EATS THE NOTICES."
+      },
+      {
+        "q": "Edda's page",
+        "when": "eddas-book/nell",
+        "a": "NAN'S PAGE! EDDA GAVE IT HER, AND NAN GAVE IT ME WHEN I GOT THE STALL. THE POSY THAT KEEPS: CUT AT DAWN, WELL WATER, A PINCH OF SUGAR, AND TELL THEM THEY'RE LOVELY. THE LAST BIT'S THE IMPORTANT BIT.\n\nOH - ON THE BACK: 'LATTICE IT LIKE THE GARDEN GATE.' I ALWAYS THOUGHT THAT WAS ABOUT THE SWEET PEAS."
       }
     ]
   },
@@ -1798,11 +1841,17 @@
       },
       {
         "q": "Gossip",
-        "a": "PERCY'S SWEET ON BRIDGET AND THINKS NOBODY KNOWS. WAT KEEPS ONE OF NELL'S FLOWERS IN A JAR AND THINKS NOBODY KNOWS. EVERYBODY KNOWS EVERYTHING. THAT'S BRAMBLEFORD."
+        "a": "PERCY'S SWEET ON BRIDGET AND THINKS NOBODY KNOWS. WAT KEEPS ONE OF NELL'S FLOWERS IN A JAR AND THINKS NOBODY KNOWS. EVERYBODY KNOWS EVERYTHING. THAT'S BRAMBLEFORD.\n\nAND BRIDGET KEEPS WONDERING OUT LOUD WHAT BECAME OF OLD EDDA'S KITCHEN BOOK. ASK HER. SHE'S BEEN DYING FOR SOMEONE TO.",
+        "rumour": "eddas-book"
       },
       {
         "q": "The harvest supper",
         "a": "FIRST NIGHT OF AUTUMN, THE WHOLE VILLAGE IN HERE AND SPILLING OUT ONTO THE SQUARE. BRING SOMETHING YOU GREW. THE BEST PUMPKIN GETS HUNG OVER THE DOOR TILL IT FALLS ON SOMEBODY."
+      },
+      {
+        "q": "Edda's page",
+        "when": "eddas-book/mags",
+        "a": "THE SUPPER PAGE. EDDA WROTE IT FOR ME THE YEAR DAD DIED, SO I'D KNOW WHAT TO DO. TABLES OUT ON THE SQUARE, LANTERNS IN THE OAK, CIDER BEFORE THE SPEECHES. AND AT THE BOTTOM: 'BRING MY PIE. SEE THE BACKS.'\n\nI NEVER HAD THE BACKS, DID I? YOU DO. GO ON - TURN THEM OVER."
       }
     ]
   },

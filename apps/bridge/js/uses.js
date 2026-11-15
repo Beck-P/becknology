@@ -17,6 +17,7 @@
  *   the fair         the Harvest Fair's show (assets/festivals.json `entries`)
  *   trade            crated for a port's market, and where it's dearest (js/trade.js GOODS / HAUL / MARKET)
  *   the hall         a find that goes on show in your hall (js/trophies.js T); implants made of a trophy (js/implants.js)
+ *   quests           a quest you've begun or heard of that asks for it (assets/quests.json, a clue's `have`)
  *   what it does     eaten or drunk (its `effects`, a potion's `works`), a weapon, a tool, a plan, a part, a map
  * and, when none of that is true and it has a value, plainly: only worth selling (who pays best is the line above it,
  * BridgeStorage.worthLine). `orphans()` lists those — the to-do for whoever builds next.
@@ -41,7 +42,8 @@ var BridgeUses = (function () {
   // ---- the index: id → the facts about what it's for -------------------------------------------------------------
   function keyNow() {
     return [count(people()), has('BridgeBusiness') && BridgeBusiness.all ? BridgeBusiness.all().length : 0,
-            has('BridgeFestivals') && BridgeFestivals.all ? count(BridgeFestivals.all()) : 0, has('BridgeItems') ? count(BridgeItems.all()) : 0].join(':');
+            has('BridgeFestivals') && BridgeFestivals.all ? count(BridgeFestivals.all()) : 0, has('BridgeItems') ? count(BridgeItems.all()) : 0,
+            has('BridgeQuests') && BridgeQuests.defs ? count(BridgeQuests.defs()) : 0].join(':');
   }
   function index() {
     var k = keyNow();
@@ -94,12 +96,21 @@ var BridgeUses = (function () {
         var C = BridgeImplants.CATALOG;
         Object.keys(C).forEach(function (k2) { if (C[k2].item) add(C[k2].item, { k: 'implant', name: C[k2].name }); });
       }
+      if (has('BridgeQuests') && BridgeQuests.defs) {                // a quest that asks for it (a clue's `have`: Ithil's star, Edda's apples)
+        var QD = BridgeQuests.defs();
+        Object.keys(QD).forEach(function (qid) {
+          (QD[qid].clues || []).forEach(function (c) { Object.keys(c.have || {}).forEach(function (id) { add(id, { k: 'quest', q: qid, n: c.have[id], clue: c.id }); }); });
+        });
+      }
     } catch (e) { /* a module that's changed shape: the rest still count */ }
     return (idx = I);
   }
 
   // ---- in words ----------------------------------------------------------------------------------------------------
-  function first(p) { var n = p.name || ''; return n.split(/[ ,]/)[0] === 'The' ? n : n.split(' ')[0]; }
+  function first(p) {                                              // a first name; "Old Ludd", "Mr Pike", "Captain Desh" stay whole
+    var n = p.name || '', w = n.split(/[ ,]/)[0];
+    return w === 'The' ? n : /^(Old|Salt|Mother|Captain|Commodore|Inspector|Doc|Dr|Mr|Ms|Mrs|Lord|Lady|Sergeant|Master|Bosun|Cutter|Gull|Mama)$/.test(w) ? n.split(' ').slice(0, 2).join(' ') : w;
+  }
   function the(n) { return String(n || '').replace(/^The /, 'the '); }    // "the Glasshouse", mid-sentence
   function place(world) {
     if (!world) return '';
@@ -141,6 +152,12 @@ var BridgeUses = (function () {
       var rs = by.make.map(function (f) { var x = R[f.r]; return x && x.kind === 'make' && x.out ? nameOf(x.out[0]) : the(rname(f.r)); }).filter(function (n, i, a) { return a.indexOf(n) === i; });
       push('make', 9, '<b>Workshop:</b> goes into ' + esc(list(rs, 3)));
     }
+    (by.quest || []).forEach(function (f) {                             // wanted for a quest you haven't finished (not before you've heard of it)
+      var Q = has('BridgeQuests') ? BridgeQuests : null, d = Q && Q.def(f.q);
+      if (!d || Q.has(f.q) || Q.has(f.q + '/' + f.clue)) return;
+      if (!Q.progress(f.q).found && Q.rumours().indexOf(f.q) < 0) return;
+      push('quest', 10, '<b>A quest:</b> ' + esc(d.title) + ' wants ' + (f.n > 1 ? f.n : 'one'));
+    });
     if (by.brew) push('brew', 9, '<b>Brew it</b> with Mirelle: ' + esc(list(by.brew.map(function (f) { return nameOf(f.out); }), 3)));
     (by.makes || []).forEach(function (f) { push('makes', 9, '<b>Made into</b> ' + esc(nameOf(f.out)) + ' at ' + esc(f.where) + (f.n > 1 ? ' (' + f.n + ' at a time)' : '')); });
     (by.plant || []).forEach(function (f) { push('plant', 9, '<b>Plant it</b> on the farm: ' + esc(nameOf(f.out || f.crop)) + ' in ' + f.days + (f.days === 1 ? ' day' : ' days')); });

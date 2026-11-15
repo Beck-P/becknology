@@ -436,8 +436,8 @@ var BridgeInteractions = (function () {
       BridgePeople.find(BridgeWorld.getWorldId(), inter.label);
     if (person) { showConversation(person, inter); return; }
     // a clue with its own moment (quests.json `say`): that, in place of the thing's usual words
-    var moment = hits.filter(function (c) { return c.say; })[0];
-    if (moment && (inter.type === 'dialog' || inter.type === 'random_dialog')) { showDialog(inter.label, moment.say, inter); return; }
+    var moment = hits.filter(function (c) { return c.say; }).map(function (c) { return c.say; }).join('\n\n');   // (two found at once — the Admiral's cat and parrot home together — both told)
+    if (moment && (inter.type === 'dialog' || inter.type === 'random_dialog')) { showDialog(inter.label, moment, inter); return; }
     var biz = typeof BridgeBusiness !== 'undefined' && BridgeBusiness.find(BridgeWorld.getWorldId(), inter.label);
     if (biz) { showBusiness(biz, inter); return; }
     // sit, sleep, look out of the window (js/actions.js) instead of a text box

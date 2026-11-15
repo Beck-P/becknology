@@ -634,6 +634,15 @@ var BridgeItems = (function () {
     px(ctx, x, y, u, '#d89a50', [[3, 8, 10, 4]]); px(ctx, x, y, u, '#e8783a', [[4, 7, 8, 2]]); px(ctx, x, y, u, '#f0a050', [[5, 7, 3, 1]]);
     px(ctx, x, y, u, '#f4ecd8', [[7, 5, 2, 2]]); px(ctx, x, y, u, '#a86a30', [[3, 11, 10, 1]]);
   }
+  // Edda's apple pie (assets/quests.json eddas-book): a lattice top, golden, a little apple bubbling through
+  function eddaPieIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#2a1608', [[2, 7, 12, 6], [3, 6, 10, 1]]);
+    px(ctx, x, y, u, '#a8402a', [[3, 7, 10, 4]]);
+    px(ctx, x, y, u, '#e8b060', [[3, 7, 10, 1], [3, 9, 10, 1], [4, 7, 1, 4], [7, 7, 1, 4], [10, 7, 1, 4]]);
+    px(ctx, x, y, u, '#f8d890', [[5, 7, 1, 1], [8, 9, 1, 1], [11, 7, 1, 1]]);
+    px(ctx, x, y, u, '#c87a38', [[3, 11, 10, 1]]); px(ctx, x, y, u, '#50a040', [[7, 5, 2, 1]]);
+  }
   function cakeIcon(ctx, x, y, s) {
     var u = s / 16;
     px(ctx, x, y, u, '#2a1608', [[3, 6, 10, 8]]);
@@ -1634,6 +1643,8 @@ var BridgeItems = (function () {
                      stackable: true, draw: pieIcon, effects: { hp: 30, energy: 35 }, value: 9, onUse: consumableUse },
     ploughmans:    { id: 'ploughmans', name: 'Ploughman\'s Lunch', desc: 'The Hayloft\'s: crusty bread, a wedge of cheese, a pickled onion, an apple. The farmers swear by it.', type: 'food',
                      stackable: true, draw: ploughmansIcon, effects: { hp: 25, energy: 30 }, value: 7, onUse: consumableUse },
+    eddas_pie:     { id: 'eddas_pie', name: 'Edda\'s Apple Pie', desc: 'Baked from Edda\'s own recipe, written a line at a time across the backs of six others. Apples, honey, an egg wash, a hot oven and a lattice top. Bridget bakes them now.', type: 'food',
+                     stackable: true, draw: eddaPieIcon, effects: { hp: 40, energy: 45 }, value: 12, onUse: consumableUse },
     posy:          { id: 'posy', name: 'Posy', desc: 'A little bunch of flowers from Nell\'s stall on the square. Nobody minds being given one.', type: 'gift',
                      stackable: true, draw: posyIcon, value: 4 },
     lucky_horseshoe: { id: 'lucky_horseshoe', name: 'Lucky Horseshoe', desc: 'From Wat at the Anvil & Hoof, nail holes and all. Carried, the fish bite sooner.',

@@ -465,6 +465,106 @@
       "text": "Four colours, as I thought - and the Midnight stones guarding a fourth that nobody has ever drawn.\n\nI've added all of them to the chart, with your name in the corner where the cartographer usually signs. It's only fair. Come by the house and see it: the ink's barely dry.\n\nIlsa Venn"
     }
   },
+  "eddas-book": {
+    "title": "Edda's Book",
+    "where": "Verdance · Brambleford",
+    "reward": 200,
+    "start": "Edda kept a kitchen book, and gave it away a page at a time to the people of Brambleford. Bridget has one page. She'd love to see the rest together again.",
+    "rumour": "Mags at the Hayloft says Bridget keeps wondering aloud what became of old Edda's kitchen book.",
+    "begin": "bridget",
+    "done": "Six pages, six people, and on the backs of them, a line at a time, the one recipe Edda never gave anybody: her own apple pie. Bridget baked it the same afternoon. Half the village found a reason to walk past the Crusty Loaf.",
+    "keep": "eddas_pie",
+    "keepNote": "The first of Edda's pies in years. Bridget sells them now.",
+    "items": {
+      "book": {
+        "name": "Edda's Book",
+        "text": "Edda's kitchen pages, tied up in one of Bridget's ribbons. Each one a recipe in Edda's round hand, and on the back, something else. Bring them all back to Bridget at the Crusty Loaf.",
+        "to": "Bridget",
+        "icon": "book"
+      }
+    },
+    "clues": [
+      {
+        "id": "bridget",
+        "on": {
+          "world": "verdance-village",
+          "label": "BRIDGET"
+        },
+        "text": "Bridget's page is Edda's honey cake - and Edda's trick for it: wrap them in a cloth by the oven and they're always still warm. Edda gave the rest of her book away a page at a time. Bridget gave you a ribbon to tie them in.",
+        "get": "book",
+        "hint": "Bridget at the Crusty Loaf, on Brambleford's square, has a page of something old."
+      },
+      {
+        "id": "nell",
+        "after": "bridget",
+        "on": {
+          "world": "verdance-village",
+          "label": "NELL"
+        },
+        "text": "Nell's page came from her Nan, who had it from Edda: the posy that keeps. Cut at dawn, well water, a pinch of sugar, and tell them they're lovely.",
+        "hint": "Edda gave a page to someone who sells flowers on the square."
+      },
+      {
+        "id": "hollin",
+        "after": "bridget",
+        "on": {
+          "world": "verdance",
+          "label": "HOLLIN"
+        },
+        "text": "Hollin, Edda's neighbour for forty years, kept her page on the hens: names for every one, and talk to them, or they sulk and lay small.",
+        "hint": "Edda's neighbour on Meadow Lane was given a page about her hens."
+      },
+      {
+        "id": "wat",
+        "after": "bridget",
+        "on": {
+          "world": "verdance-village",
+          "label": "WAT"
+        },
+        "text": "Wat keeps his page in the forge, which is why it's scorched: a hot bran mash for Parsnip, Edda's old plough horse, on a cold night. He made Parsnip's last shoes.",
+        "hint": "Edda's old plough horse had a page of its own. Someone who shoes horses would have it."
+      },
+      {
+        "id": "ludd",
+        "after": "bridget",
+        "on": {
+          "world": "verdance-village",
+          "label": "OLD LUDD"
+        },
+        "text": "Old Ludd's page is the first loaf of the year, from the first grain, which Edda brought him every summer. It's floury. Everything in the mill is.",
+        "hint": "Edda brought her first grain every year to the miller in the village. He'll have her page on bread."
+      },
+      {
+        "id": "mags",
+        "after": "bridget",
+        "on": {
+          "world": "verdance-village",
+          "label": "MAGS"
+        },
+        "text": "Mags has the page Edda wrote for the harvest supper. It says only: BRING MY PIE. SEE THE BACKS. Turn the pages over and there it is, a line on each: Edda's own apple pie.",
+        "hint": "Edda never missed the harvest supper. Whoever keeps the Hayloft has that page."
+      },
+      {
+        "id": "bake",
+        "after": "*",
+        "give": "book",
+        "have": {
+          "apple": 4
+        },
+        "take": true,
+        "on": {
+          "world": "verdance-village",
+          "label": "BRIDGET"
+        },
+        "text": "You brought Bridget the whole book and four apples off Edda's own trees. She read the backs twice, said \"Oh, Edda,\" and lit the oven as hot as Wat's forge.",
+        "hint": "The pie wants four apples from Edda's own trees - the orchard on the farm down Meadow Lane, free to pick. Then the book and the apples to Bridget."
+      }
+    ],
+    "letter": {
+      "from": "bridget",
+      "text": "Dear farmer,\n\nI've copied Edda's pie out on a card and pinned it over the oven, and I've given every page back to whoever had it. That felt right. Ludd says his loaf page is going under his pillow. Wat says nothing, but he's framed his.\n\nThe pies sell out by ten. I keep one back for you. It's always still warm.\n\nBridget"
+    }
+  },
   "wren": {
     "title": "The Wren",
     "where": "Enigma Station",
