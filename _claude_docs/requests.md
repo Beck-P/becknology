@@ -4,6 +4,21 @@ Everything asked for, so nothing slips. Newest batch first. Status: **done** (li
 now — a branch or a render queue), **open** (not started), **discuss** (needs a decision with Beck). When something is
 only partly done, the rest stays here as open.
 
+## November 15 (deeper, not wider: "it's kind of wide but not very deep")
+Beck, after the what-next brainstorm: "focus on making the worlds denser instead of wider… it's not super clear on what
+to actually do with everything", and one session to orchestrate it with agents working in parallel (each on its own
+branch, merged and shipped when its tests pass).
+| Ask | Status | Where / notes |
+|---|---|---|
+| A tutorial and story when you load in, "making everything a lot easier" (the guided first hour, wanted now) | in progress | One character walks a new pilot through a first loop (fish → sell → buy → sail), then hands on to the journal's Next up. |
+| Clear what to do with everything; "a lot easier" | in progress | A map of the dead ends first (things with no use, places with no reason to go, people with nothing to offer), then fixes world by world. |
+| Every world deeper | in progress | Built from that map: quests, jobs, uses for what you find, reasons to come back — out of the systems already there, no new planets. |
+| Worlds more cohesive: nothing random in the way, nothing that looks off — Hoarfell named (heard as "Porsche" in the voice note; to confirm) | in progress | A look-over of every place in the running game, by day and night; Hoarfell first, the other planets with the same method after. |
+| Prettier set pieces: "the train ride… the skyscape… make them look really cool" | in progress | Arcadia's Loop and its skyline, Hoarfell's mountain railway and its sky; the other skies after. |
+| Finish the maps that aren't finished | in progress | Sylvara's closed places first (the Boughs, the tavern, the falls and their cave, Mirror Lake, the Deepwood); then Verdance's café, dairy and makers as rooms; the interiors still in the old finish (backlog below). |
+| The people who run your empire for you (captains, staff, smiths, hands) "just work well"; all of it easy to use | in progress | Every flow played through as a player would, bugs fixed, the clumsy steps smoothed, *Needs you* complete. No new systems (chunk 6 waits). |
+| From the brainstorm, not yet picked: the main story to its ending at the Singularity; things for two (photos and a scrapbook, a records board, quests that need both); the festival calendar; the AI characters knowing all seven worlds | open | Beck to pick. The story's seeds are in `assets/quests.json` and `api/_personas.json`. |
+
 ## October 17 (the new look: "toy… not HD… with soft light", the normal faces, Stardew portraits — into the game)
 Beck's pick from Look Book 2, and: "make it a goal of implementing all of these changes and updating everything… start
 with updating the engine and all the descriptions and instructions… so all the new places… adopt this… then we can work
