@@ -1772,6 +1772,11 @@ var BridgeSloop = (function () {
     if (typeof BridgeSea !== 'undefined' && BridgeSea.setSeaCycles) BridgeSea.setSeaCycles(false);
     if (!running) return;
     raceQuit(landed ? 'ashore' : 'gone');                            // ashore before the line: out of it
+    // a deed (the first hour): out on the water a while and in again - tied up anywhere, or put back where you started
+    if (dest && (landed || dest === from) && performance.now() - began > 20000 && typeof BridgeQuests !== 'undefined' && BridgeQuests.did) {
+      var sailedTo = dest;
+      setTimeout(function () { BridgeQuests.did('sail', { world: sailedTo }); }, 2500);
+    }
     if (crewOf && net()) net().send('sail-end', { dest: dest || from, landed: !!landed }, crewOf.id);
     crewOf = null; captainOf = null; mirror = null; seaPeers = {};
     running = false;

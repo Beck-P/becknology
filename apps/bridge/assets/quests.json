@@ -1,4 +1,74 @@
 {
+  "first-hour": {
+    "title": "Learning the Ropes",
+    "where": "Lumar \u00b7 Diggen's Point",
+    "reward": 40,
+    "invite": true,
+    "welcome": "a letter in the rack on the bridge",
+    "skippable": true,
+    "aside": "Ask Bess Tolliver on Lumar, or press Track in the journal, to pick it up again.",
+    "start": "Bess Tolliver, harbourmistress of Diggen's Point, has a little boat waiting for you - the Gull - and she won't let you take her out until you've learned the ropes.",
+    "rumour": "A letter in the rack on the bridge: Bess Tolliver, harbourmistress on Lumar, has a little boat waiting for a new pilot.",
+    "begin": "bess",
+    "done": "You caught it, sold it, spent the coins, sailed the Gull out and back and found your own way home. Bess says that's all there is to it. She's fibbing, and she knows it.",
+    "keep": "gull_pennant",
+    "keepNote": "Bess tucked her gull pennant into your pack as you left.",
+    "next": "ship-mark",
+    "nextFrom": "Bess Tolliver",
+    "clues": [
+      {
+        "id": "bess",
+        "on": {
+          "world": "lumar",
+          "label": "HARBOURMASTER"
+        },
+        "text": "Bess Tolliver keeps the pier where the shuttle sets down. The Gull is yours, she says - once you've caught your own supper.",
+        "hint": "Bess Tolliver meets new pilots on the pier at Diggen's Point, where the shuttle lands. The shuttle's in the hangar, through the door on the bridge's left."
+      },
+      {
+        "id": "fish",
+        "deed": "catch",
+        "after": "bess",
+        "text": "You caught your first fish off Bess's pier. \"That's supper,\" she said. \"Now make it pay.\"",
+        "toast": "Your first fish! \"That's supper. Now make it pay.\"",
+        "hint": "Catch a fish off Bess's pier: stand at the edge by the water, press E, then hold Space to cast.",
+        "hintTouch": "Catch a fish off Bess's pier: stand at the edge by the water, tap A, then hold to cast."
+      },
+      {
+        "id": "sell",
+        "deed": "sell",
+        "after": "fish",
+        "text": "You sold your catch. Bess buys fish for the salting sheds, and the fish stall up in the square takes anything worth a coin.",
+        "toast": "Sold! \"Coins are for spending. Never go to sea hungry.\"",
+        "hint": "Sell your fish: Bess buys for the salting sheds (ask her), or the fish stall up the trail in the square."
+      },
+      {
+        "id": "buy",
+        "deed": "buy",
+        "after": "sell",
+        "text": "You spent your first coins. A sailor who goes out hungry, Bess says, comes back sorry.",
+        "toast": "Bought! \"Right. Now take the Gull out.\"",
+        "hint": "Buy something for the trip: Bess keeps a tin of ship's biscuit (ask her), and the bakery up in the square sells bread."
+      },
+      {
+        "id": "sail",
+        "deed": "sail",
+        "after": "buy",
+        "text": "You took the Gull out past the harbour mouth and brought her in again, and neither of you sank.",
+        "toast": "Out and back! \"She likes you. Now go on home.\"",
+        "hint": "Take the Gull out: Go sailing at the end of the pier, run out past the harbour mouth, then bring her back in alongside.",
+        "hintTouch": "Take the Gull out: tap Go sailing at the end of the pier, run out past the harbour mouth, then bring her back in alongside."
+      },
+      {
+        "id": "aboard",
+        "deed": "aboard",
+        "after": "sail",
+        "text": "You found your own way back up to the Wayfarer.",
+        "hint": "Find your way back up to your ship: the shuttle on the beach, or Esc (Return to ship) from anywhere.",
+        "hintTouch": "Find your way back up to your ship: the shuttle on the beach, or Return to ship, top left, from anywhere."
+      }
+    ]
+  },
   "ship-mark": {
     "title": "The Ship Mark",
     "where": "Lumar",

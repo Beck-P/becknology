@@ -64,37 +64,137 @@ var BridgeQuests = (function () {
     Object.keys(defs).forEach(function (id) {
       var q = defs[id];
       if (q.needs && !was[q.needs]) return;        // a sequel waits for the quest before it
+      if (q.invite && !state[id] && (!meta.offer[id] || meta.aside[id])) return;   // one you're asked into (the first hour): not for everyone who passes, nor once you've said not now
       q.clues.forEach(function (c) {
+        if (!c.on) return;                         // (a deed: done, not found - did() below)
         var wm = c.on.world, wid = inter.home ? inter.home.world : worldId;   // someone visiting counts as at home (js/routines.js)
         if (!(wm === wid || (wm.slice(-1) === '*' && wid.indexOf(wm.slice(0, -1)) === 0)) || c.on.label !== inter.label) return;   // 'lumar-rose-mine-*': any floor
         if (!ready(id, q, c)) return;
-        var s = state[id] || (state[id] = { clues: {}, started: Date.now() });
-        if (s.clues[c.id]) return;
-        var fresh = !Object.keys(s.clues).length;
-        s.clues[c.id] = Date.now();
-        hits.push(Object.assign({ quest: id }, c));   // (with its quest: js/keyitems.js finds the thing it gets or gives)
-        var p = progress(id);
-        if (p.found === p.total && !s.done) {
-          s.done = Date.now();
-          toast('Quest complete', q.title, '+' + q.reward + ' coins');
-          if (typeof BridgeAudio !== 'undefined') BridgeAudio.sfx('quest');
-          if (typeof BridgeProgression !== 'undefined' && BridgeProgression.recordAchievement) {
-            BridgeProgression.recordAchievement('quest_' + id, q.reward, { source: 'quest' });
-          }
-        } else if (fresh) {
-          toast('New quest', q.title, q.start);
-          if (typeof BridgeAudio !== 'undefined') BridgeAudio.sfx('clue');
-        } else {
-          toast('Clue found', q.title, p.found + ' of ' + p.total);
-          if (typeof BridgeAudio !== 'undefined') BridgeAudio.sfx('clue');
-        }
-        save();
-        if (shown()) render();
+        if (meta.aside[id] && state[id]) delete meta.aside[id], saveMeta();   // went back to it: it's picked up again
+        findClue(id, c, hits);
       });
     });
-    if (hits.length) { trSig = ''; refreshTracker(); }
+    if (hits.length) { trSig = null; refreshTracker(); }
     return hits;
   }
+  // a clue found: its toast, the quest begun or finished (its reward, a keepsake, the rumour it hands on to)
+  function findClue(id, c, hits) {
+    var q = defs[id], s = state[id] || (state[id] = { clues: {}, started: Date.now() });
+    if (s.clues[c.id]) return false;
+    var fresh = !Object.keys(s.clues).length;
+    s.clues[c.id] = Date.now();
+    if (hits) hits.push(Object.assign({ quest: id }, c));   // (with its quest: js/keyitems.js finds the thing it gets or gives)
+    var p = progress(id), au = typeof BridgeAudio !== 'undefined' ? BridgeAudio : null;
+    if (p.found === p.total && !s.done) {
+      s.done = Date.now();
+      toast('Quest complete', q.title, '+' + q.reward + ' coins');
+      if (au) au.sfx('quest');
+      if (typeof BridgeProgression !== 'undefined' && BridgeProgression.recordAchievement) {
+        BridgeProgression.recordAchievement('quest_' + id, q.reward, { source: 'quest' });
+      }
+      if (q.keep && typeof BridgeInventory !== 'undefined' && BridgeInventory.give) {   // something to keep (the first hour's pennant)
+        setTimeout(function () {
+          BridgeInventory.give(q.keep, 1);
+          var it = typeof BridgeItems !== 'undefined' && BridgeItems.get(q.keep);
+          toast('Keepsake', it ? it.name : q.keep, q.keepNote || '');
+          if (au) au.sfx('itemget');
+        }, 2600);
+      }
+      if (q.next) setTimeout(function () { hear(q.next, q.nextFrom || ''); }, 4800);    // and what's next: a rumour, after the toast
+    } else if (fresh) {
+      toast('New quest', q.title, q.start);
+      if (au) au.sfx('clue');
+    } else {
+      toast(c.deed ? q.title + ' · ' + p.found + ' / ' + p.total : 'Clue found', c.deed && c.toast ? c.toast : q.title, c.deed ? '' : p.found + ' of ' + p.total);
+      if (au) au.sfx('clue');
+    }
+    save();
+    if (shown()) render();
+    return true;
+  }
+
+  // ---- deeds: clues found by doing something, not by using a thing (the first hour: catch a fish, sell it, buy...) ----
+  // A clue with `deed` (and no `on`) is found when the game reports that deed — `did('catch')` from js/fishing.js,
+  // 'sell' and 'buy' from the sell sheet, the vendors and any purchase, 'sail' from js/sloop.js, 'aboard' and
+  // 'arrive' (with the place) from js/world.js. Only a quest already under way and not set aside counts them, and only
+  // a clue that's ready (its `after`), so a deed done before its step doesn't skip it.
+  function did(deed, info) {
+    var hits = [];
+    if (!defs) return hits;
+    Object.keys(defs).forEach(function (id) {
+      var q = defs[id], s = state[id];
+      if (!s || s.done || meta.aside[id]) return;
+      q.clues.forEach(function (c) {
+        if (c.deed !== deed || s.clues[c.id] || !ready(id, q, c)) return;
+        if (c.in && [].concat(c.in).indexOf(info && info.world) < 0) return;
+        findClue(id, c, hits);
+      });
+    });
+    if (hits.length) { trSig = null; refreshTracker(); }
+    return hits;
+  }
+  // purchases and sales anywhere, as the coins move (anything that spends through BridgeProgression): a sale is
+  // 'sell'; a spend that buys something (not a game, a bet, a fare, a tip or a gift) is 'buy'
+  var NOT_BUYING = /casino|cards|dice|pachinko|fortune|busker|chapel|shrine|gift|pirates|transit|touring|theatre|club|race|together|crew|legacy|rest:/;
+  function coinsMoved(e) {
+    var r = String(e && e.reason || '');
+    if (/^sell:/.test(r) && e.delta > 0) did('sell');
+    else if (e && e.delta < 0 && (/^purchase:/.test(r) || (/^wager:/.test(r) && !NOT_BUYING.test(r)))) did('buy');
+  }
+  if (typeof BridgeProgression !== 'undefined' && BridgeProgression.onCoinChange) BridgeProgression.onCoinChange(coinsMoved);
+
+  // ---- quests you're asked into, and setting one aside -------------------------------------------------------------
+  // A quest with `invite` begins only for a pilot who's been offered it (meta.offer): a new pilot is, as they sign up
+  // (welcome(), below); anyone can ask for it from a person whose topic has `begin` (js/interactions.js). A quest with
+  // `skippable` can be set aside from the tracker or the journal (meta.aside) — the tracker and Next up leave it be and
+  // its deeds stop counting — and picked up again with Track, or by going back to whoever started it.
+  function offer(id, who) {
+    if (!defs || !defs[id] || (state[id] && state[id].done)) return false;
+    meta.offer[id] = Date.now(); delete meta.aside[id]; saveMeta();
+    if (!state[id]) hear(id, who);
+    trSig = null; refreshTracker(); if (shown()) render();
+    return true;
+  }
+  function begin(id, who) {                          // asked for it: offered, and its first clue found here and now
+    if (!defs || !defs[id] || (state[id] && state[id].done)) return false;
+    meta.offer[id] = meta.offer[id] || Date.now(); delete meta.aside[id];
+    if (meta.heard[id] == null) meta.heard[id] = { t: Date.now(), who: who || '' };
+    meta.track = id; meta.min = false; saveMeta();
+    var b = beginOf(id), hits = [];
+    if (b && !(state[id] && state[id].clues[b.id])) findClue(id, b, hits);
+    trSig = null; refreshTracker(); if (shown()) render();
+    return true;
+  }
+  function setAside(id, on) {
+    if (!defs || !defs[id]) return;
+    if (on) { meta.aside[id] = Date.now(); if (meta.track === id) meta.track = null; }
+    else { delete meta.aside[id]; meta.track = id; meta.min = false; }
+    saveMeta(); trSig = null; refreshTracker(); if (shown()) render();
+    if (on) toast('Set aside', defs[id].title, defs[id].aside || 'Track it in the journal to pick it up again.', false);
+  }
+  // a pilot who has just signed up (js/identity.js leaves their id in sessionStorage, so a reload by js/cloud.js
+  // doesn't lose it): their ship parked over Lumar, where the title showed her, and the first hour offered
+  var NEWKEY = 'bridge_new_pilot';
+  function welcome() {
+    var id = null;
+    try { id = sessionStorage.getItem(NEWKEY); } catch (e) { id = null; }
+    var pl = typeof BridgeState !== 'undefined' && BridgeState.getPilot ? BridgeState.getPilot() : null;
+    if (!id || !defs || !pl || pl.id !== id) return;
+    try { sessionStorage.removeItem(NEWKEY); } catch (e) { /* */ }
+    try { if (!localStorage.getItem('bridge_ship_location')) localStorage.setItem('bridge_ship_location', 'lumar'); } catch (e) { /* */ }
+    setTimeout(function () {                         // (once the bridge's welcome banner has had its moment)
+      Object.keys(defs).forEach(function (q) { if (defs[q].invite && defs[q].welcome && !state[q] && !meta.offer[q]) offer(q, defs[q].welcome); });
+    }, 3500);
+  }
+  var welcoming = false;
+  setInterval(function () {
+    var pend = null;
+    try { pend = sessionStorage.getItem(NEWKEY); } catch (e) { pend = null; }
+    if (!pend || !defs || welcoming) return;
+    welcoming = true;
+    var go = function () { welcoming = false; welcome(); };
+    if (typeof BridgeCloud !== 'undefined' && BridgeCloud.ready) BridgeCloud.ready(go); else go();
+  }, 700);
 
   // can this clue be found yet? Only the things that really have to come first: what it gives must be in hand,
   // and an `after` (a list, or '*': every other clue in the quest)
@@ -120,6 +220,8 @@ var BridgeQuests = (function () {
   var META = 'bridge_quest_meta', meta = {};
   try { meta = JSON.parse(localStorage.getItem(META) || '{}') || {}; } catch (e) { meta = {}; }
   if (!meta.heard) meta.heard = {};
+  if (!meta.offer) meta.offer = {};                 // quests you've been asked into (`invite`)
+  if (!meta.aside) meta.aside = {};                 // quests you've set aside (`skippable`)
   function saveMeta() { try { localStorage.setItem(META, JSON.stringify(meta)); } catch (e) { /* private mode */ } }
   function unlocked(id) { var q = defs && defs[id]; return !!q && (!q.needs || !!(state[q.needs] && state[q.needs].done)); }
   function beginOf(id) {
@@ -131,9 +233,9 @@ var BridgeQuests = (function () {
   function startsHere(wid) {
     var out = {};
     Object.keys(defs || {}).forEach(function (id) {
-      if (state[id] || !unlocked(id)) return;
+      if (state[id] || !unlocked(id) || meta.aside[id] || (defs[id].invite && !meta.offer[id])) return;
       var c = beginOf(id);
-      if (c && inWorld(c.on.world, wid)) out[c.on.label] = id;
+      if (c && c.on && inWorld(c.on.world, wid)) out[c.on.label] = id;
     });
     return out;
   }
@@ -161,35 +263,39 @@ var BridgeQuests = (function () {
     var q = defs && defs[id];
     if (!q) return [];
     var wid = typeof BridgeWorld !== 'undefined' && BridgeWorld.getWorldId ? BridgeWorld.getWorldId() : '';
-    if (!state[id]) { var b = beginOf(id); return b && b.hint ? [b.hint] : []; }
+    if (!state[id]) { var b = beginOf(id); return b && b.hint ? [hintOf(b)] : []; }
     if (state[id].done) return [];
     var got = state[id].clues || {};
     var open = q.clues.filter(function (c) { return !got[c.id] && ready(id, q, c) && c.hint; });
-    open = open.filter(function (c) { return inWorld(c.on.world, wid); }).concat(open.filter(function (c) { return !inWorld(c.on.world, wid); }));
-    return open.slice(0, n || 99).map(function (c) { return c.hint; });
+    var here = function (c) { return !c.on || inWorld(c.on.world, wid); };      // (a deed can be done anywhere)
+    open = open.filter(here).concat(open.filter(function (c) { return !here(c); }));
+    return open.slice(0, n || 99).map(hintOf);
   }
+  // a lead in the words for how you're playing: `hintTouch` on a phone or tablet, where keys would mean nothing
+  function hintOf(c) { return document.documentElement.classList.contains('touch') && c.hintTouch ? c.hintTouch : c.hint; }
   // the quest the tracker follows: the one you chose, or the one you last moved on, or the newest rumour
   function tracked() {
     var t = meta.track;
     if (t && defs && defs[t] && !(state[t] && state[t].done) && (state[t] || meta.heard[t])) return t;
-    var going = Object.keys(defs || {}).filter(function (id) { return state[id] && !state[id].done; })
+    var going = Object.keys(defs || {}).filter(function (id) { return state[id] && !state[id].done && !meta.aside[id]; })
       .sort(function (a, b) { return lastFound(b) - lastFound(a); });
-    return going[0] || rumours()[0] || null;
+    return going[0] || rumours().filter(function (id) { return !meta.aside[id]; })[0] || null;
   }
   function track(id) {
     meta.track = id || null;
-    if (id) meta.min = false;
+    if (id) { meta.min = false; delete meta.aside[id]; }
     saveMeta(); refreshTracker(); if (shown()) render();
   }
 
   // ---- the tracker: the quest you're following, under the coins ------------------------------------------------------
-  var trEl = null, trSig = '';
+  var trEl = null, trSig = null;
   function trackerHTML(id) {
     var q = defs[id], begun = !!state[id], p = begun ? progress(id) : null;
     var carry = typeof BridgeKeyItems !== 'undefined' ? BridgeKeyItems.carried(id) : [];
     var ls = leads(id, 2);
     return '<div class="qtr-head"><span class="qtr-kicker">' + (begun ? 'Quest' : 'Rumour') + '</span>' +
         (p ? '<span class="qtr-n">' + p.found + ' / ' + p.total + '</span>' : '') +
+        (q.skippable ? '<button type="button" class="qtr-skip" title="Set it aside - pick it up again from the journal">Not now</button>' : '') +
         '<button type="button" class="qtr-min" title="' + (meta.min ? 'Show' : 'Hide') + ' the details">' + (meta.min ? '+' : '\u2013') + '</button></div>' +
       '<button type="button" class="qtr-title" title="Open the journal">' + esc(q.title) + '</button>' +
       (meta.min ? '' :
@@ -211,7 +317,8 @@ var BridgeQuests = (function () {
       document.body.appendChild(trEl);
       trEl.addEventListener('click', function (e) {
         e.stopPropagation();
-        if (e.target.closest('.qtr-min')) { meta.min = !meta.min; saveMeta(); trSig = ''; refreshTracker(); return; }
+        if (e.target.closest('.qtr-min')) { meta.min = !meta.min; saveMeta(); trSig = null; refreshTracker(); return; }
+        if (e.target.closest('.qtr-skip')) { setAside(trEl.dataset.q, true); return; }
         if (e.target.closest('.qtr-title') && typeof BridgeMenu !== 'undefined') BridgeMenu.show('journal');
       });
     }
@@ -250,6 +357,10 @@ var BridgeQuests = (function () {
   var seen = {};
   try { seen = JSON.parse(localStorage.getItem('bridge_log_seen') || '{}') || {}; } catch (e) { seen = {}; }
   function arrived(worldId, name) {
+    if (worldId && defs) {                             // deeds: somewhere reached (the first hour: back up to the ship)
+      did('arrive', { world: worldId });
+      if (typeof BridgeShip !== 'undefined' && BridgeShip.isShipWorld && BridgeShip.isShipWorld(worldId)) did('aboard', { world: worldId });
+    }
     if (!worldId || seen[worldId]) return;
     seen[worldId] = Date.now();
     try { localStorage.setItem('bridge_log_seen', JSON.stringify(seen)); } catch (e) { /* private mode */ }
@@ -264,7 +375,7 @@ var BridgeQuests = (function () {
       document.body.appendChild(toastEl);
     }
     toastEl.innerHTML = '<div class="qt-kicker">' + esc(kicker) + '</div><div class="qt-title">' + esc(title) + '</div>' +
-      (sub ? '<div class="qt-sub">' + esc(sub) + '</div>' : '') + (hint === false ? '' : '<div class="qt-hint"><span class="ip-key">J</span> Journal</div>');
+      (sub ? '<div class="qt-sub">' + esc(sub) + '</div>' : '') + (hint === false ? '' : '<div class="qt-hint">' + (document.documentElement.classList.contains('touch') ? 'In your journal: Menu, top left' : '<span class="ip-key">J</span> Journal') + '</div>');   // (no J key on a phone)
     toastEl.classList.remove('visible');
     void toastEl.offsetWidth;
     toastEl.classList.add('visible');
@@ -290,7 +401,7 @@ var BridgeQuests = (function () {
   // where a quest's missing clues are: the places you know by name, the rest as somewhere on an island or a world
   function whereNext(id) {
     var q = defs[id], s = state[id] || { clues: {} }, by = {}, order = [];
-    var left = q.clues.filter(function (c) { return !s.clues[c.id]; });
+    var left = q.clues.filter(function (c) { return !s.clues[c.id] && c.on; });     // (deeds aren't anywhere)
     left = left.filter(function (c) { return ready(id, q, c); }).concat(left.filter(function (c) { return !ready(id, q, c); }));   // what can be found now first
     left.forEach(function (c) {
       var w = c.on.world.slice(-1) === '*' ? c.on.world.slice(0, -2) : c.on.world;
@@ -315,7 +426,7 @@ var BridgeQuests = (function () {
   // what to do next: active quests first, then things waiting for you, then where to look round here
   function nextUp() {
     var out = [], wid = typeof BridgeWorld !== 'undefined' && BridgeWorld.getWorldId ? BridgeWorld.getWorldId() : '', m = M();
-    var active = Object.keys(defs || {}).filter(function (id) { return state[id] && !state[id].done; })
+    var active = Object.keys(defs || {}).filter(function (id) { return state[id] && !state[id].done && !meta.aside[id]; })
       .sort(function (a, b) { return lastFound(b) - lastFound(a); });
     if (typeof BridgeKeyItems !== 'undefined') BridgeKeyItems.carried().forEach(function (it) {   // something to hand over: that first
       out.push({ tag: 'Carrying', title: it.name, text: it.to ? 'Give it to ' + it.to + '.' : '' });
@@ -324,9 +435,9 @@ var BridgeQuests = (function () {
       var p = progress(id), w = whereNext(id)[0], l = leads(id, 1)[0];
       out.push({ tag: 'Quest', title: defs[id].title + ' · ' + p.found + '/' + p.total, text: l || (w ? 'Next, look ' + (w.known ? 'in ' : '') + w.text + '.' : ''), world: w && w.known ? w.world : null });
     });
-    if (!active.length) rumours().slice(0, 1).forEach(function (id) {               // nothing under way: the newest rumour
+    if (!active.length) rumours().filter(function (id) { return !meta.aside[id]; }).slice(0, 1).forEach(function (id) {               // nothing under way: the newest rumour
       var b = beginOf(id);
-      out.push({ tag: 'Rumour', title: defs[id].title, text: leads(id, 1)[0] || defs[id].rumour || '', world: beenTo(b.on.world) ? b.on.world.replace(/-\*$/, '') : null });
+      out.push({ tag: 'Rumour', title: defs[id].title, text: leads(id, 1)[0] || defs[id].rumour || '', world: b.on && beenTo(b.on.world) ? b.on.world.replace(/-\*$/, '') : null });
     });
     if (typeof BridgeBusiness !== 'undefined') BridgeBusiness.summary().forEach(function (b) {
       if (b.pending > 0) out.push({ tag: 'Takings', title: b.pending + ' coins waiting', text: 'at ' + b.name + '.' });
@@ -360,7 +471,7 @@ var BridgeQuests = (function () {
     }
     if (m && m.unseenSystems) {
       var us = m.unseenSystems();
-      if (us && out.length < 5) out.push({ tag: 'Voyage', title: us + (us === 1 ? ' world' : ' worlds') + ' you\'ve never set foot on', text: 'The helm on the Wayfarer\'s bridge jumps the ship. The shuttle takes you down.' });
+      if (us && out.length < 5) out.push({ tag: 'Voyage', title: us + (us === 1 ? ' world' : ' worlds') + ' you\'ve never set foot on', text: 'The helm on the Wayfarer\'s bridge jumps the ship. The shuttle in the hangar (the door on the bridge\'s left) takes you down.' });
     }
     if (logged.length < 6) {
       var tch = document.documentElement.classList.contains('touch');
@@ -375,7 +486,9 @@ var BridgeQuests = (function () {
     if (!page) return;
     var ids = Object.keys(defs || {}).filter(function (id) { return state[id]; }), tr = tracked();
     function trackBtn(id) {
-      return tr === id ? '<span class="jn-tracking">Tracking</span>' : '<button type="button" class="gm-btn gm-btn-sm jn-track" data-q="' + esc(id) + '">Track</button>';
+      if (meta.aside[id]) return '<button type="button" class="gm-btn gm-btn-sm jn-track" data-q="' + esc(id) + '">Pick it up</button>';   // set aside: back to it
+      return (tr === id ? '<span class="jn-tracking">Tracking</span>' : '<button type="button" class="gm-btn gm-btn-sm jn-track" data-q="' + esc(id) + '">Track</button>') +
+        (defs[id].skippable ? '<button type="button" class="gm-btn gm-btn-sm jn-aside" data-q="' + esc(id) + '">Not now</button>' : '');
     }
     ids.sort(function (a, b) { return (!!state[a].done - !!state[b].done) || (lastFound(b) - lastFound(a)); });
     var left = '', right = '';
@@ -430,6 +543,9 @@ var BridgeQuests = (function () {
     });
     page.querySelectorAll('.jn-track').forEach(function (b) {
       b.addEventListener('click', function (e) { e.stopPropagation(); track(b.getAttribute('data-q')); });
+    });
+    page.querySelectorAll('.jn-aside').forEach(function (b) {
+      b.addEventListener('click', function (e) { e.stopPropagation(); setAside(b.getAttribute('data-q'), true); });
     });
     var more = page.querySelector('.jn-more');
     if (more) more.addEventListener('click', function (e) { e.stopPropagation(); logAll = !logAll; render(); });
@@ -541,7 +657,7 @@ var BridgeQuests = (function () {
     return Object.keys(defs || {}).map(function (id) {
       var q = defs[id], p = progress(id);
       return { id: id, title: q.title, started: !!state[id], done: p.done, found: p.found, total: p.total,
-               worlds: q.clues.map(function (c) { return c.on.world; }) };
+               worlds: q.clues.filter(function (c) { return c.on; }).map(function (c) { return c.on.world; }) };
     });
   }
 
@@ -564,6 +680,7 @@ var BridgeQuests = (function () {
            found: found, finished: finished, has: has, defs: function () { return defs || {}; }, def: function (id) { return defs ? defs[id] || null : null; },
            progress: function (id) { return defs && defs[id] ? progress(id) : null; },
            startsHere: function (wid) { return defs ? startsHere(wid) : {}; }, hear: hear, rumours: function () { return defs ? rumours() : []; },
-           leads: leads, tracked: function () { return defs ? tracked() : null; }, track: track, refreshTracker: function () { trSig = ''; refreshTracker(); },
+           leads: leads, tracked: function () { return defs ? tracked() : null; }, track: track,
+           did: did, offer: offer, begin: begin, setAside: setAside, aside: function (id) { return !!meta.aside[id]; }, offered: function (id) { return !!meta.offer[id]; }, refreshTracker: function () { trSig = null; refreshTracker(); },
            reset: function () { state = {}; save(); } };
 })();

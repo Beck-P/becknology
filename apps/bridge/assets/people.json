@@ -1820,9 +1820,91 @@
     "again": "BACK AGAIN. THE GULL'S WHERE YOU LEFT HER - SHE ALWAYS IS.",
     "topics": [
       {
+        "q": "Show me the ropes?",
+        "until": "first-hour/bess",
+        "begin": "first-hour",
+        "a": "NEW AT THIS? EVERYONE IS ONCE. THERE'S A LITTLE SLOOP AT THE END OF MY PIER CALLED THE GULL, AND I'LL SHOW YOU HOW SHE WORKS. FIRST THING: CATCH YOUR SUPPER. EITHER SIDE OF THE PIER, RIGHT AT THE WATER. HOLD TO CAST, LET GO AT THE TOP OF THE SWING."
+      },
+      {
+        "q": "A boat for me?",
+        "when": "first-hour/bess",
+        "until": "first-hour/fish",
+        "a": "THE GULL. ONE SAIL, ONE BENCH, NO SENSE OF DIRECTION. SHE'S YOURS - BUT NOBODY TAKES ONE OF MY BOATS OUT ON AN EMPTY BELLY. CATCH YOUR SUPPER FIRST. EITHER SIDE OF THE PIER, RIGHT AT THE WATER. HOLD TO CAST, LET GO AT THE TOP OF THE SWING."
+      },
+      {
+        "q": "I caught one!",
+        "when": "first-hour/fish",
+        "until": "first-hour/sell",
+        "a": "SO YOU DID. NOW MAKE IT PAY. I BUY FOR THE SALTING SHEDS - FAIR, NOT GENEROUS. THE FISH STALL UP THE TRAIL TAKES ANYTHING WORTH A COIN, WHEN IT'S OPEN."
+      },
+      {
+        "q": "Now what?",
+        "when": "first-hour/sell",
+        "until": "first-hour/buy",
+        "a": "NOW YOU SPEND IT. NEVER GO TO SEA HUNGRY. I KEEP A TIN OF SHIP'S BISCUIT BEHIND THE BOOK, A COIN A PIECE. THE BAKERY UP IN THE SQUARE DOES BREAD, IF YOU'RE FANCY."
+      },
+      {
+        "q": "Ready to sail?",
+        "when": "first-hour/buy",
+        "until": "first-hour/sail",
+        "a": "AS YOU'LL EVER BE. END OF THE PIER, STEP DOWN INTO HER. LEFT AND RIGHT STEERS, DOWN LOWERS THE SAIL WHEN YOU WANT TO STOP. OUT PAST THE HARBOUR MOUTH AND BACK IN AGAIN - THAT'S ALL I ASK. WIND IN YOUR FACE? TURN AWAY FROM IT."
+      },
+      {
+        "q": "She's back!",
+        "when": "first-hour/sail",
+        "until": "first-hour",
+        "a": "AND SO ARE YOU, BOTH IN ONE PIECE. THAT'S SAILING. NOW GO ON HOME TO THAT GREAT SHIP OF YOURS - THE SHUTTLE ON THE BEACH WILL TAKE YOU UP. COME BACK WHEN YOU WANT A BIGGER BOAT."
+      },
+      {
+        "q": "Where was I?",
+        "when": "first-hour/bess",
+        "aside": "first-hour",
+        "until": "first-hour",
+        "begin": "first-hour",
+        "a": "RIGHT WHERE YOU LEFT OFF. FISH, SELL IT, SPEND IT, TAKE THE GULL OUT AND BRING HER BACK, THEN HOME. I'VE WRITTEN IT IN YOUR BOOK."
+      },
+      {
+        "q": "Anything else?",
+        "when": "first-hour",
+        "rumour": "ship-mark",
+        "a": "THERE'S A PAINTING BY THE FIRE IN THE TAVERN UP THE TRAIL. A SHIP UNDER A GREEN MOON, SIGNED BY A PILOT WHO NEVER CAME BACK. SAME MARK AS ON YOUR HULL, IF YOU ASK ME. GO AND LOOK."
+      },
+      {
         "q": "The harbour book",
         "a": "HERE. EVERYTHING OF YOURS THAT FLOATS, EVERYTHING I CAN SELL YOU THAT DOES, AND WHO'S LOOKING FOR A BERTH.",
         "harbour": true
+      },
+      {
+        "q": "Sell her your catch",
+        "a": "FOR THE SALTING SHEDS. FAIR, NOT GENEROUS.",
+        "sell": [
+          {
+            "id": "silverfin",
+            "price": 8
+          },
+          {
+            "id": "spore_minnow",
+            "price": 5
+          },
+          {
+            "id": "harbour_crab",
+            "price": 14
+          },
+          {
+            "id": "bluefin",
+            "price": 18
+          }
+        ]
+      },
+      {
+        "q": "A tin of biscuit?",
+        "a": "A COIN A PIECE. NEVER GO TO SEA WITHOUT IT.",
+        "stores": [
+          {
+            "id": "sea_biscuit",
+            "price": 1
+          }
+        ]
       },
       {
         "q": "About the yard",

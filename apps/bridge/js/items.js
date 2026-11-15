@@ -672,6 +672,14 @@ var BridgeItems = (function () {
     px(ctx, x, y, u, '#a8d8f0', [[5, 7, 1, 1], [10, 7, 1, 1], [5, 11, 6, 1]]);
     px(ctx, x, y, u, '#e8f8ff', [[6, 3, 4, 3]]); px(ctx, x, y, u, '#80c8f0', [[7, 4, 2, 1]]);
   }
+  function pennantIcon(ctx, x, y, s) {                     // Bess Tolliver's pennant: a gull in white on Diggen's green
+    var u = s / 16;
+    px(ctx, x, y, u, '#1a1008', [[3, 1, 2, 14]]);
+    px(ctx, x, y, u, '#a07040', [[4, 2, 1, 12]]); px(ctx, x, y, u, '#e0b040', [[3, 0, 2, 2]]);
+    px(ctx, x, y, u, '#14402a', [[5, 3, 9, 1], [5, 4, 8, 1], [5, 5, 7, 1], [5, 6, 6, 1], [5, 7, 5, 1], [5, 8, 4, 1], [5, 9, 3, 1]]);
+    px(ctx, x, y, u, '#2f8a52', [[5, 4, 7, 1], [5, 5, 6, 1], [5, 6, 5, 1], [5, 7, 4, 1], [5, 8, 3, 1]]);
+    px(ctx, x, y, u, '#f4f0e4', [[6, 5, 1, 1], [7, 6, 1, 1], [8, 5, 1, 1], [9, 4, 1, 1]]);
+  }
   function tideIcon(ctx, x, y, s) {
     var u = s / 16;
     px(ctx, x, y, u, '#2a1a10', [[7, 2, 2, 3]]);
@@ -1674,6 +1682,10 @@ var BridgeItems = (function () {
                      type: 'tool', stackable: false, draw: featherIcon, value: 120, onUse: charmUse },
     frost_ring:    { id: 'frost_ring', name: 'Ring of Hoarfrost', desc: 'Cold as a grave to the touch. Carried, the cold can\'t touch you.',
                      type: 'tool', stackable: false, draw: ringIcon, value: 120, onUse: charmUse },
+    gull_pennant:  { id: 'gull_pennant', name: 'Gull Pennant', desc: 'A little gull in white on Diggen\'s green, from Bess Tolliver. Every pilot she\'s taught the ropes flies one.',
+                     type: 'tool', stackable: false, draw: pennantIcon, value: 0, onUse: function () {
+                       if (typeof BridgeInteractions !== 'undefined') BridgeInteractions.say('GULL PENNANT', 'A LITTLE GULL IN WHITE ON DIGGEN\'S GREEN, STITCHED BY BESS TOLLIVER.\n\n"FLY IT AND EVERY HARBOURMASTER ON THE EMERALD KNOWS WHO TAUGHT YOU. DON\'T MAKE ME ASHAMED."');
+                       return false; } },
     tide_charm:    { id: 'tide_charm', name: 'Tide Charm', desc: 'A green glass float in a net, a wave inside it. Carried, the sloop sails a little faster.',
                      type: 'tool', stackable: false, draw: tideIcon, value: 90, onUse: charmUse },
     whistle:       { id: 'whistle', name: 'Whistle', desc: 'A brass whistle on a red cord. Use it to call your companion - the next one, or send them all home.', type: 'tool',

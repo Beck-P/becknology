@@ -1178,6 +1178,7 @@ var BridgeInteractions = (function () {
           return;
         }
         sold.forEach(function (x) { BridgeInventory.removeItem(x.id, x.n); });
+        if (typeof BridgeQuests !== 'undefined' && BridgeQuests.did) BridgeQuests.did('sell');   // a deed (the first hour)
         showDialog(inter.label, 'SOLD: ' + sold.map(function (x) { return x.n + ' ' + x.name.toUpperCase(); }).join(', ') +
           ', FOR ' + t + ' COINS.\n\nPLEASURE DOING BUSINESS.', inter);
       }).catch(function () {
@@ -1315,6 +1316,7 @@ var BridgeInteractions = (function () {
     // the ones a quest has just opened come first, lit up
     var Q = typeof BridgeQuests !== 'undefined' && BridgeQuests.has ? BridgeQuests.has : function () { return false; };
     var topics = person.topics.filter(function (t) {
+      if (t.aside && !(typeof BridgeQuests !== 'undefined' && BridgeQuests.aside && BridgeQuests.aside(t.aside))) return false;   // only once you've set that quest aside
       return (!t.when || [].concat(t.when).every(Q)) && (!t.until || ![].concat(t.until).some(Q));
     });
     var fresh = topics.filter(function (t) { return t.when && !BridgePeople.asked(person.id, t.q); });
@@ -1433,6 +1435,11 @@ var BridgeInteractions = (function () {
         BridgeGifts.open(Object.getPrototypeOf(person));
         return;
       }
+      if (t.stores) {                                                 // a few things they sell over the counter (Bess's biscuit tin)
+        close();
+        showVendorDialog({ label: person.name.toUpperCase(), items: t.stores });
+        return;
+      }
       if (t.harbour && typeof BridgeHarbour !== 'undefined') {        // a harbourmaster's book: ships, yard, hands, hold, market
         close();
         BridgeHarbour.open(BridgeWorld.getWorldId(), t.a);
@@ -1523,6 +1530,7 @@ var BridgeInteractions = (function () {
       if (face) face.set('neutral');
       say(t.a);
       if (t.rumour && typeof BridgeQuests !== 'undefined' && BridgeQuests.hear) BridgeQuests.hear(t.rumour, person.name);   // gossip about a quest: into the journal
+      if (t.begin && typeof BridgeQuests !== 'undefined' && BridgeQuests.begin) BridgeQuests.begin(t.begin, person.name);  // asked for it (the first hour): under way now
     }
     function close() {
       closed = true;
@@ -1672,6 +1680,7 @@ var BridgeInteractions = (function () {
               // bought and paid for: if it won't fit, you're asked what to make room with (it's never just lost)
               if (BridgeInventory.give) BridgeInventory.give(entry.id, 1, { title: 'Bought - but your pack is full' }); else BridgeInventory.addItem(entry.id, 1);
               updateBalance(res.balance);
+              if (typeof BridgeQuests !== 'undefined' && BridgeQuests.did) BridgeQuests.did('buy');     // a deed (the first hour)
             }
             renderItems();
           });

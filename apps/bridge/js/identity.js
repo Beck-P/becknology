@@ -160,6 +160,9 @@ var BridgeIdentity = (function () {
       return;
     }
 
+    // someone new: js/quests.js welcomes them (the first hour) once their save is settled - sessionStorage, so the
+    // reload js/cloud.js may do on a browser that held someone else's game doesn't lose it
+    try { sessionStorage.setItem('bridge_new_pilot', result.id); } catch (e) { /* private mode: no welcome */ }
     BridgeState.setPilot(result);
     if (newLook) BridgeLook.set(newLook);
     aboard();

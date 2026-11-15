@@ -2621,6 +2621,7 @@ html.menu-open #bridge-toast, html.menu-open #quarters-toast { visibility: hidde
 .jn-quest.tracked { border-color: var(--gm-accent); box-shadow: inset 3px 0 0 var(--gm-accent); }
 .jn-quest.rumour { background: transparent; border-style: dashed; }
 .jn-q-head .jn-track { margin-left: auto; padding: 1px 8px; font-size: 11px; }
+.jn-q-head .jn-aside { padding: 1px 8px; font-size: 11px; opacity: 0.75; }
 .jn-tracking { margin-left: auto; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--gm-accent); }
 .jn-sub { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--gm-dim); margin: 12px 0 6px; }
 
@@ -2639,6 +2640,10 @@ html.menu-open #bridge-toast, html.menu-open #quarters-toast { visibility: hidde
 .qtr-n { color: rgba(242, 238, 230, 0.6); letter-spacing: 1px; }
 .qtr-min { margin-left: auto; width: 18px; height: 18px; padding: 0; border-radius: 4px; border: 1px solid rgba(255, 255, 255, 0.18);
   background: none; color: rgba(242, 238, 230, 0.7); font: inherit; font-size: 13px; line-height: 15px; cursor: pointer; }
+.qtr-skip { margin-left: auto; height: 18px; padding: 0 6px; border-radius: 4px; border: 1px solid rgba(255, 255, 255, 0.18); background: none;
+  color: rgba(242, 238, 230, 0.6); font: inherit; font-size: 9px; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; }
+.qtr-skip:hover { color: #ffd56a; border-color: rgba(255, 213, 106, 0.5); }
+.qtr-skip + .qtr-min { margin-left: 0; }
 .qtr-title { display: block; width: 100%; text-align: left; padding: 0; margin: 2px 0 0; background: none; border: 0; cursor: pointer;
   font: inherit; font-size: 15px; color: #fff4dc; }
 .qtr-title:hover { color: #ffd56a; }
