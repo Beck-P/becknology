@@ -434,7 +434,11 @@ var BridgeLit = (function () {
   // powder a touch cooler); a trodden lane is a step darker and cooler; ice (pale, or blue-green) leans the same colours
   // toward blue — grey-blue rock is rock. Everything else keeps its colours with a warm lean where the sun lands and a
   // cool one in the shade.
-  var ICE_LIT = rgbn('#c4e2f2'), ICE_SH = rgbn('#6c90b6');
+  // ice leans toward its own colours: pale blue in the light and a blue-grey in the shade by day, and after dark a deep
+  // cold blue a little darker than the snow round it (a fixed day shade at night left every ice surface — the tarn, the
+  // glacier's bands, the pistes' patches — lighter than its snow); the night ones come in only once it's truly dark
+  // (`nk`), so dawn, day and golden hour are as they were
+  var ICE_LIT = rgbn('#c4e2f2'), ICE_SH = rgbn('#6c90b6'), ICE_LIT_N = rgbn('#4868a6'), ICE_SH_N = rgbn('#22407a');
   function snowAt(A, F, p) {                           // the snow's own lightness at a pixel (0: not snow)
     var ar = A[p], ag = A[p + 1], ab = A[p + 2], al = 0.3 * ar + 0.59 * ag + 0.11 * ab;
     if (al < 195 || Math.max(ar, ag, ab) - Math.min(ar, ag, ab) > 46) return 0;    // pale rock stays rock
@@ -497,7 +501,9 @@ var BridgeLit = (function () {
       var grey = mixv(rgbn('#dfe3ec'), rgbn('#4a5280'), night);
       lit = mixv(lit, grey, 0.65 * wk); sh = mixv(sh, mixv(grey, rgbn('#9aa2c4'), 0.5 * (1 - night)), 0.5 * wk);
     }
-    return { lit: lit, sh: sh, iceLit: mixv(lit, ICE_LIT, 0.45), iceSh: mixv(sh, ICE_SH, 0.42), norm: Math.max(40, p95) / 255,
+    var nk = smooth(0.1, 0.9, night);
+    return { lit: lit, sh: sh, iceLit: mixv(lit, mixv(ICE_LIT, ICE_LIT_N, nk), 0.45), iceSh: mixv(sh, mixv(ICE_SH, ICE_SH_N, nk), 0.42),
+             norm: Math.max(40, p95) / 255, nk: nk,
              sunUp: t > 6.2 && t < 19.6 ? 1 : 0, wf: lerp(1, 0.35, wk), gold: gold, day: 1 - night };
   }
   function M_wx(Lt) { return Lt.M.wx; }
@@ -623,7 +629,9 @@ var BridgeLit = (function () {
             if (LP) { hk = Lt.lamp * 0.85; r += DEC[LP[p]] * hk * 0.9; g += DEC[LP[p + 1]] * hk * 0.8; bl += DEC[LP[p + 2]] * hk * 0.55; }
           } else if (lt >= 0) {                        // ice: the snow's colours leaned blue, its marks kept
             var mark = clamp((0.3 * A[p] + 0.59 * A[p + 1] + 0.11 * A[p + 2]) / 205, 0.62, 1.12), IL = hf.iceLit, IS = hf.iceSh;
+            if (mark > 1) mark = 1 + (mark - 1) * (1 - 0.7 * hf.nk);                  // pale ice doesn't outshine the snow at night
             r = (IS[0] + (IL[0] - IS[0]) * lt) * mark; g = (IS[1] + (IL[1] - IS[1]) * lt) * mark; bl = (IS[2] + (IL[2] - IS[2]) * lt) * mark;
+            if (hf.nk > 0) { hk = moonL * hf.nk; r += hk * 0.03; g += hk * 0.06; bl += hk * 0.12; }    // a cold sheen under the moon
             if (LP) { hk = Lt.lamp * 0.6; r += DEC[LP[p]] * hk * 0.9; g += DEC[LP[p + 1]] * hk * 0.78; bl += DEC[LP[p + 2]] * hk * 0.59; }
           } else {                                     // the rest: warm where the sun lands, cool in the shade
             var s2 = share > 0.45 ? 1 : 0, kLit = s2 * (0.06 + 0.22 * hf.gold) * hf.day * hf.wf, kSh = (1 - s2) * (0.05 + 0.08 * hf.gold) * hf.day;

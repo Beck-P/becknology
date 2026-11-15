@@ -61,7 +61,46 @@ const SHOTS = process.argv[2] || __dirname + '/shots', WORLD = process.argv[3] |
   console.log('live light: walking across, the biggest change in a figure\'s light over an eighth of a tile', jump);
   if (jump > 14) { errs++; console.log('live light: ERROR a figure\'s light jumps as they walk'); }
   await p.evaluate(() => BridgeLit._force(null));
-  console.log('live light: compositions', (await stats()).comps, '· errors', errs);
+  // Hoarfell at night: the tarn's ice, away from any lamp, sits darker than the snow round it (a fixed day shade once
+  // left every ice surface on Hoarfell lighter than its snow after dark — the tarn glowing brighter than its banks)
+  if (!process.argv[3]) {
+    await p.evaluate(() => BridgeWeather._pin('hoarfell', 'fair'));
+    await p.evaluate(() => new Promise(r => BridgeWorld.load('hoarfell', () => { BridgeState.transition('world', { worldId: 'hoarfell' }); r(); })));
+    let hs = null;
+    for (let i = 0; i < 120; i++) { hs = await p.evaluate(() => BridgeLit._stats('hoarfell')); if (hs && hs.drawing) break; await p.waitForTimeout(250); }
+    if (!hs || !hs.drawing) { errs++; console.log('live light: ERROR Fellhaven never drew live'); }
+    else for (const [hour, weather, name] of [[22.5, null, 'night'], [2, null, 'midnight'], [22.5, 'snow', 'night in snowfall'], [12.5, null, 'noon']]) {
+      const r = await p.evaluate((q) => {
+        const sc = BridgeScene.get('hoarfell'), L = sc.lit;
+        BridgeLit._force({ hour: q.hour, weather: q.weather || undefined });
+        L.checked = 0;
+        const before = L.comps;
+        for (let n = 0; L.comps === before && n < 5000; n++) BridgeLit.frame(sc);
+        const G = L.G, A = G.lit_albedo, F = G.lit_c, LP = G.lit_lamps, W = G.w, H = G.h;
+        const o = L.cur.canvas.getContext('2d').getImageData(0, 0, W, H).data, D = (v) => (v / 255) * (v / 255) * 4;
+        const CS = 24, cw = Math.ceil(W / CS), cells = new Float64Array(cw * Math.ceil(H / CS) * 4);
+        let iS = 0, iN = 0, sS = 0, sN = 0;
+        for (let i = 0; i < W * H; i++) {
+          const p4 = i * 4;
+          if (A[p4 + 3] < 8 || (LP && D(LP[p4]) + D(LP[p4 + 1]) + D(LP[p4 + 2]) > 0.03)) continue;      // away from the lamps
+          const ar = A[p4], ag = A[p4 + 1], ab = A[p4 + 2], al = 0.3 * ar + 0.59 * ag + 0.11 * ab, sn = G.snow[i];
+          const ice = !sn && !(F[p4 + 2] & 8) && ab - ar > 18 && al > 120 && (al >= 180 || ag - ar > 14);     // litscene's iceAt
+          const l = 0.2126 * o[p4] + 0.7152 * o[p4 + 1] + 0.0722 * o[p4 + 2], c = (((i / W) | 0) / CS | 0) * cw + ((i % W) / CS | 0);
+          if (ice) { iS += l; iN++; cells[c * 4] += l; cells[c * 4 + 1]++; }
+          else if (sn && sn !== 255) { sS += l; sN++; cells[c * 4 + 2] += l; cells[c * 4 + 3]++; }
+        }
+        let both = 0, lighter = 0;
+        for (let c = 0; c < cells.length / 4; c++) if (cells[c * 4 + 1] > 40 && cells[c * 4 + 3] > 40) { both++; if (cells[c * 4] / cells[c * 4 + 1] > cells[c * 4 + 2] / cells[c * 4 + 3]) lighter++; }
+        return { ice: iN ? iS / iN : 0, snow: sN ? sS / sN : 0, iceN: iN, both, lighter };
+      }, { hour, weather });
+      console.log('live light: Fellhaven', name, '· the ice', r.ice.toFixed(1), 'against the snow', r.snow.toFixed(1), `· ice lighter than its snow in ${r.lighter} of ${r.both} patches`);
+      if (name === 'noon') continue;
+      if (!r.iceN || !r.both) { errs++; console.log('live light: ERROR no ice beside snow found on Fellhaven'); }
+      else if (r.ice > r.snow || r.lighter > r.both / 4) { errs++; console.log('live light: ERROR Fellhaven\'s ice is lighter than its snow', name); }
+    }
+    await p.evaluate(() => BridgeLit._force(null));
+  }
+  console.log('live light: errors', errs);
   await b.close();
   process.exit(errs ? 1 : 0);
 })();
