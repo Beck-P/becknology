@@ -27,7 +27,9 @@ var BridgeSapphire = (function () {
     taverna: [
       { label: 'Tomato fritters and fava', sub: 'the island\'s tomatoes, small and fierce', price: 8, hp: 10, en: 20 },
       { label: 'Lamb baked in paper', sub: 'with lemon and wild oregano off the rim', price: 18, hp: 30, en: 30 },
-      { label: 'A glass of caldera wine', sub: 'sweet, from vines grown in baskets against the wind', price: 6, hp: 0, en: 25 }
+      { label: 'A glass of caldera wine', sub: 'sweet, from vines grown in baskets against the wind', price: 6, hp: 0, en: 25 },
+      // (spec-deeper-worlds L9) only as the sun goes down: warm through the next cold (js/worlds/hoarfell.js `warm`)
+      { label: 'The sunset plate', sub: 'what Despina cooks while the caldera goes gold · warm through the cold for two hours', price: 22, hp: 25, en: 35, warm: 120, sunset: true }
     ],
     fish_taverna: [
       { label: 'Grilled octopus', sub: 'dried on the line by the door all afternoon', price: 12, hp: 20, en: 20 },
@@ -74,20 +76,44 @@ var BridgeSapphire = (function () {
   }
 
   // ---- the donkeys --------------------------------------------------------------------------------------------------
+  // (spec-deeper-worlds L9) a coin for Yannis, a day at a time: three days running and the donkeys carry you for nothing
+  var TIP = 2, RUN = 3;
+  function tday() { return Math.floor((typeof BridgeClock !== 'undefined' && BridgeClock.now ? BridgeClock.now() : Date.now()) / 86400000); }
+  function tipped() { return (st.tips || []).indexOf(tday()) >= 0; }
+  function donkeysFree() { return !!st.donkeyFree; }
+  function streak() { var t = st.tips || [], n = 0; for (var d = tday(); t.indexOf(d) >= 0; d--) n++; return n; }
+  function tip() {
+    pay(TIP, 'lanternfall:tip').then(function (r) {
+      if (!r || !r.ok) return say('YANNIS', '"KEEP IT, KEEP IT. STAMATIA DOESN\'T SPEND COINS. SHE EATS THEM."');
+      if (tipped()) return;
+      st.tips = (st.tips || []).filter(function (d) { return d > tday() - RUN - 2; }).concat([tday()]);
+      var n = streak();
+      if (n >= RUN && !st.donkeyFree) {
+        st.donkeyFree = Date.now(); store(); sfx('success');
+        toast('Lanternfall', 'Yannis\'s donkeys carry you free', 'Up or down the zigzag, for nothing');
+        note('Lanternfall', 'Yannis\'s donkeys carry you free', 'three days of tips');
+        return say('YANNIS', 'HE POCKETS IT AND SHAKES HIS HEAD. "THREE DAYS. THREE! NOBODY TIPS THREE DAYS. FROM NOW ON STAMATIA CARRIES YOU FOR NOTHING. SHE INSISTS. I ASKED HER."');
+      }
+      store(); sfx('coin');
+      say('YANNIS', n > 1 ? '"AGAIN! STAMATIA, LOOK. THE ONE WHO TIPS." STAMATIA LOOKS. SHE IS NOT, YOU FEEL, UNMOVED.' : '"FOR THE DONKEYS? THEY\'LL HAVE CARROTS TONIGHT." HE SCRATCHES ZOE BEHIND THE EAR. ZOE PRETENDS NOT TO NOTICE.');
+    });
+  }
   function donkey(up) {
+    var free = donkeysFree(), rows = [];
+    if (!free && !tipped()) rows.push({ label: 'Tip Yannis', sub: 'for the donkeys\' carrots' + (streak() ? ' · ' + streak() + ' day' + (streak() > 1 ? 's' : '') + ' running' : ''), note: TIP + ' coins', pick: function () { tip(); } });
     choose({
       title: up ? 'Up the zigzag' : 'Down the zigzag',
       text: up ? 'STAMATIA LOOKS AT YOU, THEN AT THE FIVE HUNDRED STEPS, THEN BACK AT YOU, AS IF TO SAY SHE HAS DONE THIS BEFORE AND YOU HAVE NOT. YANNIS HOLDS OUT HIS HAND FOR THE COINS.'
                : 'YANNIS\'S COUSIN SADDLES ZOE. "DOWN IS FASTER THAN UP," HE SAYS. "HOLD ON. SHE LIKES THE CORNERS."',
-      rows: [{ label: up ? 'Ride up to the town' : 'Ride down to the old port', sub: up ? 'to the promenade at the top' : 'to the quay, by the boats', note: DONKEY + ' coins',
+      rows: [{ label: up ? 'Ride up to the town' : 'Ride down to the old port', sub: up ? 'to the promenade at the top' : 'to the quay, by the boats', note: free ? 'free' : DONKEY + ' coins',
                pick: function () {
-                 pay(DONKEY, 'lanternfall:donkey').then(function (r) {
+                 (free ? Promise.resolve({ ok: true }) : pay(DONKEY, 'lanternfall:donkey')).then(function (r) {
                    if (!r || !r.ok) return say('THE DONKEYS', 'FIVE COINS, SAYS YANNIS. THE DONKEY SAYS NOTHING, BUT AGREES.');
                    sfx('pickup');
                    note('Lanternfall', up ? 'Rode a donkey up the zigzag' : 'Rode a donkey down the zigzag', 'Five hundred steps, none of them yours');
                    if (typeof BridgeWorld !== 'undefined' && BridgeWorld.enterWorld) BridgeWorld.enterWorld(CLIFF, up ? UP : DOWN);
                  });
-               } }],
+               } }].concat(rows),
       closeLabel: up ? 'Walk it' : 'Not now'
     });
   }
@@ -112,16 +138,30 @@ var BridgeSapphire = (function () {
   }
 
   // ---- eating -------------------------------------------------------------------------------------------------------
+  // the sunset plate's hours: from two Lumar hours before the sun goes down to three after (Lumar's own clock)
+  function sunsetHour() {
+    var s = typeof BridgeClock !== 'undefined' && BridgeClock.sky ? BridgeClock.sky(CLIFF) : null;
+    if (!s || s.sunset == null || s.t == null) return false;
+    var h = s.len / 24;                             // a Lumar hour, in ms
+    return s.t >= s.sunset - 2 * h && s.t <= s.sunset + 3 * h;
+  }
   function eat(which, title, text) {
+    var dusk = sunsetHour(), list = DISHES[which].filter(function (d) { return !d.sunset || dusk; });
+    if (which === 'taverna') text += dusk ? '\n\n"THE SUNSET PLATE," SHE SAYS, BEFORE YOU CAN ASK. "IT\'S WHAT I COOK WHILE IT GOES GOLD. YOU WON\'T FEEL THE COLD FOR HOURS."' : '\n\n"COME BACK AT SUNSET FOR THE SUNSET PLATE. IT\'S THE ONLY THING I MAKE THAT I\'M PROUD OF."';
     choose({
       title: title, text: text,
-      rows: DISHES[which].map(function (d) {
+      rows: list.map(function (d) {
         return { label: d.label, sub: d.sub + (d.hp ? ' · +' + d.hp + ' health' : '') + (d.en ? ' · +' + d.en + ' energy' : ''), note: d.price + ' coins',
                  pick: function () {
                    pay(d.price, 'lanternfall:' + which).then(function (r) {
                      if (!r || !r.ok) return say(title.toUpperCase(), 'NOT ENOUGH COINS. NOBODY MINDS YOU SITTING AND LOOKING, THOUGH.');
                      restore(d.hp, d.en);
                      sfx('coin');
+                     if (d.warm) {
+                       if (typeof BridgeHoarfell !== 'undefined' && BridgeHoarfell.warm) BridgeHoarfell.warm(d.warm);
+                       toast('The sunset plate', 'At Despina\'s, on the rim', 'Warm through the cold for two hours');
+                       return say(title.toUpperCase(), 'LAMB AND FIGS AND SOMETHING SMOKY, ON A PLATE THE COLOUR OF THE SKY. BY THE TIME IT\'S GONE THE CALDERA IS PINK AND THE ZIGZAG\'S LAMPS ARE COMING ON, ONE BY ONE. YOU FEEL IT IN YOUR BONES, LIKE A HEARTH.');
+                     }
                      say(title.toUpperCase(), which === 'taverna'
                        ? 'IT ARRIVES WITH BREAD AND OLIVES YOU DIDN\'T ORDER AND A VIEW NOBODY COULD. YOU EAT SLOWLY. THE CALDERA TURNS FROM BLUE TO DEEPER BLUE.'
                        : 'IT COMES STRAIGHT OFF THE GRILL, SMELLING OF SMOKE AND LEMON. A CAT ARRIVES FROM NOWHERE AND SITS, POLITELY, AT YOUR FEET.');
