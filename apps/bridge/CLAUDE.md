@@ -845,7 +845,7 @@ interactions of type `lumardeep` (`act`), set by `decorate` on the labels alread
   happening at the Arsenal, js/events.js `sovereign`, `due` from `BridgeLumarDeep.launchDue(slot)` — every twenty-minute
   slot of a regatta Friday after your share went in, until you've seen her go (and the slot she went in, so the crowd
   stays to cheer). Agnes Rook (`npc-smith`) and Commodore Harrow (`npc-academy`) on the quay south of the stocks
-  (45, 29 / 51, 29), the yard's crowd gathered round 48, 30, THE LAUNCH (48, 29) and ON THE STOCKS taken over:
+  (45, 29 / 51, 29), the yard's crowd gathered round 48, 30.6 (r 2.2, so none stands on it), THE LAST SHORE (48, 28: *Knock out*) and ON THE STOCKS taken over:
   *knock out the last shore* (`shore`) — or stay to the end and a shipwright does it for you (`watched`, the event's
   `end`). Either way, once: 600 coins (`PAY`), your name in the Arsenal's book (THE ARSENAL becomes the book: the
   Crown's friends and you, dated), and the yard's plan for the first of `PLANS` you don't know (long nine, bow chaser,

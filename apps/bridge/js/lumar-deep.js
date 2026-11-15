@@ -43,7 +43,12 @@ var BridgeLumarDeep = (function () {
   function store() { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) { /* private mode: this session only */ } }
   function now() { return has('BridgeClock') && BridgeClock.now ? BridgeClock.now() : Date.now(); }
   function etAt(ms) { return has('BridgeClock') && BridgeClock.etAt ? BridgeClock.etAt(ms) : ms - 5 * HOUR; }
-  function say(who, t) { BridgeInteractions.say(who, t); }
+  // what people say here is often long: the chooser's card (it holds the touch controls on a phone; a plain text box
+  // leaves the stick and buttons over the words)
+  function say(who, t) {
+    if (BridgeInteractions.choose) BridgeInteractions.choose({ title: who.charAt(0) + who.slice(1).toLowerCase(), text: t, rows: [], closeLabel: 'Go on' });
+    else BridgeInteractions.say(who, t);
+  }
   function sfx(n) { if (has('BridgeAudio') && BridgeAudio.sfx) BridgeAudio.sfx(n); }
   function toast(a, b, c) { if (has('BridgeQuests') && BridgeQuests.toast) BridgeQuests.toast(a, b, c); }
   function note(a, b, c) { if (has('BridgeQuests') && BridgeQuests.note) BridgeQuests.note(a, b, c); }

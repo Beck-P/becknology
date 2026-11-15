@@ -372,10 +372,10 @@ var BridgeEvents = (function () {
       world: 'lumar-crown-arsenal', name: 'The Sovereign II\'s launch', len: 6, w: 1, at: [48, 27],
       hint: 'The yard\'s turned out — the Sovereign II is going down the ways!', sfx: 'peal', loop: { name: 'horn', every: 40, near: 24 },
       cast: [{ sheet: 'npc-smith', x: 45, y: 29, f: 'up' }, { sheet: 'npc-academy', x: 51, y: 29, f: 'up' }],
-      gather: { x: 48, y: 30.4, r: 3, n: 12, face: [48, 26] },
+      gather: { x: 48, y: 30.6, r: 2.2, n: 10, face: [48, 26] },          // (kept off THE LAST SHORE's tile, a row in front of them)
       say: [[3, 0, 'STAND CLEAR OF THE WAYS!'], [30, 1, 'FOR THE CROWN AND THE REGATTA!'], [75, 0, 'WHERE\'S OUR CAPTAIN WITH THE MAUL?'], [200, 'at', 'SHE\'S AWAY!']],
-      talk: [{ x: 48, y: 29, label: 'THE LAUNCH', prompt: 'PRESS E TO KNOCK OUT THE LAST SHORE', on: function () { if (typeof BridgeLumarDeep !== 'undefined') BridgeLumarDeep.shore(); } }],
-      take: [{ label: 'ON THE STOCKS', prompt: 'PRESS E TO KNOCK OUT THE LAST SHORE', on: function () { if (typeof BridgeLumarDeep !== 'undefined') BridgeLumarDeep.shore(); } }],
+      talk: [{ x: 48, y: 28, label: 'THE LAST SHORE', prompt: 'PRESS E TO KNOCK OUT', on: function () { if (typeof BridgeLumarDeep !== 'undefined') BridgeLumarDeep.shore(); } }],
+      take: [{ label: 'ON THE STOCKS', prompt: 'PRESS E TO LAUNCH', on: function () { if (typeof BridgeLumarDeep !== 'undefined') BridgeLumarDeep.shore(); } }],
       when: function () { return false; },                             // (never drawn at random: due)
       due: function (slot) { return typeof BridgeLumarDeep !== 'undefined' && BridgeLumarDeep.launchDue ? BridgeLumarDeep.launchDue(slot) : null; },
       end: function (L) { if (now() >= L.end - 3000 && typeof BridgeLumarDeep !== 'undefined' && !BridgeLumarDeep.launched()) BridgeLumarDeep.watched(); },
