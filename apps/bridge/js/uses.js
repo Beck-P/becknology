@@ -17,7 +17,9 @@
  *   the fair         the Harvest Fair's show (assets/festivals.json `entries`)
  *   trade            crated for a port's market, and where it's dearest (js/trade.js GOODS / HAUL / MARKET)
  *   the hall         a find that goes on show in your hall (js/trophies.js T); implants made of a trophy (js/implants.js)
- *   what it does     eaten or drunk (its `effects`, a potion's `works`), a weapon, a tool, a plan, a part, a map
+ *   what it does     eaten or drunk (its `effects`, a potion's `works`), a weapon, a tool, a plan, a part, a map; carried
+ *                    (an item's `carried.text`: a lantern after dark), decor you made (`decor.text`), a fish tank's
+ *                    (js/aquarium.js `ok`), loved by anyone (js/gifts.js ALL_LOVE), Wren's fire arrows (js/worlds/sylvara.js)
  * and, when none of that is true and it has a value, plainly: only worth selling (who pays best is the line above it,
  * BridgeStorage.worthLine). `orphans()` lists those — the to-do for whoever builds next.
  *
@@ -62,7 +64,7 @@ var BridgeUses = (function () {
         });
       }
       if (has('BridgeBrewing')) (BridgeBrewing.RECIPES || []).forEach(function (r) { r.takes.forEach(function (t) { add(t[0], { k: 'brew', out: r.id, n: t[1] }); }); });
-      [has('BridgeMakers') && BridgeMakers.MAKES, has('BridgeVillage') && BridgeVillage.MAKES, has('BridgeRose') && BridgeRose.MAKES].forEach(function (list) {
+      [has('BridgeMakers') && BridgeMakers.MAKES, has('BridgeVillage') && BridgeVillage.MAKES, has('BridgeRose') && BridgeRose.MAKES, has('BridgeSylvara') && BridgeSylvara.MAKES].forEach(function (list) {
         (list || []).forEach(function (m) { add(m.in, { k: 'makes', n: m.n, out: m.out, where: m.where }); });
       });
       if (has('BridgeFarm') && BridgeFarm.CROPS) {
@@ -71,7 +73,10 @@ var BridgeUses = (function () {
       if (has('BridgeGifts') && BridgeGifts.TASTES) {
         var T = BridgeGifts.TASTES;
         Object.keys(T).forEach(function (pid) { (T[pid].love || []).forEach(function (id) { add(id, { k: 'gift', pid: pid }); }); });
+        (BridgeGifts.ALL_LOVE || []).forEach(function (id) { add(id, { k: 'giftall' }); });      // loved by anyone (the silk scarf)
       }
+      // what lives in a fish tank at home (js/aquarium.js): the fish, crabs and shrimp — and a goldfish won at the scoop
+      if (has('BridgeAquarium') && BridgeAquarium.ok && has('BridgeItems')) Object.keys(BridgeItems.all()).forEach(function (id) { if (BridgeAquarium.ok(id)) add(id, { k: 'tank' }); });
       if (has('BridgeBusiness') && BridgeBusiness.all) BridgeBusiness.all().forEach(function (d) { (d.stock || []).forEach(function (id) { add(id, { k: 'biz', biz: d.id, name: d.name }); }); });
       if (has('BridgeHomestead') && BridgeHomestead.ORDERS) BridgeHomestead.ORDERS.forEach(function (o) { add(o.item, { k: 'order', board: 'farm', who: o.who }); });
       if (has('BridgeMakers') && BridgeMakers.ORDERS) BridgeMakers.ORDERS.forEach(function (o) { add(o.item, { k: 'order', board: 'export', who: o.who }); });
@@ -195,7 +200,8 @@ var BridgeUses = (function () {
     }
     var set = has('BridgeCodex') && BridgeCodex.setOf ? BridgeCodex.setOf(id) : null;
     if (set) push('set', set.done ? 4 : 6, '<b>Collection:</b> ' + esc(set.name) + ' · ' + set.have + ' of ' + set.of + (set.done ? ', complete' : ''));
-    if (by.gift) {
+    if (by.giftall) push('gift', 6, '<b>Loved as a gift</b> by anyone you give it to');
+    else if (by.gift) {
       var ws = by.gift.map(function (f) { return who(f.pid); }).filter(Boolean);
       var met = ws.filter(function (w) { return w.met; }).map(function (w) { return w.t; });
       var unmet = {};
@@ -206,7 +212,10 @@ var BridgeUses = (function () {
     (by.own || []).forEach(function (f) { push('own', f.p || 5, f.t); });
     (by.show || []).slice(0, 1).forEach(function (f) { push('show', 5, '<b>Show it</b> at ' + esc(the(f.fest)) + seasonWord(f.season)); });
     if (by.hall) push('hall', 5, '<b>A find:</b> it goes on show in your hall');
-    if (!it.works && !eat && !by.plant && typeof it.onUse === 'function' && it.type !== 'plan' && !/^tmap_/.test(id)) {
+    if (it.carried && it.carried.text) push('carry', 7, '<b>Carry it:</b> ' + esc(it.carried.text));      // in your pack, it does something (a lantern after dark)
+    if (it.decor && it.decor.text) push('decor', 7, '<b>Decor:</b> ' + esc(it.decor.text));              // what you made is a piece to put up (js/items.js decorUse)
+    if (by.tank) push('tank', it.effects ? 3 : 7, '<b>A fish tank:</b> put it in one of yours at home, aboard or in any place you own');
+    if (!it.decor && !it.works && !eat && !by.plant && typeof it.onUse === 'function' && it.type !== 'plan' && !/^tmap_/.test(id)) {
       push('use', 4, it.type === 'weapon' ? '<b>A weapon:</b> hold it and strike' : '<b>Use it</b> from the hotbar');
     }
     if (by.trade && by.trade[0]) {

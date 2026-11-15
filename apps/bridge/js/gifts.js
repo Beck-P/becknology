@@ -12,10 +12,11 @@
  */
 var BridgeGifts = (function () {
   var KEY = 'bridge_gifts';
+  var ALL_LOVE = ['silk_scarf'];                          // loved by everyone (js/uses.js says so on its card)
   var TASTES = {
     bridget: { love: ['honey', 'strawberry', 'posy'], like: ['apple', 'pumpkin', 'egg', 'milk'], hate: ['old_boot', 'stone'],
                loveLine: 'HONEY FROM YOUR OWN SKEPS? OH, THAT\'S GOING STRAIGHT IN THE CAKES. THE FIRST SLICE IS YOURS, AND I WON\'T HEAR OTHERWISE.' },
-    percy: { love: ['heron_coin', 'pocket_watch'], like: ['posy', 'sea_glass', 'starfruit'], hate: ['old_boot'],
+    percy: { love: ['heron_coin', 'pocket_watch', 'autograph'], like: ['posy', 'sea_glass', 'starfruit'], hate: ['old_boot'],
              loveLine: 'WELL, NOW. THAT\'S A COLLECTOR\'S PIECE. IT\'S GOING IN THE WINDOW - NOT FOR SALE. JUST TO LOOK AT.' },
     wat: { love: ['iron_ore', 'star_iron', 'mug_of_ale'], like: ['silver_ore', 'ploughmans', 'apple'], hate: ['posy'],
            loveLine: 'GOOD IRON. YOU CAN HEAR IT\'S GOOD - LISTEN. NO? WELL. I CAN. I\'LL MAKE SOMETHING FINE OF IT.' },
@@ -153,7 +154,7 @@ var BridgeGifts = (function () {
     velvet: { love: ['posy', 'champagne', 'star_pearl'], like: ['souffle_royale', 'royale_martini', 'sunflower'], hate: ['old_boot', 'stone'],
               loveLine: 'FLOWERS, FOR ME? FROM SOMEWHERE WITH A SKY? DARLING, I\'LL SING THE NEXT ONE FOR YOU.' },
     rafe: { love: ['gold_chip', 'pocket_watch'], like: ['champagne', 'royale_globe'], hate: ['old_boot'] },
-    mimi: { love: ['royale_globe', 'posy'], like: ['sweet_roll', 'strawberry', 'sea_glass'], hate: ['old_boot'] },
+    mimi: { love: ['royale_globe', 'posy', 'autograph'], like: ['sweet_roll', 'strawberry', 'sea_glass'], hate: ['old_boot'] },
     kit: { love: ['void_fizz', 'songstone'], like: ['lucky_dice', 'stim_pack', 'apple'], hate: ['turnip'] },
     laurent: { love: ['champagne', 'starfruit'], like: ['honey', 'strawberry', 'souffle_royale'], hate: ['old_boot', 'void_fizz'] },
     // the Mid-Levels' Terraces and Moonglow
@@ -256,7 +257,7 @@ var BridgeGifts = (function () {
                        loveLine: 'IT HOLDS A LITTLE LIGHT, LIKE THE WELL DOES. I\'LL HANG IT IN THE LANTERN BY THE GREAT TREE. WHEN YOU PASS, IT WILL BE A LITTLE BRIGHTER.' },
     elf_weaver: { love: ['heron_feather', 'sunflower', 'strawberry'], like: ['posy', 'honey', 'sea_glass'], hate: ['stone', 'old_boot'],
                   loveLine: 'OH, THE COLOUR OF IT. THAT\'S GOING INTO A CLOAK. YOU\'LL KNOW IT WHEN YOU SEE A WARDEN WEARING IT.' },
-    elf_child: { love: ['honey_cake', 'strawberry', 'sweet_roll'], like: ['apple', 'posy', 'sea_glass', 'heron_feather'], hate: ['turnip'],
+    elf_child: { love: ['honey_cake', 'strawberry', 'sweet_roll', 'goldfish_bag'], like: ['apple', 'posy', 'sea_glass', 'heron_feather'], hate: ['turnip'],
                  loveLine: 'FOR ME? FOR ACTUALLY ME? I\'M GOING TO KEEP IT FOREVER. OR EAT IT. PROBABLY EAT IT.' }
   };
   var NOT = { key: 1, map: 1, seed: 1 };                  // things that aren't gifts
@@ -283,6 +284,7 @@ var BridgeGifts = (function () {
     if ((T.like || []).indexOf(id) >= 0) return 'like';
     if ((T.hate || []).indexOf(id) >= 0) return 'hate';
     if (id === 'old_boot' || id === 'stone') return 'hate';
+    if (ALL_LOVE.indexOf(id) >= 0) return 'love';         // as promised: the silk scarf (js/rose.js), loved by anyone who doesn't say otherwise
     return 'plain';
   }
 
@@ -326,5 +328,5 @@ var BridgeGifts = (function () {
     if (counts && t === 'love' && typeof BridgeQuests !== 'undefined' && BridgeQuests.toast) BridgeQuests.toast('Gift', person.name + ' loved it', it.name);
   }
 
-  return { can: can, open: open, taste: taste, TASTES: TASTES, _given: function () { return given; } };
+  return { can: can, open: open, taste: taste, TASTES: TASTES, ALL_LOVE: ALL_LOVE, _given: function () { return given; } };
 })();

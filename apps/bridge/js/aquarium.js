@@ -37,6 +37,8 @@ var BridgeAquarium = (function () {
                  stones: [[0.44, 7, 4], [0.53, 4, 3], [0.75, 5, 3]], air: 0.58, wood: 0.4 }
   };
   var EXTRA = { harbour_crab: 'crab', rose_shrimp: 'shrimp' };           // not drawn by fishart, but they live in tanks
+  var CALLED = { goldfish_bag: 'Goldfish' };                              // out of its bag, in the water: just a goldfish
+  var SMALL = { goldfish_bag: 8 };                                         // a length in the room, for what isn't in js/fishing.js's sizes
   var SAMPLE = [{ id: 'glowtail', s: 4 }, { id: 'silverfin', s: 17 }, { id: 'coral_dragonet', s: 9 }];   // the shop's picture
   // how each kind swims: speed (× a fish's), the depths it keeps to (0 top - 1 bottom), how far it wanders up and down,
   // and how much it stops and starts (crabs and shrimp)
@@ -71,7 +73,7 @@ var BridgeAquarium = (function () {
 
   // ---- the fish ------------------------------------------------------------------------------------------------------
   function ok(id) { return !!EXTRA[id] || (typeof BridgeFishArt !== 'undefined' && BridgeFishArt.has(id)); }
-  function name(id) { var it = typeof BridgeItems !== 'undefined' && BridgeItems.get(id); return it ? it.name : id; }
+  function name(id) { if (CALLED[id]) return CALLED[id]; var it = typeof BridgeItems !== 'undefined' && BridgeItems.get(id); return it ? it.name : id; }
   function tier(id) { return typeof BridgeFishArt !== 'undefined' ? BridgeFishArt.tier(id) : 0; }
   function kindOf(id) {
     if (EXTRA[id]) return EXTRA[id];
@@ -87,6 +89,7 @@ var BridgeAquarium = (function () {
   function lenOf(id, maxL) {
     if (EXTRA[id] === 'crab') return 7;
     if (EXTRA[id] === 'shrimp') return 7;
+    if (SMALL[id]) return Math.min(SMALL[id], maxL);
     var s = typeof BridgeFishing !== 'undefined' && BridgeFishing.size ? BridgeFishing.size(id) : null, cm = s ? (s[0] + s[1]) / 2 : 20;
     return clamp(Math.round(8 + 2.6 * Math.log(Math.max(1, cm / 8)) / Math.LN2), 8, maxL);
   }
