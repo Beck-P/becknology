@@ -237,6 +237,7 @@ var BridgeQuests = (function () {
 
   // 'quest' — is it done; 'quest/clue' — has that clue been found (people's topics use this: `when`, `until`)
   function has(key) {
+    if (/^gate:/.test(key)) { var g = GATES[String(key).slice(5)]; try { return !!g && !!g(); } catch (e) { return false; } }   // a module's own condition (js/village.js 'village-wants')
     var k = String(key).split('/'), s = state[k[0]];
     return !!(s && (k[1] ? s.clues && s.clues[k[1]] : s.done));
   }
@@ -558,6 +559,7 @@ var BridgeQuests = (function () {
     }
     if (wid && typeof BridgeBoards !== 'undefined') BridgeBoards.nextUp(wid).forEach(function (b) { out.push(b); });   // a request here you can fill now
     if (typeof BridgeFestivals !== 'undefined' && BridgeFestivals.nextUp) BridgeFestivals.nextUp().forEach(function (b) { out.push(b); });   // a festival on, or this weekend
+    (window.BRIDGE_NEXTUP || []).forEach(function (fn) { try { (fn(wid) || []).forEach(function (b) { out.push(b); }); } catch (e) { /* one module's trouble */ } });   // a module's own (js/village.js: the fund's little want)
     if (typeof BridgeInventory !== 'undefined' && BridgeInventory.freeSlots && BridgeInventory.freeSlots() === 0) {
       out.push({ tag: 'Pack', title: 'Your pack is full', text: 'Sell to a trader, or leave things in a chest: the sea chest on the bridge, the locker in your quarters.' });
     }

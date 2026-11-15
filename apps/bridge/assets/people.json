@@ -6540,6 +6540,12 @@
         "q": "Village gossip",
         "a": "MR PIKE HAS POLISHED THE SAME BRASS LAMP FOUR TIMES THIS WEEK. HE SAYS IT'S FOR THE HARVEST FAIR. THE FAIR JUDGES PUMPKINS, NOT LAMPS. NOBODY HAS TOLD HIM.",
         "lead": "harvest-fair"
+      },
+      {
+        "q": "The fund",
+        "a": "FIVE DONE AND THE VICAR'S STARTED A NEW LIST. LITTLE THINGS - A BENCH, A DUCK HOUSE. ONE A WEEK, ON THE BOARD. AND THE COUNTY'S JUDGE COMES ROUND ON FRIDAYS NOW. BEST KEPT VILLAGE. MRS PRIDDY. SHE HAS A HAT.",
+        "when": "gate:village-wants",
+        "lead": "village-wants"
       }
     ]
   },
