@@ -136,7 +136,8 @@ const SHOTS = process.argv[2] || __dirname + '/shots';
   // ---- the field: the moonflower opens only by night, the twin-moon melon grows only by moonlight ----
   const moon = await p.evaluate(() => {
     // night on Verdance (js/farm.js nightAt) agrees with the sky now, and comes round for part of every Verdance day
-    const now = Date.now(), sky = BridgeClock.sky('verdance'), out = { skyNow: +sky.sun.toFixed(2), nightNow: BridgeFarm.nightAt(now) };
+    // (the page's clock is pinned by ?at=, so 'now' is the clock's, not the machine's: the two disagree most hours of a real day)
+    const now = BridgeClock.now(), sky = BridgeClock.sky('verdance'), out = { skyNow: +sky.sun.toFixed(2), nightNow: BridgeFarm.nightAt(now) };
     let n = 0; for (let t = now; t < now + 6 * 3600000; t += 600000) if (BridgeFarm.nightAt(t)) n++;
     out.nightShare = (n / 36).toFixed(2);
     out.lantern = BridgeFarm.moonLight(0, now).toFixed(2); out.button = BridgeFarm.moonLight(1, now).toFixed(2);
