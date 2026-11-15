@@ -219,6 +219,88 @@ for (x, r) in ((22.2, 21.0), (48.0, 19.4)):
     K.tie_down(k, x, r)
 Y.street_railing(k, -0.5, COLS + 0.5, RAIL)
 
+# ---- the middle apron (bay 2's open front): its own lights, its stand markings, the small life of a working berth ---------
+# (the look-over found it dark and plain: big slabs under one lamp pool). Its own dice, so nothing above moves.
+_dice = rng.getstate()
+ar = random.Random(22071)
+
+
+def apron_mast(x, r, h=4.6, aim=-2.2, energy=260, col='#fff0d0'):
+    """A floodlight mast like the others, its lamps turned back over the berth: the pool falls on the apron, not the rail."""
+    k.cyl(x, r, 0.0, 0.2, 0.22, '#2a2a32', 'mast_base', verts=10)
+    for (dx, dr) in ((-0.07, -0.07), (0.07, -0.07), (0.0, 0.07)):
+        k.tube((x + dx, r + dr, 0.2), (x + dx * 0.5, r + dr * 0.5, h), 0.025, '#5a5a66', 'mast', verts=4)
+    for i in range(6):
+        z = 0.5 + i * (h - 0.6) / 6
+        k.tube((x - 0.07, r - 0.07, z), (x + 0.07, r - 0.07, z + 0.3), 0.012, '#5a5a66', 'mast_brace', verts=3)
+    k.box(x - 0.4, r - 0.12, h, x + 0.4, r + 0.12, h + 0.3, '#2a2a32', 'mast_head')
+    for i in range(4):
+        k.box(x - 0.35 + i * 0.18, r - 0.14, h + 0.04, x - 0.21 + i * 0.18, r - 0.1, h + 0.26, shade(col, 0.6), 'mast_lamp',
+              emit=(col, 1.0))
+    k.point_light(x, r + aim, h - 0.4, col, energy, radius=0.4)
+    k.sphere(x, r, h + 0.42, 0.07, 0.07, Y.RED, 'mast_beacon', emit=(Y.RED, 1.0), segs=8)
+    k.solid_post(x, r)
+
+
+apron_mast(31.4, 27.0)
+apron_mast(41.0, 27.0)
+for x in (29.6, 42.4):                                  # work lamps under the gantry's near beam, lighting its legs' feet
+    k.box(x - 0.3, 22.14, 4.9, x + 0.3, 22.4, 5.12, '#2a2a32', 'gantry_lamp_head')
+    k.box(x - 0.24, 22.4, 4.94, x + 0.24, 22.42, 5.08, '#fff0d0', 'gantry_lamp', emit=('#fff0d0', 0.95))
+    k.point_light(x + (1.6 if x < 36 else -1.6), 23.2, 4.2, '#ffe8c8', 120, radius=0.3)
+# stand markings: a lead-in line down the berth's middle, a stop bar with its stand number, aircraft-style tee marks
+for x in [25.8 + i * 1.0 for i in range(22)]:
+    k.box(x, 23.92, 0.0, x + 0.55, 24.04, 0.006, P.STRIPE, 'floor_paint')
+k.box(36.94, 22.6, 0.0, 37.06, 25.6, 0.006, P.STRIPE, 'floor_paint')                       # the stop bar across it
+k.box(36.5, 22.6, 0.0, 37.5, 22.72, 0.006, P.STRIPE, 'floor_paint')
+K.floor_text(k, 'STAND 2A', 'RussoOne', 33.6, 25.05, 0.4, '#d8c890')
+K.floor_text(k, 'STAND 2B', 'RussoOne', 41.8, 25.05, 0.4, '#d8c890')
+for x in (28.2, 45.0):                                                                   # arrows: in from either end
+    s = 1 if x < 36 else -1
+    k.bar(x, 23.98, x + s * 1.1, 23.98, 0.0, 0.006, 0.12, P.STRIPE, 'floor_paint')
+    k.bar(x + s * 1.1, 23.98, x + s * 0.75, 23.7, 0.0, 0.006, 0.1, P.STRIPE, 'floor_paint')
+    k.bar(x + s * 1.1, 23.98, x + s * 0.75, 24.26, 0.0, 0.006, 0.1, P.STRIPE, 'floor_paint')
+for (x, r) in ((27.0, 21.0), (34.0, 21.0), (39.0, 21.0)):                                # tie-downs along the hull's foot
+    K.tie_down(k, x, r)
+# the small life: a tug and its baggage cart parked off the line, pallets and gas by the loader, a tool chest by the gantry
+TX, TR = 38.6, 25.3
+k.box(TX, TR - 0.32, 0.12, TX + 0.9, TR + 0.32, 0.5, ('#e0b020', 0.06), 'tug_body', bevel=0.04)
+k.box(TX + 0.5, TR - 0.28, 0.5, TX + 0.88, TR + 0.28, 0.82, '#1a2230', 'tug_cab', emit=('#2a3a50', 0.25), bevel=0.03)
+k.box(TX - 0.02, TR - 0.33, 0.3, TX + 0.9, TR + 0.33, 0.36, '#1a1a1e', 'tug_stripe')
+for (dx, dr) in ((0.18, -0.34), (0.72, -0.34), (0.18, 0.34), (0.72, 0.34)):
+    k.cyl_y(TX + dx, TR + dr - 0.05, TR + dr + 0.05, 0.13, 0.13, 0.13, '#18181c', 'tug_wheel', verts=10)
+k.sphere(TX + 0.92, TR - 0.18, 0.4, 0.04, 0.04, '#fff2d0', 'tug_lamp', emit=('#fff2d0', 1.0), segs=6)
+k.sphere(TX + 0.92, TR + 0.18, 0.4, 0.04, 0.04, '#fff2d0', 'tug_lamp', emit=('#fff2d0', 1.0), segs=6)
+k.bar(TX - 0.4, TR, TX, TR, 0.18, 0.22, 0.05, '#3a3a40', 'tug_towbar')
+CX_ = TX - 1.6                                                                            # the cart: a flatbed of cases
+k.box(CX_, TR - 0.32, 0.18, CX_ + 1.2, TR + 0.32, 0.26, ('#4a4a54', 0.08), 'cart_bed')
+for (dx, dr) in ((0.15, -0.34), (1.05, -0.34), (0.15, 0.34), (1.05, 0.34)):
+    k.cyl_y(CX_ + dx, TR + dr - 0.04, TR + dr + 0.04, 0.09, 0.09, 0.09, '#18181c', 'cart_wheel', verts=8)
+for (dx, dr, w_, h_, c_) in ((0.05, -0.28, 0.5, 0.36, '#3a5a7a'), (0.6, -0.26, 0.5, 0.3, '#6a3a2a'), (0.1, 0.02, 0.42, 0.28, '#5a4a32'),
+                             (0.6, 0.06, 0.54, 0.4, '#2a4a3a'), (0.2, -0.2, 0.3, 0.2, '#7a6a4a')):
+    z0 = 0.26 if h_ > 0.21 else 0.62
+    k.box(CX_ + dx, TR + dr, z0, CX_ + dx + w_, TR + dr + 0.24, z0 + h_, (c_, 0.1), 'cargo_case', bevel=0.02)
+k.solid(CX_ - 0.05, TR - 0.4, TX + 0.95, TR + 0.4)
+AR.pallets(k, 27.4, 24.7, n=3)
+AR.gas_bottles(k, 28.6, 25.2, n=3, col='#2a6ab0')
+k.solid(28.45, 25.05, 29.25, 25.35)
+TB = 43.4                                                                                 # a rolling tool chest, a hose reel
+k.box(TB, 22.75, 0.08, TB + 0.6, 23.15, 0.78, ('#c83a2a', 0.08), 'tool_chest', bevel=0.02)
+for i in range(4):
+    k.box(TB + 0.04, 23.15, 0.16 + i * 0.15, TB + 0.56, 23.16, 0.26 + i * 0.15, '#8a2a1a', 'tool_drawer')
+    k.box(TB + 0.22, 23.16, 0.2 + i * 0.15, TB + 0.38, 23.18, 0.22 + i * 0.15, '#c8c8d0', 'tool_handle')
+k.box(TB + 0.1, 22.85, 0.78, TB + 0.42, 22.95, 0.82, '#5a5a66', 'spanner')
+k.solid(TB, 22.75, TB + 0.6, 23.15)
+k.cyl_x(TB + 0.9, TB + 1.3, 23.0, 0.42, 0.38, 0.38, ('#2a2a30', 0.06), 'hose_reel', verts=14)
+k.cyl_x(TB + 0.94, TB + 1.26, 23.0, 0.42, 0.33, 0.33, '#a02a1a', 'hose_coil', verts=14)
+k.solid(TB + 0.85, 22.7, TB + 1.35, 23.3)
+AR.cones(k, ((32.2, 22.7), (33.4, 22.7), (34.6, 22.7)))
+for (x, r) in ((32.2, 22.7), (33.4, 22.7), (34.6, 22.7)):
+    k.solid_post(x, r)
+for (x, r, rx, ry) in ((30.6, 23.0, 0.7, 0.24), (40.2, 22.4, 0.6, 0.22)):                # puddles catch the new lamps
+    Y.puddle(k, x, r, rx, ry, tint='#ffe8c8')
+rng.setstate(_dice)
+
 # ---- light --------------------------------------------------------------------------------------------------------------
 for (x, c) in ((6.0, '#a060ff'), (17.0, '#ff8a40'), (26.0, '#60c0ff'), (35.0, '#ffb040'), (42.0, '#80d0ff'), (51.0, '#a080ff'),
                (62.0, '#ff9a50')):
