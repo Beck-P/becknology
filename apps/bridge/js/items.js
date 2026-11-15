@@ -1963,6 +1963,13 @@ var BridgeItems = (function () {
     ship_lemon:    { id: 'ship_lemon', name: 'Lemon', desc: 'From the greenhouse deck\'s lemon tree. Sharp enough to make your eyes water.', type: 'food', stackable: true,
                      draw: function (ctx, x, y, s) { var u = s / 16; px(ctx, x, y, u, '#a88a10', [[3, 6, 10, 6], [4, 5, 8, 8]]); px(ctx, x, y, u, '#f0d040', [[4, 6, 8, 6], [5, 5, 6, 1]]); px(ctx, x, y, u, '#fff0a0', [[5, 7, 2, 2]]); px(ctx, x, y, u, '#3a8a3a', [[11, 4, 3, 2]]); },
                      effects: { energy: 5 }, onUse: consumableUse, value: 6 },
+    // Okafor's strain from Enigma's hydroponics (js/fardeep.js, E1): a seedling she swaps for herbs, grown on in the greenhouse
+    okafor_seedling: { id: 'okafor_seedling', name: 'Okafor\'s Seedling', desc: 'A tuber sprouting in a ration tin, from Enigma\'s hydroponics. It glows green when you breathe on it. Plant it at the greenhouse deck\'s potting bench.', type: 'material', stackable: true,
+                     draw: function (ctx, x, y, s) { var u = s / 16; px(ctx, x, y, u, '#1a1a22', [[4, 9, 8, 6]]); px(ctx, x, y, u, '#8a9aa8', [[5, 10, 6, 4]]); px(ctx, x, y, u, '#c8d4dc', [[5, 10, 6, 1]]); px(ctx, x, y, u, '#3a8a3a', [[7, 4, 2, 6], [5, 5, 2, 2], [9, 3, 2, 2]]); px(ctx, x, y, u, '#80ff90', [[8, 5, 1, 2], [6, 5, 1, 1], [10, 3, 1, 1]]); },
+                     value: 0 },
+    glow_tuber:    { id: 'glow_tuber', name: 'Glow-Tuber', desc: 'Okafor\'s, bred from Lumar spores: a knobbly tuber that glows green when you talk to it. Roasts well. Carried after dark it lights the water round your line.', type: 'food', stackable: true,
+                     draw: function (ctx, x, y, s) { var u = s / 16; px(ctx, x, y, u, '#1a2a14', [[3, 6, 10, 7], [4, 5, 7, 9]]); px(ctx, x, y, u, '#6a8a3a', [[4, 6, 8, 6], [5, 5, 5, 8]]); px(ctx, x, y, u, '#9ad860', [[5, 6, 3, 2]]); px(ctx, x, y, u, '#60f0a0', [[8, 9, 2, 1], [6, 11, 1, 1], [10, 7, 1, 1]]); px(ctx, x, y, u, '#3a8a3a', [[11, 3, 2, 3]]); },
+                     effects: { hp: 6, energy: 12 }, onUse: consumableUse, value: 11, carried: { bite: 0.9, dark: true, text: 'after dark its glow brings fish up to your line a little sooner' } },
     sunflower:     { id: 'sunflower', name: 'Sunflower', desc: 'A head as big as a plate. Marlo pays 32 for them.', type: 'material', stackable: true,
                      draw: produceIcon('sunflower'), value: 32 },
     pumpkin:       { id: 'pumpkin', name: 'Pumpkin', desc: 'Heavy, ribbed and glossy. Marlo pays 95.', type: 'food', stackable: true,

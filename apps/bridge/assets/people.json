@@ -777,6 +777,17 @@
         "a": "LETTUCE, TOMATOES, AND SOMETHING I BRED FROM LUMAR SPORES THAT GLOWS WHEN YOU TALK TO IT. I TALK TO IT A LOT. THE FISH ARE CALLED ADA, BIX, CORA, DELL AND EZE. AFTER THE CREW. DON'T EAT THEM."
       },
       {
+        "q": "A swap for the garden?",
+        "a": "WHAT HAVE YOU GOT?",
+        "use": { "type": "okafor_swap" },
+        "when": "gate:okafor-swap"
+      },
+      {
+        "q": "Station dispatches",
+        "a": "READ ME WHAT YOU'VE GOT.",
+        "use": { "type": "okafor_dispatches" }
+      },
+      {
         "q": "Heard anything?",
         "a": "IF YOU'RE GOING TO THE BRINK - THE THING ON THE OTHER SIDE OF THE DARK - LOOK FOR A PIECE OF THIS STATION. IT GOT THERE BEFORE US. EVERYTHING DOES.",
         "rumour": "brink"

@@ -360,6 +360,60 @@ const ONLY = process.argv[3] || '';
     console.log('w1 done');
   }
 
+  // ---- E1 · Okafor's seeds, E2 · dispatches into the log ----
+  if (part('e1')) {
+    await p.evaluate(() => { const s = BridgeFarDeep._s(); s.seeds = 0; s.dispatches = []; window._fit = BridgeWayfarer.fitted; });
+    await go('enigma-hydro', 'OKAFOR');
+    await p.evaluate(() => { BridgeWayfarer.fitted = () => false; });
+    await use('OKAFOR'); await pick(/swap for the garden/); let t = await said(); await shut();
+    if (!/GREENHOUSE ON THAT SHIP/.test(t)) fail('Okafor without a greenhouse: ' + t.slice(0, 80));
+    await p.evaluate(() => { BridgeWayfarer.fitted = (m) => m === 'greenhouse' || window._fit(m); });
+    await use('OKAFOR'); await pick(/swap for the garden/); t = await said(); await shut();
+    if (!/THREE BUNCHES/.test(t)) fail('Okafor without herbs: ' + t.slice(0, 80));
+    await give('ship_herbs', 3);
+    await use('OKAFOR'); await pick(/swap for the garden/); t = await said(); await shut();
+    await p.waitForTimeout(800); await shut();
+    if (await count('okafor_seedling') !== 1 || await count('ship_herbs') !== 0) fail('the swap: seedling ' + await count('okafor_seedling') + ', herbs ' + await count('ship_herbs'));
+    console.log('the swap:', t.slice(0, 120).replace(/\n/g, ' '));
+    console.log('next up:', JSON.stringify(await p.evaluate(() => BridgeFarDeep.nextUp('enigma-hydro').map(n => n.title))));
+    await go('ship-greenhouse', [8, 8]);
+    const bench = async () => { await p.evaluate(() => BridgeInteractions.execute(BridgeWorld.getWorld().interactions.find(i => i.type === 'greenhouse' && i.part === 'bench'))); await p.waitForTimeout(800); };
+    await bench(); await pick(/Plant Okafor/); await said(); await shut();
+    if (await count('okafor_seedling')) fail('the seedling not planted');
+    await bench();
+    let r = await rows(); console.log('bench:', JSON.stringify(r.filter(x => /glow/i.test(x))));
+    await shot('e1_bench');
+    await pick(/glow-tubers/); await p.waitForTimeout(600);
+    if (await count('glow_tuber') !== 2) fail('glow-tubers: ' + await count('glow_tuber'));
+    r = await rows(); console.log('bench after:', JSON.stringify(r.filter(x => /glow/i.test(x))));
+    if (!r.some(x => /ready in 60 min/.test(x))) fail('the tubers not growing back');
+    await shut();
+    const u = await p.evaluate(() => BridgeUses.lines('glow_tuber').map(l => l.t.replace(/<[^>]+>/g, '')));
+    console.log('glow-tuber uses:', JSON.stringify(u));
+    if (!u.some(x => /glow brings fish/.test(x))) fail('the tuber\'s light not on its card');
+    if (await p.evaluate(() => BridgeQuests.has('gate:okafor-swap'))) fail('the swap still offered once planted');
+    await p.evaluate(() => { BridgeWayfarer.fitted = window._fit; });
+    console.log('e1 done');
+  }
+  if (part('e2')) {
+    await p.evaluate(() => { BridgeFarDeep._s().dispatches = []; });
+    await go('enigma', 'CIPHER TERMINAL');
+    for (let i = 0; i < 2; i++) { await p.evaluate(() => window.postMessage({ type: 'bridge-run-ended', game: 'cipher-room', title: 'Cipher Terminal', score: '01:23' }, '*')); await p.waitForTimeout(900); }
+    const lg = await p.evaluate(() => BridgeQuests.log().filter(l => l.k === 'Dispatch decoded').map(l => l.t + ': ' + l.s));
+    console.log('the log:', JSON.stringify(lg));
+    if (lg.length !== 2 || !/Supply order 114/.test(lg.join()) || !/Shift swap/.test(lg.join())) fail('dispatches in the log: ' + lg.length);
+    await shot('e2_toast');
+    if (lg.some(x => /signal|wren|listen/i.test(x))) fail('a dispatch about the story');
+    await p.evaluate(() => window.postMessage({ type: 'bridge-run-ended', game: 'asteroids', score: 9 }, '*')); await p.waitForTimeout(700);
+    if (await p.evaluate(() => BridgeFarDeep._s().dispatches.length) !== 2) fail('another game filed a dispatch');
+    await go('enigma-hydro', 'OKAFOR');
+    await use('OKAFOR'); await pick(/Station dispatches/); const t = await said();
+    if (!/PEACHES|POTTING GRIT/.test(t)) fail('Okafor\'s read-back: ' + t.slice(0, 100));
+    await shot('e2_okafor'); await shut();
+    if (!(await p.evaluate(() => BridgeQuests.leadsOpen())).includes('enigma-dispatches')) fail('no lead to the terminal');
+    console.log('e2 done');
+  }
+
   console.log(errors ? errors + ' FAILED' : 'far_deeper OK');
   await b.close();
   process.exit(errors ? 1 : 0);

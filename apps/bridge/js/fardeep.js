@@ -14,6 +14,10 @@
  *   S1  Echoes that grow: the Brink's RING GATE (type `brink_ring` once you've finished anything) reads back what you've
  *       done out there — quests (not the main story's), festival placings, sea legends, Collection sets — and hangs a
  *       thread of light in the ring for each (the `singularity` items hook), the new ones brighter.
+ *   E1  Okafor's seeds: her glowing tuber for three bunches of your greenhouse's herbs (`okafor_swap`), planted at the
+ *       potting bench (js/greenhouse.js reads `benchRows`): two glow-tubers an hour.
+ *   E2  Dispatches into the log: each cipher solved at Enigma's terminal decodes the next station dispatch (`DISPATCHES`)
+ *       into the Journal's log; Okafor reads them back (`okafor_dispatches`).
  * State: localStorage `bridge_fardeep` (cloud-saved like every bridge_* key).
  */
 var BridgeFarDeep = (function () {
@@ -161,6 +165,80 @@ var BridgeFarDeep = (function () {
   }
   if (typeof BridgeWorld !== 'undefined' && BridgeWorld.registerSceneHooks) BridgeWorld.registerSceneHooks('singularity', { items: threads });
 
+  // ---- E1 · Okafor's seeds ------------------------------------------------------------------------------------------
+  // Okafor swaps a seedling of her glowing tuber for three bunches of fresh herbs off your greenhouse deck (she hasn't
+  // smelled mint in seventy cycles); planted at the potting bench aboard, it gives two glow-tubers every hour.
+  var SWAP = 3, TUBER_EVERY = 60 * 60000;
+  function fitted(m) { return typeof BridgeWayfarer !== 'undefined' && BridgeWayfarer.fitted && BridgeWayfarer.fitted(m); }
+  gate('okafor-swap', function () { return !s.seeds; });
+  function swap() {
+    if (s.seeds) return say('OKAFOR', '"HOW\'S MY TUBER? TALK TO IT. IT LIKES THAT. IT LIKES SHANTIES BEST, BUT I DON\'T KNOW ANY."');
+    if (count('okafor_seedling') > 0) return say('OKAFOR', '"IT WANTS A POT AND A GROW-LAMP. YOUR POTTING BENCH WILL DO. GO ON, IT\'S GETTING IDEAS."');
+    if (!fitted('greenhouse')) return say('OKAFOR', '"A GREENHOUSE ON THAT SHIP OF YOURS? NO? WHEN THERE IS ONE, BRING ME HERBS FROM IT - REAL ONES - AND I\'LL GIVE YOU SOMETHING THAT GROWS IN THE DARK."');
+    if (count('ship_herbs') < SWAP) return say('OKAFOR', '"FRESH HERBS. THREE BUNCHES, FROM YOUR OWN BEDS. I HAVEN\'T SMELLED MINT IN SEVENTY CYCLES. THEN WE\'LL TALK."' + (count('ship_herbs') ? ' (YOU HAVE ' + count('ship_herbs') + '.)' : ''));
+    BridgeInventory.removeItem('ship_herbs', SWAP);
+    if (BridgeInventory.give) BridgeInventory.give('okafor_seedling', 1); else BridgeInventory.addItem('okafor_seedling', 1);
+    sfx('give');
+    say('OKAFOR', 'SHE PUTS HER FACE IN THE HERBS AND DOESN\'T SAY ANYTHING FOR A WHILE.\n\n"RIGHT." SHE PRISES A SPROUTING TUBER OUT OF A RATION TIN AND HANDS YOU THE TIN. "IT GLOWS WHEN YOU TALK TO IT. POT IT UP UNDER A LAMP. TWO AN HOUR, ONCE IT\'S GOING. DON\'T LET IT HEAR YOU CALL IT A POTATO."');
+  }
+  register('okafor_swap', swap, 'Ask');
+  // the potting bench (js/greenhouse.js asks for these rows): plant it, then pick what it's grown
+  function benchRows(back) {
+    var rows = [];
+    if (!s.seeds && count('okafor_seedling') > 0) rows.push({ label: 'Plant Okafor\'s seedling', sub: 'a pot under a grow-lamp', icon: 'okafor_seedling', note: 'two glow-tubers an hour', pick: function () {
+      BridgeInventory.removeItem('okafor_seedling', 1); s.seeds = Date.now() - TUBER_EVERY; store(); sfx('pickup');
+      say('THE POTTING BENCH', 'YOU POT IT UP UNDER THE GROW-LAMP AND, FEELING SILLY, SAY GOOD MORNING TO IT. IT GLOWS GREEN. IT\'S ALREADY GOT TWO LITTLE TUBERS ON IT.');
+    } });
+    if (s.seeds) {
+      var left = s.seeds + TUBER_EVERY - Date.now();
+      rows.push({ label: 'Okafor\'s glow-tubers', sub: 'in a pot under the lamp', icon: 'glow_tuber', note: left > 0 ? 'ready in ' + Math.ceil(left / 60000) + ' min' : 'two ready', info: left > 0, pick: function () {
+        if (s.seeds + TUBER_EVERY > Date.now()) return;
+        if (!BridgeInventory.addItem('glow_tuber', 2)) return say('THE POTTING BENCH', 'YOUR PACK\'S FULL.');
+        s.seeds = Date.now(); store(); sfx('pickup');
+        if (back) back();
+      } });
+    }
+    return rows;
+  }
+
+  // ---- E2 · Dispatches into the log ------------------------------------------------------------------------------------
+  // Each cipher solved at Enigma's terminal (apps/cipher-room posts `bridge-run-ended`, game 'cipher-room') decodes the
+  // next of the station's old dispatches into the Journal's log: shift swaps, supply orders, notices. Station business only.
+  var DISPATCHES = [
+    ['Supply order 114', 'Hydro: two bags of potting grit, one pump seal, seed trays (any). Signed D. Okafor. In the margin: the tomatoes want a word.'],
+    ['Shift swap', 'Maintenance third shift swaps with Stores for the long weekend. Coffee owed: two. No trading back.'],
+    ['Notice', 'The galley kettle is not a soldering iron. Whoever this is about knows who they are.'],
+    ['Supply order 117', 'Fuses (40). Light tubes (12). One deck of cards: the old one is short a queen.'],
+    ['Rota', 'Ring section C closed for the air scrub, cycles 40 to 42. Use the spine corridor. Mind the step.'],
+    ['Shift swap', 'Okafor takes all of Stores\' night shifts this cycle in exchange for the big hammock. Approved, with a sigh.'],
+    ['Supply order 121', 'From Arcadia port: six tins of peaches, one long squeegee, batteries. Do not substitute the peaches.'],
+    ['Maintenance', 'Dock 3, clamp 2 sticks. Hit it with the mallet. It\'s fine. It\'s been fine for six cycles.'],
+    ['Medical', 'Annual checks in cycle 50. Bring your card. Bring your own sweets: the jar is for the doctor.'],
+    ['Shift swap', 'Relay Ops first shift needs cover on the 14th. Will pay in socks. Good socks.'],
+    ['Supply order 126', 'Hydro: grow-lamp bulbs (6), twine, and a lemon tree if anyone\'s passing Verdance. (Nobody is.)'],
+    ['Notice', 'Whoever keeps setting the corridor lights to "sunset": thank you. Please stop. Please don\'t stop.']
+  ];
+  function dispatch() {
+    var n = s.dispatches.length;
+    if (n >= DISPATCHES.length) return null;
+    var D = DISPATCHES[n];
+    s.dispatches.push(Date.now()); store();
+    toast('Dispatch decoded', D[0], D[1]);
+    return D;
+  }
+  window.addEventListener('message', function (e) {
+    var d = e && e.data;
+    if (d && d.type === 'bridge-run-ended' && d.game === 'cipher-room') setTimeout(dispatch, 400);
+  });
+  function dispatches() {
+    var got = s.dispatches.length;
+    if (typeof BridgeQuests !== 'undefined' && BridgeQuests.lead) BridgeQuests.lead('enigma-dispatches', 'Dami Okafor');
+    if (!got) return say('OKAFOR', '"THE CIPHER TERMINAL ON THE RELAY DECK? IT\'S STILL CHEWING THROUGH THE OLD TRAFFIC. EVERY CODE YOU CRACK, SOMETHING DULL FALLS OUT. SHIFT SWAPS. PEACHES. BRING ME THE GOSSIP."');
+    say('OKAFOR', 'SHE READS THEM OFF YOUR COPY, GRINNING.\n\n' + DISPATCHES.slice(0, got).map(function (D) { return (D[0] + ': ' + D[1]).toUpperCase(); }).join('\n\n') +
+      (got < DISPATCHES.length ? '\n\n"MORE WHERE THOSE CAME FROM. THE TERMINAL\'S GOT YEARS OF IT."' : '\n\n"THAT\'S THE LOT. I MISS THE PEACHES."'));
+  }
+  register('okafor_dispatches', dispatches, 'Ask');
+
   function decorate(worldId, data) {
     if (!data) return;
     decorateVerse(worldId, data);
@@ -172,6 +250,8 @@ var BridgeFarDeep = (function () {
     if (/^sylvara/.test(wid || '') && typeof BridgeQuests !== 'undefined' && BridgeQuests.has('queens-favour') && !BridgeQuests.has(VQ + '/ask') &&
         !(BridgeQuests.rumours && BridgeQuests.rumours().indexOf(VQ) >= 0))
       out.push({ tag: 'Here', title: 'Thaelin\'s old song', text: 'Fennick at the Hollow Bough, up in the Boughs, says the bard has lost the words to his best song.', world: 'sylvara-tavern' });
+    if (count('okafor_seedling') > 0 && !s.seeds) out.push({ tag: 'Carrying', title: 'Okafor\'s seedling', text: 'Pot it up at the potting bench on your greenhouse deck.', world: 'ship-greenhouse' });
+    if (s.seeds && s.seeds + TUBER_EVERY <= Date.now() && /^ship-/.test(wid || '')) out.push({ tag: 'Aboard', title: 'Glow-tubers ready', text: 'Two on Okafor\'s plant at the potting bench.', world: 'ship-greenhouse' });
     // W1: tonight's sight not logged yet, with the observatory fitted
     if (typeof BridgeObservatory !== 'undefined' && typeof BridgeWayfarer !== 'undefined' && BridgeWayfarer.fitted('observatory')) {
       var S = BridgeObservatory.tonight();
@@ -185,14 +265,19 @@ var BridgeFarDeep = (function () {
   function comeBack(wid) {
     var out = [];
     if (wid === 'sylvara-river') out.push('trout off the dock; a moon carp after dark');   // Y7 (js/fishing.js `river`)
+    if (wid === 'ship-greenhouse' && s.seeds) out.push('two glow-tubers an hour on Okafor\'s plant');   // E1
+    if (wid === 'enigma' && s.dispatches.length < DISPATCHES.length) out.push('a station dispatch for every cipher you crack');   // E2
     if (wid === 'singularity') out.push('a new echo in the ring gate for each thing you finish out there');   // S1
     return out;
   }
   window.BRIDGE_NEXTUP = (window.BRIDGE_NEXTUP || []).concat([nextUp]);
   window.BRIDGE_COMEBACK = (window.BRIDGE_COMEBACK || []).concat([comeBack]);
 
-  var USES = [];
+  var USES = [
+    { id: 'ship_herbs', p: 5, t: '<b>Okafor</b> on Enigma swaps a seedling of her glowing tuber for ' + SWAP + ' of them' },
+    { id: 'okafor_seedling', p: 9, t: 'Plant it at the <b>potting bench</b> on your greenhouse deck: two glow-tubers an hour from then on' }
+  ];
 
-  return { USES: USES, decorate: decorate, nextUp: nextUp, comeBack: comeBack, verses: verses, verseOf: verseOf, deeds: deeds, ring: ring,
+  return { USES: USES, decorate: decorate, nextUp: nextUp, comeBack: comeBack, verses: verses, verseOf: verseOf, deeds: deeds, ring: ring, benchRows: benchRows, swap: swap, dispatch: dispatch, DISPATCHES: DISPATCHES,
            _s: function () { return s; }, reload: function () { s = load(); } };
 })();
