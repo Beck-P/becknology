@@ -347,6 +347,9 @@ w = {'name': 'The Floating Market', 'width': COLS, 'height': ROWS, 'tileSize': 1
          look('THE HARBOUR LIGHTS', 18, 20, 'TWO BLUE LAMPS ON THE BREAKWATER MARK THE GAP TO THE OPEN SEA. BLUE, THE SAILORS SAY, BECAUSE A SAPPHIRE MAN WILL ONLY TRUST A SAPPHIRE LIGHT.'),
      ] + [{'x': t[6][0], 'y': t[6][1], 'type': 'dialog', 'label': t[5], 'prompt': 'PRESS E TO TALK', 'dialog': ''} for t in TRADERS]}
 open(WORLD, 'w').write(json.dumps(w, indent=2) + '\n')
+# the look-over (November 2026): the gate's corner was shut in by the barrels, the first lamp and a bollard, so you
+# arrived from Sapphire Port in a pocket of five tiles. The cobbles in front of the barrels are open.
+k.blocked -= {(1, 5), (34, 5)}       # (and the same at the quay's east end, shut off by its barrels and lamp)
 apply_world(WORLD, k, (0, 0, COLS - 1, ROWS - 1), scene_id=WID,
             actors=[{'sheet': 'npc-market-' + t[5].lower().replace('old ', ''), 'x': t[6][0], 'y': t[6][1], 'facing': 'down'} for t in TRADERS],
             scene_extra={'smoke': SMOKE})
