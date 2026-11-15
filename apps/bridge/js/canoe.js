@@ -218,22 +218,27 @@ var BridgeCanoe = (function () {
     // head-on into a rock with water either side of it (one stands on the falls' current line): ease round it toward the
     // nearer open side, or the current pins you there for good
     var my = st.vy + c[1], mx = st.vx + c[0];
-    if (!hy && Math.abs(my) > 0.05) st.x += roundBy(w, st.x, st.y + Math.sign(my) * 0.5, 'x') * dt;
-    else if (!hx && Math.abs(mx) > 0.05) st.y += roundBy(w, st.x + Math.sign(mx) * 0.5, st.y, 'y') * dt;
+    if (!hy && Math.abs(my) > 0.05) st.x += roundBy(w, st.x, st.y, 0, Math.sign(my)) * dt;
+    else if (!hx && Math.abs(mx) > 0.05) st.y += roundBy(w, st.x, st.y, Math.sign(mx), 0) * dt;
     if (waterAt(w, st.x, st.y) === 2 && Math.random() < dt * 2) { st.bump = performance.now(); st.th += (Math.random() - 0.5) * 0.3; }
     var now = performance.now();
     if (now - (st.wakeAt || 0) > 90 && (Math.hypot(st.vx + c[0], st.vy + c[1]) > 0.4)) { st.wakeAt = now; st.wake.push({ x: st.x, y: st.y, th: st.th, t: now }); }
     st.wake = st.wake.filter(function (p) { return now - p.t < 1400; });
     pose();
   }
-  /** Which way round what's ahead at (x, y) along the other axis: −1.6 or +1.6 tiles a second toward the nearer side that's
-   *  water (0 when neither is). */
-  function roundBy(w, x, y, axis) {
-    var v = axis === 'x' ? x : y, f = v - Math.floor(v), lo = f + 0.1, hi = 1.1 - f;
-    var at = function (d) { return axis === 'x' ? waterAt(w, x + d, y) : waterAt(w, x, y + d); };
-    var a = at(-lo), b = at(hi);
-    if (a && (!b || lo <= hi)) return -1.6;
-    if (b) return 1.6;
+  /** Blocked going (dx, dy) — one of them 0 — from (x, y): which way along the bank to the nearest place it opens, within
+   *  three tiles either side, sliding only through water: −1.6 or +1.6 tiles a second along the other axis, 0 if none.
+   *  (Looking one cell either side got you round a rock in the stream, but not along a bank whose gap is two rows off —
+   *  south of the Deep Run's mouth the current pinned you against the bank for good.) */
+  function roundBy(w, x, y, dx, dy) {
+    var ax = dy ? 1 : 0, ay = dx ? 1 : 0;                       // the axis to slide along
+    for (var d = 0.25; d <= 3.0; d += 0.25) {
+      for (var k = 0; k < 2; k++) {
+        var sg = k ? 1 : -1, ok = true;
+        for (var t = 0.25; t <= d && ok; t += 0.25) ok = !!waterAt(w, x + ax * sg * t, y + ay * sg * t);
+        if (ok && waterAt(w, x + ax * sg * d + dx * 0.6, y + ay * sg * d + dy * 0.6)) return sg * 1.6;
+      }
+    }
     return 0;
   }
   function bump() {
