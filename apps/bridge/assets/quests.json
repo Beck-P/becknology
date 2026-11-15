@@ -405,6 +405,102 @@
       "text": "ok so you know about us now. dont tell joro. the gate stays chained, thats the rule, but if you ever need something run anywhere in the district, you know who to ask. tokens up front.\n\nP\n\n(this is a NULL letter. burn it)"
     }
   },
+  "iris-arm": {
+    "title": "Chrome All the Way Up",
+    "where": "Arcadia · the levels",
+    "reward": 400,
+    "start": "Iris Kade learned her trade under the street, at Doc Sallow's chair, before the clinic and before LUMEN. The first arm she ever built went missing on the way up. Sallow remembers it.",
+    "rumour": "Iris Kade of LUMEN built her first arm in a back-alley chop shop under the street, and lost it on her way up. Doc Sallow, in the Undercity, would remember.",
+    "begin": "sallow",
+    "done": "Iris Kade's first arm hangs in its own arch of light in LUMEN now, between the starlight optics and the gilt lace, a little scuffed. It's the only thing in the shop that isn't for sale.",
+    "items": {
+      "hand": {
+        "name": "Iris Kade's first hand",
+        "text": "A slim chrome hand, hand-filed, the fingers still on their pins, a K etched in the palm. Out of the heap under Saint Ruin's throne. The rest of the arm is somewhere else.",
+        "to": "Iris Kade",
+        "icon": "chromehand"
+      },
+      "arm": {
+        "name": "Iris Kade's first arm",
+        "text": "A forearm built by hand on a back-alley bench: pink trim at the wrist, cables at the elbow, a lot of love and not much money. Take it, and its hand, up to LUMEN.",
+        "to": "Iris Kade",
+        "icon": "chromearm"
+      }
+    },
+    "clues": [
+      {
+        "id": "sallow",
+        "on": {
+          "world": "arcadia-chopshop",
+          "label": "DOC SALLOW"
+        },
+        "text": "Doc Sallow remembers Iris Kade's first arm: she built it on his bench, and left it with him to sell when she went up to the Chrome Clinic. He sent it up to Nakuri's for its papers - a papered arm fetches three times the price - and never saw it again.",
+        "hint": "Iris Kade learned her trade in a chop shop under the street. Doc Sallow, in the Undercity's Warrens, would remember her first arm."
+      },
+      {
+        "id": "file",
+        "after": "sallow",
+        "on": {
+          "world": "chrome-clinic",
+          "label": "DOCTOR"
+        },
+        "text": "Dr. Nakuri still has the file: the arm passed its papers and sold the same week, for cash and a crate of scrap, to a buyer who signed with a crown of three strokes. The Rust Saints' mark. Saint Ruin's.",
+        "hint": "Sallow sent the arm up to the Chrome Clinic on the District street for its papers. Dr. Nakuri keeps a file on everything she signs."
+      },
+      {
+        "id": "hand",
+        "after": "file",
+        "get": "hand",
+        "gate": "ruin-beaten",
+        "on": {
+          "world": "arcadia-scrapyard",
+          "label": "THRONE"
+        },
+        "lack": "Saint Ruin is sitting on it",
+        "gateText": "Beat him first. He's on his throne once a day.",
+        "text": "With Saint Ruin beaten, you went through the heap of engine blocks under his throne and found a slim chrome hand with a K etched in the palm. The rest of the arm wasn't there.",
+        "say": "WITH SAINT RUIN DOWN, NOBODY STOPS YOU CLIMBING HIS HEAP. UNDER THE CAR SEAT, BETWEEN TWO ENGINE BLOCKS, WRAPPED IN AN ORANGE RAG LIKE SOMETHING PRECIOUS: A HAND. SLIM CHROME FINGERS ON THEIR PINS, FILED BY HAND, A K ETCHED IN THE PALM.\n\nJUST THE HAND. THE REST OF THE ARM IS SOMEWHERE ELSE.",
+        "hint": "The crown of three strokes is Saint Ruin's, on his throne in the scrapyards past the Warrens. Beat him, then see what he's been sitting on."
+      },
+      {
+        "id": "arm",
+        "after": "hand",
+        "get": "arm",
+        "on": {
+          "world": "arcadia-pit",
+          "label": "TALLY"
+        },
+        "text": "Tally had the rest of it: Saint Ruin put the arm up on a bout years ago, lost, and never came to settle. It's hung behind the book ever since. With Ruin beaten, Tally calls the bet paid.",
+        "hint": "Saint Ruin bet on the fights, they say, and didn't always pay. Ask the bookie in the Pit."
+      },
+      {
+        "id": "home-hand",
+        "after": "arm",
+        "give": "hand",
+        "on": {
+          "world": "arcadia-boutique",
+          "label": "IRIS KADE"
+        },
+        "text": "You took Iris Kade her first hand, up in LUMEN at the top of the city.",
+        "hint": "Take the arm and its hand all the way up: Iris Kade, at LUMEN in the Spires."
+      },
+      {
+        "id": "home-arm",
+        "after": "arm",
+        "give": "arm",
+        "on": {
+          "world": "arcadia-boutique",
+          "label": "IRIS KADE"
+        },
+        "text": "And the arm. She put the two together on the fitting chair's tray without a word, and the fingers closed, once.",
+        "hint": "Take the arm and its hand all the way up: Iris Kade, at LUMEN in the Spires."
+      }
+    ],
+    "letter": {
+      "from": "iris_kade",
+      "text": "You,\n\nIt still works. I put it on last night, after close, just to see. It's heavy and it squeaks and it can't hold a teacup. I cried a little, which nobody is to know.\n\nCome up and I'll fit you something, at what the clinic would charge. Once. Don't tell the board.\n\nIris\n\nP.S. Tell Sallow the knuckle pins held. He'll know."
+    }
+  },
   "crystals": {
     "title": "Four Colours",
     "where": "Lumar",

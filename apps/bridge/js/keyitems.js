@@ -61,6 +61,10 @@ var BridgeKeyItems = (function () {
       px(ctx, x, y, u, '#d03a2a', [[6, 6, 1, 3]]); px(ctx, x, y, u, '#f0d040', [[8, 3, 1, 1]]);
       px(ctx, x, y, u, '#e8e0c8', [[10, 3, 2, 1]]); px(ctx, x, y, u, '#5a3a1a', [[3, 14, 10, 1]]);
     },
+    // Iris Kade's first arm (iris-arm): the hand out of Saint Ruin's heap — slim chrome fingers, a K etched in the palm
+    chromehand: function (ctx, x, y, u) { grid(ctx, x, y, u, CHROMEHAND, CHROME_KEY); },
+    // and the rest of it, off the wall behind Tally's book: a hand-built forearm, cables at the elbow, pink trim
+    chromearm: function (ctx, x, y, u) { grid(ctx, x, y, u, CHROMEARM, CHROME_KEY); },
     star: function (ctx, x, y, u) {
       px(ctx, x, y, u, '#3a2a10', [[7, 1, 2, 14], [1, 6, 14, 3], [4, 4, 8, 8]]);
       px(ctx, x, y, u, '#d0a040', [[7, 2, 2, 12], [2, 7, 12, 1], [5, 5, 6, 6]]);
@@ -109,6 +113,43 @@ var BridgeKeyItems = (function () {
     '...oGdo...odGo..',
     '..oGGo.....oGGo.',
     '..ooo.......ooo.'
+  ];
+  var CHROME_KEY = { o: '#0e1018', D: '#4a5262', d: '#7a8494', s: '#b8c2d0', w: '#eef4fa', p: '#ff5ab0', c: '#3ae0e8' };
+  var CHROMEHAND = [
+    '................',
+    '....o.o.o.......',
+    '...odosodo......',
+    '...osodosoo.....',
+    '...odosodsdo....',
+    '...osodosodo....',
+    '...odosodsdo.oo.',
+    '...osssssssoosdo',
+    '...osdddddsossdo',
+    '...osdpdpdsosdo.',
+    '...osddpddssdo..',
+    '...ossdddssso...',
+    '....oswwsso.....',
+    '....oDcDcDo.....',
+    '....oDDDDDo.....',
+    '.....ooooo......'
+  ];
+  var CHROMEARM = [
+    '................',
+    '.........ooo....',
+    '........osdso...',
+    '.......osdddo...',
+    '......osdwdso...',
+    '.....osdwdso....',
+    '....osdwddo.....',
+    '...ospppso......',
+    '..osdddso.......',
+    '.osdddso........',
+    'oDsddso.........',
+    'oDDsso..........',
+    'occDo...........',
+    '.oco............',
+    '..o.............',
+    '................'
   ];
   function draw(icon, ctx, x, y, size) { (ICONS[icon] || ICONS.star)(ctx, x, y, size / 16); }
   var urls = {};

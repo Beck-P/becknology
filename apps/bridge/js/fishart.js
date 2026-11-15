@@ -24,7 +24,7 @@ var BridgeFishArt = (function () {
   var TIER = {
     silverfin: 0, spore_minnow: 0, harbour_crab: 0, rose_shrimp: 0, pond_perch: 0, arctic_char: 0, old_boot: 0, bottle: 0,
     bluefin: 1, glowtail: 1, ember_snapper: 1, spore_tuna: 1, frostfin: 1, heron_coin: 1,
-    sapphire_ray: 2, moon_eel: 2, lantern_angler: 2, star_pearl: 2, sun_carp: 2,
+    sapphire_ray: 2, moon_eel: 2, lantern_angler: 2, star_pearl: 2, sun_carp: 2, sump_pearl: 2, sump_eel: 0, chrome_part: 1,
     coral_dragonet: 2, cinder_grouper: 2, starfin: 2, jade_marlin: 2, glass_swordfish: 2,
     old_mossback: 3, crownfin: 3, dawnveil: 3, emberjaw: 3, nightglass: 3
   };
@@ -42,6 +42,8 @@ var BridgeFishArt = (function () {
     sun_carp:       { depth: 0.42, tail: 'fork', dorsal: 'low', pattern: 'scales', barbels: true, glow: '#fff0a0', c: ['#a06010', '#d8a020', '#ffe080', '#e08020', '#fff0a0'] },
     sapphire_ray:   { shape: 'ray', pattern: 'crystals', glow: '#80b0ff', c: ['#1a2a5a', '#3050a8', '#80a0e0', '#1a2a5a', '#c0e0ff'] },
     moon_eel:       { shape: 'eel', depth: 0.11, pattern: 'spots', glow: '#e0e0ff', c: ['#8a8ab0', '#c8c8e8', '#f0f0ff', '#a8a8d0', '#ffffff'] },
+    // the Sump's eels, under Arcadia: black-green, the meat glowing teal through the skin (Teo's laksa)
+    sump_eel:       { shape: 'eel', depth: 0.13, pattern: 'spots', glow: '#5af0d8', c: ['#0e2a28', '#245a52', '#6ab8a8', '#1a4a44', '#7af4e8'] },
     lantern_angler: { depth: 0.5, peak: 0.66, tail: 'round', dorsal: 'none', lure: true, jaw: 'teeth', glow: '#ffe080', c: ['#1a1018', '#3a2a3a', '#5a4058', '#2a1a28', '#ffe080'] },
     coral_dragonet: { depth: 0.28, tail: 'fan', dorsal: 'sail', pattern: 'squiggles', c: ['#c03040', '#ff7040', '#ffd040', '#3aa0ff', '#60ffe0'] },
     cinder_grouper: { depth: 0.5, peak: 0.52, tail: 'round', dorsal: 'spines', jaw: 'big', pattern: 'spots', glow: '#ff7030', c: ['#2a1a18', '#5a3a30', '#a07060', '#3a2018', '#ff7030'] },

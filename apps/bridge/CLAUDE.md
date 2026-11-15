@@ -1350,6 +1350,80 @@ numbers, a finish). And **trophies** fitted at Sallow's from what the bosses lea
   `installed()`, `has(id)`, `tier(slot)`, `bonus()`, `perkLine(perk)`. An interaction `{ type: 'implants', shop: '…' }`
   opens a shop.
 
+### Arcadia, deeper (A3, A5–A8)
+Beck: "wide but not very deep… not super clear on what to actually do with everything." The rest of
+`_claude_docs/spec-deeper-worlds.md`'s Arcadia items (A1, A2, A4 were built before): things that send you between the
+city's levels and give the people already there something to do with you. No new people, no new art but what's drawn in
+code. `js/arcadia-deep.js` (BridgeArcadiaDeep) holds the glue; each item's data lives where its system keeps it. Test:
+`world/arcadia_deeper.js` (`node world/arcadia_deeper.js <shots> quest|…` for one part; shots `ad_*.png`).
+- **A7 · Chrome All the Way Up** (quests.json `iris-arm`, Arcadia's second quest and the first up the levels; 400
+  coins). Iris Kade (LUMEN, the Spires) built her first arm at Doc Sallow's chair and lost it on her way up. Rumour: Dr.
+  Nakuri's *Iris Kade* (the Chrome Clinic) or Iris's own *Your first arm*. Begins at **Doc Sallow** (the gold !; his
+  *Iris Kade's arm*: he sent it up to the clinic for papers) → **Dr. Nakuri** (*The old file*: sold for cash and scrap
+  to someone signing with a crown of three strokes — the Rust Saints' saint) → **THRONE** in the scrapyards (a `say`:
+  the hand, key item `hand`), shut until Saint Ruin's been beaten → **Tally in the Pit** (*Ruin's bet*: the arm, put up
+  on a bout and never settled, key item `arm`) → **Iris Kade** (both handed over, two `give` clues as the Admiral does;
+  her letter). The reward beyond the coins: **her favour** — one designer piece at what the clinic charges for that
+  slot, once (her *Fit me something* opens the collection; the rows say so). Icons `chromehand`, `chromearm`
+  (js/keyitems.js). Two small engine additions any quest can use: a clue's **`gate`** — a name a module registers with
+  `BridgeQuests.gate(name, fn)`; while it returns false the clue isn't found and a toast says why (`lack`, `gateText`);
+  a gate nobody registered stands open, and a partner's find (`inter.shared`) skips it (here `ruin-beaten`: js/undercity.js's
+  save, his trophy dropped or beaten today) — and a shop's **`favour`** in js/implants.js (`{ key, name, open(), line }`
+  on the shop: designer pieces at the slot's cheapest clinic price while `open()` and not yet used; used favours kept in
+  `bridge_implants.favours`; `BridgeImplants.favourOpen(shop)`, `priceIn(shop, id)`, `install(id, { price, favour })`).
+  **Found together** (js/multi.js, a partner within six tiles): each clue counts for her too, but only once her own
+  quest has reached that step (`after`); the heap's gate is the finder's (she was there for the fight) — alone, with
+  Ruin unbeaten, she can't dig; the hand and the arm are carried by both (each quest's own things); at Iris both are
+  handed over and the 400 goes into each pilot's own coins; nothing is taken from her; the favour is each pilot's own.
+  Test: `multi/mp_iris_arm.js`. (Saint Ruin stands on 46, 11, just in front of his throne: a test that put the pilot on
+  that tile hid him under her, leaving only his health bar.)
+- **A3 · Fishing in the Sump** (js/fishing.js `POOLS.sump`, `WATER.sump`: black water lit teal from under and the city's
+  underside for a sky, no stars; the cast drawn in the world on the `arcadia` tileset too). Spots (assets/fishing.json):
+  two OFF THE QUAY on the Sump's north quay — by Teo's boat (20, 19) and below the shrine (50, 19), both where the
+  roster's `safe` rects keep the fighters off — and the PLATFORM EDGE at Central (4, 15), onto the flooded track bed.
+  The pool: the line-caught **Sump Eel** (`sump_eel`, items.js; drawn by js/fishart.js, common, 40–95 cm; in the
+  Collection's Fish set — a bonus already paid stays paid), scrap, circuit boards, old boots, now and then a chrome part
+  or a sump pearl (junk: no size, `JUNK`). No bottles here (their messages are the main story's). **Old Teo** buys whole
+  eels at 14 (`TEO_EEL`, js/undercity.js `boat`; a fillet's 8), Gage the rest as before; Teo's *A line off the quay?*
+  says so, the eel's card says so (`BridgeArcadiaDeep.USES`, read by js/uses.js as a module's own lines), and Teo asks
+  for three on Arcadia's board (js/boards.js).
+- **A5 · Chrome you can tune** (js/implants.js). At Sallow's chair a glitchy street piece gets a **Steady** row (a shop's
+  `steady: { takes: { chrome_part: 2, circuit: 1 }, days: 7 }`): the parts come out of your pack — no coins — and it
+  glitches half as often for a week (`slots[slot].steady`, a time, saved in `bridge_implants`; `steadied(slot)`; the
+  roll in `tick` halved; the chair and the shop's *IN YOU NOW* say *steadied* and how many days). Short of parts, Sallow
+  says what's missing. A new piece in the slot starts unsteadied; the clinic's coin tuning (for good) is unchanged. At
+  **LUMEN** a designer piece's confirm has a second row when you carry a chrome part: *a chrome part down*, 120 off
+  (a shop's `deposit: { item, off, sub }`, js/spires.js; not on top of Iris's favour; `install(id, { price, deposit })`).
+  Sallow's *Steadier chrome?* explains it; the chrome part's and the circuit board's cards say so (`USES`).
+- **A6 · The Orrery, worth joining** (`arcadia-members`; an interaction type `orrery` with `act`, from people's topics'
+  `use` — and a topic's `offer` is what the Map's marker says it opens, js/map.js `offers`). State in localStorage
+  `bridge_orrery` (`bets`, `firsts`; cloud-saved).
+  **Lady Perpetua** (*A hand of Eights?*) deals Eights heads up for 25 or 100 a side, or for nothing: js/eights.js's new
+  `BridgeEights.at(table, stake)` — `table: { title, rivals: [{ id, name, sheet, style, say }], onOver({ won, stake, pot }) }`;
+  a rival's own `style` and sayings, its face from `sheet`, *Another hand* keeps the same table; the mess's game is as it
+  was. She hoards her eights and switches the suit on you (`style: { hoard, spite }`).
+  **Sir Augustin** (*Your wager book*) keeps a book on the week (Sunday to Saturday, Eastern): **the Emerald Regatta's
+  last start** (Friday 11:45pm: which of the five Emerald sloops in it wins — `BridgeRace.fleetFor`, the fastest, the
+  same boats and speeds the race itself sails) and **the Pit's big bout** (Saturday 10pm: Tally's house bout,
+  `BridgeUndercity._bout`). Odds are 0.9 over each one's chance, 1.2 to 50 (the regatta's from the sloops' form over a
+  fixed set of draws, not the day's luck, so the book doesn't give the winner away); one bet a race, 50 or 200, taken
+  until the gun or the bell, settled and paid the next time you open his book (`settle`, once). The spec's derby and
+  Undercroft wagers aren't in it: Lantern Tide's derby is autumn only and the Undercroft has nobody else going down.
+  **The members' book** (THE MEMBERS' BOOK, made an `orrery` interaction by `decorate`) lists your firsts in Mr Ashdown's
+  hand, newest first: elected, every quest seen through (dated), Saint Ruin, the Dredge, the Pit's three rounds, the
+  Regatta Cup, legendary fish, beating Perpetua for money, a wager won (dated from the day the book first saw what the
+  game keeps no date for). Mr Ashdown's *The members' book* says so.
+- **A8 · Darts** (js/darts.js, BridgeDarts; CSS `#darts` in css/bridge.css). The boards already drawn — The Drip's
+  DARTBOARD (13, 3) and the Lantern tavern's DART BOARD on Lumar (11, 2) — become `darts` interactions as their worlds
+  load (js/arcadia-deep.js `decorate`, `BOARDS`: who you play there — **Nell** at The Drip, 10 a side, a steady hand;
+  **Fenwick** the merchant at the tavern, 5, a shakier one — and what they say). Nell's *A game of darts?* opens it too.
+  They throw first (three darts aimed at the treble 20, straying by their `skill` in board radii); then you: a line sweeps
+  across the board — stop it — then one sweeps down — stop it — and the dart lands where they cross, a small wobble off.
+  Three each; the higher total takes the pot, level hands the stakes back. A real board (`ORDER`, trebles, doubles, 25
+  and the bull's 50; `score(x, y)`), drawn in code once a pixel at a time on cork, The Drip's with the photo of a man in a
+  Halcyon suit pinned to the bull (its old text). Keys: Space / E / Enter, Esc; touch: tap the board or the button (the
+  board fits a phone's width). No new art, no new people.
+
 ### Homes and furniture
 `js/home.js` (BridgeHome). Places of your own: **the White House** on Sapphire Port's square (`lumar-home`, `scenes/lumar_home.py`: hearth, two windows on the sea, bare boards; 1500 coins) and a **capsule apartment** over the District's Capsule Hotel (`arcadia-home`, `scenes/arcadia_home.py`: a strip window onto the live skyline and rain — the `'*'` behind hook draws them in `scene.sky` — the sleeping capsule, a kitchenette; 600 coins). **The farmhouse** on Verdance (`verdance-home`, `scenes/verdance_home.py`: Edda's kitchen in daylight — whitewash over green wainscot, the black range, a dresser of blue-and-white plates, two windows on the field, her kitchen table with the ledger) comes with the farm's deed (`HOMES[id].farm`: `owns` asks `BridgeHomestead.owned()`; the FARMHOUSE door goes in once it's yours, and Edda's rocking chair and bed are waiting the first time). Their doors are `home_door` interactions set on the street as worlds load (`HOMES[id].door`: the WHITE HOUSE door at 38,13 on Sapphire; the CAPSULE HOTEL on the street): the first time they offer the place for sale (`wagerCoins`, a menu option `home_buy`), then let you in. Each comes with two pieces to start. Aboard, **your quarters and the bridge** are yours already. The rooms are rendered empty; everything else is what you put in them. The legacy homes (*Legacy* below) are rendered furnished with their architecture and fixed pieces — the Penthouse's inside and roof deck, Ashcombe House's five rooms, the Starling — with open floor left round them for yours: a home can be several worlds (`part: '<home id>'` in HOMES: owned with that home, furnished on its own, no toast of its own), and a world can be a hotel you own (`resort`: owned once the holm's Starling is built).
 - **Furniture**: 36 pieces, each built with the scene kits' own builders by `tools/bridge-art/furniture_sprites.py` into one floorless sheet (`assets/scenes/furniture`, a 3 × 4-tile cell each, footprint at the bottom of its cell) plus `assets/furniture.json` (id, name, price, footprint `w` × `d`, `walk` for rugs, the footprint's corner on the sheet). The engine cuts each sprite at its cell's opaque bounds and draws it depth-tested against the room (`drawOccluded` at its front row, tinted by the room's light but softened, since the sheet is lit already); rugs sort under everyone, and a seat you're sitting on draws before you. Non-rug pieces block their tiles. A module can add pieces it draws itself, live (`BridgeHome.add({id, name, price, w, d, spr: {img, sx, sy, sw, sh, ax, ay}, live(entry, now, theme), glow?, use?, after?})`: `live` hands back this frame's picture, drawn through the same `drawOccluded`; `glow` a light laid over it with `lighter`, untinted; `use` its interaction; `after` the piece it's listed beside) — the fish tanks are.

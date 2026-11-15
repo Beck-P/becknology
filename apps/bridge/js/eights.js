@@ -32,6 +32,7 @@ var BridgeEights = (function () {
     lose: { regular: 'WELL PLAYED, CAPTAIN.', pip: 'NEXT ONE\'S MINE.', corra: 'LUCKY.', okafor: 'NICELY DONE.', traveller: 'YOU\'LL BUY THE NEXT ROUND?', dorrie: 'GO ON THEN, CLEVER CLOGS.' }
   };
   function has(n) { return typeof window[n] !== 'undefined'; }
+  function line(P, k) { return (P.say && P.say[k]) || (SAY[k] && SAY[k][P.id]); }
   function sfx(n) { if (has('BridgeAudio') && BridgeAudio.sfx) BridgeAudio.sfx(n); }
   function rng(seed) { var s = seed >>> 0 || 1; return function () { s ^= s << 13; s ^= s >>> 17; s ^= s << 5; return (s >>> 0) / 4294967296; }; }
   function suitOf(c) { return c.slice(-1); }
@@ -76,8 +77,8 @@ var BridgeEights = (function () {
     g.pile.push(card);
     g.suit = mod8(card) ? (suit || suitOf(card)) : suitOf(card);
     sfx('card');
-    if (mod8(card)) say(P, (P.ai ? (SAY.eight[P.id] || 'EIGHT.') : 'AN EIGHT.') + ' ' + { s: 'SPADES', h: 'HEARTS', d: 'DIAMONDS', c: 'CLUBS' }[g.suit] + '.');
-    else if (P.hand.length === 1 && P.ai) say(P, SAY.last[P.id] || 'LAST CARD.');
+    if (mod8(card)) say(P, (P.ai ? (line(P, 'eight') || 'EIGHT.') : 'AN EIGHT.') + ' ' + { s: 'SPADES', h: 'HEARTS', d: 'DIAMONDS', c: 'CLUBS' }[g.suit] + '.');
+    else if (P.hand.length === 1 && P.ai) say(P, line(P, 'last') || 'LAST CARD.');
     if (!P.hand.length) return finish(pi);
     next();
   }
@@ -85,18 +86,18 @@ var BridgeEights = (function () {
   function finish(pi) {
     var P = g.players[pi];
     g.over = { winner: pi };
-    if (P.ai) say(P, SAY.win[P.id] || 'MINE.');
-    else g.players.forEach(function (q) { if (q.ai) { say(q, SAY.lose[q.id] || 'WELL PLAYED.'); } });
+    if (P.ai) say(P, line(P, 'win') || 'MINE.');
+    else g.players.forEach(function (q) { if (q.ai) { say(q, line(q, 'lose') || 'WELL PLAYED.'); } });
     settle();
   }
 
   // ---- the crew's play --------------------------------------------------------------------------------------------
   function aiTurn() {
-    var P = g.players[g.turn], st = STYLE[P.id] || {};
+    var P = g.players[g.turn], st = P.style || STYLE[P.id] || {};
     var can = P.hand.filter(fits);
     if (!can.length && !g.drew) {
       var c = draw1();
-      if (c) { P.hand.push(c); say(P, SAY.draw[P.id] || 'DRAWS.'); }
+      if (c) { P.hand.push(c); say(P, line(P, 'draw') || 'DRAWS.'); }
       g.drew = true;
       if (c && fits(c)) { lay(g.turn, c, bestSuit(P)); return; }
       next(); return;
@@ -122,6 +123,7 @@ var BridgeEights = (function () {
 
   // ---- the coins --------------------------------------------------------------------------------------------------
   function settle() {
+    if (table && table.onOver && !g.told) { g.told = true; try { table.onOver({ won: g.over && g.over.winner === 0, stake: g.stake, pot: g.pot }); } catch (e) { /* theirs */ } }
     if (g.paid || !g.stake) return;
     g.paid = true;
     var you = g.over && g.over.winner === 0;
@@ -140,6 +142,7 @@ var BridgeEights = (function () {
 
   // ---- the table --------------------------------------------------------------------------------------------------
   function sitIn(inter) {
+    table = null;
     var c = has('BridgeWayfarer') ? BridgeWayfarer.clock() : { h: 20 };
     var round = has('BridgeAboard') && BridgeAboard.atCards ? BridgeAboard.atCards() : [];
     if (!round.length) {
@@ -156,15 +159,26 @@ var BridgeEights = (function () {
              { label: 'Play for matches', sub: 'just the game', pick: function () { start(round, 0); } }],
       closeLabel: 'Not tonight' });
   }
+  // someone else's table (the Orrery's card table, js/arcadia-deep.js): { title, rivals: [{ id, name, sheet, style, say }],
+  // onOver({ won, stake, pot }), leave (what's said as the cards go back) } — dealt in at `stake` (0 for matches)
+  var table = null;
+  function at(t, stake) {
+    table = t;
+    start(t.rivals.map(function (r) { return r.id; }), stake);
+  }
+  function rivalOf(id) { return table && table.rivals.filter(function (r) { return r.id === id; })[0]; }
   function start(round, stake) {
-    var players = [{ id: 'you', name: 'You', ai: false }].concat(round.map(function (id) { return { id: id, name: NAMES[id] || id, ai: true }; }));
+    var players = [{ id: 'you', name: 'You', ai: false }].concat(round.map(function (id) {
+      var R = rivalOf(id);
+      return R ? { id: id, name: R.name, ai: true, sheet: R.sheet, style: R.style, say: R.say } : { id: id, name: NAMES[id] || id, ai: true };
+    }));
     var day = has('BridgeWayfarer') ? BridgeWayfarer.clock().day : 0;
     seq++;
     g = null;
     deal(players, (day * 131 + seq * 977 + Date.now() % 1000) >>> 0);
     g.stake = stake;
     ante().then(function (ok) {
-      if (!ok) { g = null; BridgeInteractions.say('CARD TABLE', 'YOU HAVEN\'T THE ' + stake + ' COINS FOR THE POT. PLAY FOR MATCHES?'); return; }
+      if (!ok) { g = null; BridgeInteractions.say(table ? table.title.toUpperCase() : 'CARD TABLE', 'YOU HAVEN\'T THE ' + stake + ' COINS FOR THE POT. PLAY FOR MATCHES?'); return; }
       seat();
       open();
     });
@@ -244,6 +258,7 @@ var BridgeEights = (function () {
       });
     }
     el.classList.add('visible');
+    el.querySelector('.e8-title').textContent = table ? table.title : 'Eights';
     sel = 0;
     if (has('BridgeControls')) BridgeControls.disable();
     document.addEventListener('keydown', onKey, true);
@@ -278,6 +293,7 @@ var BridgeEights = (function () {
     paint(); loop();
   }
   function startAgain(round, stake) {
+    if (table) return start(round, stake);                          // someone else's table: they're still sat there
     var still = has('BridgeAboard') && BridgeAboard.atCards ? BridgeAboard.atCards() : round;
     if (!still.length) { close(); BridgeInteractions.say('CARD TABLE', 'THE OTHERS HAVE TURNED IN. THE CARDS GO BACK IN THEIR TIN.'); return; }
     start(still, stake);
@@ -315,7 +331,7 @@ var BridgeEights = (function () {
       var box = document.createElement('div');
       box.className = 'e8-rival' + (g.turn === i && !g.over ? ' turn' : '') + (g.over && g.over.winner === i ? ' won' : '');
       var face = document.createElement('canvas'); face.className = 'e8-face'; face.width = face.height = 32;
-      if (has('BridgeLook') && BridgeLook.npcFace) BridgeLook.npcFace(face, (has('BridgeAboard') ? BridgeAboard.sheets(p.id)[0] : null) || 'npc-dorrie', {});
+      if (has('BridgeLook') && BridgeLook.npcFace) BridgeLook.npcFace(face, p.sheet || (has('BridgeAboard') ? BridgeAboard.sheets(p.id)[0] : null) || 'npc-dorrie', {});
       box.appendChild(face);
       var w = document.createElement('div'); w.className = 'e8-who'; w.textContent = p.name + ' · ' + p.hand.length; box.appendChild(w);
       var fan = document.createElement('div'); fan.className = 'e8-fan';
@@ -350,6 +366,6 @@ var BridgeEights = (function () {
     C.querySelector('[data-a="again"]').style.display = g.over ? '' : 'none';
   }
 
-  return { sitIn: sitIn, card: card, _g: function () { return g; }, _deal: deal, _start: start, _fits: function (c) { return fits(c); },
+  return { sitIn: sitIn, at: at, card: card, _g: function () { return g; }, _deal: deal, _start: start, _fits: function (c) { return fits(c); },
            _lay: function (c, s) { if (g && g.turn === 0) { lay(0, c, s); paint(); loop(); } }, _act: act, _ai: aiTurn, _close: close };
 })();

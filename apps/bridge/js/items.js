@@ -1807,6 +1807,8 @@ var BridgeItems = (function () {
                      stackable: true, draw: sumpPearlIcon, value: 90 },
     eel_fillet:    { id: 'eel_fillet', name: 'Eel Fillet', desc: 'A sump eel\'s, faintly luminous. Old Teo will take it off you for the pot.', type: 'material',
                      stackable: true, draw: filletIcon, value: 8 },
+    sump_eel:      { id: 'sump_eel', name: 'Sump Eel', desc: 'A whole eel off a line in the Sump\'s black canals, the meat glowing teal through the skin. Old Teo pays best for one.', type: 'material',
+                     stackable: true, draw: fishIcon('#245a52', '#6ab8a8', '#0e2a28', '#7af4e8'), value: 10 },
     ruin_knuckles: { id: 'ruin_knuckles', name: "Ruin's Knuckles", desc: 'Saint Ruin\'s chrome fist, still warm. Doc Sallow can fit it to your own arm: it hits like his did, and it never glitches.', type: 'material',
                      stackable: true, draw: knuckleIcon, value: 300 },
     dredge_heart:  { id: 'dredge_heart', name: "The Dredge's Heart", desc: 'The dredger\'s core, a sealed gold housing that still hums. Doc Sallow can put it in you.', type: 'material',

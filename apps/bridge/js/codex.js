@@ -36,7 +36,7 @@ var BridgeCodex = (function () {
       ['spore_tuna', 'From a boat, out on the open sea'], ['lantern_angler', 'From a boat in deep water - the Midnight Sea most of all'],
       ['coral_dragonet', 'Off Rose Cove\'s piers, rarely; more often from a boat on the Rose Sea'], ['cinder_grouper', 'Off Crimson Reach, rarely; more often from a boat on the Crimson Sea'],
       ['starfin', 'Round Midnight Isle, rarely; more often from a boat on the Midnight Sea'], ['jade_marlin', 'From a boat on the open Emerald Sea; cast long'],
-      ['glass_swordfish', 'From a boat on the Sapphire Sea; cast long']] },
+      ['glass_swordfish', 'From a boat on the Sapphire Sea; cast long'], ['sump_eel', 'Off the quays of the Sump, under Arcadia']] },
     // one legend in each sea, and only ever from a boat out on it
     { id: 'legends', name: 'Sea legends', reward: 1500, items: [
       ['old_mossback', 'The Emerald Sea, from a boat. Once in a long while'], ['crownfin', 'The Sapphire Sea, from a boat. Once in a long while'],

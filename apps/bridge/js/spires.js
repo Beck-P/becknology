@@ -76,6 +76,11 @@ var BridgeSpires = (function () {
     I.register('gilt_lace', { slot: 'arm', tier: 'designer', name: 'Gilt Lace', price: 3000, perk: { damage: 0.32, armour: 2 },
       finish: 'gold filigree under the skin', blurb: 'Chrome lace worked under the skin of the arm, warm to the touch and harder than it looks.' });
     I.shop('lumen', { title: 'LUMEN · the collection', who: 'IRIS KADE', tiers: ['designer'], tune: 0,
+      // a chrome part off the Undercity's heaps as a deposit (spec-deeper-worlds A5): she re-uses the good ones
+      deposit: { item: 'chrome_part', off: 120, sub: 'Iris Kade takes a chrome part from your pack as a deposit' },
+      // her thanks for her first arm (quests.json iris-arm): one piece at what the clinic would charge
+      favour: { key: 'kade', name: 'Iris Kade\'s favour', open: function () { return typeof BridgeQuests !== 'undefined' && BridgeQuests.has('iris-arm'); },
+                line: '"FOR THE ARM," SAYS IRIS KADE. "AT WHAT NAKURI WOULD CHARGE. DON\'T TELL THE BOARD."' },
       line: 'IRIS KADE LIFTS A GLASS DOME FROM A VELVET STAND. "EVERYTHING HERE IS MADE FOR ONE PERSON. TELL ME WHICH PIECE, AND WE\'LL MEASURE YOU."' });
   }
   function implants(inter) {

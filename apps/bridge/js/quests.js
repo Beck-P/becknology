@@ -70,6 +70,12 @@ var BridgeQuests = (function () {
     if (c.holds && ![].concat(c.holds).some(function (id) { return I.getCount(id) > 0; })) out.push(c.holdsName || iname([].concat(c.holds)[0]));
     return out;
   }
+  // a clue that waits on something in the world a module keeps (`gate: <name>`, registered with `gate(name, fn)`:
+  // Saint Ruin beaten, js/arcadia-deep.js) — closed, it isn't found and a toast says why (`lack`, `gateText`); a gate
+  // nobody registered (its module not loaded) stands open
+  var GATES = {};
+  function gate(name, fn) { GATES[name] = fn; }
+  function gateOpen(c) { try { return !c.gate || !GATES[c.gate] || !!GATES[c.gate](); } catch (e) { return true; } }
   function take(c) { var I = inv(); if (I) Object.keys(c.takes || {}).forEach(function (id) { I.removeItem(id, c.takes[id]); }); }
   function onInteract(worldId, inter) {
     var hits = [];                                 // the clues found just now (js/interactions.js shows a clue's `say`)
@@ -90,13 +96,14 @@ var BridgeQuests = (function () {
         if (state[id] && state[id].clues[c.id]) return;
         var short = inter.shared ? [] : missing(c);   // found beside a partner (js/multi.js): they gave what it takes, you give nothing
         if (short.length) { lacking = lacking || { q: q, c: c, short: short }; return; }
+        if (!inter.shared && !gateOpen(c)) { lacking = lacking || { q: q, c: c, gate: true }; return; }   // (a partner who found it had it open)
         if (meta.aside[id] && state[id]) delete meta.aside[id], saveMeta();   // went back to it: it's picked up again
         if (!inter.shared) take(c);
         findClue(id, c, hits);
       });
     });
     if (hits.length) { trSig = null; refreshTracker(); }
-    else if (lacking) toast(lacking.q.title, lacking.c.lack || 'Not yet', 'You need ' + lacking.short.join(' and '), false);
+    else if (lacking) toast(lacking.q.title, lacking.c.lack || 'Not yet', lacking.gate ? lacking.c.gateText || '' : 'You need ' + lacking.short.join(' and '), false);
     return hits;
   }
   // a clue found: its toast, the quest begun or finished (its reward, a keepsake, the rumour it hands on to)
@@ -794,6 +801,6 @@ var BridgeQuests = (function () {
            progress: function (id) { return defs && defs[id] ? progress(id) : null; },
            startsHere: function (wid) { return defs ? startsHere(wid) : {}; }, hear: hear, rumours: function () { return defs ? rumours() : []; },
            leads: leads, tracked: function () { return defs ? tracked() : null; }, track: track,
-           did: did, offer: offer, begin: begin, setAside: setAside, aside: function (id) { return !!meta.aside[id]; }, offered: function (id) { return !!meta.offer[id]; }, refreshTracker: function () { trSig = null; refreshTracker(); },
+           did: did, gate: gate, gateOpen: gateOpen, offer: offer, begin: begin, setAside: setAside, aside: function (id) { return !!meta.aside[id]; }, offered: function (id) { return !!meta.offer[id]; }, refreshTracker: function () { trSig = null; refreshTracker(); },
            reset: function () { state = {}; save(); } };
 })();

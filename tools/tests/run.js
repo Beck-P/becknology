@@ -56,6 +56,7 @@ const SUITES = {
     ['world/quest_tracker.js', SHOTS],
     ['world/firsthour.js', SHOTS],
     ['world/small_stories.js', SHOTS],
+    ['world/arcadia_deeper.js', SHOTS],
     ['world/rumours.js', SHOTS],
     ['world/events.js', SHOTS],
     ['world/boards.js', SHOTS],
@@ -78,7 +79,7 @@ const SUITES = {
   ],
   // two pilots on the fake Supabase: seeing each other, walking, presence, sharing, partners, fighting, sailing, a party
   multi: ['mp_see', 'mp_walk', 'mp_visible', 'mp_presence', 'mp_away', 'mp_share', 'mp_partner', 'mp_clue', 'mp_fight', 'mp_hp',
-    'mp_sail', 'mp_sailcol', 'mp_seapill', 'mp_seafight', 'mp_party', 'mp_wayfarer'].map((t) => ['multi/' + t + '.js', D]),
+    'mp_sail', 'mp_sailcol', 'mp_seapill', 'mp_seafight', 'mp_party', 'mp_wayfarer', 'mp_iris_arm'].map((t) => ['multi/' + t + '.js', D]),
   // playing every game together (js/together.js), and the table chat
   together: [['t_cab.js', 'asteroids'], ['t_cab.js', 'breakout'], ['t_cab.js', 'space-invaders', 'Co-op', 'Just for fun'],
     ['t_heli.js', 'Score duel'], ['t_heli.js', 'Tandem'], ['t_dice.js', 'With'], ['t_dice.js', 'Heads', 'lumar-crown-pub'], ['t_diceleave.js'],
