@@ -16,6 +16,7 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from scenekit import THETA, Kit, apply_world, shade  # noqa: E402
 import assets_cyber as Y                             # noqa: E402
+import assets_deck as D                              # noqa: E402
 import assets_lumar as A                             # noqa: E402
 import assets_ship as P                              # noqa: E402
 
@@ -34,6 +35,7 @@ P.ship_back_wall(k, 0.5, 15.5, 4.0, H, win=WIN, mullions=(), pal=PAL, trim=P.LED
 P.ship_side_wall(k, 0.4, 1.0, 3.5, 11.0, H, pal=PAL)
 P.ship_side_wall(k, 15.0, 15.6, 3.5, 11.0, H, pal=PAL)
 P.ship_front_wall(k, 0.4, 15.6, 11.0, door=(7.0, 9.0), pal=PAL)
+D.front_door(k, 7.0, 9.0, 11.0, sign='BRIDGE', runner=False)       # the bridge's doorway, so it reads as one
 
 # ---- the bay: hazard-striped sill, chevrons up the frame, field emitters ----------------------
 P.hazard_stripes(k, WIN[0], WIN[1], 4.02, 4.35)
