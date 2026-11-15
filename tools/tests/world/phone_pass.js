@@ -16,7 +16,7 @@ const fail = (m) => { errors++; console.log('FAILED: ' + m); };
 
 // ---- the screens ---------------------------------------------------------------------------------------------------------
 // world + at: where to stand; use: the interaction (label, or a predicate on it); then: steps after it opens (a row or option
-// to pick by its text); menu: a menu tab instead; seed: localStorage before the page loads; prep: run in the page first.
+// to pick by its text); act: anything more, played from the test (a fish landed); menu: a menu tab instead; seed: localStorage before the page loads; prep: run in the page first.
 const SCREENS = [
   { id: 'bess', world: 'lumar', at: [9, 14], use: 'HARBOURMASTER', prep: () => { ['first-hour'].forEach(q => BridgeQuests._done && BridgeQuests._done(q)); } },
   { id: 'shop', world: 'lumar-square', at: [19, 11], use: 'FISHMONGER' },
@@ -45,6 +45,26 @@ const SCREENS = [
   { id: 'booth', world: 'lumar-crown-bridge', at: [24, 11], time: '2026-11-18T11:00', use: 'SWEET BOOTH' },
   { id: 'donkeys', world: 'lumar-cliff', at: [44, 30], time: '2026-11-16T10:00', use: 'THE DONKEYS' },
   { id: 'taverna', world: 'lumar-cliff', at: [33, 12], use: 'TAVERNA' },
+  // Sylvara, Enigma, the Brink and the ship, deeper (js/fardeep.js)
+  { id: 'song', world: 'sylvara', at: [39, 24], use: 'BARD', then: ['Play The Long Way Home'], wait: 2500,
+    act: async (p) => { await p.waitForTimeout(1500); await p.evaluate(() => { const d = document.querySelector('.world-dialog.typing'); if (d) d.click(); }); },   // (a long line: read to its end)
+    seed: { bridge_quests: JSON.stringify({ 'thaelins-verse': { clues: { ask: 1, lookout: 1, stage: 1, falls: 1, lake: 1, deep: 1, song: 1 }, started: 1, done: 1 } }) } },
+  { id: 'rivercard', world: 'sylvara-river', at: [24, 1], use: (i) => i.type === 'fish' && i.x === 21, act: async (p) => {
+      await p.keyboard.down(' '); await p.waitForTimeout(1150); await p.keyboard.up(' '); await p.waitForTimeout(300);
+      await p.evaluate(() => { const s = BridgeFishing._state(); if (s && s.phase === 'wait') { s.catchId = 'moon_carp'; s.nibbles = []; } });
+      await p.waitForFunction(() => { const s = BridgeFishing._state(); return s && s.phase === 'bite'; }, null, { timeout: 15000 }).catch(() => {});
+      await p.keyboard.down(' '); await p.waitForTimeout(120); await p.keyboard.up(' ');
+      await p.evaluate(() => { const s = BridgeFishing._state(); if (s && s.phase === 'reel') { s.progress = 0.995; s.fish = s.ft = s.zone + s.zoneH / 2; } });
+      await p.waitForFunction(() => !!document.getElementById('fish-reveal'), null, { timeout: 6000 }).catch(() => {});
+    }, wait: 1200 },
+  { id: 'ring', world: 'singularity', at: [8, 27], use: 'RING GATE',
+    seed: { bridge_quests: JSON.stringify({ 'eddas-book': { clues: {}, started: 1, done: 1763100000000 }, admiral: { clues: {}, started: 1, done: 1763000000000 }, 'ithils-star': { clues: {}, started: 1, done: 1763200000000 } }),
+            bridge_festivals: JSON.stringify({ 'harvest_fair@20400': { best: 12, what: "Edda's Apple Pie", paid: 1, n: 1 } }) } },
+  { id: 'sights', world: 'ship-observatory', at: [9, 10], use: (i) => i.type === 'observatory' && i.part === 'log' },
+  { id: 'dorrie', world: 'ship-galley', at: [8, 10], time: '2026-10-16T13:00', use: (i) => i.type === 'galley' && i.part === 'cook', prep: () => { BridgeInventory.addItem('fondue', 1); BridgeInventory.addItem('farm_cheese', 1); }, then: ['Something from the other worlds'] },
+  { id: 'bench', world: 'ship-greenhouse', at: [9, 10], use: (i) => i.type === 'greenhouse' && i.part === 'bench', seed: { bridge_fardeep: JSON.stringify({ seeds: 1 }) } },
+  { id: 'dispatches', world: 'enigma-hydro', at: [2, 9], use: 'OKAFOR', then: ['Station dispatches'], wait: 2500, seed: { bridge_fardeep: JSON.stringify({ dispatches: [1, 2, 3, 4, 5] }) } },
+  { id: 'cloak', world: 'sylvara-roots', at: [1, 20], use: 'WEAVER', prep: () => { BridgeInventory.addItem('silk_cocoon', 4); BridgeInventory.addItem('owlmoss', 3); }, then: ['A warden\'s cloak?'] },
   // a plain line (BridgeInteractions.say): the touch controls go while it's up and come back as they were
   { id: 'say', world: 'lumar-square', at: [11, 10], use: 'FOUNTAIN' },
   { id: 'journal', menu: 'journal', world: 'lumar', at: [9, 16] },
@@ -149,7 +169,7 @@ const SCREENS = [
         const b = e.getBoundingClientRect(), cx = b.left + b.width / 2, cy = b.top + b.height / 2, pr = pn.getBoundingClientRect();
         if (cx < 0 || cy < 0 || cx > vw || cy > vh || cy < pr.top || cy > pr.bottom) return false;
         const h = document.elementFromPoint(cx, cy);
-        return h && !e.contains(h) && !h.contains(e) && !pn.contains(h);
+        return h && !e.contains(h) && !h.contains(e) && !pn.contains(h) && !h.closest('#fish-reveal');   // (a catch's card lies over the rod's panel until it's tapped away)
       });
       if (over.length) out.push(over.length + ' covered: ' + over.slice(0, 4).map(e => { const b = e.getBoundingClientRect(); const h = document.elementFromPoint(b.left + b.width / 2, b.top + b.height / 2); return '"' + (e.textContent || e.getAttribute('aria-label') || '').trim().slice(0, 16) + '" by ' + name(h); }).join(', '));
       // the last of each list: scrolled to, inside the screen and the panel
@@ -209,6 +229,7 @@ const SCREENS = [
         if (S.menu) { await p.evaluate((m) => BridgeMenu.open(m), S.menu); await p.waitForTimeout(1200); how = 'menu ' + S.menu; }
         else { const r = await useIt(p, S.use); if (!r.ok) { if (S.optional) console.log(size + ' ' + S.id + ': ' + r.why + ' (not on now)'); else fail(S.id + ': ' + r.why); await p.context().close(); continue; } how = r.how; }
         for (const t of (S.then || [])) { if (!await press(p, t)) console.log('  ' + S.id + ': no "' + t + '" to tap'); }
+        if (S.act) await S.act(p);                                          // a screen got to by playing (a fish landed)
         await p.waitForTimeout(S.wait || 600);
         const a = await audit(p);
         await p.screenshot({ path: OUT + '/pp_' + S.id + '_' + size + '.png' });

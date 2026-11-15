@@ -473,6 +473,7 @@ var BridgeWorld = (function () {
         if (typeof BridgeDistrict !== 'undefined') BridgeDistrict.decorate(worldId, data);
         if (typeof BridgeUndercity !== 'undefined') BridgeUndercity.decorate(worldId, data);   // Arcadia below: shops, fights, bosses
         if (typeof BridgeArcadiaDeep !== 'undefined') BridgeArcadiaDeep.decorate(worldId, data);   // Arcadia, deeper: darts, the Orrery's book
+        if (typeof BridgeFarDeep !== 'undefined') BridgeFarDeep.decorate(worldId, data);       // Sylvara, Enigma, the Brink and the ship, deeper
         if (typeof BridgeLumarDeep !== 'undefined') BridgeLumarDeep.decorate(worldId, data);   // Lumar, deeper: the Sovereign's ledger, the WANTED board, the dragon, the booths
         if (typeof BridgeSeasons !== 'undefined') BridgeSeasons.decorate(worldId, data);
         if (typeof BridgeFoliage !== 'undefined') BridgeFoliage.apply(worldId);        // the trees turn with the seasons

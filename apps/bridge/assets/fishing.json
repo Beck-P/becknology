@@ -3,6 +3,10 @@
     { "x": 20, "y": 19, "pool": "sump", "label": "OFF THE QUAY" },
     { "x": 50, "y": 19, "pool": "sump", "label": "OFF THE QUAY" }
   ],
+  "sylvara-river": [
+    { "x": 21, "y": 6, "pool": "river", "label": "OFF THE CANOE DOCK" },
+    { "x": 24, "y": 23, "pool": "river", "label": "BELOW THE WEIR" }
+  ],
   "arcadia-sump-rave": [
     { "x": 4, "y": 15, "pool": "sump", "label": "PLATFORM EDGE" }
   ],

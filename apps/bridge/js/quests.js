@@ -373,7 +373,9 @@ var BridgeQuests = (function () {
   // a lead in the words for how you're playing: `hintTouch` on a phone or tablet, where keys would mean nothing
   // and when it names someone who keeps hours (js/routines.js) and isn't at their spot just now, when they're back or
   // where they've gone — so a lead never leaves you at an empty stall at night
+  // and `hintGate` while the clue's gate is shut (Thaelin's verse in a place of Sylvara's not open yet: say so, plainly)
   function hintOf(c) {
+    if (c.hintGate && c.gate && GATES[c.gate] && !gateOpen(c)) return c.hintGate;
     var h = document.documentElement.classList.contains('touch') && c.hintTouch ? c.hintTouch : c.hint;
     try {
       var w = c.on && typeof BridgeRoutines !== 'undefined' && BridgeRoutines.whereabouts ? BridgeRoutines.whereabouts(c.on.world, c.on.label) : null;

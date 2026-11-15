@@ -428,6 +428,29 @@ var BridgeItems = (function () {
     ctx.fillRect(x + 10*u, y + 8*u, 1*u, 1*u); ctx.fillRect(x + 12*u, y + 8*u, 1*u, 1*u);
   }
 
+  // a star chart of one world's sky (js/observatory.js, W1): navy paper in a brass rule, gold stars joined in that world's
+  // own figure (seeded by its name), the world's colour in the corner
+  function skyChartIcon(seed, col) {
+    return function (ctx, x, y, s) {
+      var u = s / 16, h = 0;
+      for (var i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
+      function r(n) { h = (h * 1103515245 + 12345) >>> 0; return (h >>> 16) % n; }
+      ctx.fillStyle = '#0a0810'; ctx.fillRect(x + 1*u, y + 2*u, 14*u, 12*u);
+      ctx.fillStyle = '#a08040'; ctx.fillRect(x + 2*u, y + 3*u, 12*u, 10*u);
+      ctx.fillStyle = '#16233e'; ctx.fillRect(x + 3*u, y + 4*u, 10*u, 8*u);
+      ctx.fillStyle = col; ctx.fillRect(x + 3*u, y + 10*u, 2*u, 2*u);
+      var pts = [];
+      for (var k = 0; k < 5; k++) pts.push([4 + r(8), 5 + r(5)]);
+      ctx.fillStyle = '#5a6aa8';
+      for (k = 1; k < pts.length; k++) {                     // the figure's lines, a pixel at a time
+        var a = pts[k - 1], b = pts[k], n = Math.max(Math.abs(b[0] - a[0]), Math.abs(b[1] - a[1]));
+        for (var t = 1; t < n; t++) ctx.fillRect(x + Math.round(a[0] + (b[0] - a[0]) * t / n) * u, y + Math.round(a[1] + (b[1] - a[1]) * t / n) * u, u, u);
+      }
+      ctx.fillStyle = '#ffe080';
+      pts.forEach(function (p) { ctx.fillRect(x + p[0]*u, y + p[1]*u, u, u); });
+    };
+  }
+
   function moonstoneIcon(ctx, x, y, s) {
     var u = s / 16;
     ctx.fillStyle = '#0c0a14'; ctx.fillRect(x + 4*u, y + 4*u, 8*u, 9*u); ctx.fillRect(x + 3*u, y + 6*u, 10*u, 5*u);
@@ -1617,6 +1640,21 @@ var BridgeItems = (function () {
                      type: 'tool', stackable: false, draw: stormGlassIcon, value: 120, onUse: charmUse },
     ember_glass:   { id: 'ember_glass', name: 'Ember Glass', desc: 'Black volcanic glass from the crater on Cinder Key, a red glow deep in it. The fence buys it; so does any trader, cheaper.', type: 'material', stackable: true,
                      draw: emberGlassIcon, value: 40, fence: 55 },
+    // star charts of each world's sky, drawn up at the observatory once every sight over it is logged (js/observatory.js, W1)
+    sky_chart_lumar: { id: 'sky_chart_lumar', name: 'Star Chart: Lumar', desc: 'The sky over Lumar, every sight in it logged from the Wayfarer\'s observatory and inked in by your own hand. Use it to read it.', type: 'material',
+                     stackable: false, draw: skyChartIcon('lumar', '#2a7050'), value: 0, onUse: function () { if (typeof BridgeObservatory !== 'undefined') BridgeObservatory.read('lumar'); return false; } },
+    sky_chart_arcadia: { id: 'sky_chart_arcadia', name: 'Star Chart: Arcadia', desc: 'The sky over Arcadia, every sight in it logged from the Wayfarer\'s observatory and inked in by your own hand. Use it to read it.', type: 'material',
+                     stackable: false, draw: skyChartIcon('arcadia', '#e870c0'), value: 0, onUse: function () { if (typeof BridgeObservatory !== 'undefined') BridgeObservatory.read('arcadia'); return false; } },
+    sky_chart_enigma: { id: 'sky_chart_enigma', name: 'Star Chart: Enigma', desc: 'The sky over Enigma, every sight in it logged from the Wayfarer\'s observatory and inked in by your own hand. Use it to read it.', type: 'material',
+                     stackable: false, draw: skyChartIcon('enigma', '#40c8d8'), value: 0, onUse: function () { if (typeof BridgeObservatory !== 'undefined') BridgeObservatory.read('enigma'); return false; } },
+    sky_chart_singularity: { id: 'sky_chart_singularity', name: 'Star Chart: The Singularity', desc: 'The sky over the Singularity, every sight in it logged from the Wayfarer\'s observatory and inked in by your own hand. Use it to read it.', type: 'material',
+                     stackable: false, draw: skyChartIcon('singularity', '#a080e0'), value: 0, onUse: function () { if (typeof BridgeObservatory !== 'undefined') BridgeObservatory.read('singularity'); return false; } },
+    sky_chart_verdance: { id: 'sky_chart_verdance', name: 'Star Chart: Verdance', desc: 'The sky over Verdance, every sight in it logged from the Wayfarer\'s observatory and inked in by your own hand. Use it to read it.', type: 'material',
+                     stackable: false, draw: skyChartIcon('verdance', '#7ac040'), value: 0, onUse: function () { if (typeof BridgeObservatory !== 'undefined') BridgeObservatory.read('verdance'); return false; } },
+    sky_chart_hoarfell: { id: 'sky_chart_hoarfell', name: 'Star Chart: Hoarfell', desc: 'The sky over Hoarfell, every sight in it logged from the Wayfarer\'s observatory and inked in by your own hand. Use it to read it.', type: 'material',
+                     stackable: false, draw: skyChartIcon('hoarfell', '#b8e0f8'), value: 0, onUse: function () { if (typeof BridgeObservatory !== 'undefined') BridgeObservatory.read('hoarfell'); return false; } },
+    sky_chart_sylvara: { id: 'sky_chart_sylvara', name: 'Star Chart: Sylvara', desc: 'The sky over Sylvara, every sight in it logged from the Wayfarer\'s observatory and inked in by your own hand. Use it to read it.', type: 'material',
+                     stackable: false, draw: skyChartIcon('sylvara', '#a8e0d8'), value: 0, onUse: function () { if (typeof BridgeObservatory !== 'undefined') BridgeObservatory.read('sylvara'); return false; } },
     // treasure maps (js/treasure.js)
     tmap_lighthouse: { id: 'tmap_lighthouse', name: 'Map: Under the Old Light', desc: 'A treasure map. Use it to unfold the sketch - the landmarks are real. Somewhere on Lumar.', type: 'map',
                 stackable: false, draw: mapIcon, onUse: function () { if (typeof BridgeTreasure !== 'undefined') BridgeTreasure.view('lighthouse'); return false; } },
@@ -1925,6 +1963,18 @@ var BridgeItems = (function () {
     ship_lemon:    { id: 'ship_lemon', name: 'Lemon', desc: 'From the greenhouse deck\'s lemon tree. Sharp enough to make your eyes water.', type: 'food', stackable: true,
                      draw: function (ctx, x, y, s) { var u = s / 16; px(ctx, x, y, u, '#a88a10', [[3, 6, 10, 6], [4, 5, 8, 8]]); px(ctx, x, y, u, '#f0d040', [[4, 6, 8, 6], [5, 5, 6, 1]]); px(ctx, x, y, u, '#fff0a0', [[5, 7, 2, 2]]); px(ctx, x, y, u, '#3a8a3a', [[11, 4, 3, 2]]); },
                      effects: { energy: 5 }, onUse: consumableUse, value: 6 },
+    // the loomer's cloak (js/fardeep.js, Y5): woven by Ysane in the Rootmarket from Rosewell's cocoons and owlmoss
+    warden_cloak:  { id: 'warden_cloak', name: 'Warden\'s Cloak', desc: 'Ysane\'s weaving: spore silk from Rosewell\'s cocoons, dyed with owlmoss to the grey-green of the wood at dusk. It goes on over whatever you\'re wearing, and it\'s quiet: creatures notice you later while it\'s in your pack.',
+                     type: 'tool', stackable: false, value: 160, onUse: function () { if (typeof BridgeInteractions !== 'undefined') BridgeInteractions.say('WARDEN\'S CLOAK', 'YOU SETTLE IT ROUND YOUR SHOULDERS. IT DOESN\'T RUSTLE. NOTHING ABOUT IT RUSTLES. THINGS THAT HUNT BY EAR AND EYE WILL HAVE TO COME A FEW STEPS CLOSER BEFORE THEY KNOW YOU\'RE THERE.\n\n(IT WORKS AS LONG AS YOU CARRY IT.)'); return false; },
+                     carried: { text: 'creatures notice you later: their eyes reach a fifth less far while it\'s in your pack' },
+                     draw: function (ctx, x, y, s) { var u = s / 16; px(ctx, x, y, u, '#141a12', [[4, 2, 8, 13], [3, 5, 10, 10]]); px(ctx, x, y, u, '#4a5a44', [[4, 5, 8, 9], [5, 3, 6, 2]]); px(ctx, x, y, u, '#6a7a5a', [[5, 5, 2, 8], [9, 6, 1, 7]]); px(ctx, x, y, u, '#2e3a2a', [[7, 5, 1, 9], [11, 6, 1, 8]]); px(ctx, x, y, u, '#d0a040', [[7, 3, 2, 1]]); px(ctx, x, y, u, '#f0b0d8', [[4, 14, 1, 1], [8, 14, 1, 1], [11, 14, 1, 1]]); } },
+    // Okafor's strain from Enigma's hydroponics (js/fardeep.js, E1): a seedling she swaps for herbs, grown on in the greenhouse
+    okafor_seedling: { id: 'okafor_seedling', name: 'Okafor\'s Seedling', desc: 'A tuber sprouting in a ration tin, from Enigma\'s hydroponics. It glows green when you breathe on it. Plant it at the greenhouse deck\'s potting bench.', type: 'material', stackable: true,
+                     draw: function (ctx, x, y, s) { var u = s / 16; px(ctx, x, y, u, '#1a1a22', [[4, 9, 8, 6]]); px(ctx, x, y, u, '#8a9aa8', [[5, 10, 6, 4]]); px(ctx, x, y, u, '#c8d4dc', [[5, 10, 6, 1]]); px(ctx, x, y, u, '#3a8a3a', [[7, 4, 2, 6], [5, 5, 2, 2], [9, 3, 2, 2]]); px(ctx, x, y, u, '#80ff90', [[8, 5, 1, 2], [6, 5, 1, 1], [10, 3, 1, 1]]); },
+                     value: 0 },
+    glow_tuber:    { id: 'glow_tuber', name: 'Glow-Tuber', desc: 'Okafor\'s, bred from Lumar spores: a knobbly tuber that glows green when you talk to it. Roasts well. Carried after dark it lights the water round your line.', type: 'food', stackable: true,
+                     draw: function (ctx, x, y, s) { var u = s / 16; px(ctx, x, y, u, '#1a2a14', [[3, 6, 10, 7], [4, 5, 7, 9]]); px(ctx, x, y, u, '#6a8a3a', [[4, 6, 8, 6], [5, 5, 5, 8]]); px(ctx, x, y, u, '#9ad860', [[5, 6, 3, 2]]); px(ctx, x, y, u, '#60f0a0', [[8, 9, 2, 1], [6, 11, 1, 1], [10, 7, 1, 1]]); px(ctx, x, y, u, '#3a8a3a', [[11, 3, 2, 3]]); },
+                     effects: { hp: 6, energy: 12 }, onUse: consumableUse, value: 11, carried: { bite: 0.9, dark: true, text: 'after dark its glow brings fish up to your line a little sooner' } },
     sunflower:     { id: 'sunflower', name: 'Sunflower', desc: 'A head as big as a plate. Marlo pays 32 for them.', type: 'material', stackable: true,
                      draw: produceIcon('sunflower'), value: 32 },
     pumpkin:       { id: 'pumpkin', name: 'Pumpkin', desc: 'Heavy, ribbed and glossy. Marlo pays 95.', type: 'food', stackable: true,
@@ -1988,6 +2038,12 @@ var BridgeItems = (function () {
                      draw: fishIcon('#6a8a3a', '#c0d080', '#3a5a1a'), effects: { hp: 8, energy: 8 }, onUse: consumableUse, value: 7 },
     sun_carp:      { id: 'sun_carp', name: 'Sun Carp', desc: 'A golden carp from the farm pond, scales like coins. Hollin swears there\'s only one.', type: 'material', stackable: true,
                      draw: fishIcon('#d8a020', '#ffe080', '#a06010', '#fff0a0'), value: 45 },
+    river_trout:   { id: 'river_trout', name: 'River Trout', desc: 'Brown and red-spotted, off a line in the Silverrun. Fennick does them with herbs and a squeeze of starpear.', type: 'food', stackable: true,
+                     draw: fishIcon('#8a8a4a', '#e8d8a8', '#3a4a2a', '#d04a30'), effects: { hp: 9, energy: 9 }, onUse: consumableUse, value: 9 },
+    silverscale:   { id: 'silverscale', name: 'Silverscale', desc: 'A slim river fish with a line of light down its side. The elves say it swam out of the Moonwell and kept going.', type: 'material',
+                     stackable: true, draw: fishIcon('#b8d8d0', '#f0fff8', '#4a6a6a', '#c8f0e8'), value: 24 },
+    moon_carp:     { id: 'moon_carp', name: 'Moon Carp', desc: 'Pale as the Moonwell and whiskered like an old elf. It rises to the moon, and hardly ever by day.', type: 'material',
+                     stackable: true, draw: fishIcon('#c8e8e0', '#f4fffc', '#4a7a72', '#a8e0d8'), value: 95 },
     // the Workshop's materials (js/workshop.js `FROM` says where to get each); what's cargo by the crate in a hold
     // (pine timber, Sapphire glass, spore silk, black powder) breaks open into these at the workshop
     pine_log:      { id: 'pine_log', name: 'Pine Log', desc: 'A length of straight pine off Diggen\'s Point. A crate of pine timber holds eight.', type: 'material',

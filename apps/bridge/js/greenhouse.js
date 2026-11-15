@@ -66,6 +66,7 @@ var BridgeGreenhouse = (function () {
       rows.push({ label: i.label.charAt(0) + i.label.slice(1).toLowerCase(), sub: it ? it.name : i.item, icon: i.item, info: true,
                   note: left > 0 ? 'ready in ' + Math.ceil(left / 60000) + ' min' : 'ready to pick' });
     });
+    if (has('BridgeFarDeep') && BridgeFarDeep.benchRows) BridgeFarDeep.benchRows(bench).forEach(function (r) { rows.push(r); });   // Okafor's tubers (E1)
     BridgeInteractions.choose({ title: 'The potting bench', text: 'POTS, SEEDLINGS, SEED PACKETS IN A TRAY, A TROWEL. CHALKED ON THE BENCH\'S EDGE, WHAT\'S READY:' +
         (state.watered === day() ? '\n\nTHE BEDS ARE WATERED TODAY: ONE MORE OF WHATEVER YOU PICK.' : ''), rows: rows, closeLabel: 'Done' });
   }

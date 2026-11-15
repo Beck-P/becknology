@@ -152,6 +152,18 @@
     "title": "The farm's order board", "where": "Verdance · the farm", "kind": "board", "board": "farm", "world": "verdance", "label": "NOTICE BOARD",
     "text": "The board by the farm on Verdance posts orders every day from people across the worlds (Tove wants pumpkins for the lift crew). They pay well over a sale."
   },
+  "silverrun-fishing": {
+    "title": "A line in the Silverrun", "where": "Sylvara · the Silverrun", "kind": "fishing", "world": "sylvara-river", "label": "OFF THE CANOE DOCK",
+    "text": "Tamsin at the canoe dock says trout and silverscale take a line off the dock or below the otter weir, and after dark a moon carp comes up to look at the moon, most of all at the full. She buys what you catch."
+  },
+  "enigma-dispatches": {
+    "title": "The station's old traffic", "where": "Enigma \u00b7 the relay deck", "kind": "place", "world": "enigma", "label": "CIPHER TERMINAL",
+    "text": "Okafor says every code you crack at the cipher terminal on Enigma's relay deck decodes one of the station's old dispatches: shift swaps, supply orders, notices. They go in your journal's log."
+  },
+  "warden-cloak": {
+    "title": "A warden's cloak", "where": "Sylvara \u00b7 the Rootmarket", "kind": "maker", "world": "sylvara-roots", "label": "WEAVER",
+    "text": "Aerin says Ysane at the Rootmarket's looms weaves the wardens' cloaks: four silk cocoons from Rosewell's groves and three owlmoss for the dye. In one, creatures notice you later."
+  },
   "peddler": {
     "title": "Wendel the Peddler", "where": "somewhere new each day", "kind": "person", "label": "PEDDLER",
     "text": "Wendel Crane sets up somewhere different every day: the Market Square, Arcadia's street, Brambleford's square, Fellhaven, Sapphire Port's quay, Enigma's dock. He sells things that do things."
