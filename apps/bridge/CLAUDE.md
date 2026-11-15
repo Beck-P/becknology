@@ -895,7 +895,10 @@ interactions of type `lumardeep` (`act`), set by `decorate` on the labels alread
   Lumar hours before the sun goes down to three after (`sunsetHour`, js/clock.js `sky` on `lumar-cliff`); it warms you
   through the cold for two hours (js/worlds/hoarfell.js `warm`, as the church lamps do). Their own *About the donkeys* and
   *About the taverna* say so. **Not built:** Aris painting your ship (a picture for a home drawn from her colours needs a
-  furniture piece drawn live through `BridgeHome.add`; left for later). **Two pilots**: tips, the free ride and the
+  furniture piece drawn live through `BridgeHome.add`, as the fish tanks are; js/sloop.js `portrait` draws a ship in her
+  `look` but only into a dialog's canvas while it's on screen, at sea scale with the sea behind her — it would want a
+  still, room-scale mode, and the piece's layout entry would have to carry the look so a visiting partner sees the same
+  picture; left for later). **Two pilots**: tips, the free ride and the
   plate are each pilot's own.
 
 ### The Peddler, magic things and the curios
