@@ -62,6 +62,7 @@ var BridgeBoards = (function () {
     ],
     arcadia: [
       { who: 'teo', item: 'eel_fillet', at: 'here', n: 4, why: '"Eel for the laksa. Sump eel, mind. The fresh ones bite back."' },
+      { who: 'teo', item: 'sump_eel', at: 'here', n: 3, why: '"Three whole eels, off a line. For the big pot on a Friday."' },
       { who: 'wen', item: 'beeswax_candles', n: 2, w: 2, x: 1.5, why: '"Real candles for the drowned shrine. The plastic ones don\'t flicker."' },
       { who: 'kanna', item: 'sea_glass', n: 3, why: '"Sea glass for the omamori. The sea\'s luck, sewn in."' },
       { who: 'hoshi', item: 'egg', n: 6, why: '"Farm eggs. Real ones. The ramen deserves it."' },

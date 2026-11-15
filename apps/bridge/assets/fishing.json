@@ -1,4 +1,11 @@
 {
+  "arcadia-sump": [
+    { "x": 20, "y": 19, "pool": "sump", "label": "OFF THE QUAY" },
+    { "x": 50, "y": 19, "pool": "sump", "label": "OFF THE QUAY" }
+  ],
+  "arcadia-sump-rave": [
+    { "x": 4, "y": 15, "pool": "sump", "label": "PLATFORM EDGE" }
+  ],
   "lumar": [
     {
       "x": 6,

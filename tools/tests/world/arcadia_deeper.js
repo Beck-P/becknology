@@ -138,6 +138,55 @@ const ONLY = process.argv[3] || '';
     await b.contexts()[0].close();
   }
 
+  // ---- A3 · Fishing in the Sump -----------------------------------------------------------------------------------------
+  // a spot off the quay by Teo's boat (and the station platform's), a sump eel landed and on its card, Teo buying it, the
+  // eel's Uses line (the junk off a line is Gage's, as it always was), the platform's spot
+  if (part('fish')) {
+    const H = await open(), p = H.p;
+    const spots = await H.ev(() => new Promise(r => { const out = {}; let n = 0; ['arcadia-sump', 'arcadia-sump-rave'].forEach(w => fetch('/bridge/assets/worlds/' + w + '.json').then(x => x.json()).then(d => { d.interactions = d.interactions || []; BridgeFishing.decorate(w, d);
+      out[w] = d.interactions.filter(i => i.type === 'fish').map(i => ({ x: i.x, y: i.y, pool: i.pool, water: d.collisions[i.y][i.x], stand: [[0, -1], [0, 1], [1, 0], [-1, 0]].some(o => d.collisions[i.y + o[1]] && d.collisions[i.y + o[1]][i.x + o[0]] === 0) }));
+      if (++n === 2) r(out); })); }));
+    console.log('spots:', JSON.stringify(spots));
+    ['arcadia-sump', 'arcadia-sump-rave'].forEach(w => { if (!(spots[w] || []).length) fail('no fishing in ' + w); (spots[w] || []).forEach(s => { if (s.pool !== 'sump' || !s.water || !s.stand) fail(w + ' spot ' + JSON.stringify(s)); }); });
+    await H.go('arcadia-sump', [20, 18]);
+    await H.ev(() => { BridgeCharacter.setFacing && BridgeCharacter.setFacing('down'); });
+    await H.use('OFF THE QUAY', "i.type === 'fish' && i.x === 20");
+    if (!await H.ev(() => BridgeFishing.isOpen())) fail('no fishing off the quay');
+    await p.keyboard.down(' '); await p.waitForTimeout(1150); await p.keyboard.up(' '); await p.waitForTimeout(300);
+    await H.ev(() => { const s = BridgeFishing._state(); if (s && s.phase === 'wait') { s.catchId = 'sump_eel'; s.nibbles = []; } });
+    await p.waitForFunction(() => { const s = BridgeFishing._state(); return s && s.phase === 'bite'; }, null, { timeout: 15000 }).catch(() => fail('no bite'));
+    await p.screenshot({ path: OUT + '/ad_fish_bite.png' });
+    await p.keyboard.down(' '); await p.waitForTimeout(120); await p.keyboard.up(' ');
+    await H.ev(() => { const s = BridgeFishing._state(); if (s && s.phase === 'reel') { s.progress = 0.995; s.fish = s.ft = s.zone + s.zoneH / 2; } });
+    await p.waitForTimeout(1800);
+    const card = await H.ev(() => (document.getElementById('fish-reveal') || {}).innerText || '');
+    if (!/Sump Eel/.test(card)) fail('the card: ' + card);
+    if (!await H.ev(() => !!document.querySelector('#fish-reveal .fr-art canvas'))) fail('the eel isn\'t drawn on its card');
+    await p.screenshot({ path: OUT + '/ad_fish_card.png' });
+    await p.waitForTimeout(2500); await p.keyboard.press(' '); await p.waitForTimeout(600);
+    await p.keyboard.press('Escape'); await p.waitForTimeout(300);
+    if (await H.ev(() => BridgeFishing.isOpen())) await H.ev(() => BridgeFishing.close());
+    if (await H.count('sump_eel') !== 1) fail('the eel not in the pack: ' + await H.count('sump_eel'));
+    const uses = await H.ev(() => BridgeUses.lines('sump_eel').map(l => l.t.replace(/<[^>]+>/g, '')));
+    console.log('sump eel, uses:', JSON.stringify(uses));
+    if (!uses.some(t => /Old Teo/.test(t))) fail('no Teo line on the eel');
+    // junk off a line: no size, Gage buys it
+    await H.ev(() => { BridgeInventory.addItem('sump_eel', 2); BridgeInventory.addItem('circuit', 1); });
+    await H.use('NOODLE BOAT');
+    const rows = await H.rows(); console.log('the boat:', JSON.stringify(rows));
+    const c0 = await H.coins();
+    await H.pickRow('line-caught'); await H.shut();
+    if ((await H.coins()) - c0 !== 3 * 14) fail('Teo paid ' + ((await H.coins()) - c0) + ' for three eels');
+    if (await H.count('sump_eel')) fail('eels left after selling');
+    await H.go('arcadia-sump-rave', [4, 14]);
+    await H.use('PLATFORM EDGE', "i.type === 'fish'");
+    if (!await H.ev(() => BridgeFishing.isOpen())) fail('no fishing off the platform');
+    await p.waitForTimeout(600);
+    await p.screenshot({ path: OUT + '/ad_fish_platform.png' });
+    await H.ev(() => BridgeFishing.close());
+    await b.contexts()[0].close();
+  }
+
   console.log(errors ? errors + ' FAILED' : 'arcadia_deeper OK');
   await b.close();
   process.exit(errors ? 1 : 0);

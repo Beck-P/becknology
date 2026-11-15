@@ -9,7 +9,7 @@
  * everywhere, bluefin and rays off Sapphire, shrimp in Rose Cove, ember
  * snappers and coins from the Heron off Crimson, moon eels round Midnight —
  * and star pearls in the moon pool; perch and the odd sun carp in the farm pond
- * on Verdance, char and frostfin through the ice on Fellhaven's pond. Old boots.
+ * on Verdance, char and frostfin through the ice on Fellhaven's pond, sump eels off the quays under Arcadia. Old boots.
  * Messages in bottles. And from a boat at sea (js/sloop.js: slow her right
  * down and cast a line): each sea's own deep water (`sea_<pal>` pools), with
  * two fish only a boat finds — the spore tuna and, deep down, the lantern angler.
@@ -44,6 +44,8 @@ var BridgeFishing = (function () {
     moonpool: [['moon_eel', 50], ['glowtail', 35], ['star_pearl', 15]],
     pond:     [['pond_perch', 60], ['sun_carp', 12], ['old_boot', 20], ['bottle', 8]],
     ice:      [['arctic_char', 62], ['frostfin', 18], ['old_boot', 20]],
+    // under Arcadia, off the Sump's quays and the drowned station's platform (A3): eels, the city's leavings, now and then a pearl
+    sump:     [['sump_eel', 44], ['scrap_metal', 20], ['circuit', 12], ['old_boot', 14], ['chrome_part', 4], ['sump_pearl', 4]],
     // out at sea, from the boat: deeper water, bigger fish, each sea's rare one more often - and its legend
     sea_emerald:  [['silverfin', 30], ['spore_tuna', 22], ['bluefin', 12], ['glowtail', 10], ['jade_marlin', 7], ['lantern_angler', 3], ['old_mossback', 2.5], ['old_boot', 6], ['bottle', 8]],
     sea_sapphire: [['bluefin', 28], ['spore_tuna', 20], ['sapphire_ray', 12], ['silverfin', 14], ['glass_swordfish', 7], ['lantern_angler', 4], ['crownfin', 2.5], ['old_boot', 5], ['bottle', 8]],
@@ -61,7 +63,7 @@ var BridgeFishing = (function () {
     { zone: 0.3, gain: 0.22, drain: 0.65, start: 0.3, strike: 640 }
   ];
   function tierOf(id) { return typeof BridgeFishArt !== 'undefined' ? BridgeFishArt.tier(id) : 0; }
-  var JUNK = ['old_boot', 'heron_coin', 'star_pearl', 'bottle'];        // not fish: no sizes, no records, never in the fish hold
+  var JUNK = ['old_boot', 'heron_coin', 'star_pearl', 'bottle', 'scrap_metal', 'circuit', 'chrome_part', 'sump_pearl'];        // not fish: no sizes, no records, never in the fish hold
   // how each one fights on the line: speed it darts, how wild, the sizes it comes in (cm)
   var FIGHT = {
     silverfin: [0.8, 0.25, 18, 34], spore_minnow: [1.1, 0.4, 6, 12], harbour_crab: [0.5, 0.15, 10, 22],
@@ -70,7 +72,8 @@ var BridgeFishing = (function () {
     star_pearl: [1.6, 0.8, 1, 2],
     coral_dragonet: [1.55, 0.85, 8, 18], cinder_grouper: [1.35, 0.6, 60, 150], starfin: [1.65, 0.8, 30, 60], jade_marlin: [1.7, 0.7, 150, 320],
     glass_swordfish: [1.65, 0.75, 140, 300], old_mossback: [1.45, 0.75, 240, 310], dawnveil: [1.5, 0.85, 280, 360], emberjaw: [1.6, 0.85, 160, 210],
-    crownfin: [1.55, 0.8, 300, 380], nightglass: [1.5, 0.95, 180, 230], pond_perch: [0.7, 0.25, 12, 28], sun_carp: [1.2, 0.55, 30, 70], arctic_char: [0.9, 0.35, 25, 60], frostfin: [1.4, 0.6, 8, 16], spore_tuna: [1.4, 0.5, 60, 140], lantern_angler: [1.5, 0.75, 30, 70], old_boot: [0.25, 0.0, 26, 31], heron_coin: [0.3, 0.05, 3, 4], bottle: [0.35, 0.05, 20, 30]
+    crownfin: [1.55, 0.8, 300, 380], nightglass: [1.5, 0.95, 180, 230], pond_perch: [0.7, 0.25, 12, 28], sun_carp: [1.2, 0.55, 30, 70], arctic_char: [0.9, 0.35, 25, 60], frostfin: [1.4, 0.6, 8, 16], spore_tuna: [1.4, 0.5, 60, 140], lantern_angler: [1.5, 0.75, 30, 70], old_boot: [0.25, 0.0, 26, 31],
+    sump_eel: [1.3, 0.6, 40, 95], scrap_metal: [0.2, 0.0, 10, 30], circuit: [0.25, 0.05, 8, 14], chrome_part: [0.4, 0.1, 10, 30], sump_pearl: [1.4, 0.7, 1, 2], heron_coin: [0.3, 0.05, 3, 4], bottle: [0.35, 0.05, 20, 30]
   };
   var BOTTLES = [
     "IF YOU FIND THIS, I AM STILL ON THE STACK OFF CRIMSON. BRING ROPE. - H.M.",
@@ -120,10 +123,11 @@ var BridgeFishing = (function () {
     midnight: { w: ['#262850', '#1c1c3e', '#12122c', '#08081a'], s: '#6060b0', g: '#c8c0ff' },
     moonpool: { w: ['#2e3e62', '#223252', '#16223c', '#0a1222'], s: '#a8b8e8', g: '#f4f4ff' },
     pond:     { w: ['#3a7a70', '#2e655c', '#22504a', '#183a34'], s: '#8ad0c0', g: '#fffbe0', day: true },
-    ice:      { w: ['#1e4a6a', '#163a58', '#0e2a44', '#081a2e'], s: '#a8d4ea', g: '#e8f8ff', ice: true }
+    ice:      { w: ['#1e4a6a', '#163a58', '#0e2a44', '#081a2e'], s: '#a8d4ea', g: '#e8f8ff', ice: true },
+    sump:     { w: ['#0e3a3c', '#0a2a2e', '#061c20', '#020c10'], s: '#3ab8b0', g: '#7af4e8', under: true }   // black water lit teal from under
   };
   var POOL_SEA = { harbour: 'emerald', sea_emerald: 'emerald', sapphire: 'sapphire', sea_sapphire: 'sapphire', rose: 'rose', sea_rose: 'rose',
-                   crimson: 'crimson', sea_crimson: 'crimson', midnight: 'midnight', sea_midnight: 'midnight', moonpool: 'moonpool', pond: 'pond', ice: 'ice' };
+                   crimson: 'crimson', sea_crimson: 'crimson', midnight: 'midnight', sea_midnight: 'midnight', moonpool: 'moonpool', pond: 'pond', ice: 'ice', sump: 'sump' };
   function look() { return WATER[POOL_SEA[st.pool] || 'emerald']; }
   var TIER_COL = ['#e8e0c0', '#80c8ff', '#d8a0ff', '#ffd060'];
 
@@ -458,6 +462,11 @@ var BridgeFishing = (function () {
     // above the water
     if (L.ice) { P(c, 0, 0, NW, SURF, '#cfe4f2'); dither(c, 0, SURF - 6, NW, 6, '#cfe4f2', '#9cc0da', 0.5); P(c, 0, SURF - 1, NW, 1, '#7aa4c4'); }
     else if (L.day) { P(c, 0, 0, NW, SURF, '#9ccfe6'); dither(c, 0, 10, NW, SURF - 10, '#9ccfe6', '#c6e6f0', 0.5); }
+    else if (L.under) {                                             // no sky down here: the city's underside, a few sodium lamps and a tube
+      P(c, 0, 0, NW, SURF, '#06070c'); dither(c, 0, SURF - 8, NW, 8, '#06070c', '#0c1418', 0.5);
+      for (var u = 0; u < 7; u++) { var ux = (u * 61 + 23) % NW; P(c, ux, 3 + (u * 5) % 9, 2, 1, u % 3 ? '#f0a040' : '#9af0c8'); P(c, ux, 2 + (u * 5) % 9, 1, 1, 'rgba(255,200,120,0.4)'); }
+      P(c, 120, 4, 18, 1, '#5ae0c0');
+    }
     else { P(c, 0, 0, NW, SURF, '#070c16'); dither(c, 0, 12, NW, SURF - 12, '#070c16', '#0e1830', 0.5);
       for (var s = 0; s < 22; s++) P(c, (s * 53 + 7) % NW, (s * 29) % (SURF - 6), 1, 1, s % 4 ? 'rgba(200,230,255,0.5)' : 'rgba(255,240,200,0.8)'); }
     // the water, darkening with depth
@@ -825,7 +834,7 @@ var BridgeFishing = (function () {
     c.restore();
   }
   if (typeof BridgeWorld !== 'undefined' && BridgeWorld.registerSceneHooks) {
-    ['lumar', 'verdance', 'hoarfell'].forEach(function (t) { BridgeWorld.registerSceneHooks(t, { items: worldItems }); });
+    ['lumar', 'verdance', 'hoarfell', 'arcadia'].forEach(function (t) { BridgeWorld.registerSceneHooks(t, { items: worldItems }); });
   }
 
   // for the journal: what you've caught, the messages you've read

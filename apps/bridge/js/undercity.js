@@ -323,6 +323,7 @@ var BridgeUndercity = (function () {
       closeLabel: 'Leave'
     });
   }
+  var TEO_EEL = 14;                                                  // a whole sump eel, line-caught
   function boat() {
     var eels = BridgeInventory.getCount('eel_fillet');
     var rows = [{ label: "Teo's Laksa", sub: 'curry noodles off the boat: energy and health', note: '18 coins', icon: 'sump_laksa', pick: function () {
@@ -335,6 +336,11 @@ var BridgeUndercity = (function () {
     if (eels) rows.push({ label: 'Sell him your eel', sub: 'you have ' + eels, note: '8 each', icon: 'eel_fillet', pick: function () {
       BridgeInventory.removeItem('eel_fillet', eels); award(eels * 8, 'boat:eel'); sfx('coin');
       say('OLD TEO', '"SUMP EEL! GOOD." HE PAYS ' + (eels * 8) + ' COINS AND DROPS THEM IN A BUCKET, WHERE THEY GLOW. "THE BROTH LIKES THEM."');
+    } });
+    var whole = BridgeInventory.getCount('sump_eel');                 // off a line from his own quay (js/fishing.js, the `sump` pool)
+    if (whole) rows.push({ label: 'Sell him your line-caught eels', sub: 'you have ' + whole, note: TEO_EEL + ' each', icon: 'sump_eel', pick: function () {
+      BridgeInventory.removeItem('sump_eel', whole); award(whole * TEO_EEL, 'sell:boat:sump_eel'); sfx('coin');
+      say('OLD TEO', 'HE HOLDS ONE UP TO THE LAMP AND WATCHES IT GLOW. "OFF A LINE, NOT OFF A KNIFE. THE BROTH KNOWS THE DIFFERENCE." ' + (whole * TEO_EEL) + ' COINS.');
     } });
     BridgeInteractions.choose({
       title: 'THE NOODLE BOAT',

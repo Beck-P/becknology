@@ -1369,6 +1369,16 @@ code. `js/arcadia-deep.js` (BridgeArcadiaDeep) holds the glue; each item's data 
   save, his trophy dropped or beaten today) — and a shop's **`favour`** in js/implants.js (`{ key, name, open(), line }`
   on the shop: designer pieces at the slot's cheapest clinic price while `open()` and not yet used; used favours kept in
   `bridge_implants.favours`; `BridgeImplants.favourOpen(shop)`, `priceIn(shop, id)`, `install(id, { price, favour })`).
+- **A3 · Fishing in the Sump** (js/fishing.js `POOLS.sump`, `WATER.sump`: black water lit teal from under and the city's
+  underside for a sky, no stars; the cast drawn in the world on the `arcadia` tileset too). Spots (assets/fishing.json):
+  two OFF THE QUAY on the Sump's north quay — by Teo's boat (20, 19) and below the shrine (50, 19), both where the
+  roster's `safe` rects keep the fighters off — and the PLATFORM EDGE at Central (4, 15), onto the flooded track bed.
+  The pool: the line-caught **Sump Eel** (`sump_eel`, items.js; drawn by js/fishart.js, common, 40–95 cm; in the
+  Collection's Fish set — a bonus already paid stays paid), scrap, circuit boards, old boots, now and then a chrome part
+  or a sump pearl (junk: no size, `JUNK`). No bottles here (their messages are the main story's). **Old Teo** buys whole
+  eels at 14 (`TEO_EEL`, js/undercity.js `boat`; a fillet's 8), Gage the rest as before; Teo's *A line off the quay?*
+  says so, the eel's card says so (`BridgeArcadiaDeep.USES`, read by js/uses.js as a module's own lines), and Teo asks
+  for three on Arcadia's board (js/boards.js).
 
 ### Homes and furniture
 `js/home.js` (BridgeHome). Places of your own: **the White House** on Sapphire Port's square (`lumar-home`, `scenes/lumar_home.py`: hearth, two windows on the sea, bare boards; 1500 coins) and a **capsule apartment** over the District's Capsule Hotel (`arcadia-home`, `scenes/arcadia_home.py`: a strip window onto the live skyline and rain — the `'*'` behind hook draws them in `scene.sky` — the sleeping capsule, a kitchenette; 600 coins). **The farmhouse** on Verdance (`verdance-home`, `scenes/verdance_home.py`: Edda's kitchen in daylight — whitewash over green wainscot, the black range, a dresser of blue-and-white plates, two windows on the field, her kitchen table with the ledger) comes with the farm's deed (`HOMES[id].farm`: `owns` asks `BridgeHomestead.owned()`; the FARMHOUSE door goes in once it's yours, and Edda's rocking chair and bed are waiting the first time). Their doors are `home_door` interactions set on the street as worlds load (`HOMES[id].door`: the WHITE HOUSE door at 38,13 on Sapphire; the CAPSULE HOTEL on the street): the first time they offer the place for sale (`wagerCoins`, a menu option `home_buy`), then let you in. Each comes with two pieces to start. Aboard, **your quarters and the bridge** are yours already. The rooms are rendered empty; everything else is what you put in them. The legacy homes (*Legacy* below) are rendered furnished with their architecture and fixed pieces — the Penthouse's inside and roof deck, Ashcombe House's five rooms, the Starling — with open floor left round them for yours: a home can be several worlds (`part: '<home id>'` in HOMES: owned with that home, furnished on its own, no toast of its own), and a world can be a hotel you own (`resort`: owned once the holm's Starling is built).
