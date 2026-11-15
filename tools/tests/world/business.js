@@ -52,7 +52,10 @@ const H = 3600000;
     b.held = Math.round(ph * cap * 1.1); b.last = Date.now();
     const row = BridgeLedger.needs().find(n => n.name === BridgeBusiness.get(id).name);
     // an open hour later, still earning?
-    let k = 0; while (!BridgeBusiness.openNow(id) && k++ < 48) { window._off += 1800000; BridgeBusiness._tick(); }
+    // (a moment when it's open now and still open half an hour on: measured across closing time it earns nothing and
+    // this failed by the clock)
+    const openFor30 = () => { if (!BridgeBusiness.openNow(id)) return false; window._off += 1800000; const o = BridgeBusiness.openNow(id); window._off -= 1800000; return o; };
+    let k = 0; while (!openFor30() && k++ < 96) { window._off += 1800000; BridgeBusiness._tick(); }
     const p0 = BridgeBusiness.pending(id); window._off += 1800000; BridgeBusiness._tick(); const p1 = BridgeBusiness.pending(id);
     return { held: b.held, limit: Math.round(BridgeBusiness.heldCap(id)), said: row ? row.sub : 'nothing', full: BridgeBusiness.full(id), stillEarning: p1 > p0, p0, p1 };
   });
