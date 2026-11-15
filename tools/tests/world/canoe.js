@@ -41,7 +41,13 @@ const OUT = process.argv[2] || '/tmp';
         const st = BridgeCanoe._st(), w = BridgeWorld.getWorld();
         if (!st || !w.river) return null;
         let tx, ty;
-        if (target) { tx = target[0] + 0.5; ty = target[1] + 0.5; }
+        if (target === 'run') {                                  // along an arm's own flow line (river.flows[0]), off its end
+          const F = w.river.flows[0];
+          let bi = 0, bd = 1e9;
+          F.forEach((f, i) => { const d = Math.hypot(f[0] - st.x, f[1] - st.y); if (d < bd) { bd = d; bi = i; } });
+          const ahead = F[Math.min(F.length - 1, bi + 2)];
+          tx = ahead[0] + (bi >= F.length - 3 ? 3 : 0); ty = ahead[1];
+        } else if (target) { tx = target[0] + 0.5; ty = target[1] + 0.5; }
         else {
           const F = (w.river.flow || []).concat(...(w.river.flows || []));
           let bi = 0, bd = 1e9;
@@ -113,8 +119,8 @@ const OUT = process.argv[2] || '/tmp';
   // ---- the fork: back out, up the Deep Run into the Deepwood --------------------------------------------------------------
   await useKind('launch');
   await steer([24, 13], 8000, (s) => s.y < 14.2);                     // up to the Run's mouth (row 13): south of it is bank
-  await steer([30, 14], 12000, (s) => s.x > 28);
-  await steer([49, 15], 30000, (s) => s.w !== 'sylvara-falls');
+  await steer('run', 40000, (s) => s.w !== 'sylvara-falls');        // up the Run along its own line (a straight line to its far end
+                                                                       // ran the canoe into the bank south of the mouth)
   await p.waitForTimeout(2500);
   if (await wid() !== 'sylvara-deepwood') fail('the Deep Run didn\'t carry on into the Deepwood (in ' + await wid() + ')');
   else {
