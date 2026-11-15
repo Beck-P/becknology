@@ -46,7 +46,7 @@ for (x, kind) in ((7.6, 'still'), (14.4, 'portrait')):
         E.still_life(k, x, 2.0, 1.85, w=0.8, h=0.62)
     else:
         E.portrait(k, x, 2.0, 1.7, w=0.66, h=0.9, sitter='gent', coat='#3a2a1a', hair='#d8d4cc')
-    E.sconce(k, x, 2.0, z=1.35, energy=4)
+    E.sconce(k, x, 2.0, z=1.35, energy=1.5)
 
 # ---- the table, laid --------------------------------------------------------------------------------------------------
 E.persian_rug(k, 3.6, 4.4, 18.4, 8.9, field='#2a3048', border='#6a1a1e', accent='#c8a050')
@@ -85,7 +85,7 @@ for (x, r) in ((5.0, 10.0), (17.0, 10.0), (11.0, 10.5), (2.5, 5.0), (19.5, 5.0))
 E.torchere(k, 7.6, 3.1, h=1.7, energy=8)
 E.torchere(k, 14.4, 3.1, h=1.7, energy=8)
 
-render(k, OUT)
+render(k, OUT, ambient=('#5a4a40', 0.75))     # candlelit at night: a warm ambient keeps the whole floor in one band of the toy finish
 
 I = [door('THE HALL', x, y, 'lumar-manor', [7, 3]) for (x, y) in DOORS]
 I += [
