@@ -31,9 +31,12 @@ const OUT = process.argv[2] || '/tmp';
     held = Object.assign({}, want);
   };
   // steer: toward a point a little way along the flow line from the nearest one (or at a target), in eight ways
+  // (each leg's time limit is what a free machine needs, times SLOW: on a loaded one the canoe is slower, and a leg
+  // given up on early failed the test — the Deep Run, then Mirror Lake's landing)
+  const SLOW = 3;
   const steer = async (target, ms, until) => {
     const t0 = Date.now();
-    while (Date.now() - t0 < ms) {
+    while (Date.now() - t0 < ms * SLOW) {
       const s = await p.evaluate((target) => {
         const st = BridgeCanoe._st(), w = BridgeWorld.getWorld();
         if (!st || !w.river) return null;
@@ -109,9 +112,9 @@ const OUT = process.argv[2] || '/tmp';
 
   // ---- the fork: back out, up the Deep Run into the Deepwood --------------------------------------------------------------
   await useKind('launch');
-  await steer([24, 13], 24000, (s) => s.y < 14.2);                     // up to the Run's mouth (row 13): south of it is bank
-  await steer([30, 14], 36000, (s) => s.x > 28);
-  await steer([49, 15], 90000, (s) => s.w !== 'sylvara-falls');   // (time limits three times what a free machine needs: on a loaded one the canoe is slower and the Run was given up on)
+  await steer([24, 13], 8000, (s) => s.y < 14.2);                     // up to the Run's mouth (row 13): south of it is bank
+  await steer([30, 14], 12000, (s) => s.x > 28);
+  await steer([49, 15], 30000, (s) => s.w !== 'sylvara-falls');
   await p.waitForTimeout(2500);
   if (await wid() !== 'sylvara-deepwood') fail('the Deep Run didn\'t carry on into the Deepwood (in ' + await wid() + ')');
   else {
@@ -126,7 +129,7 @@ const OUT = process.argv[2] || '/tmp';
   await go('sylvara-falls', [19, 23]);
   await useKind('canoe');
   const t1 = Date.now();
-  while (Date.now() - t1 < 60000 && await wid() === 'sylvara-falls') await steer(null, 1500);
+  while (Date.now() - t1 < 60000 * SLOW && await wid() === 'sylvara-falls') await steer(null, 1500 / SLOW);
   if (await wid() !== 'sylvara-lake') fail('didn\'t reach Mirror Lake (in ' + await wid() + ')');
   await steer([25, 25], 25000, (s) => Math.hypot(s.x - 25, s.y - 25) < 1.5);
   await p.evaluate(() => BridgeLit && BridgeLit._force && BridgeLit._force({ hour: 23, season: 'summer', weather: 'clear' }));
