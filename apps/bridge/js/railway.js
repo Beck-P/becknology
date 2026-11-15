@@ -21,6 +21,11 @@
  * moon, lit windows and now and then the aurora). The train is the Blender sprite (assets/cine/train*.png, made by
  * tools/bridge-art/cine_sprites.py from assets_alpine.train), lit or not by the hour.
  *
+ * The mountains are Hoarfell's own (the heightfield ranges behind the summit, assets/backdrops/hoarfell, coloured per
+ * ride for the season and hour: `imgRange`), in layers that slide at their own speeds; big firs whip past the carriage
+ * windows, the line runs through a snow shed, the high pass opens out of the tunnel's mouth, firs frame the viaduct and
+ * lit windows spill warm light at dusk. What doesn't move is drawn once a ride (`still`, the ranges' canvases, `warm`).
+ *
  * Saved: localStorage bridge_railway { seen }. The first ride can't be skipped.
  */
 var BridgeRailway = (function () {
@@ -68,7 +73,15 @@ var BridgeRailway = (function () {
   };
   var SNOW = [238, 242, 250], SNOW_SH = [178, 192, 222];
 
+  // the ranges' images (imgRange): asked for with the first ride's env, waited for (a moment at most) before it plays
+  function ready() {
+    return new Promise(function (res) {
+      var t0 = Date.now();
+      (function poll() { if (rangeImgs() || !RIM || Date.now() - t0 > 2500) res(); else setTimeout(poll, 50); })();
+    });
+  }
   function env(over) {
+    rangeImgs();
     var k = typeof BridgeClock !== 'undefined' && BridgeClock.sky ? BridgeClock.sky('hoarfell') : { sun: 1, dusk: 0 };
     var season = (k.season && k.season.id) || 'winter';
     var E = { season: SEASONS[season] ? season : 'winter', sun: k.sun === undefined ? 1 : k.sun, dusk: k.dusk || 0 };
@@ -238,10 +251,76 @@ var BridgeRailway = (function () {
     });
   }
 
+  // ---- the ranges as Hoarfell's own (tools/bridge-art/hoarfell_range.py, the heightfields behind the summit): each
+  // layer's pixels hold data (the light from the west, rock or snow, the line, how high in the layer), indexed once and
+  // coloured per ride from a palette of a few dozen entries — snow down to the season's line, pasture or larch gold on
+  // the low slopes out of winter, the alpenglow on the high snow at dusk, the haze of distance — then blitted in whole
+  // pixels at each layer's own speed. The procedural `range` below stands in until the images have loaded.
+  var RIM = null, RIDX = [], RCOL = {};
+  function rangeImgs() {
+    if (!RIM && typeof Image !== 'undefined') RIM = ['far', 'mid', 'near'].map(function (n) { var im = new Image(); im.src = '/bridge/assets/backdrops/hoarfell/range_' + n + '.png'; return im; });
+    return RIM && RIM.every(function (im) { return im.complete && im.naturalWidth; }) ? RIM : null;
+  }
+  var LAYER = { far: 0, mid: 1, near: 2 };
+  function rangeIndex(li) {
+    if (RIDX[li]) return RIDX[li];
+    var im = RIM[li], c = document.createElement('canvas'); c.width = im.naturalWidth; c.height = im.naturalHeight;
+    var g = c.getContext('2d'); g.drawImage(im, 0, 0);
+    var d = g.getImageData(0, 0, c.width, c.height).data, idx = new Uint8Array(c.width * c.height);
+    for (var i = 0, j = 0; i < d.length; i += 4, j++) {
+      if (!d[i + 3]) continue;
+      if (d[i + 1] === 255) { idx[j] = 1; continue; }
+      idx[j] = 2 + (d[i + 1] === 128 ? 32 : 0) + Math.min(3, (d[i] >> 4) >> 2) * 8 + (d[i + 2] >> 5);
+    }
+    return (RIDX[li] = { w: c.width, h: c.height, idx: idx });
+  }
+  function rangeCanvas(li, E, haze, snowline) {
+    var key = li + '|' + E.season + '|' + [E.wday, E.wd, E.wn, haze, snowline].map(function (x) { return Math.round(x * 20); }).join(',');
+    if (RCOL[key]) return RCOL[key];
+    var R = rangeIndex(li), C = skyCols(E), S = E.S, pal = new Uint32Array(66);
+    var rock = S.rock, snowAt = snowline === undefined ? { winter: 0, spring: 0.42, summer: 0.62, autumn: 0.55 }[E.season] : snowline;
+    var low = E.season === 'summer' || E.season === 'spring' ? S.meadowSh : E.season === 'autumn' ? [150, 118, 64] : null;
+    function pack(c) {
+      c = mixc(c, C.hor, haze);
+      return (255 << 24) | (Math.round(clamp(c[2], 0, 255)) << 16) | (Math.round(clamp(c[1], 0, 255)) << 8) | Math.round(clamp(c[0], 0, 255));
+    }
+    pal[1] = pack(mixc(lit(E, [36, 40, 66]), lit(E, rock), 0.45));
+    var rockT = [mixc(rock, [40, 46, 76], 0.45), mixc(rock, [56, 62, 92], 0.2), rock, mixc(rock, [190, 196, 214], 0.3)];
+    var snowT = [mixc(SNOW_SH, [140, 150, 200], 0.3), SNOW_SH, mixc(SNOW, SNOW_SH, 0.35), SNOW];
+    for (var m = 0; m < 2; m++) for (var band = 0; band < 4; band++) for (var hb = 0; hb < 8; hb++) {
+      var hgt = (hb + 0.5) / 8, col;
+      var snowy = m === 1 && hgt >= snowAt || E.season === 'winter' && band >= 2 && hgt > 0.15;
+      if (snowy) {
+        col = lit(E, snowT[band]);
+        if (E.wd > 0.1 && band >= 2) col = mixc(col, [255, 172, 150], E.wd * 0.55 * hgt);     // the alpenglow, strongest up high
+      } else if (low && hgt < 0.3) col = lit(E, mixc(low, [20, 30, 30], (3 - band) * 0.12));
+      else col = lit(E, rockT[band]);
+      pal[2 + m * 32 + band * 8 + hb] = pack(col);
+    }
+    var c = document.createElement('canvas'); c.width = R.w; c.height = R.h;
+    var g = c.getContext('2d'), img = g.createImageData(R.w, R.h), px = new Uint32Array(img.data.buffer);
+    for (var i = 0; i < R.idx.length; i++) if (R.idx[i]) px[i] = pal[R.idx[i]];
+    g.putImageData(img, 0, 0);
+    if (Object.keys(RCOL).length > 24) RCOL = {};
+    return (RCOL[key] = c);
+  }
+  // draw a layer with its foot at o.base (sunk a few pixels so nearer things hide it), scrolled by o.scroll; false if the
+  // images aren't in yet
+  function imgRange(b, W, E, o) {
+    if (!rangeImgs()) return false;
+    var li = LAYER[o.layer], c = rangeCanvas(li, E, Math.max(o.haze || 0, [0.5, 0.22, 0][li]), o.snowline);
+    var ox = -Math.round(o.scroll || 0) % c.width;
+    if (ox > 0) ox -= c.width;
+    var y = Math.round(o.base + (o.sink === undefined ? [34, 26, 16][li] : o.sink) - c.height);
+    for (var x = ox; x < W; x += c.width) b.drawImage(c, x, y);
+    return true;
+  }
+
   // A range of mountains: peaks with straight flanks (the highest of the peaks near each point), the flank turned to
   // the sun (left) lit and the other in shade, down to a haze at the foot; snow capping whatever stands above the
   // season's snowline, running down the lit gullies in streaks; far ranges fading into the sky.
   function range(b, W, H, E, o) {
+    if (o.layer && imgRange(b, W, E, o)) return;
     var C = skyCols(E), haze = o.haze || 0;
     var rock = E.S.rock;
     var rL = mixc(lit(E, mixc(rock, [176, 182, 202], 0.3)), C.hor, haze), rD = mixc(lit(E, mixc(rock, [56, 62, 92], 0.4)), C.hor, haze);
@@ -436,6 +515,89 @@ var BridgeRailway = (function () {
     }
   }
 
+  // the parts of a shot that never move (a gorge's far wall, the glacier's ice), drawn once a ride and size
+  var STILL = {};
+  function still(name, W, H, E, fn, w) {
+    var key = name + '|' + W + 'x' + H + '|' + E.season + '|' + [E.wday, E.wd, E.wn].map(function (x) { return Math.round(x * 40); }).join(',');
+    if (STILL[key]) return STILL[key];
+    if (Object.keys(STILL).length > 12) STILL = {};
+    var c = document.createElement('canvas'); c.width = w || W; c.height = H;
+    fn(c.getContext('2d'));
+    return (STILL[key] = c);
+  }
+  // ---- things close to the train -----------------------------------------------------------------------------------------
+  // a big fir right beside the line: a dark silhouette in sawtooth tiers (the light catching its sun side, snow on its tiers
+  // in winter), its foot at (x, foot), h tall
+  function bigFir(b, x, foot, h, E, seed) {
+    var dk = lit(E, mixc(E.S.fir, [4, 8, 12], 0.7)), lt = lit(E, mixc(E.S.fir, [120, 150, 120], 0.05)), sn = lit(E, SNOW);
+    var cD = css(dk), cL = css(lt), cS = css(mixc(sn, dk, 0.15)), w0 = h * (0.22 + hash(seed) * 0.08);
+    rect(b, x - 2, foot - Math.round(h * 0.12), 4, Math.round(h * 0.12), css(lit(E, [40, 28, 20])));
+    for (var y = 0; y < h * 0.92; y += 2) {
+      var k = y / h, tier = (y % 22) / 22, ww = Math.round(w0 * (0.08 + k * 0.92) * (0.62 + 0.38 * tier));
+      var yy = Math.round(foot - h * 0.1 - h * 0.9 + y);
+      rect(b, x - ww, yy, ww * 2 + 1, 2, cD);
+      rect(b, x - ww, yy, Math.max(1, Math.round(ww * 0.4)), 2, cL);
+      if (E.S.firSnow && tier < 0.2) rect(b, x - ww + 1, yy, Math.round(ww * 1.3), 1, cS);
+    }
+  }
+  // firs right outside the carriage whipping past (fast: the nearest thing there is), now and then
+  function whip(b, W, H, E, scroll, ground) {
+    var gap = 170, i0 = Math.floor(scroll / gap) - 1, i1 = Math.floor((scroll + W) / gap) + 2;
+    for (var i = i0; i < i1; i++) {
+      if (hash(i * 3.7 + 1) < 0.5) continue;
+      bigFir(b, Math.round(i * gap - scroll + hash(i) * 70), ground, Math.round(Math.min(H, W * 0.56) * (0.75 + hash(i * 2) * 0.35)), E, i);
+    }
+  }
+  // a snow shed (an avalanche gallery): its roof over the line, concrete posts flicking past on the valley side, the view
+  // between them in its shade. x0 is where its mouth is now; it runs `len` px to the right of that.
+  function snowShed(b, W, H, E, x0, len, scroll, sill) {
+    var a = Math.max(0, Math.round(x0)), z = Math.min(W, Math.round(x0 + len));
+    if (z <= a) return;
+    var conc = lit(E, [150, 146, 140]), concD = lit(E, [86, 84, 84]), concL = lit(E, [196, 192, 184]);
+    rect(b, a, 0, z - a, sill, css(lit(E, [24, 26, 34]), 0.5));                // its shade over the view
+    var roof = Math.round(H * 0.24);
+    rect(b, a, 0, z - a, roof, css(concD));
+    rect(b, a, roof - 3, z - a, 3, css(conc));
+    rect(b, a, roof, z - a, 1, css(concL));
+    if (E.S.firSnow || E.season === 'spring') rect(b, a, 0, z - a, 4, css(lit(E, SNOW)));
+    var gap = 30, p0 = Math.round(x0) + ((Math.round(-scroll) % gap) + gap) % gap;
+    for (var p = p0; p < z; p += gap) {
+      if (p + 10 < a) continue;
+      rect(b, p, roof, 10, sill - roof, css(conc));
+      rect(b, p + 7, roof, 3, sill - roof, css(concD));
+      rect(b, p, roof, 1, sill - roof, css(concL));
+      rect(b, p - 4, roof, 18, 3, css(conc));                               // the post's head under the roof
+    }
+  }
+  // out of the tunnel: the portal's arch opening out around the view, the stone ring, the glare as the daylight hits
+  function tunnelMouth(b, W, H, E, k) {
+    if (k >= 1) return;
+    var e = ease(k), hw = Math.round(W * (0.1 + e * 0.95)), bottom = Math.round(H * (0.86 + e * 0.6)), topC = bottom - Math.round(hw * 0.9);
+    var ring = Math.max(4, Math.round(hw * 0.08)), stone = css(lit(E, [150, 142, 126])), stoneD = css(lit(E, [100, 94, 84]));
+    for (var y = 0; y < H; y++) {
+      var half = y > bottom ? -1 : y >= topC ? hw : Math.sqrt(Math.max(0, hw * hw - (topC - y) * (topC - y)));
+      var outer = y > bottom + ring ? -1 : y >= topC ? hw + ring : Math.sqrt(Math.max(0, (hw + ring) * (hw + ring) - (topC - y) * (topC - y)));
+      var cx = W / 2;
+      if (outer < 0) { rect(b, 0, y, W, 1, '#05060a'); continue; }
+      var ho = Math.round(outer), hi = Math.round(half);
+      rect(b, 0, y, Math.round(cx - ho), 1, '#05060a'); rect(b, Math.round(cx + ho), y, W, 1, '#05060a');
+      if (half < 0) rect(b, Math.round(cx - ho), y, ho * 2, 1, stoneD);
+      else {
+        rect(b, Math.round(cx - ho), y, ho - hi, 1, (y % 6) < 1 ? stoneD : stone);
+        rect(b, Math.round(cx + hi), y, ho - hi, 1, (y % 6) < 1 ? stoneD : stone);
+      }
+    }
+    var flash = clamp(1 - k * 4, 0, 1);                                       // the glare as you come out
+    if (flash > 0) rect(b, 0, 0, W, H, css(lit(E, [255, 255, 255]), flash * 0.85));
+  }
+  // a lit window's warm spill on the dusk around it
+  function spill(b, x, y, r, k) {
+    if (k <= 0.03) return;
+    b.save(); b.globalCompositeOperation = 'lighter';
+    disc(b, Math.round(x), Math.round(y), r, 'rgba(255,170,90,' + (0.1 * k).toFixed(3) + ')');
+    b.restore();
+  }
+
   // ---- the towns at each end --------------------------------------------------------------------------------------------
   function chalet(b, x, y, w, h, E, opts) {
     var wall = lit(E, opts && opts.wall || [122, 74, 42]), dark = lit(E, [78, 46, 24]);
@@ -452,6 +614,7 @@ var BridgeRailway = (function () {
     var winC = E.wday < 0.7 ? [255, 200, 110] : [60, 50, 40];
     for (var wx = x + 2; wx < x + w - 3; wx += 5) {
       rect(b, wx, y - h + 3, 3, 3, css(E.wday < 0.7 ? mixc([255, 200, 110], [80, 60, 40], E.wday) : lit(E, [52, 44, 40])));
+      if (E.wday < 0.7) spill(b, wx + 1, y - h + 4, 4, 1 - E.wday);
       if (h > 12) rect(b, wx, y - h + 9, 3, 3, css(E.wday < 0.7 ? mixc([255, 200, 110], [80, 60, 40], E.wday) : lit(E, [52, 44, 40])));
     }
     void winC;
@@ -505,7 +668,11 @@ var BridgeRailway = (function () {
       rect(b, xa, y - hgt, xb - xa, 1, css(stoneD));
       for (var fl = 0; fl < Math.floor((hgt - 4) / 8); fl++) {
         rect(b, xa, y - 6 - fl * 8, xb - xa, 1, css(stoneD));
-        for (var wx = xa + 3; wx < xb - 3; wx += 6) rect(b, wx, y - 12 - fl * 8 + 2, 2, 4, css(hash(wx * 3.3 + fl) > 0.2 ? wl : lit(E, [64, 72, 92])));
+        for (var wx = xa + 3; wx < xb - 3; wx += 6) {
+          var on = hash(wx * 3.3 + fl) > 0.2;
+          rect(b, wx, y - 12 - fl * 8 + 2, 2, 4, css(on ? wl : lit(E, [64, 72, 92])));
+          if (on && E.wday < 0.75 && (wx + fl) % 12 < 6) spill(b, wx + 1, y - 12 - fl * 8 + 4, 4, 1 - E.wday);
+        }
       }
       for (var j = 0; j < roofH; j++) rect(b, xa + Math.round(j * 0.5), y - hgt - j - 1, xb - xa - Math.round(j), 1, css(j === roofH - 1 ? snowC : slate));
       if (E.season !== 'summer') rect(b, xa + roofH / 2, y - hgt - roofH - 1, xb - xa - roofH, 2, css(snowC));
@@ -577,8 +744,8 @@ var BridgeRailway = (function () {
       sky(b, W, H, E, now, horizon);
       puffs(b, W, H, E, { base: Math.round(H * 0.2), seed: town === 'aurelle' ? 44 : 14, scroll: ms * 0.004 + 20, haze: 0.25, size: 1 });
       birds(b, W, H, E, now, Math.round(H * 0.28), town === 'aurelle' ? 5 : 3);
-      range(b, W, H, E, { base: horizon + 14, amp: H * 0.4, seed: town === 'aurelle' ? 41 : 11, scroll: 0, haze: 0.5 });
-      range(b, W, H, E, { base: horizon + 34, amp: H * 0.28, seed: town === 'aurelle' ? 43 : 13, scroll: 30, haze: 0.2, strata: true, freq: 0.8 });
+      range(b, W, H, E, { base: horizon + 14, amp: H * 0.4, seed: town === 'aurelle' ? 41 : 11, scroll: town === 'aurelle' ? 300 : 0, haze: 0.42, layer: 'far' });
+      range(b, W, H, E, { base: horizon + 34, amp: H * 0.28, seed: town === 'aurelle' ? 43 : 13, scroll: town === 'aurelle' ? 620 : 30, haze: 0.18, strata: true, freq: 0.8, layer: 'mid' });
       var gy = Math.round(H * 0.68);
       var tops = slope(b, W, H, E, { base: gy, amp: 16, seed: 5, scroll: 0, trees: true, size: 1.0, gap: 8, sparse: 0.45 });
       var ground = function (x) { return tops[clamp(Math.floor((x + 2) / 2), 0, tops.length - 1)]; };
@@ -620,8 +787,8 @@ var BridgeRailway = (function () {
         clouds(b, W, H, E, { base: Math.round(H * 0.2), amp: 6, seed: 3, scroll: v * 0.005 + 300, haze: 0.25 });
         puffs(b, W, H, E, { base: Math.round(H * 0.16), seed: 5, scroll: v * 0.003 + 80, haze: 0.2, size: 0.9 });
         birds(b, W, H, E, now, Math.round(H * 0.24), 2);
-        range(b, W, H, E, { base: horizon + 4, amp: H * 0.34, seed: 21, scroll: v * 0.004, haze: 0.45 });
-        range(b, W, H, E, { base: horizon + 22, amp: H * 0.26, seed: 23, scroll: v * 0.011 + 200, haze: 0.15, strata: true, freq: 0.8 });
+        range(b, W, H, E, { base: horizon + 4, amp: H * 0.34, seed: 21, scroll: v * 0.004 + 120, haze: 0.4, layer: 'far' });
+        range(b, W, H, E, { base: horizon + 22, amp: H * 0.26, seed: 23, scroll: v * 0.011 + 200, haze: 0.15, strata: true, freq: 0.8, layer: 'mid' });
         var tops = slope(b, W, H, E, { base: horizon + 40, amp: 16, seed: 7, scroll: v * 0.03, trees: true, size: 1.2, gap: 7, sparse: 0.25 });
         // the river in the valley floor, glinting; chalets along it
         var ry = horizon + 50, wc = lit(E, E.S.water);
@@ -640,6 +807,8 @@ var BridgeRailway = (function () {
         for (var p = -((v * 0.5) % 34); p < W; p += 34) rect(b, Math.round(p), Math.round(H * 0.6), 3, Math.round(H * 0.2), post);
         rect(b, 0, Math.round(H * 0.63), W, 1, post);
         for (var m = -((v * 0.5) % 260); m < W; m += 260) rect(b, Math.round(m) + 100, 0, 5, H, css(lit(E, [52, 56, 68])));    // a mast whips by
+        whip(b, W, H, E, v * 0.75, Math.round(H * 0.7));                      // firs right outside, whipping past
+        snowShed(b, W, H, E, W - (v - 4000) * 0.9, 1200, v * 0.9, Math.round(H * 0.66));   // through a snow shed
         var pass = (t - 0.52) / 0.14;                                         // the down train flashing past the other way
         if (pass > 0 && pass < 1) {
           var tw2 = trainWidth(false) * 2, xo = Math.round(W + 20 - (W + tw2 + 40) * pass);
@@ -714,11 +883,12 @@ var BridgeRailway = (function () {
     return function (b, W, H, t, now, ms) {
       var top = Math.round(H * 0.2);
       sky(b, W, H, E, now, top + 10);
-      range(b, W, H, E, { base: top + 12, amp: H * 0.16, seed: 61, scroll: 0, haze: 0.4 });
+      range(b, W, H, E, { base: top + 12, amp: H * 0.16, seed: 61, scroll: 500, haze: 0.4, layer: 'near' });
       // the far wall of the gorge: rock in blocks and strata, ledges with snow or firs, cracks running down
       var rock = E.S.rock, wL = lit(E, mixc(rock, [184, 190, 208], 0.18)), wM = lit(E, rock), wD = lit(E, mixc(rock, [40, 44, 72], 0.38));
       var floorY = Math.round(H * 0.66);
       var wallTop = function (x) { return Math.round(top + 6 + 8 * vn(x / 40, 63) + 5 * vn(x / 11, 64)); };
+      b.drawImage(still('gorge', W, H, E, function (b) {
       for (var x = 0; x < W; x += 2) {
         var wt = wallTop(x);
         for (var y = wt; y < floorY; y += 3) {
@@ -736,6 +906,7 @@ var BridgeRailway = (function () {
         if (E.season === 'winter') rect(b, x, wt - 1, 2, 2, css(lit(E, SNOW)));
       }
       trees(b, W, E, { scroll: 0, gap: 11, size: 0.8, seed: 65, sparse: 0.5 }, function (x) { return wallTop(x) + 2; });
+      }), 0, 0);
       // the waterfall: falling in stripes down the wall into spray, or frozen into a blue curtain in winter
       var fx = Math.round(W * 0.32), fw = Math.round(10 + 8 * E.S.fall);
       for (var y2 = top + 14; y2 < floorY; y2++) {
@@ -795,8 +966,8 @@ var BridgeRailway = (function () {
       clouds(b, W, H, E, { base: Math.round(H * 0.18), amp: 7, seed: 13, scroll: ms * 0.004 + 100, haze: 0.1 });
       puffs(b, W, H, E, { base: Math.round(H * 0.24), seed: 15, scroll: ms * 0.006 + 40, haze: 0.3, size: 1.1, spread: 20 });
       birds(b, W, H, E, now, Math.round(H * 0.3), 7);
-      range(b, W, H, E, { base: horizon + 6, amp: H * 0.38, seed: 81, scroll: 0, haze: 0.5 });
-      range(b, W, H, E, { base: horizon + 30, amp: H * 0.26, seed: 83, scroll: 0, haze: 0.22, strata: true });
+      range(b, W, H, E, { base: horizon + 6, amp: H * 0.38, seed: 81, scroll: 700, haze: 0.42, layer: 'far' });
+      range(b, W, H, E, { base: horizon + 30, amp: H * 0.26, seed: 83, scroll: 260, haze: 0.2, strata: true, layer: 'mid' });
       // the ravine: forested slopes falling in from either side to a stream far below, mist lying in it
       var floor = Math.round(H * 0.94), deck0 = Math.round(H * 0.5);
       var gL = lit(E, E.S.meadow), gD = lit(E, E.S.meadowSh);
@@ -840,6 +1011,10 @@ var BridgeRailway = (function () {
       var s = trainSprite(E, true), tw = s ? s.w : 62;
       var tx = -tw + (W + tw) * t;
       drawTrain(b, E, tx, deck(Math.round(tx + tw / 2)) - 3, true, now);
+      var fz = Math.min(H, W * 0.56);                                         // firs at the ravine's lip, close: the depth of it
+      bigFir(b, 16, H + 8, Math.round(fz * 0.62), E, 3);
+      bigFir(b, 40, H + 14, Math.round(fz * 0.44), E, 4);
+      bigFir(b, W - 12, H + 10, Math.round(fz * 0.7), E, 7);
       if (E.S.snowfall) snowfall(b, W, H, now, 70);
     };
   }
@@ -848,14 +1023,16 @@ var BridgeRailway = (function () {
       var horizon = Math.round(H * 0.32), sc = ms * 0.01;
       sky(b, W, H, E, now, horizon);
       puffs(b, W, H, E, { base: Math.round(H * 0.14), seed: 104, scroll: sc * 0.2 + 60, haze: 0.3, size: 0.8, spread: 10 });
-      range(b, W, H, E, { base: horizon + 26, amp: H * 0.34, seed: 101, scroll: sc * 0.3, haze: 0.4, snowline: 0.18 });
-      range(b, W, H, E, { base: Math.round(H * 0.5), amp: H * 0.14, seed: 103, scroll: sc * 0.6, haze: 0.1, snowline: 0.5, strata: true });
+      range(b, W, H, E, { base: horizon + 26, amp: H * 0.34, seed: 101, scroll: sc * 0.3 + 420, haze: 0.36, snowline: 0.18, layer: 'far' });
+      range(b, W, H, E, { base: Math.round(H * 0.5), amp: H * 0.14, seed: 103, scroll: sc * 0.6 + 80, haze: 0.1, snowline: 0.5, strata: true, layer: 'near' });
       // the glacier: white névé coming in from the left, the ice going blue and breaking up as it falls to the right,
       // ogive bands across it, a dark medial moraine down its middle, crevasses in rows
       var ice = lit(E, [178, 214, 236], 0.15), iceM = lit(E, [140, 188, 222], 0.15), iceD = lit(E, [74, 126, 182], 0.2), iceL = lit(E, [232, 244, 252]), sn = lit(E, SNOW);
       var g0 = Math.round(H * 0.47), gb = Math.round(H * 0.8);
-      for (var x = 0; x < W; x += 2) {
-        var u = x + sc;
+      var GW = W + 140;                                                       // the ice drawn once, wider than the frame, slid by sc
+      b.drawImage(still('glacier', W, H, E, function (b) {
+      for (var x = 0; x < GW; x += 2) {
+        var u = x;
         var gt = Math.round(g0 + (x / W) * H * 0.06 + 3 * vs(u / 40, 107));
         var q = clamp(x / W * 1.4 - 0.2, 0, 1);                               // how far down the glacier (left névé → right ice)
         for (var y = gt; y < gb; y += 2) {
@@ -870,6 +1047,7 @@ var BridgeRailway = (function () {
           if (q > 0.25 && hash(Math.floor(u / 7) * 1.9 + r2 * 3.7) > 0.4) { rect(b, x, cy, 2, 2, css(iceD)); rect(b, x, cy - 1, 2, 1, css(iceL)); }
         }
       }
+      }, GW), -Math.round(sc), 0);
       // seracs: blocks tumbled where it steepens, lit on top, a lit face and a blue shadow side
       for (var i = 0; i < 30; i++) {
         var sx = Math.round(((hash(i * 3.3) * W * 1.3 - sc) % (W * 1.3) + W * 1.3) % (W * 1.3)) - W * 0.15;
@@ -912,9 +1090,9 @@ var BridgeRailway = (function () {
       sky(b, W, H, E, now, horizon);
       puffs(b, W, H, E, { base: Math.round(H * 0.22), seed: 124, scroll: ms * 0.003 + 200, haze: 0.2, size: 1.2, spread: 24 });
       birds(b, W, H, E, now, Math.round(H * 0.3), 11);
-      range(b, W, H, E, { base: horizon + 6, amp: H * 0.48, seed: 121, scroll: ms * 0.002, haze: 0.35, snowline: 0.3, sharp: 1.6 });
+      range(b, W, H, E, { base: horizon + 6, amp: H * 0.48, seed: 121, scroll: ms * 0.002 + 860, haze: 0.32, snowline: 0.3, sharp: 1.6, layer: 'far' });
       cloudSea(b, W, H, E, { base: horizon - 4, seed: 123, scroll: ms * 0.006, haze: 0.2, size: 0.8 });
-      range(b, W, H, E, { base: horizon + 18, amp: H * 0.32, seed: 125, scroll: ms * 0.004 + 90, haze: 0.06, snowline: 0.2, strata: true });
+      range(b, W, H, E, { base: horizon + 18, amp: H * 0.32, seed: 125, scroll: ms * 0.004 + 90, haze: 0.08, snowline: 0.2, strata: true, layer: 'mid' });
       cloudSea(b, W, H, E, { base: horizon + 16, seed: 127, scroll: ms * 0.014, gap: 30, size: 1.2 });
       // the shelf the line runs along: deep snow (or the year's last patches over the scree), rocks through it,
       // a cairn with prayer flags strung to a pole
@@ -946,6 +1124,7 @@ var BridgeRailway = (function () {
       drawTrain(b, E, -tw + (W + tw * 1.3) * t, ry, false, now);
       rect(b, 0, ry + 4, W, H - ry - 4, css(mixc(shelf, [30, 34, 50], 0.15)));
       if (E.S.snowfall) snowfall(b, W, H, now, 110, 0.06);
+      tunnelMouth(b, W, H, E, t / 0.14);                                      // out of the tunnel into all this
     };
   }
 
@@ -977,9 +1156,21 @@ var BridgeRailway = (function () {
     var o = { name: NAMES[to], kicker: 'The mountain railway · from ' + NAMES[from], noskip: first && !opts.skippable, hold: opts.hold };
     if (typeof BridgeAudio !== 'undefined' && BridgeAudio.sfx) BridgeAudio.sfx('jingle');
     if (typeof BridgeCine === 'undefined' || !BridgeCine.play) return Promise.resolve();
-    return BridgeCine.play(function () { return shots(from, to, E); }, o).then(function () {
+    return ready().then(function () { warm(from, to, E); return BridgeCine.play(function () { return shots(from, to, E); }, o); }).then(function () {
       S = load(); S.seen = true; S.rides = (S.rides || 0) + 1; store(S);
     });
+  }
+
+  // each shot drawn once, unseen, at the size the cutscene will use (js/cinematic.js's buffer), so the ranges' colours and
+  // the still parts are made before the ride rather than as a shot cuts in
+  function warm(from, to, E) {
+    try {
+      var dpr = window.devicePixelRatio || 1, sw = Math.round(window.innerWidth * dpr), sh = Math.round(window.innerHeight * dpr);
+      var z = Math.max(1, Math.round(sw / 480)), c = document.createElement('canvas');
+      c.width = Math.ceil(sw / z); c.height = Math.ceil(sh / z);
+      var g = c.getContext('2d');
+      shots(from, to, E).forEach(function (s) { s.draw(g, c.width, c.height, 0.5, 0); });
+    } catch (e) { /* only a head start */ }
   }
 
   // one frame into a canvas of its own (the tests): i a shot index or name, t 0..1
@@ -994,7 +1185,7 @@ var BridgeRailway = (function () {
   }
 
   var api = { ride: ride, seen: seen, env: env, SHOTS: ['depart', 'carriage', 'gorge', 'viaduct', 'glacier', 'tunnel', 'pass', 'arrive'],
-              _frame: frame, _reset: function () { store({}); } };
+              ready: ready, _frame: frame, _reset: function () { store({}); } };
   if (typeof BridgeCine !== 'undefined') BridgeCine.railway = ride;
   return api;
 })();
