@@ -854,6 +854,22 @@ interactions of type `lumardeep` (`act`), set by `decorate` on the labels alread
   Journal's *Next up* (your count, then the launch), the Map's *Come back for*; the materials' cards say so.
   **Two pilots** each put in their own share; the needs are the same, the launch is each one's own (two pilots both
   ready see it in the same slot; a partner whose share isn't in sees nothing at the Arsenal).
+- **L6 · Cinder Key's bounties.** The WANTED posters in Cinder Key's square (28, 21 in `lumar-cinder`; the Salt Rat's
+  stay the pirates' own) are this week's three (`bounties(ms)`: Sunday to Saturday, Eastern, seeded by the week — the
+  same three on every page): a black-sailed **raider** on the Crimson (450, a plunder idol), a **privateer** gone bad on
+  the Emerald lanes (350, plunder rings), a Crimson **cutter** (250, a plunder plate) — each named from js/sloop.js's
+  traffic names, with a captain. Reading the board (`bounty.read` = the week) puts the word out: from then on a passage
+  through a wanted ship's sea (js/seafight.js `plan`, `BridgeLumarDeep.hunting(seas)`) has at least a 0.3 chance of
+  trouble, and the trouble is her six times in ten (`wantedFoe`: her name over her, *THE GRIN, WANTED*, and `o.wanted`).
+  A new pilot who never reads it is never hunted, so the Emerald stays calm for them. The privateer is a seafight kind
+  of its own (`KINDS.privateer`: a brigantine in the privateers' colours, carronade, long nine and chaser, five
+  fighters), only ever met as a wanted ship. **Sunk** (`sink`, by guns or a boarding won) → `beaten(id)`: a toast and
+  the journal; sailing together the captain's `sf-prize` carries `wanted`, so the crewmate's counts too. **Claimed**
+  from Scarlet Dee (her *The bounties*, a topic `use` of type `lumardeep`, `act: 'claim'`; the Map: *pays the WANTED
+  board's bounties*): the coins and the plunder piece (Vesper buys them), once, any week after. Led to by Cutter Joss's
+  *Bounties?* in the Crown & Anchor (lead `bounties`, moot once you've read this week's), *Next up* when one's sunk and
+  unclaimed, *Come back for* on Cinder Key. **Two pilots** chase the same three; each one's sinkings and claims are
+  their own (a crewmate aboard when she goes down claims too).
 
 ### The Peddler, magic things and the curios
 `js/magic.js` (BridgeMagic; localStorage `bridge_magic`). **Wendel Crane, Peddler of Oddments** (`npc-peddler`, a witch-hatted Blender NPC; people.json `peddler`, found by the label PEDDLER in any of his worlds) sets up somewhere different each day (`PLACES`, by the date: the Market Square, the District street, Verdance's farm road, Fellhaven, Sapphire's quay, Enigma's docking bay) — added to that world's interactions and actors as it loads. *What have you got?* opens his wares (`BridgeInteractions.choose`):

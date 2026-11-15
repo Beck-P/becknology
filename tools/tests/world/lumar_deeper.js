@@ -27,7 +27,7 @@ const ONLY = process.argv[3] || '';
       if (sessionStorage.getItem('ld_fresh')) return;                // once: a reload keeps what was saved
       sessionStorage.setItem('ld_fresh', '1');
       ['bridge_quests', 'bridge_quest_meta', 'bridge_lumar_deep', 'bridge_letters', 'bridge_workshop', 'bridge.inventory.v2'].forEach(k => localStorage.removeItem(k));
-      localStorage.setItem('bridge_ship_location', 'lumar');
+      localStorage.setItem('bridge_ship_location', 'lumar'); localStorage.setItem('bridge_sail_taught', '1');
       if (fleet) localStorage.setItem('bridge_fleet', JSON.stringify(fleet));
     }, fleet || null);
     await p.goto('http://127.0.0.1:8766/bridge/' + (at ? '?at=' + at : '')); await p.waitForTimeout(2500);
@@ -224,7 +224,9 @@ const ONLY = process.argv[3] || '';
     if (await H.count('plunder_idol') !== idol0 + 1) fail('no idol from the cabin');
     await H.use('HARBOURMASTER'); await H.ask('The bounties'); await H.shut();
     if (await H.coins() - c0 !== 450) fail('paid twice');
-    if (await H.ev(() => BridgeLumarDeep.hunting(['crimson']))) fail('the sunk raider still hunting');
+    const after = await H.ev(() => BridgeLumarDeep.hunting(['crimson']));
+    console.log('hunting on the Crimson after:', after && after.ship);
+    if (after && after.kind === 'raider') fail('the sunk raider still hunting');
     // a crewmate's word: a sunk wanted ship counts for her too (js/seafight.js sf-prize carries it)
     const pid = await H.ev(() => BridgeLumarDeep.bounties()[1].id);
     await H.ev((id) => BridgeLumarDeep.beaten(id), pid);
