@@ -63,6 +63,7 @@ const AT = '2026-11-16T10:30';                                 // a Monday morni
       const rows = await rowsShown(p), ttl = await p.evaluate(() => (document.querySelector('.wd-title') || {}).textContent);
       console.log('boards:', s[0], '·', ttl, '·', rows.map(r => r.name + ' (' + r.note + ')').join(' | '));
       if (rows.length !== 3) fail(s[0] + ' shows ' + rows.length + ' requests, not 3');
+      if (rows.some(r => r.off)) fail(s[0] + ': a request you can\'t fill yet is drawn pale, as if done');
       if (s === spots[planet][0]) await p.screenshot({ path: SHOTS + '/boards_' + planet + '.png' });
       await p.keyboard.press('Escape'); await p.waitForTimeout(200);
     }
@@ -83,6 +84,9 @@ const AT = '2026-11-16T10:30';                                 // a Monday morni
   for (const f of fs.readdirSync(ROOT + '/assets/worlds')) {
     const d = JSON.parse(fs.readFileSync(ROOT + '/assets/worlds/' + f, 'utf8'));
     (d.interactions || []).forEach(i => (i.items || []).forEach(x => { if (x.id && x.price) vendor[x.id] = Math.min(vendor[x.id] || 1e9, x.price); }));
+  }
+  for (const [f, t] of files) if (/\.js$/.test(f)) {                // and the stalls the JS sets up ({ id: 'honey', price: 30 })
+    for (const m of t.matchAll(/\{\s*id:\s*'(\w+)',\s*price:\s*(\d+)/g)) vendor[m[1]] = Math.min(vendor[m[1]] || 1e9, +m[2]);
   }
   const wanted = {};
   for (const pl in tables) {
@@ -117,6 +121,27 @@ const AT = '2026-11-16T10:30';                                 // a Monday morni
     return out;
   });
   console.log('boards: a board-day pays on average', JSON.stringify(econ));
+
+  // ---- local first: the first something a new pilot can get on that planet, two got there, at most one from away ----
+  const local = await p.evaluate(() => {
+    const out = {};
+    for (const pl in BridgeBoards.REQUESTS) {
+      const T = BridgeBoards.REQUESTS[pl], hasStart = T.some(q => q.at === 'start');
+      let bad = 0, ex = '';
+      for (let d = 0; d < 120; d++) {
+        const t = BridgeBoards.todays(pl, 'y' + d), ats = t.map(q => q.at || 'away');
+        const ok = !hasStart || (ats[0] === 'start' && ats.filter(a => a !== 'away').length >= 2);
+        if (!ok) { bad++; ex = ats.join(','); }
+      }
+      out[pl] = { hasStart, bad, ex };
+    }
+    return out;
+  });
+  console.log('boards: local first', JSON.stringify(local));
+  for (const pl in local) {
+    if (local[pl].bad) fail(pl + ': ' + local[pl].bad + ' of 120 days not local first (' + local[pl].ex + ')');
+    if (!local[pl].hasStart && spots[pl] && spots[pl].length && pl !== 'enigma') fail(pl + ' has nothing a new pilot can get there');
+  }
 
   // ---- the same three on two pages on the same day, others the next ----
   const mine = await p.evaluate(() => Object.keys(BridgeBoards.REQUESTS).map(pl => pl + ':' + BridgeBoards.todays(pl).map(q => q.who + '/' + q.item).join(',')));

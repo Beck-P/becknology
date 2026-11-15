@@ -45,71 +45,75 @@ var BridgeBoards = (function () {
   // in the game asks for — the spec's orphans — so the board tells you what they're for); x a markup in place of MARKUP
   var REQUESTS = {
     lumar: [
-      { who: 'penn', item: 'sea_glass', n: 5, why: '"The shallows off Tern Holm are a green I can\'t mix. Sea glass is the nearest."' },
-      { who: 'rigg', item: 'harbour_crab', n: 2, why: '"Crab for the loft. Sailmakers live on crab and thread."' },
-      { who: 'mudlark', item: 'old_boot', n: 1, why: '"The left one. I\'ve had the right one since spring."' },
-      { who: 'ione', item: 'star_pearl', n: 1, why: '"A star pearl. They say it keeps the sky it fell from. I\'d like to check."' },
-      { who: 'bryony', item: 'silverfin', n: 4, why: '"Silverfin for the pot. The Tern\'s Rest runs on chowder."' },
-      { who: 'wick', item: 'ember_glass', n: 2, why: '"Ember glass for the stormwatch lamp. Burns brighter than oil in a blow."' },
-      { who: 'glass_stavrou', item: 'glass_float', n: 1, w: 2, x: 1.5, why: '"One float of your own blowing. Let me see what Ione\'s taught you."' },
-      { who: 'rose_lior', item: 'silk_scarf', n: 1, w: 2, why: '"A silk scarf for my mother. Rosewell silk, nothing less."' },
+      { who: 'penn', item: 'sea_glass', at: 'start', n: 5, why: '"The shallows off Tern Holm are a green I can\'t mix. Sea glass is the nearest."' },
+      { who: 'rigg', item: 'harbour_crab', at: 'start', n: 2, why: '"Crab for the loft. Sailmakers live on crab and thread."' },
+      { who: 'mudlark', item: 'old_boot', at: 'start', n: 1, why: '"The left one. I\'ve had the right one since spring."' },
+      { who: 'ione', item: 'star_pearl', at: 'here', n: 1, why: '"A star pearl. They say it keeps the sky it fell from. I\'d like to check."' },
+      { who: 'bryony', item: 'silverfin', at: 'start', n: 4, why: '"Silverfin for the pot. The Tern\'s Rest runs on chowder."' },
+      { who: 'wick', item: 'ember_glass', at: 'here', n: 2, why: '"Ember glass for the stormwatch lamp. Burns brighter than oil in a blow."' },
+      { who: 'glass_stavrou', item: 'glass_float', at: 'here', n: 1, w: 2, x: 1.5, why: '"One float of your own blowing. Let me see what Ione\'s taught you."' },
+      { who: 'rose_lior', item: 'silk_scarf', at: 'here', n: 1, w: 2, why: '"A silk scarf for my mother. Rosewell silk, nothing less."' },
       { who: 'hetty', item: 'wolf_pelt', n: 1, w: 2, why: '"A wolf pelt for the settle by the fire. The old one\'s gone bald."' },
       { who: 'pim', item: 'rime_shell', n: 1, w: 2, why: '"A rime shell to hold the charts down. Paperweights are for amateurs."' },
       { who: 'crier', item: 'goldfish_bag', n: 1, w: 2, why: '"A goldfish for the Old Town fountain. Every town needs a mascot."' },
       { who: 'kettle', item: 'scrap_metal', n: 6, w: 2, why: '"Scrap for a raider\'s ribs. Iron\'s dear on Cinder Key."' },
+      { who: 'annie', item: 'spore_minnow', at: 'start', n: 4, why: '"Spore minnows for the bait tin. Forty years, and I still fish on my days off."' },
       { who: 'harrow', item: 'wyrm_scale', n: 1, w: 2, x: 1.4, why: '"A wyrm scale. The cadets should see what real armour looks like."' }
     ],
     arcadia: [
-      { who: 'teo', item: 'eel_fillet', n: 4, why: '"Eel for the laksa. Sump eel, mind. The fresh ones bite back."' },
-      { who: 'wen', item: 'beeswax_candles', n: 2, w: 2, why: '"Real candles for the drowned shrine. The plastic ones don\'t flicker."' },
+      { who: 'teo', item: 'eel_fillet', at: 'here', n: 4, why: '"Eel for the laksa. Sump eel, mind. The fresh ones bite back."' },
+      { who: 'wen', item: 'beeswax_candles', n: 2, w: 2, x: 1.5, why: '"Real candles for the drowned shrine. The plastic ones don\'t flicker."' },
       { who: 'kanna', item: 'sea_glass', n: 3, why: '"Sea glass for the omamori. The sea\'s luck, sewn in."' },
       { who: 'hoshi', item: 'egg', n: 6, why: '"Farm eggs. Real ones. The ramen deserves it."' },
       { who: 'nadia', item: 'moonmelon', n: 1, why: '"A twin-moon melon, for a cocktail I haven\'t named yet."' },
       { who: 'ferris', item: 'sunflower', n: 3, why: '"Sunflowers. Something up here ought to face the sun, even if it can\'t find one."' },
       { who: 'brannigan', item: 'arctic_char', n: 2, why: '"Char from a real ice world. Spacers get homesick for cold."' },
-      { who: 'static', item: 'circuit', n: 3, w: 2, why: '"Circuit boards for the Foundry\'s rig. Dead screens don\'t dance."' },
-      { who: 'sallow', item: 'chrome_part', n: 2, w: 2, why: '"Chrome joints. I can fit anyone with the right knee."' },
+      { who: 'static', item: 'circuit', at: 'start', n: 3, w: 2, why: '"Circuit boards for the Foundry\'s rig. Dead screens don\'t dance."' },
+      { who: 'sallow', item: 'chrome_part', at: 'here', n: 2, w: 2, why: '"Chrome joints. I can fit anyone with the right knee."' },
       { who: 'iris_kade', item: 'silk_scarf', n: 1, w: 2, why: '"Rosewell silk, for a pattern. The city only has the printed kind."' },
-      { who: 'duchess', item: 'sump_pearl', n: 1, w: 2, why: '"A sump pearl. My guests think it\'s hilarious that I wear them."' },
+      { who: 'duchess', item: 'sump_pearl', at: 'here', n: 1, w: 2, why: '"A sump pearl. My guests think it\'s hilarious that I wear them."' },
       { who: 'lanternmaker', item: 'bat_wing', n: 2, w: 2, why: '"Ice bat wings for a lantern shade. Thin as paper, and they glow red."' },
+      { who: 'brick', item: 'scrap_metal', at: 'start', n: 5, why: '"Scrap for the Foundry door. It keeps getting kicked in."' },
+      { who: 'ume', item: 'goldfish_bag', at: 'start', n: 1, why: '"A goldfish for the tea house pond. The last one was a koi with ambitions."' },
       { who: 'odette', item: 'moonflower', n: 2, why: '"Moonflowers for my hair. They open just as I go on."' }
     ],
     hoarfell: [
-      { who: 'sigrun', item: 'edelweiss', n: 2, why: '"Edelweiss for my sister. She\'s never been higher than the lodge."' },
-      { who: 'bryn', item: 'hoar_crystal', n: 3, why: '"Three hoar crystals for a dice cup. They ring when you shake them."' },
-      { who: 'tove', item: 'arctic_char', n: 2, why: '"Char for the hut\'s soup. I\'m tired of cocoa for supper."' },
-      { who: 'kaspar', item: 'frostfin', n: 2, why: '"Frostfin for the Stübli. Don\'t ask what I do with it on fondue nights."' },
+      { who: 'sigrun', item: 'edelweiss', at: 'start', n: 2, why: '"Edelweiss for my sister. She\'s never been higher than the lodge."' },
+      { who: 'bryn', item: 'hoar_crystal', at: 'start', n: 3, why: '"Three hoar crystals for a dice cup. They ring when you shake them."' },
+      { who: 'tove', item: 'arctic_char', at: 'start', n: 2, why: '"Char for the hut\'s soup. I\'m tired of cocoa for supper."' },
+      { who: 'kaspar', item: 'frostfin', at: 'start', n: 2, why: '"Frostfin for the Stübli. Don\'t ask what I do with it on fondue nights."' },
       { who: 'liv', item: 'silverleaf_salve', n: 1, why: '"Silverleaf salve for my knees. Three falls on the Hoarspire this week."' },
       { who: 'stationmaster', item: 'hearthfire_draught', n: 1, why: '"A hearthfire draught for the stoker on the night train."' },
-      { who: 'mathis', item: 'wolf_pelt', n: 1, w: 2, why: '"A wolf pelt for the bureau\'s floor. The guides come in wet."' },
-      { who: 'aubert', item: 'wraith_essence', n: 1, w: 2, why: '"Wraith essence. Madame swears No. 13 needs it. I don\'t ask."' },
-      { who: 'anouk', item: 'rime_shell', n: 2, w: 2, why: '"Rime shells for the sleigh bells. They ring like ice."' },
-      { who: 'ysolde', item: 'golem_core', n: 1, w: 2, why: '"A golem core for my hut on the face. Warmest stone there is."' },
-      { who: 'inge', item: 'bat_wing', n: 3, w: 2, why: '"Bat wings for ski wax. Old Fellhaven trick. Don\'t make that face."' },
-      { who: 'hut-bram', item: 'wyrm_scale', n: 1, w: 2, x: 1.4, why: '"A wyrm scale over the fire. Nobody believes what lives in the valley."' }
+      { who: 'mathis', item: 'wolf_pelt', at: 'here', n: 1, w: 2, why: '"A wolf pelt for the bureau\'s floor. The guides come in wet."' },
+      { who: 'aubert', item: 'wraith_essence', at: 'here', n: 1, w: 2, why: '"Wraith essence. Madame swears No. 13 needs it. I don\'t ask."' },
+      { who: 'anouk', item: 'rime_shell', at: 'here', n: 2, w: 2, why: '"Rime shells for the sleigh bells. They ring like ice."' },
+      { who: 'ysolde', item: 'golem_core', at: 'here', n: 1, w: 2, why: '"A golem core for my hut on the face. Warmest stone there is."' },
+      { who: 'inge', item: 'bat_wing', at: 'here', n: 3, w: 2, why: '"Bat wings for ski wax. Old Fellhaven trick. Don\'t make that face."' },
+      { who: 'hut-bram', item: 'wyrm_scale', at: 'here', n: 1, w: 2, x: 1.4, why: '"A wyrm scale over the fire. Nobody believes what lives in the valley."' }
     ],
     verdance: [
       { who: 'wat', item: 'iron_bar', n: 2, why: '"Good bar iron for shoes. The village stuff\'s gone soft."' },
-      { who: 'ludd', item: 'wheat', n: 10, why: '"Wheat for the stones. They grumble when they\'re idle."' },
-      { who: 'nell', item: 'moonflower', n: 2, why: '"Moonflowers. They sell before dark or not at all."' },
-      { who: 'mags', item: 'farm_cider', n: 2, why: '"Your cider for the Hayloft\'s tap. Folk ask for it by name now."' },
-      { who: 'hobb', item: 'apple', n: 10, why: '"Apples for the horses. Don\'t tell them who sent them."' },
-      { who: 'juniper', item: 'farm_cheese', n: 1, why: '"Your farmhouse cheese for the café\'s toasties."' },
-      { who: 'silas', item: 'pond_perch', n: 3, why: '"Perch from your pond. A candlemaker can\'t live on wax."' },
-      { who: 'rudd', item: 'sun_carp', n: 1, why: '"A sun carp for the ferry\'s tank. For luck on the Wend."' },
+      { who: 'ludd', item: 'wheat', at: 'start', n: 10, why: '"Wheat for the stones. They grumble when they\'re idle."' },
+      { who: 'nell', item: 'moonflower', at: 'here', n: 2, why: '"Moonflowers. They sell before dark or not at all."' },
+      { who: 'mags', item: 'farm_cider', at: 'here', n: 2, why: '"Your cider for the Hayloft\'s tap. Folk ask for it by name now."' },
+      { who: 'hobb', item: 'apple', at: 'start', n: 10, why: '"Apples for the horses. Don\'t tell them who sent them."' },
+      { who: 'juniper', item: 'farm_cheese', at: 'here', n: 1, why: '"Your farmhouse cheese for the café\'s toasties."' },
+      { who: 'silas', item: 'pond_perch', at: 'start', n: 3, why: '"Perch from your pond. A candlemaker can\'t live on wax."' },
+      { who: 'rudd', item: 'sun_carp', at: 'here', n: 1, why: '"A sun carp for the ferry\'s tank. For luck on the Wend."' },
       { who: 'tobias_ludd', item: 'old_boot', n: 2, why: '"Two old boots for the mill race. It eats them. Don\'t ask."' },
-      { who: 'pike', item: 'beeswax_candles', n: 1, w: 2, why: '"Candles for the halt\'s lamps. The paraffin smokes up the timetable."' },
-      { who: 'marigold', item: 'honey_crock', n: 2, w: 2, why: '"Honey in crocks for the gate. Folk buy flowers better with honey beside them."' },
+      { who: 'pike', item: 'beeswax_candles', at: 'here', n: 1, w: 2, x: 1.5, why: '"Candles for the halt\'s lamps. The paraffin smokes up the timetable."' },
+      { who: 'marigold', item: 'honey_crock', at: 'here', n: 2, w: 2, why: '"Honey in crocks for the gate. Folk buy flowers better with honey beside them."' },
       { who: 'ezra', item: 'glass_float', n: 1, w: 2, x: 1.5, why: '"A glass float for the press-house window. Something to catch the light."' },
       { who: 'okoro', item: 'silk_scarf', n: 1, w: 2, why: '"A silk scarf for a buyer in the Spires. Arcadia pays for Lumar silk."' },
       { who: 'hester', item: 'rime_shell', n: 1, w: 2, why: '"A rime shell for the cheese cave. Keeps it cold right through summer."' }
     ],
     sylvara: [
-      { who: 'elf_herbalist', item: 'owlmoss', n: 3, why: '"Owlmoss, gathered after dark. Mine all went into the queen\'s tea."' },
+      { who: 'elf_herbalist', item: 'owlmoss', at: 'start', n: 3, why: '"Owlmoss, gathered after dark. Mine all went into the queen\'s tea."' },
       { who: 'elf_loomer', item: 'silk_cocoon', n: 5, why: '"Silk cocoons from Rosewell. Our worms are sulking."' },
       { who: 'elf_warden', item: 'ember_glass', n: 2, why: '"Ember glass from the Crater, for fire arrows."' },
-      { who: 'elf_liftkeeper', item: 'honey', n: 3, why: '"Honey for the lift\'s pulleys. An old trick. Some of it is for me."' },
-      { who: 'elf_starreader', item: 'fallen_star', n: 1, why: '"A fallen star. I have counted them falling. I would like to hold one."' },
+      { who: 'elf_liftkeeper', item: 'silverleaf', at: 'start', n: 4, why: '"Silverleaf for the lift ropes. Rubbed in, they never fray. Mostly."' },
+      { who: 'elf_starreader', item: 'fallen_star', at: 'here', n: 1, why: '"A fallen star. I have counted them falling. I would like to hold one."' },
+      { who: 'elf_lamplighter', item: 'windthistle', at: 'start', n: 3, why: '"Windthistle for the lamp wicks. It burns blue, and the moths stay away."' },
       { who: 'elf_bowyer', item: 'golem_core', n: 1, w: 2, why: '"A golem core for a bow\'s grip. It holds its warmth in a frost."' },
       { who: 'elf_lanternmaker', item: 'glass_float', n: 1, w: 2, x: 1.5, why: '"Glass blown from your own breath. A lantern wants a heart."' },
       { who: 'elf_boatwright', item: 'wyrm_scale', n: 1, w: 2, x: 1.4, why: '"A wyrm scale for a keel guard. Rocks give way to it."' }
@@ -174,16 +178,22 @@ var BridgeBoards = (function () {
       return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
     };
   }
-  /** Today's requests on a planet: PER_DAY of its table, weighted, no item twice and nobody twice where the table allows. */
+  /** Today's requests on a planet: PER_DAY of its table, weighted, no item twice and nobody twice where the table allows —
+   *  local first: the first something a new pilot can get on this planet (`at: 'start'`), the second anything got here
+   *  (`'start'` or `'here'`), only the third may come from another world (a table with none of a kind widens the slot). */
+  var SLOTS = [['start'], ['start', 'here'], null];
   function todays(planet, key) {
     var T = REQUESTS[planet] || [], r = rng(hash(planet + '|' + (key || dayKey(planet)))), picks = [], tries = 0;
     var people = {}; T.forEach(function (q) { people[q.who] = 1; });
     var oneEach = Object.keys(people).length >= PER_DAY;
     while (picks.length < Math.min(PER_DAY, T.length) && tries++ < 200) {
       var total = 0, i;
-      var open = T.filter(function (q) {
+      var free = T.filter(function (q) {
         return picks.indexOf(q) < 0 && !picks.some(function (p) { return p.item === q.item || (oneEach && p.who === q.who); });
       });
+      var kinds = SLOTS[picks.length], open = kinds ? free.filter(function (q) { return kinds.indexOf(q.at) >= 0; }) : free;
+      if (!open.length && kinds) open = free.filter(function (q) { return q.at; });
+      if (!open.length) open = free;
       if (!open.length) break;
       open.forEach(function (q) { total += q.w || 1; });
       var x = r() * total;
@@ -270,10 +280,10 @@ var BridgeBoards = (function () {
   function rows(planet, reopen) {
     return todays(planet).map(function (q) {
       var done = isDone(planet, q), have = count(q.item), pay = payFor(q), name = whoName(q.who);
-      return {
+      return {                                     // one you can't fill yet reads as a normal row (info: not picked), "you have" muted
         label: name, icon: q.item,
-        sub: done ? 'filled - thank you' : many(q.item, q.n) + ': ' + q.why + (have < q.n ? ' (you have ' + have + ')' : ''),
-        note: done ? 'done' : pay + ' coins', disabled: done || have < q.n,
+        sub: done ? 'filled - thank you' : many(q.item, q.n) + ': ' + q.why, muted: !done && have < q.n ? '(you have ' + have + ')' : '',
+        note: done ? 'done' : pay + ' coins', disabled: done, info: !done && have < q.n,
         pick: function () {
           if (isDone(planet, q)) return reopen && reopen();
           fill({ item: q.item, n: q.n, pay: pay, reason: 'board:' + planet + ':' + q.who, who: q.who, name: name,
@@ -329,7 +339,7 @@ var BridgeBoards = (function () {
     var can = todays(planet).filter(function (q) { return !isDone(planet, q) && count(q.item) >= q.n; });
     if (!can.length) return [];
     var q = can[0], spot = spots.filter(function (s) { return s[0] === worldId; })[0] || spots[0];
-    var first = whoName(q.who).split(' ')[0];
+    var first = whoName(q.who);
     return [{ tag: 'Board', title: first + ' wants ' + many(q.item, q.n),
               text: 'You have ' + (q.n === 1 ? 'it' : 'them') + '. The notice board in ' + spot[2] + ' pays ' + payFor(q) + (can.length > 1 ? ' (and ' + (can.length - 1) + ' more you can fill).' : '.'),
               world: spot[0] }];

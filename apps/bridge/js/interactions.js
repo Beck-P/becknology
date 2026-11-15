@@ -1230,7 +1230,7 @@ var BridgeInteractions = (function () {
       (rows.length ? '<div class="wd-sell wd-sell-pick wd-chooser">' + rows.map(function (r, i) {
         return '<div class="wd-sell-row pick' + (r.disabled ? ' none' : '') + (r.info ? ' info' : '') + '" data-r="' + i + '">' +
           '<canvas class="sp-icon" width="24" height="24"></canvas><span class="sp-name">' + esc(r.label) + '</span>' +
-          '<span class="sp-have">' + esc(r.sub || '') + '</span><span class="sp-qty"></span>' +
+          '<span class="sp-have">' + esc(r.sub || '') + (r.muted ? ' <span class="sp-mute">' + esc(r.muted) + '</span>' : '') + '</span><span class="sp-qty"></span>' +
           '<span class="sp-price">' + esc(r.note || '') + '</span>' +
           (r.stats && typeof BridgeItems !== 'undefined' ? weaponCard(BridgeItems.get(r.stats), { compare: true, compact: true }) : '') + '</div>';
       }).join('') + '</div>' : '') +
