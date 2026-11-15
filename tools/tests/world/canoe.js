@@ -109,9 +109,9 @@ const OUT = process.argv[2] || '/tmp';
 
   // ---- the fork: back out, up the Deep Run into the Deepwood --------------------------------------------------------------
   await useKind('launch');
-  await steer([24, 13], 8000, (s) => s.y < 14.2);                     // up to the Run's mouth (row 13): south of it is bank
-  await steer([30, 14], 12000, (s) => s.x > 28);
-  await steer([49, 15], 30000, (s) => s.w !== 'sylvara-falls');
+  await steer([24, 13], 24000, (s) => s.y < 14.2);                     // up to the Run's mouth (row 13): south of it is bank
+  await steer([30, 14], 36000, (s) => s.x > 28);
+  await steer([49, 15], 90000, (s) => s.w !== 'sylvara-falls');   // (time limits three times what a free machine needs: on a loaded one the canoe is slower and the Run was given up on)
   await p.waitForTimeout(2500);
   if (await wid() !== 'sylvara-deepwood') fail('the Deep Run didn\'t carry on into the Deepwood (in ' + await wid() + ')');
   else {
