@@ -35,7 +35,11 @@ const OUT = process.argv[2] || '/tmp';
   };
   // what was said, once it's typed out (a fixed wait read it half-typed where the frames run slow: a big wood in a
   // software-drawn headless browser)
+  // (the willow's moment is ~600 letters, typed two every 22 ms on a timer the busy wood starves: under load it took over
+  // 15 s and was read half-typed, "no moment at the willow". Still typing after the wait, tap it — Skip, as a player
+  // would — so the whole moment is read.)
   const said = async () => { await p.waitForFunction(() => !document.querySelector('.world-dialog.typing'), null, { timeout: 15000 }).catch(() => {});
+    if (await p.evaluate(() => !!document.querySelector('.world-dialog.typing'))) { await p.evaluate(() => document.querySelector('.world-dialog.typing').click()); await p.waitForTimeout(300); }
     return p.evaluate(() => (document.querySelector('.world-dialog') || {}).innerText || ''); };
   const has = (k) => p.evaluate((k) => BridgeQuests.has(k), k);
   const card = () => p.evaluate(() => !!document.getElementById('item-get'));

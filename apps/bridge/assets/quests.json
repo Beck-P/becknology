@@ -465,6 +465,281 @@
       "text": "Four colours, as I thought - and the Midnight stones guarding a fourth that nobody has ever drawn.\n\nI've added all of them to the chart, with your name in the corner where the cartographer usually signs. It's only fair. Come by the house and see it: the ink's barely dry.\n\nIlsa Venn"
     }
   },
+  "eddas-book": {
+    "title": "Edda's Book",
+    "where": "Verdance · Brambleford",
+    "reward": 200,
+    "start": "Edda kept a kitchen book, and gave it away a page at a time to the people of Brambleford. Bridget has one page. She'd love to see the rest together again.",
+    "rumour": "Mags at the Hayloft says Bridget keeps wondering aloud what became of old Edda's kitchen book.",
+    "begin": "bridget",
+    "done": "Six pages, six people, and on the backs of them, a line at a time, the one recipe Edda never gave anybody: her own apple pie. Bridget baked it the same afternoon. Half the village found a reason to walk past the Crusty Loaf.",
+    "keep": "eddas_pie",
+    "keepNote": "The first of Edda's pies in years. Bridget sells them now.",
+    "items": {
+      "book": {
+        "name": "Edda's Book",
+        "text": "Edda's kitchen pages, tied up in one of Bridget's ribbons. Each one a recipe in Edda's round hand, and on the back, something else. Bring them all back to Bridget at the Crusty Loaf.",
+        "to": "Bridget",
+        "icon": "book"
+      }
+    },
+    "clues": [
+      {
+        "id": "bridget",
+        "on": {
+          "world": "verdance-village",
+          "label": "BRIDGET"
+        },
+        "text": "Bridget's page is Edda's honey cake - and Edda's trick for it: wrap them in a cloth by the oven and they're always still warm. Edda gave the rest of her book away a page at a time. Bridget gave you a ribbon to tie them in.",
+        "get": "book",
+        "hint": "Bridget at the Crusty Loaf, on Brambleford's square, has a page of something old."
+      },
+      {
+        "id": "nell",
+        "after": "bridget",
+        "on": {
+          "world": "verdance-village",
+          "label": "NELL"
+        },
+        "text": "Nell's page came from her Nan, who had it from Edda: the posy that keeps. Cut at dawn, well water, a pinch of sugar, and tell them they're lovely.",
+        "hint": "Edda gave a page to someone who sells flowers on the square."
+      },
+      {
+        "id": "hollin",
+        "after": "bridget",
+        "on": {
+          "world": "verdance",
+          "label": "HOLLIN"
+        },
+        "text": "Hollin, Edda's neighbour for forty years, kept her page on the hens: names for every one, and talk to them, or they sulk and lay small.",
+        "hint": "Edda's neighbour on Meadow Lane was given a page about her hens."
+      },
+      {
+        "id": "wat",
+        "after": "bridget",
+        "on": {
+          "world": "verdance-village",
+          "label": "WAT"
+        },
+        "text": "Wat keeps his page in the forge, which is why it's scorched: a hot bran mash for Parsnip, Edda's old plough horse, on a cold night. He made Parsnip's last shoes.",
+        "hint": "Edda's old plough horse had a page of its own. Someone who shoes horses would have it."
+      },
+      {
+        "id": "ludd",
+        "after": "bridget",
+        "on": {
+          "world": "verdance-village",
+          "label": "OLD LUDD"
+        },
+        "text": "Old Ludd's page is the first loaf of the year, from the first grain, which Edda brought him every summer. It's floury. Everything in the mill is.",
+        "hint": "Edda brought her first grain every year to the miller in the village. He'll have her page on bread."
+      },
+      {
+        "id": "mags",
+        "after": "bridget",
+        "on": {
+          "world": "verdance-village",
+          "label": "MAGS"
+        },
+        "text": "Mags has the page Edda wrote for the harvest supper. It says only: BRING MY PIE. SEE THE BACKS. Turn the pages over and there it is, a line on each: Edda's own apple pie.",
+        "hint": "Edda never missed the harvest supper. Whoever keeps the Hayloft has that page."
+      },
+      {
+        "id": "bake",
+        "after": "*",
+        "give": "book",
+        "takes": {
+          "apple": 4
+        },
+        "lack": "The pie wants apples",
+        "on": {
+          "world": "verdance-village",
+          "label": "BRIDGET"
+        },
+        "text": "You brought Bridget the whole book and four apples off Edda's own trees. She read the backs twice, said \"Oh, Edda,\" and lit the oven as hot as Wat's forge.",
+        "hint": "The pie wants four apples from Edda's own trees - the orchard on the farm down Meadow Lane, free to pick. Then the book and the apples to Bridget."
+      }
+    ],
+    "letter": {
+      "from": "bridget",
+      "text": "Dear farmer,\n\nI've copied Edda's pie out on a card and pinned it over the oven, and I've given every page back to whoever had it. That felt right. Ludd says his loaf page is going under his pillow. Wat says nothing, but he's framed his.\n\nThe pies sell out by ten. I keep one back for you. It's always still warm.\n\nBridget"
+    }
+  },
+  "admiral": {
+    "title": "The Admiral",
+    "where": "Lumar · Crownhaven",
+    "reward": 220,
+    "start": "Two notices in Crownhaven, one name: a grey cat lost in the Old Town and a parrot that swears lost at the Harbour Office. Both answer to \"Admiral\". The crier thinks that's very funny. Somebody is missing both.",
+    "rumour": "The town crier is crying a lost cat called Admiral. There's a lost parrot called Admiral on the Harbour Office's notices, too.",
+    "begin": "crier",
+    "done": "The Admiral and the Admiral are home in Captain Huxley's window over the chandler's, not speaking to each other, which he says is how they like it.",
+    "items": {
+      "cat": {
+        "name": "The Admiral (cat)",
+        "text": "A large grey cat with a torn ear and the air of a ship's officer. He'd like it known he's allowing this. Take him home - wherever home is.",
+        "to": "Captain Huxley",
+        "icon": "cat"
+      },
+      "parrot": {
+        "name": "The Admiral (parrot)",
+        "text": "A green parrot, red at the shoulder, on your shoulder. It has opinions about your stride. Take it home - wherever home is.",
+        "to": "Captain Huxley",
+        "icon": "parrot"
+      }
+    },
+    "clues": [
+      {
+        "id": "crier",
+        "on": {
+          "world": "lumar-crown-oldtown",
+          "label": "TOWN CRIER"
+        },
+        "text": "Barnaby Toll is crying a grey cat called Admiral, last seen on the roof of the Old Keep, looking smug. There's a parrot called Admiral on the Harbour Office's notices, too. \"Two Admirals! Oyez!\"",
+        "hint": "The town crier in the Old Town cries everything that's lost in Crownhaven."
+      },
+      {
+        "id": "keep",
+        "after": "crier",
+        "on": {
+          "world": "lumar-crown-oldtown",
+          "label": "THE OLD KEEP"
+        },
+        "text": "Grey hairs and a herring's bones on the Old Keep's warm stones; the cat's moved on. A fishwife says he goes where the boats are - over the Bridge Gate.",
+        "say": "THE OLD KEEP. UP ON THE WARM STONE BY THE WALL: GREY HAIRS, AND THE VERY CLEAN BONES OF A VERY GOOD HERRING. NO CAT.\n\nA FISHWIFE ON THE STEPS SEES YOU LOOKING. \"THE GREY TOM? GONE OVER THE BRIDGE GATE, LOVE. HE GOES WHERE THE BOATS ARE.\"",
+        "hint": "The crier says the cat was on the roof of the Old Keep."
+      },
+      {
+        "id": "pim",
+        "after": "crier",
+        "on": {
+          "world": "lumar-crown-office",
+          "label": "PIM"
+        },
+        "text": "Pim wrote the parrot's notice out for an old captain who left a coin at the window and no name. Pim has since heard the parrot swearing down on the Stilts.",
+        "hint": "The parrot's notice is in the Harbour Office. Somebody there wrote it out."
+      },
+      {
+        "id": "tag",
+        "after": "pim",
+        "on": {
+          "world": "lumar-crown-stilts",
+          "label": "MUDLARK"
+        },
+        "text": "Gull Molly dug a brass tag out of the mud: ADMIRAL - RETURN TO CAPT. H... - the rest worn off. The parrot was here this morning and flew off toward the Arsenal, swearing at the gulls.",
+        "hint": "Pim heard the parrot swearing down on the Stilts. The mudlark there misses nothing."
+      },
+      {
+        "id": "bosun",
+        "after": "tag",
+        "on": {
+          "world": "lumar-crown-pub",
+          "label": "BOSUN"
+        },
+        "text": "The bosun knew the tag at once: Captain Huxley of the cutter Perseverance, who sailed forty years with a cat on the binnacle and a parrot on the yard, both called Admiral so he'd only have to shout once. He's in the rooms over the chandler's in the Old Town now.",
+        "hint": "CAPT. H... The bosun from the Crown & Anchor has known every captain who ever put in here. By day he's out on Crownhaven's quay; of an evening, back in the pub."
+      },
+      {
+        "id": "cat",
+        "after": "keep",
+        "on": {
+          "world": "lumar-crown-bridge",
+          "label": "THE LOGGIA"
+        },
+        "text": "On the Old Bridge's loggia over the harbour mouth, watching the boats go under: a big grey cat. He answered to \"Admiral\" as if you were late, and let you pick him up.",
+        "get": "cat",
+        "say": "ON THE LOGGIA'S RAIL, OVER THE HARBOUR MOUTH, A LARGE GREY CAT WITH A TORN EAR IS WATCHING THE BOATS GO THROUGH UNDER HIM.\n\nYOU SAY \"ADMIRAL\". HE LOOKS AT YOU AS IF YOU'RE LATE, AND LETS YOU PICK HIM UP.",
+        "hint": "The cat goes where the boats are. Somewhere on the Old Bridge with a view of the harbour mouth."
+      },
+      {
+        "id": "parrot",
+        "after": "tag",
+        "on": {
+          "world": "lumar-crown-arsenal",
+          "label": "THE CRANE"
+        },
+        "text": "Up on the Arsenal's treadwheel crane, a green parrot was telling the lads in the wheel what it thought of their pace. It came down onto your shoulder at \"Admiral\".",
+        "get": "parrot",
+        "say": "UP ON THE TREADWHEEL CRANE'S JIB, A GREEN PARROT IS TELLING THE LADS IN THE WHEEL EXACTLY WHAT IT THINKS OF THEIR PACE.\n\nYOU SAY \"ADMIRAL\". IT SAYS SOMETHING THE CHAPLAIN WOULDN'T LIKE, AND COMES DOWN ONTO YOUR SHOULDER.",
+        "hint": "The parrot flew off toward the Arsenal, swearing at the gulls. Look up."
+      },
+      {
+        "id": "home-cat",
+        "after": "bosun",
+        "give": "cat",
+        "on": {
+          "world": "lumar-crown-oldtown",
+          "label": "THE CHANDLER'S"
+        },
+        "text": "Captain Huxley came down the chandler's stairs one at a time. The cat walked past him and up them like he owned the place.",
+        "say": "YOU KNOCK AT THE CHANDLER'S SIDE DOOR. A LONG WAIT, A STICK ON EVERY STAIR, AND AN OLD MAN IN A SEA COAT OPENS IT.\n\nTHE CAT WALKS PAST HIM AND UP THE STAIRS AS IF HE OWNS THEM. \"WELL,\" SAYS CAPTAIN HUXLEY. \"DON'T THANK ANYONE.\"",
+        "hint": "Captain Huxley lives over the chandler's in the Old Town. Take the cat home."
+      },
+      {
+        "id": "home-parrot",
+        "after": "bosun",
+        "give": "parrot",
+        "on": {
+          "world": "lumar-crown-oldtown",
+          "label": "THE CHANDLER'S"
+        },
+        "text": "The parrot flew up to the window over the chandler's and told the whole Old Town it was home.",
+        "say": "THE PARROT LEAVES YOUR SHOULDER FOR THE WINDOW BOX OVER THE CHANDLER'S AND TELLS THE WHOLE OLD TOWN IT'S HOME, IN WORDS THE CRIER WON'T BE REPEATING.\n\nCAPTAIN HUXLEY LEANS OUT. \"THAT'S HIM. THAT'S MY BOY.\"",
+        "hint": "Captain Huxley lives over the chandler's in the Old Town. Take the parrot home."
+      }
+    ],
+    "letter": {
+      "from": "crier",
+      "text": "OYEZ!\n\nThat's just habit. Captain Huxley can't hold a pen any more, so he's asked me to write, and I'm paid by the word, so here are a great many.\n\nThe cat sits on the sill. The parrot sits on the curtain rail. They have not looked at each other since Tuesday, which the Captain says is a sign of deep affection. He says you're to have the run of his window any time, and that the parrot has learned your name. I would not ask it to say it.\n\nTwo Admirals home. Best news I've cried all year.\n\nBarnaby Toll, Town Crier"
+    }
+  },
+  "ithils-star": {
+    "title": "A Star of Your Own",
+    "where": "Sylvara · the Crown",
+    "reward": 180,
+    "start": "Ithil the star-reader has watched the stars fall into the wood for a hundred years and never once been quick enough to catch one. If you find one, she'd like to see it.",
+    "rumour": "Dr Vesper at Crownhaven's Observatory says the elves' star-reader, Ithil, has never once held a fallen star.",
+    "begin": "ask",
+    "done": "Ithil held the fallen star for a long time, then set a star of your own in silver on the dial, between the Harp and the Stag. The telescope knows where it is. On a starfall night, she says, it sends its friends down to find you.",
+    "clues": [
+      {
+        "id": "ask",
+        "on": {
+          "world": "sylvara-crown",
+          "label": "STAR-READER"
+        },
+        "text": "Ithil reads the stars from the Crown, the platform at the top of the Great Tree. On starfall nights they come down into the wood, little and warm, and she has never once been quick enough to catch one.",
+        "hint": "The elves' star-reader keeps the platform at the very top of the Great Tree: the Heartwood Stair, up from the hall."
+      },
+      {
+        "id": "star",
+        "after": "ask",
+        "takes": {
+          "fallen_star": 1
+        },
+        "lack": "Ithil would love to see one",
+        "on": {
+          "world": "sylvara-crown",
+          "label": "STAR-READER"
+        },
+        "text": "You put a fallen star in Ithil's hands. She held it a long time, humming back at it, and then named a star for you.",
+        "hint": "Bring Ithil a fallen star. On a starfall night on Sylvara (the forecast says when) one comes down close by you after dark: pick it up and climb to the Crown."
+      },
+      {
+        "id": "dial",
+        "after": "star",
+        "on": {
+          "world": "sylvara-crown",
+          "label": "THE STAR DIAL"
+        },
+        "text": "On the star dial, in new silver between the Harp and the Stag, a small star with your name.",
+        "hint": "Ithil has set something new on the star dial. Go and read it."
+      }
+    ],
+    "letter": {
+      "from": "elf_starreader",
+      "text": "Star-friend,\n\nI kept it. I hope that's all right. It sits on the rail by the telescope and hums when the sky is clear, and Aerin says it's the first thing in a hundred years that's made me look down.\n\nYour star rose at the second hour last night, exactly where I put it. It is very small and very steady, which I think suits you. I have told the queen. She asked whether I'd name one for her. I said she would have to catch her own.\n\nIthil, of the Crown"
+    }
+  },
   "wren": {
     "title": "The Wren",
     "where": "Enigma Station",

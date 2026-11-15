@@ -55,6 +55,7 @@ const SUITES = {
     ['world/canoe.js', SHOTS + '/canoe'],
     ['world/quest_tracker.js', SHOTS],
     ['world/firsthour.js', SHOTS],
+    ['world/small_stories.js', SHOTS],
     ['world/events.js', SHOTS],
     ['world/boards.js', SHOTS],
     ['world/hoarfell_e.js', SHOTS],

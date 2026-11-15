@@ -19,7 +19,7 @@ var BridgeGifts = (function () {
              loveLine: 'WELL, NOW. THAT\'S A COLLECTOR\'S PIECE. IT\'S GOING IN THE WINDOW - NOT FOR SALE. JUST TO LOOK AT.' },
     wat: { love: ['iron_ore', 'star_iron', 'mug_of_ale'], like: ['silver_ore', 'ploughmans', 'apple'], hate: ['posy'],
            loveLine: 'GOOD IRON. YOU CAN HEAR IT\'S GOOD - LISTEN. NO? WELL. I CAN. I\'LL MAKE SOMETHING FINE OF IT.' },
-    ludd: { love: ['pumpkin', 'honey_cake'], like: ['turnip', 'carrot', 'bread', 'apple'], hate: ['sea_glass'],
+    ludd: { love: ['pumpkin', 'honey_cake', 'eddas_pie'], like: ['turnip', 'carrot', 'bread', 'apple'], hate: ['sea_glass'],
             loveLine: 'A PUMPKIN LIKE THAT TAKES A SUMMER. YOU\'VE GOT THE KNACK. EDDA HAD IT TOO. IT SUITS THE FARM, HAVING SOMEONE WITH THE KNACK.' },
     // the harbour people of Lumar's seas
     bess: { love: ['ember_rum', 'pocket_watch'], like: ['silverfin', 'sea_glass', 'mug_of_ale'], hate: ['old_boot'],
@@ -201,7 +201,7 @@ var BridgeGifts = (function () {
                  loveLine: 'FLOWERS, FOR ME? FROM SOMEONE WHO\'S NEVER HEARD ME SING? DARLING. YOU\'LL HAVE A BOX FOR LIFE.' },
     hob: { love: ['songstone', 'star_iron', 'pumpkin'], like: ['iron_ore', 'roseite', 'mug_of_ale'], hate: ['sunflower'],
            loveLine: 'A PUMPKIN. I HAVEN\'T HAD PUMPKIN SINCE MY MAM MADE IT. DON\'T TELL ANYONE I SAID THAT. DON\'T TELL ANYONE ANYTHING.' },
-    hollin: { love: ['starfruit', 'sun_carp'], like: ['honey', 'apple', 'pumpkin'], hate: ['old_boot'] },
+    hollin: { love: ['starfruit', 'sun_carp', 'eddas_pie'], like: ['honey', 'apple', 'pumpkin'], hate: ['old_boot'] },
     marlo: { love: ['starfruit', 'pumpkin'], like: ['honey', 'strawberry', 'sunflower'], hate: ['old_boot'] },
     // Station Road (js/village.js)
     hobb: { love: ['apple', 'carrot', 'mug_of_ale'], like: ['ploughmans', 'lucky_horseshoe', 'turnip'], hate: ['posy'],

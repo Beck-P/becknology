@@ -174,17 +174,28 @@ var BridgeSylvara = (function () {
     return ph < 0.03 || ph > 0.97 ? 'NEW - THE WOOD IS IN THE DIMMING' : ph < 0.22 ? 'A THIN WAXING CRESCENT' : ph < 0.28 ? 'HALF, AND WAXING' : ph < 0.47 ? 'WAXING, NEARLY FULL'
       : ph < 0.53 ? 'FULL' : ph < 0.72 ? 'WANING, STILL BRIGHT' : ph < 0.78 ? 'HALF, AND WANING' : 'A THIN WANING CRESCENT';
   }
+  // your own star, once you've brought Ithil a fallen one (assets/quests.json `ithils-star`): named for you, set on the
+  // dial between the Harp and the Stag, found in the telescope after dark
+  function myStar() {
+    if (!(typeof BridgeQuests !== 'undefined' && BridgeQuests.has && BridgeQuests.has('ithils-star/star'))) return null;
+    var pl = typeof BridgeState !== 'undefined' && BridgeState.getPilot ? BridgeState.getPilot() : null;
+    var n = String(pl && pl.name || '').trim().toUpperCase();
+    return n ? n + (/S$/.test(n) ? '\'' : '\'S') + ' SPARK' : 'YOUR SPARK';
+  }
   function telescope() {
-    var S = sky(), night = S ? S.sun < 0.3 : false, ph = S && S.phase != null ? S.phase : 0.5;
+    var S = sky(), night = S ? S.sun < 0.3 : false, ph = S && S.phase != null ? S.phase : 0.5, mine = myStar();
     var wx = typeof BridgeWeather !== 'undefined' && BridgeWeather.here ? BridgeWeather.here() : null, cloudy = wx && /rain|fog|mist|cloud/.test(wx.kind || '');
-    BridgeInteractions.say('THE TELESCOPE', cloudy ? 'CLOUD, AND MORE CLOUD. ITHIL SAYS THE STARS ARE STILL THERE, BEHIND IT, BEING EXCELLENT.'
-      : night ? 'THE MOON, ' + moonWords(ph) + ', SO CLOSE YOU COULD COUNT ITS SEAS. SWING IT ROUND AND THE HARP AND THE STAG ARE OVER THE EAST, AND LOW IN THE SOUTH A RED STAR ITHIL CALLS THE LANTERN, THAT ONLY RISES IN THE AUTUMN.'
-      : 'BY DAY THE TELESCOPE SHOWS THE CANOPY RUNNING AWAY TO THE EDGE OF THE WORLD, THE SILVERRUN GLINTING IN IT, AND - VERY SMALL AND VERY FAR - MIRROR LAKE, HOLDING THE SKY.');
+    BridgeInteractions.say('THE TELESCOPE', cloudy ? 'CLOUD, AND MORE CLOUD. ITHIL SAYS THE STARS ARE STILL THERE, BEHIND IT, BEING EXCELLENT.' + (mine ? ' YOURS TOO.' : '')
+      : night ? 'THE MOON, ' + moonWords(ph) + ', SO CLOSE YOU COULD COUNT ITS SEAS. SWING IT ROUND AND THE HARP AND THE STAG ARE OVER THE EAST, AND LOW IN THE SOUTH A RED STAR ITHIL CALLS THE LANTERN, THAT ONLY RISES IN THE AUTUMN.' +
+        (mine ? '\n\nAND THERE, BETWEEN THE HARP AND THE STAG, SMALL AND STEADY AND EXACTLY WHERE ITHIL SAID: ' + mine + '.' : '')
+      : 'BY DAY THE TELESCOPE SHOWS THE CANOPY RUNNING AWAY TO THE EDGE OF THE WORLD, THE SILVERRUN GLINTING IN IT, AND - VERY SMALL AND VERY FAR - MIRROR LAKE, HOLDING THE SKY.' +
+        (mine ? ' ' + mine + ' IS UP THERE TOO, ITHIL SAYS. COME BACK AFTER DARK.' : ''));
   }
   function dial() {
-    var S = sky(), T = typeof BridgeClock !== 'undefined' && BridgeClock.time ? BridgeClock.time('sylvara') : null;
+    var S = sky(), T = typeof BridgeClock !== 'undefined' && BridgeClock.time ? BridgeClock.time('sylvara') : null, mine = myStar();
     BridgeInteractions.say('THE STAR DIAL', 'THE DIAL\'S GOLD HAND LIES ON ' + (T ? T.text : 'THE HOUR') + ' OF SYLVARA\'S DAY. THE MOONSTONE IN THE MIDDLE SAYS THE MOON IS ' + moonWords(S && S.phase != null ? S.phase : 0.5) + '.' +
-      (S && S.season ? ' THE RING OF THE YEAR READS ' + String(S.season).toUpperCase() + '.' : ''));
+      (S && S.season ? ' THE RING OF THE YEAR READS ' + String(S.season.name || S.season.id || S.season).toUpperCase() + '.' : '') +   // (a season is { id, name, … }: it read [OBJECT OBJECT])
+      (mine ? '\n\nBETWEEN THE HARP AND THE STAG, IN NEW SILVER, A SMALL STAR THAT WASN\'T THERE BEFORE. ITHIL HAS SCRATCHED ITS NAME BESIDE IT IN VERY SMALL LETTERS: ' + mine + '.' : ''));
   }
   // ---- caches: carved boxes in out-of-the-way places (what a bow gets you to) — each opened once, kept in bridge_sylvara --
   var CACHES = {

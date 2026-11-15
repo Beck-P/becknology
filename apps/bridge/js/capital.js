@@ -45,6 +45,7 @@ var BridgeCapital = (function () {
   var BACK = { 'lumar-crown-oldtown': ['LAND GATE', 'THE OLD TOWN', 1], 'lumar-crown-arsenal': ['YARD GATE', 'THE ARSENAL', -1],
                'lumar-crown-stilts': ['QUAY STAIRS', 'QUAY STAIRS', 0] };
   var TICKET = 15;
+  var CHANDLER = 'THE CHANDLER\'S';
   var KEY = 'bridge_capital';
   var st = load();
   function load() { try { return JSON.parse(localStorage.getItem(KEY) || 'null') || {}; } catch (e) { return {}; } }
@@ -109,6 +110,14 @@ var BridgeCapital = (function () {
         if (it.label === 'THE LANTERN THEATRE') { it.type = 'capital'; it.what = 'theatre'; it.prompt = 'PRESS E FOR THE BOX OFFICE'; }
         if (it.label === 'PLAYBILL') it.dialog = playbill();
       });
+      // the chandler's, with rooms over it (the notice board: ROOMS TO LET OVER THE CHANDLER'S) — where the Admiral and the
+      // Admiral live (assets/quests.json `admiral`): a label on the shop under the purple roof, no sprite
+      if (!list.some(function (it) { return it.label === CHANDLER; })) {
+        var home = typeof BridgeQuests !== 'undefined' && BridgeQuests.has && BridgeQuests.has('admiral');
+        list.push({ x: 49, y: 10, type: 'dialog', label: CHANDLER, prompt: 'PRESS E TO LOOK',
+          dialog: 'THE CHANDLER\'S: ROPE BY THE FATHOM, TALLOW, LAMP OIL, A BARREL OF SHIP\'S BISCUIT. UPSTAIRS, A WINDOW BOX OF SEA PINKS AND A CURTAIN THAT TWITCHES WHEN YOU LOOK UP.' +
+            (home ? '\n\nIN THE WINDOW, A GREY CAT AND A GREEN PARROT, SITTING AS FAR APART AS THE SILL ALLOWS. CAPTAIN HUXLEY WAVES HIS PIPE AT YOU.' : '') });
+      }
     }
   }
 

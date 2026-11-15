@@ -1035,6 +1035,11 @@
       {
         "q": "Heard anything?",
         "a": "SOMEBODY'S GOAT IS LOOSE AGAIN. AND THE CROWS HAVE TAKEN AGAINST THE SCARECROW'S SHIRT. CAN'T SAY I BLAME THEM."
+      },
+      {
+        "q": "Edda's page",
+        "when": "eddas-book/hollin",
+        "a": "HER HENS. SHE NAMED EVERY ONE AND TALKED TO THEM OVER THE GATE. 'TALK TO THEM OR THEY SULK AND LAY SMALL.' I THOUGHT THAT WAS NONSENSE FOR THIRTY YEARS. IT ISN'T.\n\nON THE BACK: 'BRUSH WITH A BROWN EGG.' NO IDEA. EDDA WROTE ON EVERYTHING."
       }
     ]
   },
@@ -1650,6 +1655,29 @@
             "price": 6
           }
         ]
+      },
+      {
+        "q": "Edda's book",
+        "when": "eddas-book/bridget",
+        "until": "eddas-book/bake",
+        "a": "EDDA GAVE HER BOOK AWAY A PAGE AT A TIME, TO WHOEVER IT SUITED. MINE'S THE HONEY CAKE - THAT'S WHERE THE TRICK CAME FROM. NELL'S GOT ONE. HOLLIN, WAT, OLD LUDD. MAGS, I'D BET MY OVEN ON IT. BRING THEM BY AND WE'LL HAVE HER BOOK BACK TOGETHER."
+      },
+      {
+        "q": "The backs of the pages",
+        "when": ["eddas-book/nell", "eddas-book/hollin", "eddas-book/wat", "eddas-book/ludd", "eddas-book/mags"],
+        "until": "eddas-book/bake",
+        "a": "HONEY IN WITH THE APPLES. PASTRY RUBBED COLD. LATTICE IT LIKE THE GARDEN GATE. BRUSH WITH A BROWN EGG. OVEN AS HOT AS WAT'S FORGE. OH, EDDA. HER APPLE PIE. SHE NEVER GAVE THAT ONE TO ANYBODY - SHE GAVE IT TO ALL OF US.\n\nFOUR GOOD APPLES OFF HER OWN TREES, DOWN MEADOW LANE. NOBODY MINDS IF YOU PICK THEM. BRING ME THOSE AND THE BOOK."
+      },
+      {
+        "q": "Edda's pie",
+        "when": "eddas-book",
+        "a": "EDDA'S APPLE PIE, STILL WARM. I'M NOT GIVING OUT THE RECIPE EITHER. IT'S ON A CARD OVER THE OVEN, AND I'M STANDING IN FRONT OF IT.",
+        "stores": [
+          {
+            "id": "eddas_pie",
+            "price": 30
+          }
+        ]
       }
     ]
   },
@@ -1709,6 +1737,11 @@
       {
         "q": "Iron",
         "a": "BRING ME ORE FROM THAT MINE ON LUMAR AND I'LL TELL YOU IF IT'S ANY GOOD. MOSTLY IT ISN'T. NOW AND THEN IT SINGS."
+      },
+      {
+        "q": "Edda's page",
+        "when": "eddas-book/wat",
+        "a": "KEEP IT IN THE FORGE. THAT'S WHY IT'S SCORCHED. A HOT BRAN MASH FOR PARSNIP, HER OLD PLOUGH HORSE, ON A COLD NIGHT. I SHOD HIM TO THE END. GOOD HORSE.\n\nON THE BACK IT SAYS 'OVEN AS HOT AS WAT'S FORGE.' CHEEK."
       }
     ]
   },
@@ -1736,6 +1769,11 @@
       {
         "q": "The stream",
         "a": "COMES DOWN FROM THE HILLS COLD AS A COIN. THERE'S PERCH IN THE FARM POND THAT CAME DOWN IT AS EGGS. DON'T TELL NELL I SAID SO, SHE THINKS THEY'RE HERS."
+      },
+      {
+        "q": "Edda's page",
+        "when": "eddas-book/ludd",
+        "a": "EH? OH - THE FIRST LOAF. FROM HER FIRST GRAIN, EVERY SUMMER. I'VE BAKED IT EVERY YEAR SINCE AND IT'S NEVER AS GOOD. MIND THE FLOUR ON IT.\n\nON THE BACK, SOMETHING ABOUT PASTRY: 'RUB IT COLD. COLD HANDS, LUDD.' MY HANDS ARE ALWAYS COLD. IT'S THE STREAM."
       }
     ]
   },
@@ -1763,6 +1801,11 @@
       {
         "q": "The goat",
         "a": "NOBODY KNOWS WHOSE IT IS. IT TURNS UP, EATS SOMETHING IMPORTANT, AND LEAVES. WE PUT UP NOTICES. IT EATS THE NOTICES."
+      },
+      {
+        "q": "Edda's page",
+        "when": "eddas-book/nell",
+        "a": "NAN'S PAGE! EDDA GAVE IT HER, AND NAN GAVE IT ME WHEN I GOT THE STALL. THE POSY THAT KEEPS: CUT AT DAWN, WELL WATER, A PINCH OF SUGAR, AND TELL THEM THEY'RE LOVELY. THE LAST BIT'S THE IMPORTANT BIT.\n\nOH - ON THE BACK: 'LATTICE IT LIKE THE GARDEN GATE.' I ALWAYS THOUGHT THAT WAS ABOUT THE SWEET PEAS."
       }
     ]
   },
@@ -1812,11 +1855,17 @@
       },
       {
         "q": "Gossip",
-        "a": "PERCY'S SWEET ON BRIDGET AND THINKS NOBODY KNOWS. WAT KEEPS ONE OF NELL'S FLOWERS IN A JAR AND THINKS NOBODY KNOWS. EVERYBODY KNOWS EVERYTHING. THAT'S BRAMBLEFORD."
+        "a": "PERCY'S SWEET ON BRIDGET AND THINKS NOBODY KNOWS. WAT KEEPS ONE OF NELL'S FLOWERS IN A JAR AND THINKS NOBODY KNOWS. EVERYBODY KNOWS EVERYTHING. THAT'S BRAMBLEFORD.\n\nAND BRIDGET KEEPS WONDERING OUT LOUD WHAT BECAME OF OLD EDDA'S KITCHEN BOOK. ASK HER. SHE'S BEEN DYING FOR SOMEONE TO.",
+        "rumour": "eddas-book"
       },
       {
         "q": "The harvest supper",
         "a": "FIRST NIGHT OF AUTUMN, THE WHOLE VILLAGE IN HERE AND SPILLING OUT ONTO THE SQUARE. BRING SOMETHING YOU GREW. THE BEST PUMPKIN GETS HUNG OVER THE DOOR TILL IT FALLS ON SOMEBODY."
+      },
+      {
+        "q": "Edda's page",
+        "when": "eddas-book/mags",
+        "a": "THE SUPPER PAGE. EDDA WROTE IT FOR ME THE YEAR DAD DIED, SO I'D KNOW WHAT TO DO. TABLES OUT ON THE SQUARE, LANTERNS IN THE OAK, CIDER BEFORE THE SPEECHES. AND AT THE BOTTOM: 'BRING MY PIE. SEE THE BACKS.'\n\nI NEVER HAD THE BACKS, DID I? YOU DO. GO ON - TURN THEM OVER."
       }
     ]
   },
@@ -2456,6 +2505,11 @@
       {
         "q": "About you",
         "a": "THIRTY YEARS A BOSUN. MY KNEES GAVE UP BEFORE I DID. NOW I SIT HERE AND PUT GOOD HANDS ON GOOD SHIPS, AND THE CAPTAINS STAND ME A PINT."
+      },
+      {
+        "q": "Captain H...?",
+        "when": "admiral/bosun",
+        "a": "THAT TAG? HUXLEY. FORTY YEARS ON THE CUTTER PERSEVERANCE WITH A CAT ON THE BINNACLE AND A PARROT ON THE YARD, BOTH CALLED ADMIRAL SO HE ONLY EVER HAD TO SHOUT ONCE. KNEES WENT, LIKE MINE. HE'S GOT THE ROOMS OVER THE CHANDLER'S IN THE OLD TOWN."
       }
     ]
   },
@@ -2562,6 +2616,11 @@
       {
         "q": "The globe",
         "a": "THE OTHER SIDE SAYS UNSURVEYED. I WROTE THAT. ONE DAY SOMEBODY WILL MAKE ME CROSS IT OUT."
+      },
+      {
+        "q": "The parrot",
+        "when": "admiral/pim",
+        "a": "MY NOTICE. AN OLD CAPTAIN LEFT A COIN AT THE WINDOW AND ASKED ME TO WRITE IT OUT, AND HE WAS GONE BEFORE I COULD ASK HIS NAME. 'SWEARS' WAS HIS WORD. I'VE HEARD IT SINCE, DOWN ON THE STILTS. IT WAS AN ACCURATE WORD."
       }
     ]
   },
@@ -3530,6 +3589,17 @@
       {
         "q": "Falling stars",
         "a": "ON A CLEAR NIGHT IN THE STARFALL THEY COME DOWN INTO THE WOOD - LITTLE ONES, STILL WARM. IF YOU FIND ONE, BRING IT UP HERE. I'D LIKE TO SEE IT. I'VE NEVER BEEN QUICK ENOUGH."
+      },
+      {
+        "q": "Where do they fall?",
+        "when": "ithils-star/ask",
+        "until": "ithils-star/star",
+        "a": "ANYWHERE YOU ARE, ON A STARFALL NIGHT - THE FORECAST SAYS WHEN, AND THE SKY SAYS IT LOUDER. AFTER DARK ONE COMES DOWN A FEW STEPS FROM YOU, WARM AND HUMMING. PICK IT UP AND BRING IT HERE BEFORE MIRELLE OFFERS YOU MONEY FOR IT. SHE WILL."
+      },
+      {
+        "q": "Your star",
+        "when": "ithils-star/star",
+        "a": "IT'S WARM. IT'S HUMMING. IT'S HUMMING AT ME. ...SORRY. HERE: I'VE SET ONE ON THE DIAL FOR YOU, IN NEW SILVER, BETWEEN THE HARP AND THE STAG. IT'S SMALL AND IT'S STEADY AND IT HAS YOUR NAME. LOOK AT THE DIAL. TONIGHT, LOOK THROUGH THE TELESCOPE."
       }
     ]
   },
@@ -4693,8 +4763,40 @@
       {
         "q": "Why no crew?",
         "a": "THEY LEAVE. EVERY ONE OF THEM, AFTER A RUN OR TWO. THEY SAY SHE HUMS AT NIGHT. SHE DOES. I LIKE IT."
+      },
+      {
+        "q": "What's the Mercy buying?",
+        "a": "FISH OFF LUMAR AND ANYTHING THAT GREW ON VERDANCE. THE SPACEPORT KITCHENS PAY OVER THE ODDS FOR REAL FOOD, AND I PAY YOU A BIT OVER WHAT YOU'D GET AT HOME. WHAT HAVE YOU GOT?",
+        "sell": [
+          { "id": "silverfin", "price": 16 },
+          { "id": "harbour_crab", "price": 21 },
+          { "id": "bluefin", "price": 32 },
+          { "id": "spore_minnow", "price": 7 },
+          { "id": "turnip", "price": 15 },
+          { "id": "carrot", "price": 24 },
+          { "id": "strawberry", "price": 17 },
+          { "id": "apple", "price": 7 },
+          { "id": "honey", "price": 32 }
+        ]
+      },
+      {
+        "q": "Chrome and circuit",
+        "a": "WHAT ARCADIA THROWS AWAY, LUMAR CAN'T GET. I'VE A CRATE OF IT FOR THE NEXT RUN. TAKE WHAT YOU LIKE BEFORE IT GOES.",
+        "stores": [
+          { "id": "circuit", "price": 20 },
+          { "id": "chrome_part", "price": 40 }
+        ]
       }
-    ]
+    ],
+    "crew": {
+      "role": "Hauler",
+      "wage": 180,
+      "perk": "hauler",
+      "ashore": true,
+      "board": { "label": "DEPARTURES BOARD", "was": "\"CREW WANTED. ASK FOR DESH.\"", "now": "\"CREW: {pilot}. STILL ABOARD.\"" },
+      "pitch": "ME? ON YOUR CREW? HA. ALL RIGHT - BUT THE MERCY DOESN'T FLY WITHOUT ME, SO I STAY WITH HER. WHAT YOU GET IS THIS: I PACK YOUR HOLDS THE WAY I PACK HERS. A TENTH MORE IN EVERY ONE, AND NOTHING RATTLES. AND YOUR NAME GOES ON MY BOARD.",
+      "perkText": "Desh packs your holds: every ship of yours carries a tenth more cargo. She stays with the Old Mercy at Arcadia's spaceport."
+    }
   },
   "nadia": {
     "name": "Nadia Voss",
@@ -5978,7 +6080,19 @@
     "topics": [
       {
         "q": "The news",
-        "a": "THE LANTERN THEATRE HAS A NEW PLAY EVERY EVENING! THE CROWN'S REGATTA SAILS ON FRIDAYS! A CAT NAMED ADMIRAL IS MISSING AND IS, I AM TOLD, ON THE ROOF OF THE OLD KEEP, LOOKING SMUG!"
+        "a": "THE LANTERN THEATRE HAS A NEW PLAY EVERY EVENING! THE CROWN'S REGATTA SAILS ON FRIDAYS! A CAT NAMED ADMIRAL IS MISSING AND IS, I AM TOLD, ON THE ROOF OF THE OLD KEEP, LOOKING SMUG!",
+        "rumour": "admiral"
+      },
+      {
+        "q": "The Admirals",
+        "when": "admiral/crier",
+        "until": "admiral",
+        "a": "TWO ADMIRALS! ONE CAT, ONE PARROT! THE CAT WAS ON THE OLD KEEP'S ROOF THIS MORNING! THE PARROT IS ON THE HARBOUR OFFICE'S NOTICES, SWEARING! OYEZ! ...I DO LOVE A MYSTERY. NOBODY PAYS ME FOR THE MYSTERIES."
+      },
+      {
+        "q": "The Admirals, home",
+        "when": "admiral",
+        "a": "HOME! BOTH OF THEM! IN THE CAPTAIN'S WINDOW OVER THE CHANDLER'S! OYEZ! I'VE CRIED IT FOUR TIMES AND THEY KEEP PAYING ME."
       },
       {
         "q": "The Old Town",
@@ -6045,6 +6159,11 @@
       {
         "q": "Heard anything?",
         "a": "SOMETHING CROSSED THE MOON LAST WEEK THAT WASN'T A BIRD OR A CLOUD. IT WAS SHAPED LIKE A SHIP. THE ADMIRALTY SAYS I'M TIRED. I AM TIRED. IT WAS STILL A SHIP."
+      },
+      {
+        "q": "Fallen stars",
+        "a": "I'D GIVE A GREAT DEAL FOR ONE. SO WOULD ITHIL - THE STAR-READER THE ELVES KEEP UP AT THE TOP OF THEIR GREAT TREE, ON SYLVARA. WE WRITE. SHE'S NEVER CAUGHT ONE EITHER. NEITHER OF US IS QUICK. IT'S ALL THE LOOKING UP.",
+        "rumour": "ithils-star"
       }
     ]
   },
@@ -6077,6 +6196,11 @@
       {
         "q": "Heard anything?",
         "a": "THE FISHING FLEET COMES IN UNDER THE QUAY AT DUSK AND THE CATCH GOES UP FOR AUCTION. GET THERE EARLY AND YOU'LL SEE THE AUCTIONEER CHEAT. GET THERE LATE AND YOU'LL SEE HIM GET CAUGHT."
+      },
+      {
+        "q": "The brass tag",
+        "when": "admiral/tag",
+        "a": "OUT OF THE MUD THIS MORNING: 'ADMIRAL - RETURN TO CAPT. H...' AND THE REST WORN OFF. AND A GREEN PARROT ON MY ROOF CALLING ME THINGS. IT WENT OFF TOWARD THE ARSENAL, SWEARING AT THE GULLS. HAVE THE TAG. NOT THE BOOT."
       }
     ]
   },

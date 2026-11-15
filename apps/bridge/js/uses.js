@@ -100,7 +100,7 @@ var BridgeUses = (function () {
       // a quest step that takes it from your pack (quests.json, a clue's `takes`)
       if (has('BridgeQuests') && BridgeQuests.defs) {
         var QD = BridgeQuests.defs();
-        Object.keys(QD).forEach(function (qid) { (QD[qid].clues || []).forEach(function (c) { Object.keys(c.takes || {}).forEach(function (id) { add(id, { k: 'quest', q: qid, title: QD[qid].title, n: c.takes[id] }); }); }); });
+        Object.keys(QD).forEach(function (qid) { (QD[qid].clues || []).forEach(function (c) { Object.keys(c.takes || {}).forEach(function (id) { add(id, { k: 'quest', q: qid, title: QD[qid].title, n: c.takes[id], clue: c.id }); }); }); });
       }
       if (has('BridgeImplants') && BridgeImplants.CATALOG) {
         var C = BridgeImplants.CATALOG;
@@ -111,7 +111,10 @@ var BridgeUses = (function () {
   }
 
   // ---- in words ----------------------------------------------------------------------------------------------------
-  function first(p) { var n = p.name || ''; return n.split(/[ ,]/)[0] === 'The' ? n : n.split(' ')[0]; }
+  function first(p) {                                              // a first name; "Old Ludd", "Mr Pike", "Captain Desh" stay whole
+    var n = p.name || '', w = n.split(/[ ,]/)[0];
+    return w === 'The' ? n : /^(Old|Salt|Mother|Captain|Commodore|Inspector|Doc|Dr|Mr|Ms|Mrs|Lord|Lady|Sergeant|Master|Bosun|Cutter|Gull|Mama)$/.test(w) ? n.split(' ').slice(0, 2).join(' ') : w;
+  }
   function the(n) { return String(n || '').replace(/^The /, 'the '); }    // "the Glasshouse", mid-sentence
   function place(world) {
     if (!world) return '';
@@ -162,7 +165,7 @@ var BridgeUses = (function () {
     if (it.type === 'wonder') push('wonder', 9, '<b>A wonder:</b> it goes in the Cabinet of Wonders in your hall');
     if (/^tmap_/.test(id)) push('map', 9, '<b>A treasure map:</b> follow it to where something\'s buried');
     (by.quest || []).forEach(function (f) {
-      if (has('BridgeQuests') && BridgeQuests.has && BridgeQuests.has(f.q)) return;   // (done: not wanted any more)
+      if (has('BridgeQuests') && BridgeQuests.has && (BridgeQuests.has(f.q) || BridgeQuests.has(f.q + '/' + f.clue))) return;   // (done, or that step's given: not wanted any more)
       push('quest', 9, '<b>A quest:</b> ' + esc(f.title) + ' wants ' + f.n);
     });
     (by.want || []).forEach(function (f) { push('want', 8, '<b>Wanted</b> at ' + esc(f.who) + (f.world ? ' (' + esc(place(f.world)) + ')' : '') + ': ' + esc(f.what)); });

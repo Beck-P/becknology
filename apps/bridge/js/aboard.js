@@ -61,7 +61,7 @@ var BridgeAboard = (function () {
     var h = hostShip(), C = cast(), ids;
     if (h) ids = Object.keys(h.crew || {});
     else ids = has('BridgeCrew') && BridgeCrew.list ? BridgeCrew.list().map(function (p) { return p.id; }) : [];
-    return ids.filter(function (id) { return C[id] && C[id].crew; }).sort();
+    return ids.filter(function (id) { return C[id] && C[id].crew && !C[id].crew.ashore; }).sort();   // (Desh keeps to her own ship)
   }
   function galley() { return W() ? W().fitted('galley') : false; }
   function fitted(id) { return W() ? W().fitted(id) : false; }
