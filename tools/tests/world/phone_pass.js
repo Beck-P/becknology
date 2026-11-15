@@ -182,6 +182,7 @@ const SCREENS = [
       const els = [...pn.querySelectorAll('button, .wd-opt, .wd-btn, .wd-hint, .qj-close, [data-act], .gm-x, .gm-close, .wd-sell-row.pick')].filter(vis);
       const e = els.find(e => /^(✕|×|close|goodbye|leave|done|back|not now|walk away|never mind|cancel|stand up|quit|that's all|bye)\b/i.test(e.textContent.trim()) || /close/i.test(e.getAttribute('aria-label') || '') || e.classList.contains('wd-hint') || e.classList.contains('qj-close'))
         || els.find(e => /(✕|×|close|goodbye|leave|done|not now|walk away|never mind|cancel)\s*$/i.test(e.textContent.trim()));
+      document.querySelectorAll('[data-pp-closing]').forEach(x => x.removeAttribute('data-pp-closing')); pn.setAttribute('data-pp-closing', '1');
       const t = e || pn;
       t.scrollIntoView({ block: 'nearest' });
       const r = t.getBoundingClientRect();
@@ -189,7 +190,8 @@ const SCREENS = [
     }, PANELS);
     for (let i = 0; i < 4; i++) {
       await tapAt(p, box.x, box.y); await p.waitForTimeout(700);
-      if (!(await openPanels(p)).length) return box.what;
+      const gone = await p.evaluate(() => { const e = document.querySelector('[data-pp-closing]'); if (!e || !e.isConnected) return true; const c = getComputedStyle(e); return c.display === 'none' || c.visibility === 'hidden' || +c.opacity < 0.05 || e.getBoundingClientRect().width < 4; });
+      if (gone) return box.what;                                            // (that screen: a panel under it, the fishing, may stay)
       if (box.what !== 'the card') break;                                   // a line typing out: the first tap finishes it
     }
     return false;
@@ -241,10 +243,16 @@ const SCREENS = [
     await sayAndClose('walking');
     await p.evaluate(() => { BridgeCharacter.init(9, 15); BridgeCharacter.setFacing('down'); }); await p.waitForTimeout(800);
     await p.tap('#interact-prompt').catch(() => {}); await p.waitForTimeout(1200);
-    if (await p.evaluate(() => BridgeFishing.isOpen())) await sayAndClose('fishing'); else console.log('controls: no fishing off the pier here');
-    await p.evaluate(() => { if (BridgeFishing.isOpen() && BridgeFishing.close) BridgeFishing.close(); }); await p.keyboard.press('Escape'); await p.waitForTimeout(600);
+    if (await p.evaluate(() => BridgeFishing.isOpen())) {
+      const a = await audit(p); a.problems.forEach(m => fail('fishing (phone): ' + m));      // the rod's own panel: its close in reach
+      await sayAndClose('fishing');
+      if (!(await p.evaluate(() => BridgeFishing.isOpen()))) fail('controls (fishing): closing the line put the rod away too');
+    } else console.log('controls: no fishing off the pier here');
+    await p.evaluate(() => { if (BridgeFishing.isOpen() && BridgeFishing.close) BridgeFishing.close(); }); await p.waitForTimeout(600);
+    await go(p, 'lumar', 9, 13); await p.waitForTimeout(1200);
     // a line opened straight from a conversation (a dialog that opens another)
     const before = await ctl();
+    if (!/stick:shown/.test(before)) fail('controls (chained): not up to begin with: ' + before);
     await p.evaluate(() => BridgeInteractions.execute(BridgeWorld.getWorld().interactions.find(i => i.label === 'HARBOURMASTER'))); await p.waitForTimeout(900);
     await p.evaluate(() => BridgeInteractions.say('THE HARBOUR BOOK', 'Every keel that ties up here, and what she carried.')); await p.waitForTimeout(500);
     const during = await ctl();
@@ -252,6 +260,18 @@ const SCREENS = [
     const after = await ctl();
     console.log('controls chained: before ' + before + ' | during ' + during + ' | after ' + after);
     if (/shown/.test(during) || after !== before) fail('controls (chained): ' + during + ' → ' + after);
+    await p.context().close();
+  }
+
+  // ---- a lead that names someone who's gone home for the night says when they're back (js/routines.js whereabouts) ----
+  if (!ONLY || ONLY.indexOf('lead') >= 0) {
+    const p = await page('phone');
+    // through a day on Verdance's clock: Nell (the flower stall) is at her stall some of it and off home the rest
+    const w = await p.evaluate(() => { const out = []; const t0 = Date.parse('2026-11-16T00:00:00Z'); for (let h = 0; h < 48; h++) { BridgeClock._at(t0 + h * 1800000); const a = BridgePeople.all().nell.at[0]; out.push(BridgeRoutines.whereabouts(a.world, a.label)); } return out; });
+    const away = w.filter(x => x && x.away), there = w.filter(x => !x);
+    console.log('lead: Nell over a day — away ' + away.length + ' half-hours (back ' + [...new Set(away.map(x => x.back))].join(', ') + '), there ' + there.length);
+    if (!away.length || !there.length) fail('lead: Nell never away, or never there');
+    if (away.some(x => !/morning|dawn|sunrise/.test(x.back))) fail('lead: Nell\'s back isn\'t the morning: ' + JSON.stringify(away[0]));
     await p.context().close();
   }
 

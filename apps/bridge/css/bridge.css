@@ -1252,7 +1252,7 @@ html.touch #sound-pill .ip-key { display: none; }
 
 /* Fishing off the piers (js/fishing.js): a strip of night sea under the pier */
 #fishing {
-  position: fixed; left: 50%; bottom: 96px; transform: translateX(-50%); z-index: 40;      /* above the hotbar */
+  position: fixed; left: 50%; bottom: 96px; transform: translateX(-50%); z-index: 55;      /* over the coins (50): at the top of a phone its close sat under them */
   width: min(440px, 94vw); box-sizing: border-box; display: none; padding: 10px 12px 12px; border-radius: 6px;
   background: linear-gradient(180deg, rgba(26, 20, 14, 0.96), rgba(14, 10, 8, 0.96)); color: #e8dcc4;
   border: 1px solid rgba(224, 192, 96, 0.45); box-shadow: 0 12px 34px rgba(0, 0, 0, 0.6);
