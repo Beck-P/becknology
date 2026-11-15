@@ -971,6 +971,7 @@ html:not(.in-world):not(.keys-mode) .dpad { display: none !important; }
   padding: 16px 20px 12px;
   font-family: 'Pixelify Sans', 'Courier New', monospace;
   box-sizing: border-box;
+  max-height: calc(84vh - 8px); overflow-y: auto; overscroll-behavior: contain;   /* centred at 58%: never past the screen's foot; a long one scrolls */
 }
 .world-dialog.visible { opacity: 1; transform: translate(-50%, -50%) scale(1); }
 .wd-body { flex: 1; min-width: 0; }
@@ -1762,15 +1763,36 @@ html.touch .world-dialog {
   html.touch .wd-opt { padding: 6px 10px; }
 }
 html.touch .wd-opt { min-height: 38px; }
+/* a long conversation on a phone held upright (Bess has eleven topics): the face tucked into the corner so the topics
+   get the card's whole width, and seven or more go two to a row (Goodbye across the foot) — the card stays short enough
+   that what they said is still in view above them; anything longer still scrolls inside the card */
+@media (orientation: portrait) {
+  html.touch .world-dialog.wd-convo { display: block; }
+  html.touch .wd-convo .wd-portrait { float: left; margin: 0 10px 2px 0; }
+  html.touch .wd-convo .wd-options { clear: both; }
+  html.touch .wd-convo .wd-options:has(> .wd-opt:nth-child(7)) { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+  html.touch .wd-convo .wd-options:has(> .wd-opt:nth-child(7)) > .wd-opt { padding: 6px 8px; line-height: 1.2; }
+  html.touch .wd-convo .wd-options:has(> .wd-opt:nth-child(7)) > .wd-opt::before { display: none; }
+  html.touch .wd-convo .wd-options:has(> .wd-opt:nth-child(7)) > .wd-opt:last-child { grid-column: 1 / -1; text-align: center; }
+}
 /* the key-cap hint becomes a tappable close button in the corner (js/interactions.js sends it as Esc) */
 html.touch .world-dialog { position: fixed; }
 html.touch .wd-hint {
-  position: absolute; top: 8px; right: 10px; margin: 0; opacity: 0.85; cursor: pointer;
-  font-size: 12px; padding: 4px 10px; border-radius: 999px; border: 1px solid color-mix(in srgb, currentColor 30%, transparent);
+  position: absolute; top: 6px; right: 8px; margin: 0; opacity: 0.85; cursor: pointer; box-sizing: border-box;
+  min-height: 36px; min-width: 44px; justify-content: center;
+  font-size: 12px; padding: 4px 12px; border-radius: 999px; border: 1px solid color-mix(in srgb, currentColor 30%, transparent);
 }
+html.touch .world-dialog:has(.wd-hint) .wd-title { padding-right: 84px; }   /* clear of it */
 html.touch .wd-hint .ip-key { display: none; }
 html.touch .wd-hint::after { content: ' \2715'; }
 html.touch.controls-off #inventory-panel { opacity: 0 !important; pointer-events: none; }   /* a dialog has the bottom of the screen */
+html.touch.dialog-up .dpad { visibility: hidden !important; }                            /* any world dialog, a plain line too (js/interactions.js) */
+html.touch.dialog-up #inventory-panel { opacity: 0 !important; pointer-events: none; }
+html.dialog-up #world-overlay { z-index: 26; }                     /* a dialog over the HUD's pills (25), never under them */
+/* the game menu's small buttons on a phone: a finger's worth (the Map buttons, Here / All places, Sort, the pack's acts) */
+html.touch #game-menu .gm-btn, html.touch .mp-seg button { min-height: 36px; }
+html.touch #game-menu .gm-btn-sm { padding: 6px 12px; }
+html.touch .mp-pin::after { content: ''; position: absolute; inset: -9px; border-radius: 50%; }   /* a 20-px pin, a 38-px tap */
 html.touch .nav-head .ip-key { display: none; }
 html.touch .nav-head::before { content: '\2039'; font-size: 22px; line-height: 14px; margin: -3px 2px 0 6px; }
 html.touch .nav-hint { display: none; }
@@ -1790,6 +1812,10 @@ html.touch .nav-hint { display: none; }
 }
 html.touch .qj-close .ip-key { font-size: 0; min-width: 26px; height: 22px; }   /* the journal's and the letter rack's */
 html.touch .qj-close .ip-key::after { content: '\2715'; font-size: 13px; }
+/* a finger's worth (36 px at least) round every close and every button of the shared panels on a phone (phone_pass.js) */
+html.touch .qj-close { min-width: 40px; min-height: 40px; display: inline-flex; align-items: center; justify-content: center; margin: -8px -6px -8px 0; }
+html.touch .e8-controls button, html.touch .dt-controls button, html.touch .wd-btn, html.touch .sp-b { min-height: 38px; }
+html.touch .sp-b { min-width: 38px; }
 
 /* ---- Homes: the Furnish pill and the furnishing tray (js/home.js) ----
    The tray is a world-themed dialog (parchment in Lumar, neon in Arcadia,
