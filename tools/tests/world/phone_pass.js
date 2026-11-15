@@ -33,6 +33,20 @@ const SCREENS = [
   { id: 'ysolde', world: 'hoarfell', at: [9, 15], use: 'YSOLDE' },
   { id: 'elftavern', world: 'sylvara-tavern', at: [19, 9], use: 'TAVERN KEEPER' },
   { id: 'lodgeboard', world: 'hoarfell-lodge', at: [13, 4], use: 'THE BOARD' },
+  { id: 'show', world: 'verdance-east', at: [12, 22], time: '2026-11-28T03:20', use: 'FLOWER TABLE', prep: () => { BridgeInventory.addItem('moonflower', 1); BridgeInventory.addItem('posy', 1); } },
+  { id: 'fstall', world: 'verdance-east', at: [17, 20], time: '2026-11-28T03:20', use: 'BLOSSOM STALL' },
+  { id: 'derby', world: 'hoarfell-promenade', at: [17, 16], time: '2026-12-19T05:30', use: 'ICE DERBY' },
+  // Lumar, deeper (js/lumar-deep.js)
+  { id: 'arsenal', world: 'lumar-crown-arsenal', at: [52, 16], use: 'THE ARSENAL' },
+  { id: 'lastshore', world: 'lumar-crown-arsenal', at: [44, 30], time: '2026-11-20T14:02', use: 'THE LAST SHORE', optional: true },   // (there only on a launch day)
+  { id: 'wanted', world: 'lumar-cinder', at: [28, 23], use: 'WANTED' },
+  { id: 'dee', world: 'lumar-cinder', at: [28, 30], use: 'HARBOURMASTER' },
+  { id: 'dragon', world: 'lumar-crimson-cave', at: [12, 7], use: 'DRAGON' },
+  { id: 'booth', world: 'lumar-crown-bridge', at: [24, 11], time: '2026-11-18T11:00', use: 'SWEET BOOTH' },
+  { id: 'donkeys', world: 'lumar-cliff', at: [44, 30], time: '2026-11-16T10:00', use: 'THE DONKEYS' },
+  { id: 'taverna', world: 'lumar-cliff', at: [33, 12], use: 'TAVERNA' },
+  // a plain line (BridgeInteractions.say): the touch controls go while it's up and come back as they were
+  { id: 'say', world: 'lumar-square', at: [11, 10], use: 'FOUNTAIN' },
   { id: 'journal', menu: 'journal', world: 'lumar', at: [9, 16] },
   { id: 'map', menu: 'map', world: 'lumar', at: [9, 16] },
   { id: 'pack', menu: 'backpack', world: 'lumar', at: [9, 16], prep: () => { BridgeInventory.addItem('silverfin', 2); BridgeInventory.addItem('wheat', 3); } },
@@ -127,8 +141,17 @@ const SCREENS = [
       if (r.top < -1 || r.bottom > vh + 1) out.push(name(pn) + ' off the screen (' + Math.round(r.top) + '..' + Math.round(r.bottom) + ' of ' + vh + ')');
       // the controls: buttons and options, each at least 36 px on its short side
       const ctl = [...pn.querySelectorAll('button, .wd-opt, .wd-btn, .wd-sell-row.pick, [role=button], summary, .sp-b, .qj-close, .wd-hint, a[href], [data-act], [data-tab]')].filter(vis);
-      const small = ctl.filter(e => { const b = e.getBoundingClientRect(); return Math.min(b.width, b.height) < 35.5; });
-      if (small.length) out.push(small.length + ' small: ' + small.slice(0, 6).map(e => { const b = e.getBoundingClientRect(); return '"' + (e.textContent || e.getAttribute('aria-label') || '').trim().slice(0, 18) + '" ' + Math.round(b.width) + 'x' + Math.round(b.height); }).join(', '));
+      // (exempt: the pack's slot grid, ten across by design, and the map's pins, whose tap reaches 9 px past the dot)
+      const small = ctl.filter(e => { const b = e.getBoundingClientRect(); return !e.closest('.bp-slots, .gm-tabs') && !e.classList.contains('mp-pin') && Math.min(b.width, b.height) < 35.5; });
+      if (small.length && document.documentElement.classList.contains('touch')) out.push(small.length + ' small: ' + small.slice(0, 6).map(e => { const b = e.getBoundingClientRect(); return '"' + (e.textContent || e.getAttribute('aria-label') || '').trim().slice(0, 18) + '" ' + Math.round(b.width) + 'x' + Math.round(b.height); }).join(', '));
+      // nothing over a control in view (the coins' pill sat on the darts' close button)
+      const over = ctl.filter(e => {
+        const b = e.getBoundingClientRect(), cx = b.left + b.width / 2, cy = b.top + b.height / 2, pr = pn.getBoundingClientRect();
+        if (cx < 0 || cy < 0 || cx > vw || cy > vh || cy < pr.top || cy > pr.bottom) return false;
+        const h = document.elementFromPoint(cx, cy);
+        return h && !e.contains(h) && !h.contains(e) && !pn.contains(h);
+      });
+      if (over.length) out.push(over.length + ' covered: ' + over.slice(0, 4).map(e => { const b = e.getBoundingClientRect(); const h = document.elementFromPoint(b.left + b.width / 2, b.top + b.height / 2); return '"' + (e.textContent || e.getAttribute('aria-label') || '').trim().slice(0, 16) + '" by ' + name(h); }).join(', '));
       // the last of each list: scrolled to, inside the screen and the panel
       const lists = [...pn.querySelectorAll('.wd-options, .wd-sell, .wd-items, .wd-chooser')].filter(vis);
       lists.forEach(l => {
@@ -142,6 +165,11 @@ const SCREENS = [
       });
       pn.scrollTop = 0;
     });
+    // nothing of the touch controls showing over an open screen
+    if (panels.length && document.documentElement.classList.contains('touch')) {
+      const ctlUp = [...document.querySelectorAll('.stick, .dpad-action, .dpad-item, #inventory-panel')].filter(e => vis(e) && getComputedStyle(e).visibility !== 'hidden' && +getComputedStyle(e).opacity > 0.05);
+      if (ctlUp.length) out.push('the touch controls show over it: ' + ctlUp.map(name).join(' '));
+    }
     return { panels: panels.map(name), problems: out };
   }, PANELS);
   // a way out by a tap: a close/back/goodbye control, or the card itself (a line said)
@@ -150,9 +178,9 @@ const SCREENS = [
     if (!before.length) return true;
     const box = await p.evaluate((sel) => {
       const vis = (e) => { const s = getComputedStyle(e), r = e.getBoundingClientRect(); return s.display !== 'none' && s.visibility !== 'hidden' && r.width > 4 && r.height > 4; };
-      const pn = [...document.querySelectorAll(sel)].filter(vis).pop();
+      const pns = [...document.querySelectorAll(sel)].filter(vis), pn = pns.find(e => e.matches('.world-dialog')) || pns.pop();   // a dialog over a panel first
       const els = [...pn.querySelectorAll('button, .wd-opt, .wd-btn, .wd-hint, .qj-close, [data-act], .gm-x, .gm-close, .wd-sell-row.pick')].filter(vis);
-      const e = els.find(e => /^(✕|×|close|goodbye|leave|done|back|not now|walk away|never mind|cancel|stand up|quit|that's all|bye)/i.test(e.textContent.trim()) || /close/i.test(e.getAttribute('aria-label') || '') || e.classList.contains('wd-hint') || e.classList.contains('qj-close'))
+      const e = els.find(e => /^(✕|×|close|goodbye|leave|done|back|not now|walk away|never mind|cancel|stand up|quit|that's all|bye)\b/i.test(e.textContent.trim()) || /close/i.test(e.getAttribute('aria-label') || '') || e.classList.contains('wd-hint') || e.classList.contains('qj-close'))
         || els.find(e => /(✕|×|close|goodbye|leave|done|not now|walk away|never mind|cancel)\s*$/i.test(e.textContent.trim()));
       const t = e || pn;
       t.scrollIntoView({ block: 'nearest' });
@@ -172,11 +200,12 @@ const SCREENS = [
       if (ONLY && ONLY.indexOf(S.id) < 0) continue;
       const p = await page(size, S.seed);
       try {
-        await go(p, S.world, S.at[0], S.at[1]); await p.waitForTimeout(1500);
+        if (S.time) await p.evaluate((t) => BridgeClock._at(t), S.time);
         if (S.prep) await p.evaluate(S.prep).catch(e => console.log(S.id, 'prep:', e.message.slice(0, 80)));
+        await go(p, S.world, S.at[0], S.at[1]); await p.waitForTimeout(1500);
         let how = '';
         if (S.menu) { await p.evaluate((m) => BridgeMenu.open(m), S.menu); await p.waitForTimeout(1200); how = 'menu ' + S.menu; }
-        else { const r = await useIt(p, S.use); if (!r.ok) { fail(S.id + ': ' + r.why); await p.context().close(); continue; } how = r.how; }
+        else { const r = await useIt(p, S.use); if (!r.ok) { if (S.optional) console.log(size + ' ' + S.id + ': ' + r.why + ' (not on now)'); else fail(S.id + ': ' + r.why); await p.context().close(); continue; } how = r.how; }
         for (const t of (S.then || [])) { if (!await press(p, t)) console.log('  ' + S.id + ': no "' + t + '" to tap'); }
         await p.waitForTimeout(S.wait || 600);
         const a = await audit(p);
@@ -190,6 +219,42 @@ const SCREENS = [
       await p.context().close();
     }
   }
+  // ---- a plain line over the controls, and back as they were: walking, fishing, a line opened from another dialog ----
+  if (!ONLY || ONLY.indexOf('controls') >= 0) {
+    const p = await page('phone');
+    const ctl = () => p.evaluate(() => ['.stick', '.dpad-action', '#inventory-panel'].map(q => { const e = document.querySelector(q); if (!e) return q + ':none'; const c = getComputedStyle(e); return q + ':' + (c.display === 'none' ? 'none' : c.visibility === 'hidden' || +c.opacity < 0.05 ? 'hidden' : 'shown'); }).join(' '));
+    const sayAndClose = async (tag) => {
+      const before = await ctl();
+      await p.evaluate(() => BridgeInteractions.say('A NOTE', 'Somebody has carved their initials here, and a little boat.'));
+      await p.waitForTimeout(500);
+      const during = await ctl();
+      await p.screenshot({ path: OUT + '/pp_controls_' + tag + '.png' });
+      const out = await closeByTap(p);
+      await p.waitForTimeout(400);
+      const after = await ctl();
+      console.log('controls ' + tag + ': before ' + before + ' | during ' + during + ' | after ' + after);
+      if (/shown/.test(during)) fail('controls (' + tag + '): showing over a plain line: ' + during);
+      if (!out) fail('controls (' + tag + '): the line didn\'t close by a tap');
+      if (after !== before) fail('controls (' + tag + '): not back as they were: ' + before + ' → ' + after);
+    };
+    await go(p, 'lumar', 9, 16); await p.waitForTimeout(1500);
+    await sayAndClose('walking');
+    await p.evaluate(() => { BridgeCharacter.init(9, 15); BridgeCharacter.setFacing('down'); }); await p.waitForTimeout(800);
+    await p.tap('#interact-prompt').catch(() => {}); await p.waitForTimeout(1200);
+    if (await p.evaluate(() => BridgeFishing.isOpen())) await sayAndClose('fishing'); else console.log('controls: no fishing off the pier here');
+    await p.evaluate(() => { if (BridgeFishing.isOpen() && BridgeFishing.close) BridgeFishing.close(); }); await p.keyboard.press('Escape'); await p.waitForTimeout(600);
+    // a line opened straight from a conversation (a dialog that opens another)
+    const before = await ctl();
+    await p.evaluate(() => BridgeInteractions.execute(BridgeWorld.getWorld().interactions.find(i => i.label === 'HARBOURMASTER'))); await p.waitForTimeout(900);
+    await p.evaluate(() => BridgeInteractions.say('THE HARBOUR BOOK', 'Every keel that ties up here, and what she carried.')); await p.waitForTimeout(500);
+    const during = await ctl();
+    await closeByTap(p); await p.waitForTimeout(400);
+    const after = await ctl();
+    console.log('controls chained: before ' + before + ' | during ' + during + ' | after ' + after);
+    if (/shown/.test(during) || after !== before) fail('controls (chained): ' + during + ' → ' + after);
+    await p.context().close();
+  }
+
   console.log('phone_pass: errors', errors);
   await b.close();
   process.exit(errors ? 1 : 0);

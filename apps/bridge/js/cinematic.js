@@ -396,10 +396,19 @@ var BridgeCine = (function () {
         var prompt = document.getElementById('interact-prompt');
         if (prompt) prompt.classList.remove('visible');
         var title = opts && opts.name ? titleCard(opts) : null, shotNow = -1;
+        var skipEl = null;                                     // says it can be skipped, a moment in
+        if (!(opts && opts.noskip)) {
+          skipEl = document.createElement('div');
+          skipEl.className = 'cine-skip';
+          skipEl.innerHTML = document.documentElement.classList.contains('touch') ? 'Tap to skip' : '<span class="ip-key">Space</span> skip';
+          document.body.appendChild(skipEl);
+          setTimeout(function () { if (skipEl) skipEl.classList.add('on'); }, 1200);
+        }
         function finish() {
           if (done) return;
           done = true;
           if (title) title.remove();
+          if (skipEl) { skipEl.remove(); skipEl = null; }
           window.removeEventListener('keydown', onKey, true);
           canvas.removeEventListener('pointerdown', finish);
           resolve();

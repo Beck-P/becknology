@@ -159,7 +159,7 @@ var BridgeTransit = (function () {
     el.className = 'tr-' + spec.kind;
     el.innerHTML = '<canvas class="tr-cv" width="' + NW + '" height="' + NH + '"></canvas>' +
       '<div class="tr-hud"><div class="tr-title"></div><div class="tr-dest"></div></div><div class="tr-level"></div>' +
-      '<div class="tr-skip"><span class="ip-key">Space</span> skip</div>';
+      (document.documentElement.classList.contains('touch') ? '<div class="tr-skip">Tap to skip</div>' : '<div class="tr-skip"><span class="ip-key">Space</span> skip</div>');
     document.body.appendChild(el);
     el.querySelector('.tr-title').textContent = spec.title || '';
     el.querySelector('.tr-dest').textContent = spec.dest ? '→ ' + spec.dest : '';
