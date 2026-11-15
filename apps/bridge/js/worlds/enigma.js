@@ -538,103 +538,88 @@
   }
 
   // ---- Custom Background ----
-
-  var bgStars = [];
-  var bgInited = false;
+  // Deep space round the station, in the toy finish: a nebula in a few flat, faint steps, stars in three depths (each its own
+  // layer, drawn once a size and slid with the camera at its depth — the far ones hardly at all), a few bright ones that
+  // twinkle in steps, and the ringed giant (BridgeOrbit.drawGiantPixel: banded cloud, a storm, the rings and their shadow)
+  // hanging off the station wherever the world says (`giant`: [col, row, radius in tiles]), sliding slowly as you walk.
   var shootingStar = null;
+  // where the giant hangs from places whose JSON doesn't say (their scene scripts write the JSON): off the relay deck's
+  // east side, seen past its windows; off hydroponics' west
+  var GIANT_AT = { enigma: [27, 2, 6], 'enigma-hydro': [-6, 2, 5] };
+  function skh(i) { var x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }
+  var SPACE = { key: '', layers: null, neb: null, bright: [] };
+  function spaceLayers(w, h) {
+    var key = w + 'x' + h;
+    if (SPACE.key === key) return SPACE;
+    function cv() { var c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
+    // the nebula: overlapping blobs, each three flat steps of a faint colour
+    var neb = cv(), ng = neb.getContext('2d');
+    [[0.28, 0.38, 0.5, 0.3, '40,110,120'], [0.42, 0.55, 0.32, 0.2, '60,90,130'], [0.78, 0.72, 0.42, 0.26, '120,70,90'], [0.66, 0.2, 0.22, 0.14, '90,70,130']].forEach(function (b) {
+      for (var k = 0; k < 3; k++) {
+        var s = 1 - k * 0.3;
+        ng.fillStyle = 'rgba(' + b[4] + ',0.03)';
+        ng.beginPath(); ng.ellipse(Math.round(b[0] * w), Math.round(b[1] * h), Math.round(b[2] * w * s), Math.round(b[3] * h * s * 1.4), 0.4, 0, Math.PI * 2); ng.fill();
+      }
+    });
+    // three depths of stars: many faint and blue-white far off, fewer and brighter nearer, a few warm ones
+    var layers = [[w * h / 140, 0.35, 1], [w * h / 600, 0.65, 1], [w * h / 2600, 1, 2]].map(function (L, li) {
+      var c = cv(), g = c.getContext('2d');
+      for (var i = 0; i < L[0]; i++) {
+        var x = Math.floor(skh(i * 3.1 + li * 101) * w), y = Math.floor(skh(i * 7.7 + li * 57) * h), r = skh(i * 1.9 + li * 13);
+        var a = L[1] * (0.55 + 0.45 * r), warm = skh(i * 5.3 + li) > 0.84;
+        g.fillStyle = warm ? 'rgba(255,220,180,' + a.toFixed(2) + ')' : r > 0.8 ? 'rgba(170,200,255,' + a.toFixed(2) + ')' : 'rgba(225,236,255,' + a.toFixed(2) + ')';
+        g.fillRect(x, y, L[2] > 1 && r > 0.6 ? 2 : 1, L[2] > 1 && r > 0.6 ? 2 : 1);
+        if (L[2] > 1 && r > 0.92) { g.fillStyle = 'rgba(200,220,255,' + (a * 0.35).toFixed(2) + ')'; g.fillRect(x - 1, y, 4, 2); g.fillRect(x, y - 1, 2, 4); }
+      }
+      return c;
+    });
+    var bright = [];
+    for (var j = 0; j < 14; j++) bright.push([skh(j * 9.1 + 4), skh(j * 2.9 + 1), j]);
+    SPACE = { key: key, layers: layers, neb: neb, bright: bright };
+    return SPACE;
+  }
+  function wrapDraw(ctx, c, ox, oy, w, h) {
+    var x = ((Math.round(ox) % w) + w) % w, y = ((Math.round(oy) % h) + h) % h;
+    ctx.drawImage(c, x - w, y - h); ctx.drawImage(c, x, y - h); ctx.drawImage(c, x - w, y); ctx.drawImage(c, x, y);
+  }
 
   function drawStationBackground(ctx, w, h, time) {
-    if (!bgInited) {
-      bgInited = true;
-      for (var i = 0; i < 100; i++) {
-        bgStars.push({
-          x: Math.random(), y: Math.random(),
-          size: Math.random() * 1.4 + 0.5,
-          brightness: Math.random() * 0.3 + 0.1,
-          speed: Math.random() * 0.3 + 0.8,
-          parallax: Math.random() * 0.5 + 0.5,
-          warm: Math.random() < 0.15
-        });
-      }
-    }
-
-    // Dark deep-space background
-    ctx.fillStyle = '#030810';
+    var v = BridgeWorld.getView ? BridgeWorld.getView() : { offX: 0, offY: 0, ts: 32 };
+    var S = spaceLayers(w, h);
+    ctx.fillStyle = '#03060e';
     ctx.fillRect(0, 0, w, h);
+    wrapDraw(ctx, S.neb, v.offX * 0.01, v.offY * 0.01, w, h);
+    var drift = time / 90000 * w;
+    [[0.015, 0.25], [0.04, 0.5], [0.09, 1]].forEach(function (k, i) { wrapDraw(ctx, S.layers[i], v.offX * k[0] - drift * k[1] * 0.1, v.offY * k[0], w, h); });
+    S.bright.forEach(function (b) {
+      var x = Math.round(((b[0] * w + v.offX * 0.09) % w + w) % w), y = Math.round(((b[1] * h + v.offY * 0.09) % h + h) % h);
+      var on = skh(b[2] * 3.7 + Math.floor(time / 1100 + b[2] * 0.37)) > 0.25;
+      ctx.fillStyle = '#f2f6ff'; ctx.fillRect(x, y, 1, 1);
+      if (on) { ctx.fillStyle = 'rgba(200,225,255,0.55)'; ctx.fillRect(x - 1, y, 3, 1); ctx.fillRect(x, y - 1, 1, 3); }
+    });
 
-    // Subtle drifting teal nebula
-    var nebX = w * 0.3 + Math.sin(time / 8000) * w * 0.05;
-    var nebY = h * 0.4 + Math.cos(time / 9000) * h * 0.05;
-    var neb = ctx.createRadialGradient(nebX, nebY, 0, nebX, nebY, w * 0.55);
-    neb.addColorStop(0, 'rgba(30, 80, 90, 0.10)');
-    neb.addColorStop(1, 'transparent');
-    ctx.fillStyle = neb;
-    ctx.fillRect(0, 0, w, h);
-
-    // Second nebula — distant orange
-    var nebX2 = w * 0.75 + Math.cos(time / 11000) * w * 0.04;
-    var nebY2 = h * 0.7;
-    var neb2 = ctx.createRadialGradient(nebX2, nebY2, 0, nebX2, nebY2, w * 0.4);
-    neb2.addColorStop(0, 'rgba(120, 70, 60, 0.05)');
-    neb2.addColorStop(1, 'transparent');
-    ctx.fillStyle = neb2;
-    ctx.fillRect(0, 0, w, h);
-
-    // Stars with parallax drift — brighter so they actually read
-    var driftX = (time / 60000) * w;
-    for (var i = 0; i < bgStars.length; i++) {
-      var s = bgStars[i];
-      var sx = ((s.x * w + driftX * s.parallax) % w + w) % w;
-      var sy = s.y * h;
-      // Boost baseline brightness (was 0.1-0.4, now 0.4-0.85) and amp twinkle
-      var twinkle = Math.sin(time / (800 * s.speed) + i * 1.7) * 0.25 + s.brightness * 1.6 + 0.25;
-      twinkle = Math.min(1, twinkle);
-      var col = s.warm ? '255, 220, 180' : '200, 230, 250';
-      ctx.fillStyle = 'rgba(' + col + ', ' + twinkle.toFixed(2) + ')';
-      ctx.fillRect(sx, sy, s.size, s.size);
-      // Halo for the brighter stars
-      if (s.size > 1.2) {
-        ctx.fillStyle = 'rgba(' + col + ', ' + (twinkle * 0.3).toFixed(2) + ')';
-        ctx.fillRect(sx - 1, sy, s.size + 2, s.size);
-        ctx.fillRect(sx, sy - 1, s.size, s.size + 2);
-      }
-    }
-
-    // Docking Bay 3 and the ring look out on the ringed giant (parallax: it hangs far off)
+    // the ringed giant, wherever the world puts it (parallax: it hangs far off)
     var dw = BridgeWorld.getWorld();
-    var g = dw && ((dw.dock && dw.dock.giant) || dw.giant);
-    if (g && typeof BridgeOrbit !== 'undefined' && BridgeOrbit.drawGiant) {
-      var v = BridgeWorld.getView();
+    var g = dw && ((dw.dock && dw.dock.giant) || dw.giant || GIANT_AT[BridgeWorld.getWorldId && BridgeWorld.getWorldId()]);
+    if (g && typeof BridgeOrbit !== 'undefined' && (BridgeOrbit.drawGiantPixel || BridgeOrbit.drawGiant)) {
       var camCol = (w / 2 - v.offX) / v.ts, camRow = (h / 2 - v.offY) / v.ts;
-      BridgeOrbit.drawGiant(ctx, w / 2 + (g[0] - camCol) * v.ts * 0.35, h / 2 + (g[1] - camRow) * v.ts * 0.35,
-                            Math.round(g[2] * v.ts), time, 0.3);
+      var gx = Math.round(w / 2 + (g[0] - camCol) * v.ts * 0.35), gy = Math.round(h / 2 + (g[1] - camRow) * v.ts * 0.35);
+      if (BridgeOrbit.drawGiantPixel) BridgeOrbit.drawGiantPixel(ctx, gx, gy, Math.round(g[2] * v.ts), 0.3);
+      else BridgeOrbit.drawGiant(ctx, gx, gy, Math.round(g[2] * v.ts), time, 0.3);
     }
 
-    // Occasional shooting star
+    // now and then a shooting star, in whole pixels
     if (!shootingStar && Math.random() < 0.001) {
-      shootingStar = {
-        x: Math.random() * w * 0.5,
-        y: Math.random() * h * 0.4,
-        vx: 1.5 + Math.random() * 1.5,
-        vy: 0.4 + Math.random() * 0.6,
-        life: 0,
-        maxLife: 60 + Math.random() * 40
-      };
+      shootingStar = { x: Math.random() * w * 0.5, y: Math.random() * h * 0.4, vx: 1.5 + Math.random() * 1.5, vy: 0.4 + Math.random() * 0.6, life: 0, maxLife: 60 + Math.random() * 40 };
     }
     if (shootingStar) {
       var ss = shootingStar;
-      ss.life++;
-      ss.x += ss.vx * 4;
-      ss.y += ss.vy * 4;
+      ss.life++; ss.x += ss.vx * 4; ss.y += ss.vy * 4;
       var sa = Math.max(0, 1 - ss.life / ss.maxLife);
-      ctx.strokeStyle = 'rgba(220,240,255,' + (sa * 0.8).toFixed(2) + ')';
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.moveTo(ss.x - ss.vx * 12, ss.y - ss.vy * 12);
-      ctx.lineTo(ss.x, ss.y);
-      ctx.stroke();
-      ctx.fillStyle = 'rgba(255,255,255,' + sa.toFixed(2) + ')';
-      ctx.fillRect(ss.x, ss.y, 1.5, 1.5);
+      for (var q = 0; q < 10; q++) {
+        ctx.fillStyle = 'rgba(220,240,255,' + (sa * 0.8 * (1 - q / 10)).toFixed(2) + ')';
+        ctx.fillRect(Math.round(ss.x - ss.vx * q * 1.2), Math.round(ss.y - ss.vy * q * 1.2), 1, 1);
+      }
       if (ss.life > ss.maxLife) shootingStar = null;
     }
   }

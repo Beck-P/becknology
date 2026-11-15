@@ -602,6 +602,98 @@ var BridgeOrbit = (function () {
     ctx.restore();
   }
 
+  // ---- Enigma's ringed giant in the toy finish (the station's backdrop, the telescope) ------------------------------------------
+  // Drawn once a size into one image, a pixel at a time: cloud belts in flat tones of cream, ochre and rust whose edges
+  // wave and curl into eddies, a great storm oval, the sun from the upper left falling off across the globe in four flat
+  // steps to the night side with a lit rim on the day limb; the rings in ringlets with the dark gap between them, the back
+  // of them behind the globe and the front across it; the rings' shadow lying across the globe, and the globe's shadow
+  // cut out of the rings behind it.
+  var GIANTS = {};
+  function giantSprite(R, tilt) {
+    tilt = tilt || 0.28;
+    var key = R + ':' + tilt;
+    if (GIANTS[key]) return GIANTS[key];
+    var ROT = -0.22, cr = Math.cos(ROT), sr = Math.sin(ROT), RO = 2.12;               // the ring's outer edge in R
+    var hw = Math.ceil(R * RO + 2), hh = Math.ceil(Math.max(R, R * RO * (Math.abs(sr) + tilt)) + 2);
+    var c = document.createElement('canvas'); c.width = hw * 2; c.height = hh * 2;
+    var g = c.getContext('2d'), img = g.createImageData(c.width, c.height), d = img.data;
+    var BELT = [[236, 222, 192], [214, 184, 140], [196, 150, 104], [228, 206, 168], [168, 112, 78], [222, 196, 150], [184, 136, 96], [240, 228, 202]];
+    var RINGS = [[1.28, 1.42, [150, 136, 118], 0.55], [1.44, 1.66, [214, 198, 170], 0.85], [1.66, 1.71, null, 0], [1.71, 1.92, [232, 218, 190], 0.92],
+                 [1.92, 1.96, null, 0], [1.96, 2.06, [190, 172, 146], 0.7], [2.08, 2.12, [170, 156, 136], 0.45]];
+    var L = [-0.62, -0.5, 0.6], ll = Math.sqrt(L[0] * L[0] + L[1] * L[1] + L[2] * L[2]); L = [L[0] / ll, L[1] / ll, L[2] / ll];
+    var SPACE = [6, 10, 18];
+    function ringAt(px, py) {                                // the ring's colour at a point of its plane (rotated frame), or null
+      var r = Math.sqrt(px * px + (py / tilt) * (py / tilt)) / R;
+      for (var i = 0; i < RINGS.length; i++) {
+        var q = RINGS[i];
+        if (r >= q[0] && r < q[1]) {
+          if (!q[2]) return null;
+          var tone = Math.floor(r * 60) % 3 === 0 ? 0.9 : 1;        // fine ringlets
+          return [q[2][0] * tone, q[2][1] * tone, q[2][2] * tone, q[3]];
+        }
+      }
+      return null;
+    }
+    for (var y = 0; y < c.height; y++) for (var x = 0; x < c.width; x++) {
+      var dx = x - hw + 0.5, dy = y - hh + 0.5;
+      var px = dx * cr + dy * sr, py = -dx * sr + dy * cr;      // into the ring's frame
+      var inP = dx * dx + dy * dy <= R * R;
+      var ring = ringAt(px, py), front = py > 0;
+      var col = null, a = 255;
+      if (ring && (front || !inP)) {
+        col = [ring[0], ring[1], ring[2]];
+        a = Math.round(255 * ring[3]);
+        if (!front && px > 0 && Math.abs(py * 0.9 + px * 0.25) < R * tilt * 0.9 && px < R * 2.3) col = [col[0] * 0.28, col[1] * 0.28, col[2] * 0.34];  // the globe's shadow on the far ring
+        else {
+          var lr = front ? 1 : 0.86; col = [col[0] * lr, col[1] * lr, col[2] * lr];
+        }
+        if (inP && front) {                                        // the near ring over the globe: what shows between ringlets is the globe
+          var nb = a / 255; a = 255;
+          var pc = globe(dx, dy);
+          col = [col[0] * nb + pc[0] * (1 - nb), col[1] * nb + pc[1] * (1 - nb), col[2] * nb + pc[2] * (1 - nb)];
+        } else if (!inP) {
+          var nb2 = a / 255; a = Math.round(255 * Math.min(1, nb2 + 0.15));
+        }
+      } else if (inP) col = globe(dx, dy);
+      if (!col) continue;
+      var o = (y * c.width + x) * 4;
+      d[o] = Math.max(0, Math.min(255, col[0])); d[o + 1] = Math.max(0, Math.min(255, col[1])); d[o + 2] = Math.max(0, Math.min(255, col[2])); d[o + 3] = a;
+    }
+    function globe(dx, dy) {
+      var nx = dx / R, ny = dy / R, nz = Math.sqrt(Math.max(0, 1 - nx * nx - ny * ny));
+      // latitude in the planet's own tilt (the rings' plane), longitude across the face
+      var lat = (-nx * sr + ny * cr), lon = Math.atan2(nx * cr + ny * sr, nz);
+      var wav = Math.sin(lon * 5 + lat * 9) * 0.025 + Math.sin(lon * 13 - lat * 4) * 0.012;
+      var bi = Math.floor((lat + wav + 1) * 7.5), col = BELT[((bi % BELT.length) + BELT.length) % BELT.length].slice();
+      var edge = ((lat + wav + 1) * 7.5) % 1;                        // eddies curling along the belt edges
+      if (edge < 0.1 && Math.sin(lon * 38 + bi * 3 + Math.sin(lat * 60) * 2) > 0.7) col = BELT[(bi + 1) % BELT.length].slice();
+      else if (edge > 0.9 && Math.sin(lon * 27 - bi * 5) > 0.75) col = BELT[((bi - 1) % BELT.length + BELT.length) % BELT.length].slice();
+      else if (Math.abs(edge - 0.5) < 0.05) col = [col[0] * 0.94, col[1] * 0.92, col[2] * 0.9];       // a fine line down each belt
+      if (Math.abs(lat - 0.28) < 0.05 && Math.sin(lon * 31) > 0.3) col = [col[0] * 0.9, col[1] * 0.86, col[2] * 0.84];
+      var sx = (lon + 0.35) / 0.2, sy = (lat - 0.36) / 0.075, se = sx * sx + sy * sy;     // the great storm
+      if (se < 1) col = se < 0.35 ? [222, 120, 82] : se < 0.7 ? [204, 140, 100] : [240, 214, 180];
+      // the light: N·L in four flat steps, the rim lit on the day side
+      var nl = nx * L[0] + ny * L[1] + nz * L[2];
+      var k = nl > 0.55 ? 1 : nl > 0.25 ? 0.82 : nl > 0.02 ? 0.6 : nl > -0.2 ? 0.34 : 0.16;
+      // the rings' shadow across the globe: the ring plane seen from the sun, shifted down and right
+      var spx = (dx - R * 0.06) * cr + (dy - R * 0.2) * sr, spy = -(dx - R * 0.06) * sr + (dy - R * 0.2) * cr;
+      var rs = ringAt(spx, spy);
+      if (rs && nl > 0) k *= 1 - rs[3] * 0.55;
+      col = [col[0] * k + SPACE[0] * (1 - k) * 0.3, col[1] * k + SPACE[1] * (1 - k) * 0.3, col[2] * k * 1.04 + SPACE[2] * (1 - k) * 0.6];
+      if (nz < 0.16 && nl > 0.1) col = [col[0] * 0.8 + 255 * 0.2, col[1] * 0.8 + 236 * 0.2, col[2] * 0.8 + 210 * 0.2];
+      return col;
+    }
+    g.putImageData(img, 0, 0);
+    var out = { c: c, ox: hw, oy: hh };
+    if (Object.keys(GIANTS).length > 6) GIANTS = {};
+    return (GIANTS[key] = out);
+  }
+  /** The giant in the toy finish, centred on (cx, cy), at whole pixels. */
+  function drawGiantPixel(ctx, cx, cy, R, tilt) {
+    var s = giantSprite(Math.max(8, Math.round(R)), tilt);
+    ctx.drawImage(s.c, Math.round(cx) - s.ox, Math.round(cy) - s.oy);
+  }
+
   /** Enigma's ringed giant: back half of the rings, the planet, the near half. */
   function drawGiant(ctx, cx, cy, R, now, tilt) {
     drawRing(ctx, cx, cy, R, false, tilt || 0.28);
@@ -614,5 +706,5 @@ var BridgeOrbit = (function () {
 
   return { draw: draw, getLocation: getLocation, setLocation: setLocation, placeName: placeName, kindOf: kindOf,
            planet: planetCanvas, drawPlanet: drawPlanet, drawHole: drawHole, drawStation: drawStation, drawStars: drawStars,
-           drawGiant: drawGiant, globe: globe, globeFree: globeFree };
+           drawGiant: drawGiant, drawGiantPixel: drawGiantPixel, globe: globe, globeFree: globeFree };
 })();
