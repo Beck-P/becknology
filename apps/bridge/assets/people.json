@@ -1791,6 +1791,13 @@
         "a": "BRING ME ORE FROM THAT MINE ON LUMAR AND I'LL TELL YOU IF IT'S ANY GOOD. MOSTLY IT ISN'T. NOW AND THEN IT SINGS."
       },
       {
+        "q": "Shoe my horse",
+        "a": "",
+        "when": "gate:has-horse",
+        "use": { "type": "wat_shoe" },
+        "offer": "new shoes for your horse"
+      },
+      {
         "q": "Edda's page",
         "when": "eddas-book/wat",
         "a": "KEEP IT IN THE FORGE. THAT'S WHY IT'S SCORCHED. A HOT BRAN MASH FOR PARSNIP, HER OLD PLOUGH HORSE, ON A COLD NIGHT. I SHOD HIM TO THE END. GOOD HORSE.\n\nON THE BACK IT SAYS 'OVEN AS HOT AS WAT'S FORGE.' CHEEK."
@@ -1821,6 +1828,12 @@
       {
         "q": "The stream",
         "a": "COMES DOWN FROM THE HILLS COLD AS A COIN. THERE'S PERCH IN THE FARM POND THAT CAME DOWN IT AS EGGS. DON'T TELL NELL I SAID SO, SHE THINKS THEY'RE HERS."
+      },
+      {
+        "q": "Grind my wheat",
+        "a": "",
+        "use": { "type": "ludd_grind" },
+        "offer": "grinds your wheat"
       },
       {
         "q": "Edda's page",
@@ -6529,6 +6542,12 @@
       {
         "q": "Station Road",
         "a": "QUIET END OF THE VILLAGE THESE DAYS. TEA ROOMS SHUT, DAIRY EMPTY, THE HALT CLOSED. THE VILLAGE FUND ON THE GREEN COULD CHANGE ALL THAT, IF ANYONE PUT ANYTHING IN IT."
+      },
+      {
+        "q": "Her shoes",
+        "a": "LIFT A HOOF NOW AND THEN. WHEN THE SHOES GO DULL, TAKE HER TO WAT AT THE ANVIL & HOOF. TWENTY COINS AND SHE GOES LIKE SHE'S LATE FOR SOMETHING. FOR A DAY, ANYWAY.",
+        "when": "gate:has-horse",
+        "lead": "wat-shoes"
       }
     ]
   },
@@ -6866,6 +6885,11 @@
       {
         "q": "The trout",
         "a": "BEST TROUT ON VERDANCE IN THE POOL UNDER THE WEIR. OLD RUDD THINKS IT'S A SECRET. EVERYONE KNOWS. NOBODY TELLS HIM."
+      },
+      {
+        "q": "Your dad",
+        "a": "STILL TURNING THE OLD WHEEL IN BRAMBLEFORD. HE'LL GRIND YOUR WHEAT TOO, FOR NOTHING, AND THEN BUY THE FLOUR BACK OFF YOU FOR THE FAIR. SAYS MINE'S TOO FINE. IT ISN'T.",
+        "lead": "ludd-mill"
       }
     ]
   }

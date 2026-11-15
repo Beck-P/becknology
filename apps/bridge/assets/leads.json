@@ -116,6 +116,14 @@
     "title": "Ysolde would sign on", "where": "Hoarfell · Fellhaven", "kind": "crew", "world": "hoarfell", "label": "YSOLDE", "unless": "crew:ysolde",
     "text": "You've been out on the Last Ridge, further than Ysolde got. Ask her at the guide's hut whether she'd join your crew: she'd kit you against the cold and probe the snow ahead of you."
   },
+  "wat-shoes": {
+    "title": "New shoes", "where": "Verdance · Brambleford", "kind": "maker", "world": "verdance-village", "label": "WAT",
+    "text": "Wat the farrier at the Anvil & Hoof shoes your horse for 20 coins: she goes a little quicker under you for a Verdance day."
+  },
+  "ludd-mill": {
+    "title": "Old Ludd's mill", "where": "Verdance · Brambleford", "kind": "maker", "world": "verdance-village", "label": "OLD LUDD",
+    "text": "Old Ludd grinds your wheat at Brambleford's watermill for nothing, three sheaves a sack, and buys that flour back for the fair's bread."
+  },
   "village-wants": {
     "title": "The fund's little wants", "where": "Verdance · Station Road", "kind": "board", "world": "verdance-east", "label": "THE VILLAGE FUND",
     "text": "With the five projects done, Brambleford's fund board asks for one small thing a week: coins and something from your farm. Every Friday the county judges Best Kept Village and reads what's been done."

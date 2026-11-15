@@ -233,6 +233,84 @@ const ONLY = process.argv[3] || '';
     console.log('h6 done');
   }
 
+  // the first moment on a weekday (Mon–Thu ET) from now when everyone named is at their own spot (as small_stories.js)
+  const pinAt = async (ids, label) => {
+    const at = await p.evaluate(([ids]) => {
+      const base = Date.now();
+      for (let m = 0; m < 6 * 24 * 60; m += 5) {
+        const ms = base + m * 60000;
+        BridgeClock._at(ms);
+        if (BridgeClock.etParts().dow > 3) continue;
+        if (ids.every(id => { if (!BridgeRoutines._stop(id)) return true; const w = BridgeRoutines.where(id); return !!(w && w.home); })) return ms;
+      }
+      return null;
+    }, [ids]);
+    if (at == null) fail('no working hour found for ' + label);
+  };
+
+  // ---- V5 · Wat, Ludd and the horse ----
+  if (part('v5')) {
+    await p.evaluate(() => { localStorage.removeItem('bridge_deeper'); localStorage.removeItem('bridge_country'); localStorage.removeItem('bridge_quest_meta'); });
+    await p.reload(); await p.waitForTimeout(2500);
+    await p.evaluate(() => { BridgeState.setPilot({ id: 't', name: 'BECK', suit_color: 'gold' }); BridgeIntro.hide(); });
+    await coins(500);
+    await pinAt(['wat', 'ludd'], 'Wat and Ludd');
+    await go('verdance-village', [20, 14]);
+    await use('WAT');
+    if ((await rows()).some(r => /Shoe my horse/.test(r))) fail('Wat offers shoes with no horse');
+    await shut();
+    // a horse of your own (Hobb's), then Hobb's word and Wat's shoes
+    await p.evaluate(() => localStorage.setItem('bridge_country', JSON.stringify({ horse: { name: 'Clover', coat: 'bay' } })));
+    await p.reload(); await p.waitForTimeout(2500);
+    await p.evaluate(() => { BridgeState.setPilot({ id: 't', name: 'BECK', suit_color: 'gold' }); BridgeIntro.hide(); });
+    await coins(500);
+    await pinAt(['wat', 'ludd', 'hobb'], 'Wat, Ludd and Hobb');
+    await go('verdance-east', [20, 20]);
+    await use('HOBB');
+    if (!(await rows()).some(r => /Her shoes/.test(r))) fail('Hobb says nothing of shoes');
+    else { await pick(/^Her shoes/); if (!(await p.evaluate(() => (JSON.parse(localStorage.getItem('bridge_quest_meta') || '{}').leads || {})['wat-shoes']))) fail('no lead from Hobb'); }
+    await shut();
+    await go('verdance-village', [20, 14]);
+    const nu = await p.evaluate(() => window.BRIDGE_NEXTUP.map(f => f('verdance-village')).flat().map(x => x.title).join(' / '));
+    if (!/New shoes for Clover/.test(nu)) fail('Next up: ' + nu);
+    await use('WAT');
+    await pick(/^Shoe my horse/);
+    await pick(/^Shoe Clover/);
+    await p.waitForTimeout(800);
+    if (await p.evaluate(() => window._coins) !== 480) fail('the shoes cost ' + (500 - await p.evaluate(() => window._coins)));
+    if (await p.evaluate(() => BridgeDeeper.shod()) !== 1.15) fail('not shod');
+    await shut();
+    await p.evaluate(() => BridgeCountryside.whistle());
+    await p.waitForTimeout(600);
+    const sp = await p.evaluate(() => { const m = BridgeCharacter.getMount(); return m && m.speed; });
+    if (!(Math.abs(sp - 1.9 * 1.15) < 0.01)) fail('riding speed shod: ' + sp);
+    await p.evaluate(() => BridgeCountryside.whistle());
+    await use('WAT'); await pick(/^Shoe my horse/);
+    if (!/STILL NEW/.test(await said())) fail('Wat shod her twice in a day');
+    await shut();
+    // a Verdance day on: the shoes are just shoes
+    await p.evaluate(() => { const s = BridgeDeeper._s(); s.shod = Date.now() - 1; });
+    if (await p.evaluate(() => BridgeDeeper.shod()) !== 1) fail('still shod after the day');
+    // Ludd grinds and buys back only his own
+    await give('wheat', 7);
+    await give('flour', 3);
+    await use('OLD LUDD');
+    await pick(/^Grind my wheat/);
+    await pick(/^Grind your wheat/);
+    if (await count('wheat') !== 1 || await count('flour') !== 5) fail('ground: wheat ' + await count('wheat') + ' flour ' + await count('flour'));
+    await pick(/^Sell Ludd back his flour/);
+    await p.waitForTimeout(800);
+    if (await count('flour') !== 3) fail('Ludd bought back ' + (5 - await count('flour')) + ', not 2');
+    if (await p.evaluate(() => window._coins) !== 480 + 56) fail('coins after Ludd: ' + await p.evaluate(() => window._coins));
+    await p.screenshot({ path: OUT + '/hd_v5_ludd.png' });
+    const r2 = await rows();
+    if (!r2.some(r => /only what he ground/.test(r))) fail('Ludd would buy more: ' + r2.join(' | '));
+    await shut();
+    const card = await p.evaluate(() => BridgeUses.html('wheat') + BridgeUses.html('flour'));
+    if (!/Old Ludd/.test(card)) fail('no Ludd on wheat\'s or flour\'s card');
+    console.log('v5 done');
+  }
+
   console.log(errors ? 'FAILED with ' + errors + ' problem(s)' : 'OK');
   await b.close();
   process.exit(errors ? 1 : 0);
