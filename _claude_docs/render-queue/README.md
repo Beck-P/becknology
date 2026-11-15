@@ -34,7 +34,6 @@ Ranked by how much a player would notice; details and images were in the look-ov
 - **Old Town** (`lumar-crown-oldtown`): the Old Keep's roof is one flat beige plane (the Admiral's cat was "on the roof of the Old Keep"); tall gable houses reach up into the lane north of them.
 - **The Crater** (`lumar-cinder-volcano`): now that the camera follows you, its walls are stretched noise with square corners at the map's edge and the floor is flat noise. **Cinder Key**'s volcano flank is in coarse stepped bands.
 - **The Spires**: a pale wavy wash across the top of the plaza (check the light first).
-- **Brambleford**: the landing green's BRAMBLEFORD sign can't be read (letters about 5 px tall).
 - **The Stilts**: the quay stairs are a plain grey slab. **The Hill**: the drop below the terrace is flat and the city roofs below are in an older finish.
 - **The ship**: the game room's and the hangar's doors back to the bridge read as gaps (the bridge's own side doors are being fixed); in the game room the dust sheets over unfound games look like ghosts.
 - **Starling Holm, built**: the café's parasols overlap the warehouse wall.
