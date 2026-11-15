@@ -1988,6 +1988,12 @@ var BridgeItems = (function () {
                      draw: fishIcon('#6a8a3a', '#c0d080', '#3a5a1a'), effects: { hp: 8, energy: 8 }, onUse: consumableUse, value: 7 },
     sun_carp:      { id: 'sun_carp', name: 'Sun Carp', desc: 'A golden carp from the farm pond, scales like coins. Hollin swears there\'s only one.', type: 'material', stackable: true,
                      draw: fishIcon('#d8a020', '#ffe080', '#a06010', '#fff0a0'), value: 45 },
+    river_trout:   { id: 'river_trout', name: 'River Trout', desc: 'Brown and red-spotted, off a line in the Silverrun. Fennick does them with herbs and a squeeze of starpear.', type: 'food', stackable: true,
+                     draw: fishIcon('#8a8a4a', '#e8d8a8', '#3a4a2a', '#d04a30'), effects: { hp: 9, energy: 9 }, onUse: consumableUse, value: 9 },
+    silverscale:   { id: 'silverscale', name: 'Silverscale', desc: 'A slim river fish with a line of light down its side. The elves say it swam out of the Moonwell and kept going.', type: 'material',
+                     stackable: true, draw: fishIcon('#b8d8d0', '#f0fff8', '#4a6a6a', '#c8f0e8'), value: 24 },
+    moon_carp:     { id: 'moon_carp', name: 'Moon Carp', desc: 'Pale as the Moonwell and whiskered like an old elf. It rises to the moon, and hardly ever by day.', type: 'material',
+                     stackable: true, draw: fishIcon('#c8e8e0', '#f4fffc', '#4a7a72', '#a8e0d8'), value: 95 },
     // the Workshop's materials (js/workshop.js `FROM` says where to get each); what's cargo by the crate in a hold
     // (pine timber, Sapphire glass, spore silk, black powder) breaks open into these at the workshop
     pine_log:      { id: 'pine_log', name: 'Pine Log', desc: 'A length of straight pine off Diggen\'s Point. A crate of pine timber holds eight.', type: 'material',

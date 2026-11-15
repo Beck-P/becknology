@@ -370,7 +370,11 @@ var BridgeQuests = (function () {
     return open.slice(0, n || 99).map(hintOf);
   }
   // a lead in the words for how you're playing: `hintTouch` on a phone or tablet, where keys would mean nothing
-  function hintOf(c) { return document.documentElement.classList.contains('touch') && c.hintTouch ? c.hintTouch : c.hint; }
+  // and `hintGate` while the clue's gate is shut (Thaelin's verse in a place of Sylvara's not open yet: say so, plainly)
+  function hintOf(c) {
+    if (c.hintGate && c.gate && GATES[c.gate] && !gateOpen(c)) return c.hintGate;
+    return document.documentElement.classList.contains('touch') && c.hintTouch ? c.hintTouch : c.hint;
+  }
   // the quest the tracker follows: the one you chose, or the one you last moved on, or the newest rumour
   function tracked() {
     var t = meta.track;

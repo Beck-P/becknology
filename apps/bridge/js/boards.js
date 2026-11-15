@@ -117,7 +117,9 @@ var BridgeBoards = (function () {
       { who: 'elf_lamplighter', item: 'windthistle', at: 'start', n: 3, why: '"Windthistle for the lamp wicks. It burns blue, and the moths stay away."' },
       { who: 'elf_bowyer', item: 'golem_core', n: 1, w: 2, why: '"A golem core for a bow\'s grip. It holds its warmth in a frost."' },
       { who: 'elf_lanternmaker', item: 'glass_float', n: 1, w: 2, x: 1.5, why: '"Glass blown from your own breath. A lantern wants a heart."' },
-      { who: 'elf_boatwright', item: 'wyrm_scale', n: 1, w: 2, x: 1.4, why: '"A wyrm scale for a keel guard. Rocks give way to it."' }
+      { who: 'elf_boatwright', item: 'wyrm_scale', n: 1, w: 2, x: 1.4, why: '"A wyrm scale for a keel guard. Rocks give way to it."' },
+      { who: 'elf_tavernkeeper', item: 'river_trout', at: 'start', n: 3, why: '"Trout off the Silverrun for tonight. Thaelin eats two and calls it payment."' },
+      { who: 'elf_boatwright', item: 'silverscale', at: 'here', n: 2, why: '"Two silverscale. Their oil keeps a canoe\'s seams sweet a whole season."' }
     ],
     enigma: [
       { who: 'okafor', item: 'circuit', n: 2, w: 2, why: '"A circuit board will do for a radio valve. The rig\'s been coughing."' },

@@ -973,6 +973,8 @@ html:not(.in-world):not(.keys-mode) .dpad { display: none !important; }
   box-sizing: border-box;
 }
 .world-dialog.visible { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+/* a long one (Thaelin's whole song, js/fardeep.js) scrolls inside the card rather than running off the screen */
+html:not(.touch) .world-dialog { max-height: 80vh; overflow-y: auto; overscroll-behavior: contain; }
 .wd-body { flex: 1; min-width: 0; }
 .wd-title { font-size: 13px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; }
 .wd-text { font-size: 15px; line-height: 1.45; white-space: pre-wrap; min-height: 2.9em; }

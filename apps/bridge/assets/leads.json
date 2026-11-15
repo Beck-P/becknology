@@ -136,6 +136,10 @@
     "title": "The farm's order board", "where": "Verdance · the farm", "kind": "board", "board": "farm", "world": "verdance", "label": "NOTICE BOARD",
     "text": "The board by the farm on Verdance posts orders every day from people across the worlds (Tove wants pumpkins for the lift crew). They pay well over a sale."
   },
+  "silverrun-fishing": {
+    "title": "A line in the Silverrun", "where": "Sylvara · the Silverrun", "kind": "fishing", "world": "sylvara-river", "label": "OFF THE CANOE DOCK",
+    "text": "Tamsin at the canoe dock says trout and silverscale take a line off the dock or below the otter weir, and after dark a moon carp comes up to look at the moon, most of all at the full. She buys what you catch."
+  },
   "peddler": {
     "title": "Wendel the Peddler", "where": "somewhere new each day", "kind": "person", "label": "PEDDLER",
     "text": "Wendel Crane sets up somewhere different every day: the Market Square, Arcadia's street, Brambleford's square, Fellhaven, Sapphire Port's quay, Enigma's dock. He sells things that do things."

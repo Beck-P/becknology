@@ -2944,6 +2944,25 @@
         "a": "YOU'VE NOTICED TOO? AT LAST. I'VE HAD THE SONG WRITTEN FOR A CENTURY. 'THE FIRST SWORD SAYS NOTHING, AT LENGTH.' TWELVE VERSES.\n\n...NO, YOU'RE RIGHT. HE HAS TO SAY IT HIMSELF. THE MOONWELL, THEN, AT DUSK. EVERYONE SAYS THE TRUE THING AT THE MOONWELL. I'LL BE IN THE BUSHES. PLAYING VERY QUIETLY.",
         "when": "under-the-willow/song",
         "until": "under-the-willow"
+      },
+      {
+        "q": "Your old song",
+        "a": "THE LONG WAY HOME. FIVE VERSES, THE BEST THING I EVER MADE, AND I WROTE EACH ONE DOWN WHEREVER IT CAME TO ME, ON WHATEVER WAS THERE. A RAIL. A WALL. A STONE.\n\nTHE FIRST WAS AT THE LOOKOUT IN THE BOUGHS, I KNOW THAT. AFTER THAT - FIND ONE AND IT'LL SAY WHERE I WENT NEXT. I ALWAYS LEFT MYSELF A NOTE. I NEVER READ THEM.",
+        "begin": "thaelins-verse",
+        "until": "thaelins-verse/ask"
+      },
+      {
+        "q": "The verses so far",
+        "a": "READ ME WHAT YOU'VE GOT.",
+        "use": { "type": "thaelin_verses" },
+        "when": "thaelins-verse/ask",
+        "until": "thaelins-verse"
+      },
+      {
+        "q": "Play The Long Way Home",
+        "a": "WITH PLEASURE. SIT.",
+        "use": { "type": "thaelin_verses" },
+        "when": "thaelins-verse"
       }
     ]
   },
@@ -3742,6 +3761,20 @@
       {
         "q": "About you",
         "a": "I BUILD THEM. BIRCH BARK OVER ASH RIBS, SEWN WITH SPRUCE ROOT, SEALED WITH PINE GUM. SIX WEEKS EACH. SOMEBODY BORROWED THE ONE I WAS PROUDEST OF AND LEFT IT AT THE LAKE. AGAIN."
+      },
+      {
+        "q": "A line off the dock?",
+        "a": "THE DOCK'S AS GOOD AS ANYWHERE, AND BELOW THE OTTER WEIR'S BETTER, IF THE OTTERS LET YOU. TROUT, MOSTLY. SILVERSCALE IF YOU'RE QUICK. AND AFTER DARK, NOW AND THEN, A MOON CARP COMES UP TO LOOK AT THE MOON. MORE OF THEM AT THE FULL.\n\nI'LL BUY WHAT YOU CATCH. SILVERSCALE OIL KEEPS MY SEAMS SWEET.",
+        "lead": "silverrun-fishing"
+      },
+      {
+        "q": "Sell her your catch",
+        "a": "LET'S SEE THEM. FENNICK GETS THE TROUT, I GET THE OIL, AND A MOON CARP GOES BACK TO FAELAN, WHO SAYS IT BRINGS THE LAMPS LUCK.",
+        "sell": [
+          { "id": "river_trout", "price": 12 },
+          { "id": "silverscale", "price": 30 },
+          { "id": "moon_carp", "price": 120 }
+        ]
       }
     ]
   },
@@ -3770,6 +3803,17 @@
       {
         "q": "About you",
         "a": "MY GREAT-GRANDMOTHER HOLLOWED THIS BOUGH OUT WITH A SPOON. THAT'S THE STORY. IT WAS PROBABLY A LOT OF SPOONS."
+      },
+      {
+        "q": "Thaelin?",
+        "a": "HE USED TO PLAY ONE SONG HERE THAT STOPPED THE WHOLE BOUGH. EVEN THALION WOKE UP. THEN ONE NIGHT HE COULDN'T REMEMBER THE WORDS, AND HE'S NOT PLAYED IT IN EIGHTY YEARS. ASK HIM ABOUT IT. GO ON. HE'S IN THE GLADE.",
+        "rumour": "thaelins-verse",
+        "until": "thaelins-verse"
+      },
+      {
+        "q": "Thaelin's song",
+        "a": "HE PLAYS IT EVERY NIGHT NOW. I'VE HAD TO CHANGE THE BOARD. THALION STAYS AWAKE FOR THE THIRD VERSE AND GOES BACK TO SLEEP FOR THE FOURTH.",
+        "when": "thaelins-verse"
       }
     ]
   },

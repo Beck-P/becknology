@@ -1461,6 +1461,109 @@
       }
     ]
   },
+  "thaelins-verse": {
+    "title": "Thaelin's Lost Verse",
+    "where": "Sylvara · down the Silverrun",
+    "reward": 350,
+    "invite": true,
+    "start": "Thaelin's best song has five verses, and he wrote each one down wherever it came to him, on whatever was there. He can remember where the first one was. After that he'd have to see the last one to know where he went next.",
+    "rumour": "Fennick at the Hollow Bough says Thaelin used to play one song that made the whole tavern go quiet, and hasn't played it in eighty years because he's forgotten the words.",
+    "begin": "ask",
+    "done": "Thaelin played The Long Way Home in the Heartwood Hall, all five verses and the refrain, from the pages you copied out for him. The queen listened with her eyes shut. Beckolas says he wasn't crying.",
+    "clues": [
+      {
+        "id": "ask",
+        "on": {
+          "world": "sylvara",
+          "label": "BARD"
+        },
+        "text": "Thaelin wrote his best song a verse at a time, all down the wood, eighty years ago. He remembers the first was up in the Boughs, at the lookout, because he'd climbed up there to be alone and wasn't.",
+        "hint": "Thaelin the bard sits on his stone seat in Elderglade. Ask him about his old song."
+      },
+      {
+        "id": "lookout",
+        "after": "ask",
+        "on": {
+          "world": "sylvara-boughs",
+          "label": "LOOKOUT"
+        },
+        "text": "Cut into the lookout's rail in the Boughs, under a century of moss: the first verse, and a note that the second came at Fennick's.",
+        "say": "THE CANOPY RUNS AWAY IN EVERY DIRECTION, GREEN ON GREEN, THE SILVERRUN A LINE THROUGH IT GOING DOWN TO THE LAKE. AND CUT SMALL INTO THE RAIL UNDER YOUR HAND, UNDER A CENTURY OF MOSS:\n\n  I CLIMBED UNTIL THE LEAVES RAN OUT\n  AND SAW THE WHOLE WOOD BREATHE:\n  A SILVER THREAD THROUGH ALL THAT GREEN,\n  AND HOME, SOMEWHERE BENEATH.\n\nUNDER IT, SMALLER: \"SECOND ONE CAME AT FENNICK'S. WROTE IT ON SOMETHING.\"",
+        "hint": "The first verse is at the lookout in the Boughs, high in the canopy: up the basket lift or the stair from the Rootmarket."
+      },
+      {
+        "id": "stage",
+        "after": "lookout",
+        "on": {
+          "world": "sylvara-tavern",
+          "label": "THE STAGE"
+        },
+        "text": "On the back of the chalk board by the Hollow Bough's stage: the second verse, and a note that the third is behind the falls.",
+        "say": "YOU TURN THE CHALK BOARD ROUND. ON THE BACK, UNDER EIGHTY YEARS OF \"THAELIN, IF HE TURNS UP\", IN CHALK SOMEBODY HAS BEEN VERY CAREFUL NOT TO RUB OUT:\n\n  FENNICK POURED AND THE FIRE TALKED\n  AND THE OWLS UPSTAIRS COMPLAINED;\n  I PLAYED UNTIL THE CANDLES DROWNED\n  AND ONLY FRIENDS REMAINED.\n\nAND SQUEEZED INTO THE CORNER: \"THIRD ONE - BEHIND THE FALLS. DON'T TELL TAMSIN I WENT OVER.\"",
+        "hint": "Thaelin wrote the second at Fennick's, the Hollow Bough: the tavern in the Boughs. Look by the stage."
+      },
+      {
+        "id": "falls",
+        "after": "stage",
+        "gate": "verse-falls",
+        "on": {
+          "world": "sylvara-fallcave",
+          "label": "THE CARVING"
+        },
+        "lack": "Not this way yet",
+        "gateText": "The way behind the falls isn't open yet.",
+        "text": "Scratched beside the old carving in the cave behind the falls: the third verse, and a note that the fourth is at the lake.",
+        "say": "THE OLD CARVING RUNS ALONG THE BACK WALL IN SILVER: A WELL, A RIVER, A FALL OF WATER, A LAKE, THE MOON. AND BESIDE IT, SCRATCHED WITH A KNIFE IN A HAND THAT ISN'T THE OLD ELVISH ONE:\n\n  BEHIND THE FALLING WATER'S ROAR\n  THE STONE REMEMBERS SLOW:\n  A WELL, A RIVER AND A MOON,\n  AND EVERY WAY TO GO.\n\n\"NEXT ONE AT THE LAKE. THE MOON WAS DOING THE THING.\"",
+        "hint": "The third is behind the falls, at the foot of the Silverrun: the ledge behind the water goes into a cave.",
+        "hintGate": "The third verse is behind the falls of the Silverrun. The wardens still have the way down past the shrine roped off; Tamsin at the canoe dock says it won't be long. Come back when it's open."
+      },
+      {
+        "id": "lake",
+        "after": "falls",
+        "gate": "verse-lake",
+        "on": {
+          "world": "sylvara-lake",
+          "label": "FIRE RING"
+        },
+        "lack": "Not this way yet",
+        "gateText": "The path to Mirror Lake isn't open yet.",
+        "text": "In charcoal on the flattest stone of the fire ring at Mirror Lake: the fourth verse, and a note that the last is in the Deepwood.",
+        "say": "ON THE FLATTEST STONE OF THE RING, IN CHARCOAL GONE HARD AS PAINT UNDER THE ASH OF A HUNDRED CLEAR NIGHTS:\n\n  THE MOON CAME UP, AND THEN CAME UP\n  AGAIN BENEATH THE SHORE;\n  I COULD NOT TELL WHICH ONE WAS TRUE\n  AND LOVED THEM BOTH THE MORE.\n\n\"LAST ONE'S IN THE DEEPWOOD. THE FROGS HAVE IT.\"",
+        "hint": "The fourth is at Mirror Lake, below the falls: where the elves sit by the water on clear nights.",
+        "hintGate": "The fourth verse is down at Mirror Lake, past the falls. Nobody can get down there yet; the elves say the path will be open soon."
+      },
+      {
+        "id": "deep",
+        "after": "lake",
+        "gate": "verse-deepwood",
+        "on": {
+          "world": "sylvara-deepwood",
+          "label": "THE POOL"
+        },
+        "lack": "Not this way yet",
+        "gateText": "The Deepwood isn't open yet.",
+        "text": "Cut deep in a root arching over the frogs' pool in the Deepwood: the fifth verse.",
+        "say": "A ROOT ARCHES OVER THE POOL LIKE A BRIDGE NOBODY USES. CUT DEEP IN ITS UNDERSIDE, WHERE YOU'D ONLY SEE IT LYING ON YOUR BACK ON THE STONES:\n\n  THE FROGS ARE COUNTING STARS AGAIN\n  AND LOSE COUNT EVERY NIGHT.\n  THEY NEVER MIND. THEY START AGAIN.\n  I THINK THE FROGS ARE RIGHT.\n\n\"THAT'S THE LOT. NOW I JUST HAVE TO REMEMBER WHERE I PUT THEM.\"\n\nA LANTERN FROG LIGHTS UP ON A LILY PAD AND STARTS COUNTING.",
+        "hint": "The last is in the Deepwood, at the pool where the Deep Run ends and the lantern frogs sing.",
+        "hintGate": "The last verse is in the Deepwood, at the frogs' pool where the Deep Run ends. The way in isn't open yet."
+      },
+      {
+        "id": "song",
+        "after": "*",
+        "on": {
+          "world": "sylvara-hall",
+          "label": "HARP"
+        },
+        "text": "Thaelin played the whole song in the Heartwood Hall.",
+        "say": "THAELIN IS WAITING AT THE HALL'S HARP WITH HIS LUTE, PRETENDING HE ISN'T. YOU READ HIM THE PAGES. HE NODS ALONG, THEN STOPS NODDING AND STARTS PLAYING.\n\n  I CLIMBED UNTIL THE LEAVES RAN OUT\n  AND SAW THE WHOLE WOOD BREATHE:\n  A SILVER THREAD THROUGH ALL THAT GREEN,\n  AND HOME, SOMEWHERE BENEATH.\n\n  FENNICK POURED AND THE FIRE TALKED\n  AND THE OWLS UPSTAIRS COMPLAINED;\n  I PLAYED UNTIL THE CANDLES DROWNED\n  AND ONLY FRIENDS REMAINED.\n\n  BEHIND THE FALLING WATER'S ROAR\n  THE STONE REMEMBERS SLOW:\n  A WELL, A RIVER AND A MOON,\n  AND EVERY WAY TO GO.\n\n  THE MOON CAME UP, AND THEN CAME UP\n  AGAIN BENEATH THE SHORE;\n  I COULD NOT TELL WHICH ONE WAS TRUE\n  AND LOVED THEM BOTH THE MORE.\n\n  THE FROGS ARE COUNTING STARS AGAIN\n  AND LOSE COUNT EVERY NIGHT.\n  THEY NEVER MIND. THEY START AGAIN.\n  I THINK THE FROGS ARE RIGHT.\n\n  SO TAKE THE LONG WAY HOME, MY HEART;\n  THE RIVER KNOWS THE WAY,\n  AND ALL WE LOSE UPON THE ROAD\n  IS ONLY GONE ASTRAY.\n\nTHE QUEEN LISTENS WITH HER EYES SHUT. BECKOLAS LOOKS HARD AT THE CEILING. WHEN IT ENDS THE HALL HUMS WITH IT FOR A LONG TIME AFTER, LIKE THE TREE IS LISTENING.",
+        "hint": "That's all five. Bring them to the Heartwood Hall, inside the Great Tree: Thaelin will meet you at the harp."
+      }
+    ],
+    "letter": {
+      "from": "elf_bard",
+      "text": "Friend of the long way,\n\nI've played it every night since at Fennick's, and he's had to put a new line on the board: TONIGHT - THAELIN. NO, REALLY. The owls have stopped complaining. One of them comes down to the window for the third verse.\n\nI've copied the pages out fair and pinned them inside my lute case, where I will absolutely lose them again. If I do, I know who to ask.\n\nThe frogs were right, by the way. You can always start again.\n\nThaelin"
+    }
+  },
   "gloaming-light": {
     "title": "The Gloaming's Light",
     "where": "Lumar \u00b7 the Midnight Sea",

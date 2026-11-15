@@ -9,7 +9,8 @@
  * everywhere, bluefin and rays off Sapphire, shrimp in Rose Cove, ember
  * snappers and coins from the Heron off Crimson, moon eels round Midnight —
  * and star pearls in the moon pool; perch and the odd sun carp in the farm pond
- * on Verdance, char and frostfin through the ice on Fellhaven's pond, sump eels off the quays under Arcadia. Old boots.
+ * on Verdance, char and frostfin through the ice on Fellhaven's pond, sump eels off the quays under Arcadia, trout and
+ * silverscale off the Silverrun's canoe dock on Sylvara (and a moon carp after dark). Old boots.
  * Messages in bottles. And from a boat at sea (js/sloop.js: slow her right
  * down and cast a line): each sea's own deep water (`sea_<pal>` pools), with
  * two fish only a boat finds — the spore tuna and, deep down, the lantern angler.
@@ -46,6 +47,8 @@ var BridgeFishing = (function () {
     ice:      [['arctic_char', 62], ['frostfin', 18], ['old_boot', 20]],
     // under Arcadia, off the Sump's quays and the drowned station's platform (A3): eels, the city's leavings, now and then a pearl
     sump:     [['sump_eel', 44], ['scrap_metal', 20], ['circuit', 12], ['old_boot', 14], ['chrome_part', 4], ['sump_pearl', 4]],
+    // Sylvara's Silverrun, off the canoe dock and below the otter weir (Y7): trout, silverscale, and after dark a moon carp
+    river:    [['river_trout', 52], ['silverscale', 24], ['moon_carp', 3], ['old_boot', 14], ['bottle', 7]],
     // out at sea, from the boat: deeper water, bigger fish, each sea's rare one more often - and its legend
     sea_emerald:  [['silverfin', 30], ['spore_tuna', 22], ['bluefin', 12], ['glowtail', 10], ['jade_marlin', 7], ['lantern_angler', 3], ['old_mossback', 2.5], ['old_boot', 6], ['bottle', 8]],
     sea_sapphire: [['bluefin', 28], ['spore_tuna', 20], ['sapphire_ray', 12], ['silverfin', 14], ['glass_swordfish', 7], ['lantern_angler', 4], ['crownfin', 2.5], ['old_boot', 5], ['bottle', 8]],
@@ -73,7 +76,7 @@ var BridgeFishing = (function () {
     coral_dragonet: [1.55, 0.85, 8, 18], cinder_grouper: [1.35, 0.6, 60, 150], starfin: [1.65, 0.8, 30, 60], jade_marlin: [1.7, 0.7, 150, 320],
     glass_swordfish: [1.65, 0.75, 140, 300], old_mossback: [1.45, 0.75, 240, 310], dawnveil: [1.5, 0.85, 280, 360], emberjaw: [1.6, 0.85, 160, 210],
     crownfin: [1.55, 0.8, 300, 380], nightglass: [1.5, 0.95, 180, 230], pond_perch: [0.7, 0.25, 12, 28], sun_carp: [1.2, 0.55, 30, 70], arctic_char: [0.9, 0.35, 25, 60], frostfin: [1.4, 0.6, 8, 16], spore_tuna: [1.4, 0.5, 60, 140], lantern_angler: [1.5, 0.75, 30, 70], old_boot: [0.25, 0.0, 26, 31],
-    sump_eel: [1.3, 0.6, 40, 95], scrap_metal: [0.2, 0.0, 10, 30], circuit: [0.25, 0.05, 8, 14], chrome_part: [0.4, 0.1, 10, 30], sump_pearl: [1.4, 0.7, 1, 2], heron_coin: [0.3, 0.05, 3, 4], bottle: [0.35, 0.05, 20, 30]
+    sump_eel: [1.3, 0.6, 40, 95], scrap_metal: [0.2, 0.0, 10, 30], circuit: [0.25, 0.05, 8, 14], chrome_part: [0.4, 0.1, 10, 30], sump_pearl: [1.4, 0.7, 1, 2], river_trout: [0.95, 0.35, 20, 45], silverscale: [1.3, 0.55, 15, 32], moon_carp: [1.35, 0.65, 40, 85], heron_coin: [0.3, 0.05, 3, 4], bottle: [0.35, 0.05, 20, 30]
   };
   var BOTTLES = [
     "IF YOU FIND THIS, I AM STILL ON THE STACK OFF CRIMSON. BRING ROPE. - H.M.",
@@ -124,10 +127,11 @@ var BridgeFishing = (function () {
     moonpool: { w: ['#2e3e62', '#223252', '#16223c', '#0a1222'], s: '#a8b8e8', g: '#f4f4ff' },
     pond:     { w: ['#3a7a70', '#2e655c', '#22504a', '#183a34'], s: '#8ad0c0', g: '#fffbe0', day: true },
     ice:      { w: ['#1e4a6a', '#163a58', '#0e2a44', '#081a2e'], s: '#a8d4ea', g: '#e8f8ff', ice: true },
-    sump:     { w: ['#0e3a3c', '#0a2a2e', '#061c20', '#020c10'], s: '#3ab8b0', g: '#7af4e8', under: true }   // black water lit teal from under
+    sump:     { w: ['#0e3a3c', '#0a2a2e', '#061c20', '#020c10'], s: '#3ab8b0', g: '#7af4e8', under: true },  // black water lit teal from under
+    river:    { w: ['#3a6a62', '#2a544e', '#1c3c38', '#0e2422'], s: '#a8e0d8', g: '#f0fff8' }               // the Silverrun at dusk: the Moonwell's silver-green
   };
   var POOL_SEA = { harbour: 'emerald', sea_emerald: 'emerald', sapphire: 'sapphire', sea_sapphire: 'sapphire', rose: 'rose', sea_rose: 'rose',
-                   crimson: 'crimson', sea_crimson: 'crimson', midnight: 'midnight', sea_midnight: 'midnight', moonpool: 'moonpool', pond: 'pond', ice: 'ice', sump: 'sump' };
+                   crimson: 'crimson', sea_crimson: 'crimson', midnight: 'midnight', sea_midnight: 'midnight', moonpool: 'moonpool', pond: 'pond', ice: 'ice', sump: 'sump', river: 'river' };
   function look() { return WATER[POOL_SEA[st.pool] || 'emerald']; }
   var TIER_COL = ['#e8e0c0', '#80c8ff', '#d8a0ff', '#ffd060'];
 
@@ -143,11 +147,17 @@ var BridgeFishing = (function () {
     if (/^sea_/.test(pool) && typeof BridgeBloom !== 'undefined' && BridgeBloom.on() > 0.3) sky *= 1.25;          // and on a spore bloom night, from the boat
     var list = (POOLS[pool] || POOLS.harbour).map(function (e) {
       var rare = tierOf(e[0]) >= 2;
-      return [e[0], e[1] * (rare && power > 0.7 ? 1.6 : 1) * (rare && lucky ? 1.2 : 1) * (rare && rod() ? 1.1 : 1) * (rare ? sky : 1) * (rare && pearl() ? 1.3 : 1) * (rare && typeof BridgeCodex !== 'undefined' && BridgeCodex.bonus('legends') ? 1.15 : 1)];
+      return [e[0], e[1] * (e[0] === 'moon_carp' ? moonCarp() : 1) * (rare && power > 0.7 ? 1.6 : 1) * (rare && lucky ? 1.2 : 1) * (rare && rod() ? 1.1 : 1) * (rare ? sky : 1) * (rare && pearl() ? 1.3 : 1) * (rare && typeof BridgeCodex !== 'undefined' && BridgeCodex.bonus('legends') ? 1.15 : 1)];
     });
     var total = list.reduce(function (a, e) { return a + e[1]; }, 0), r = Math.random() * total;
     for (var i = 0; i < list.length; i++) { r -= list[i][1]; if (r <= 0) return list[i][0]; }
     return list[0][0];
+  }
+  // the moon carp comes up to the moon: hardly ever by day, twice as often after dark, four times on a full-moon night
+  function moonCarp() {
+    var k = typeof BridgeClock !== 'undefined' && BridgeClock.sky ? BridgeClock.sky('sylvara') : null, dark = k && k.sun < 0.3;
+    var full = dark && BridgeClock.moon && BridgeClock.moon().full;
+    return full ? 4 : dark ? 2 : 0.4;
   }
   function sfx(n) { if (n && typeof BridgeAudio !== 'undefined') BridgeAudio.sfx(n); }
   // the greenheart rod (made at your workshop, js/workshop.js), carried: a quicker bite, more room on the reel
@@ -738,8 +748,8 @@ var BridgeFishing = (function () {
     BridgeCharacter.setFacing(face);
     var pool = (inter.pool || 'harbour');
     cast = { px: px + 0.5, py: py + 0.5, dx: dx, dy: dy, face: face, side: Math.random() - 0.5,
-             reach: pool === 'ice' ? [Math.hypot(inter.x - px, inter.y - py), 0] : pool === 'pond' ? [1.3, 1.3] : [1.7, 2.6],
-             wz: pool === 'ice' ? 0.05 : pool === 'pond' ? 0.14 : 0.24 };       // how far below the floor the surface lies (tiles)
+             reach: pool === 'ice' ? [Math.hypot(inter.x - px, inter.y - py), 0] : pool === 'pond' || pool === 'river' ? [1.3, 1.3] : [1.7, 2.6],
+             wz: pool === 'ice' ? 0.05 : pool === 'pond' || pool === 'river' ? 0.14 : 0.24 };       // how far below the floor the surface lies (tiles)
   }
   function lerp(a, b, t) { return a + (b - a) * t; }
   function worldItems(world, offX, offY, ts, now) {
@@ -834,7 +844,7 @@ var BridgeFishing = (function () {
     c.restore();
   }
   if (typeof BridgeWorld !== 'undefined' && BridgeWorld.registerSceneHooks) {
-    ['lumar', 'verdance', 'hoarfell', 'arcadia'].forEach(function (t) { BridgeWorld.registerSceneHooks(t, { items: worldItems }); });
+    ['lumar', 'verdance', 'hoarfell', 'arcadia', 'sylvara'].forEach(function (t) { BridgeWorld.registerSceneHooks(t, { items: worldItems }); });
   }
 
   // for the journal: what you've caught, the messages you've read
@@ -845,7 +855,7 @@ var BridgeFishing = (function () {
     };
   }
 
-  return { decorate: decorate, open: open, close: close, journal: journal, lampPull: lampPull, _state: function () { return st; }, _cast: function () { return cast; },
+  return { decorate: decorate, open: open, close: close, journal: journal, lampPull: lampPull, _pick: pick, _state: function () { return st; }, _cast: function () { return cast; },
            size: function (id) { var f = FIGHT[id]; return f ? [f[2], f[3]] : null; },       // the sizes it comes in, cm (js/aquarium.js)
            drawLine: function (c, k, hand, offX, offY, ts, now, bang) { if (st && st.t0 != null) drawLine(c, k, hand, offX, offY, ts, now, bang); },
            isOpen: function () { return !!st; } };

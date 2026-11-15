@@ -901,8 +901,10 @@ var BridgeInteractions = (function () {
 
   // Dialog text was hard-wrapped for a narrow monospace box; join the lines
   // of each paragraph so it wraps to the dialog (lists and labels stay put).
+  // A paragraph that starts with two spaces is verse (Thaelin's song, js/fardeep.js): its lines stay as they are.
   function reflow(t) {
     return String(t || '').replace(/\\n/g, '\n').split(/\n\s*\n/).map(function (para) {
+      if (/^ {2}\S/.test(para)) return para.split('\n').map(function (L) { return L.trim(); }).join('\n');
       var lines = para.split('\n'), out = lines[0] || '';
       for (var i = 1; i < lines.length; i++) {
         var L = lines[i];
