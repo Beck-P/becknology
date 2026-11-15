@@ -134,6 +134,47 @@
     }
   },
 
+  "blessing_fleet": {
+    "name": "The Blessing of the Fleet",
+    "planet": "lumar", "season": "spring", "world": "lumar", "place": "Diggen's Point",
+    "line": "Mother Coralie blesses the boats, and the first derby of the year",
+    "poster": "THE BLESSING OF THE FLEET AT DIGGEN'S POINT, THE LAST WEEKEND OF SPRING. MOTHER CORALIE BLESSES THE BOATS; BESS KEEPS THE DERBY BOARD. ANY FISH OFF LUMAR, JUDGED FOR ITS KIND - A FAT SILVERFIN BEATS A THIN TUNA.",
+    "hours": ["morning", "evening"], "music": "fair",
+    "props": [["derby_board", 12, 9], ["stall", 10, 6], ["flags", 8, 8], ["flags", 14, 9]],
+    "contest": {
+      "kind": "derby", "score": "kind", "at": [12, 9], "label": "DERBY BOARD", "judge": "Bess",
+      "title": "the Blessing derby", "judging": "THE FINEST FISH LANDED ON LUMAR THIS BLESSING, AGAINST THE BIGGEST OF ITS KIND. BESS CHALKS THEM UP.",
+      "bring": "Fish anywhere on Lumar while it's on - off a pier, off a boat. It's scored against its own kind, so a fat silverfin beats a thin tuna.",
+      "rivals": [["Salt Annie", "silverfin", 62, 92], ["Cutter Joss", "bluefin", 55, 90], ["Old Pell", "harbour_crab", 50, 86]],
+      "prizes": [[600, "blue_rosette"], [250, "red_rosette"], [100, "yellow_rosette"]]
+    },
+    "stall": { "at": [10, 6], "label": "BLESSING STALL", "items": [{ "id": "saffron_bun", "price": 4 }, { "id": "sea_biscuit", "price": 3 }, { "id": "cider", "price": 4 }] },
+    "crowd": {
+      "coralie": [11, 10, "down"], "annie": [10, 9, "right"], "joss": [8, 10, "up"]
+    }
+  },
+
+  "bloom_night": {
+    "name": "Bloom Night",
+    "planet": "lumar", "season": "summer", "when": "bloom", "world": "lumar-rose", "place": "Rose Cove",
+    "line": "Glass on the tables, Master Stavrou judging, and the sea alight if it blooms",
+    "poster": "BLOOM NIGHT ON ROSE COVE: A NIGHT THE SEA BLOOMS THIS SUMMER, OR IF IT WON'T, THE LAST WEEKEND OF IT. THE GLASS SHOW: FLOATS, MOONGLASS, ANYTHING THAT CATCHES THE BLOOM. MASTER STAVROU JUDGES, AND HE'S SEEN A LOT OF GLASS.",
+    "hours": ["sunset", "small"], "music": "tide",
+    "props": [["table", 20, 15], ["table", 21, 15], ["floats", 18, 15], ["floats", 23, 15], ["stall", 24, 17]],
+    "contest": {
+      "kind": "show", "at": [20, 15], "label": "GLASS TABLE", "judge": "Master Stavrou",
+      "title": "the glass show", "judging": "MASTER STAVROU HOLDS IT UP AGAINST THE GLOWING SEA AND TURNS IT, SLOWLY, LOOKING FOR THE BUBBLE.",
+      "bring": "Bring glass you blew at the Sapphire Glassworks - a float scores best - or moonglass, roseite, sea glass, anything that catches the bloom.",
+      "entries": { "star_pearl": 12, "glass_float": 10, "moonglass": 8, "glowtail": 6, "roseite": 5, "sapphire_crystal": 4, "sea_glass": 3 },
+      "rivals": [["Lyra", "glass_float"], ["Pell", "roseite"], ["Mira Quell", "sea_glass"], ["Liesl Marrow", "glowtail"]],
+      "prizes": [[600, "blue_rosette"], [250, "red_rosette"], [100, "yellow_rosette"]]
+    },
+    "stall": { "at": [24, 17], "label": "BLOOM STALL", "items": [{ "id": "spore_sherbet", "price": 4 }, { "id": "lantern_cake", "price": 6 }, { "id": "cider", "price": 4 }] },
+    "crowd": {
+      "glass_stavrou": [20, 14, "down"], "glass_ione": [21, 14, "down"], "mira": [24, 16, "down"], "pell": [19, 17, "up"], "liesl": [22, 17, "up"]
+    }
+  },
+
   "lantern_tide": {
     "name": "Lantern Tide",
     "planet": "lumar", "season": "autumn", "world": "lumar-crown", "place": "Crownhaven quay",
