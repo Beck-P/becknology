@@ -375,7 +375,7 @@ var BridgeLumarDeep = (function () {
   if (has('BridgeItems') && BridgeItems.add) {
     BridgeItems.add({
       silk_line: { name: 'Silk Line', desc: 'A spool of line finer than a hair, from the tackle booth on the Old Bridge. Bend it on and the big ones never see it coming.',
-                   type: 'tool', stackable: true, draw: lineIcon, value: 8, works: 'The rare fish come up more for a Lumar day (8 hours)', onUse: useLine },
+                   type: 'tool', stackable: true, draw: lineIcon, value: 8, onUse: useLine },
       toffee_ship: { name: 'Toffee Ship', desc: 'A little ship of amber toffee on a stick, sails of spun sugar, in a merchant house\'s colours. From the sweet booth on the Old Bridge.',
                      type: 'gift', stackable: true, draw: toffeeIcon, value: 2, effects: { energy: 8 } }
     });

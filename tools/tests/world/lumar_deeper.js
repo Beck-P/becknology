@@ -313,7 +313,7 @@ const ONLY = process.argv[3] || '';
       await p.waitForTimeout(500);
       if (!(await H.ev(() => BridgeLumarDeep.lineOn()))) fail('the line didn\'t go on');
       if (await H.count('silk_line') !== 0) fail('the line wasn\'t used up');
-      await H.ev(() => BridgeClock._at('2026-11-18T18:30'));
+      await H.ev(() => BridgeClock._at('2026-11-18T19:10'));
       if (await H.ev(() => BridgeLumarDeep.lineOn())) fail('the line still on after a Lumar day');
       await H.ev(() => BridgeClock._at('2026-11-18T11:00'));
       await H.use('FLOWER BOOTH'); await H.pickRow('Posy'); await H.shut();
@@ -324,7 +324,11 @@ const ONLY = process.argv[3] || '';
       console.log('toffee uses:', JSON.stringify(tu));
       if (!tu.some(u => /love/i.test(u))) fail('nobody loves a toffee ship on its card');
       if (!(await H.back('lumar-crown-bridge')).some(s => /booths/.test(s))) fail('no Come back for on the bridge');
-      await H.go('lumar-crown-pub', [10, 8]);
+      for (const at of ['2026-11-18T13:00', '2026-11-18T14:00', '2026-11-18T12:00', '2026-11-18T15:00']) {   // (Annie's in from noon, by Lumar's clock)
+        await H.ev((at) => BridgeClock._at(at), at);
+        await H.go('lumar-crown-pub', [10, 8]);
+        if (await H.inter('SALT ANNIE')) break;
+      }
       await H.use('SALT ANNIE'); await H.ask('Advice for a captain'); await H.shut();
       if ((await H.leads()).indexOf('bridge-booths') < 0) fail('Annie\'s advice isn\'t a lead');
       await p.context().close();

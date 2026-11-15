@@ -878,6 +878,15 @@ interactions of type `lumardeep` (`act`), set by `decorate` on the labels alread
   guess a day. Right: one heron coin from the hoard (Percy, Pip and the Cabinet want them). Wrong: she tells you what
   it was. Led to by Corra Vane's *The dragon* (lead `dragon-riddle`), *Next up* once you've answered one and a new
   day's come, *Come back for* in the cave. **Two pilots** read the same riddle; each guesses and is paid their own.
+- **L4 · The Old Bridge's booths open** (`BOOTHS`, matched by label as `lumar-crown-bridge` loads — never in its scene
+  or world JSON, which a re-render owns; today FLOWER BOOTH 10, 13, TACKLE BOOTH 39, 13, SWEET BOOTH 49, 13, served from
+  the lane's row 12). Each keeps its old words and gains a keeper in the text (no sprite) and a row to buy: the tackle
+  booth's **silk line** (`silk_line`, 30: *use* it from your pack and for 8 hours — a Lumar day — the rare fish come up a
+  quarter more often wherever you fish: js/fishing.js's rare weights ask `lineOn()`; another use adds 8 hours), the
+  flower booth's **posy** (10, as Nell's), the sweet booth's **toffee ship** (`toffee_ship`, 6, a new item drawn in code:
+  +8 energy eaten, loved by both Pips and Gull Molly, liked by the crier — js/gifts.js). The items are `BridgeItems.add`ed
+  here, their uses in `USES`. Led to by Salt Annie's *Advice for a captain* (lead `bridge-booths`), and *Come back for*
+  on the bridge. **Two pilots**: each buys their own; a line is the user's own.
 
 ### The Peddler, magic things and the curios
 `js/magic.js` (BridgeMagic; localStorage `bridge_magic`). **Wendel Crane, Peddler of Oddments** (`npc-peddler`, a witch-hatted Blender NPC; people.json `peddler`, found by the label PEDDLER in any of his worlds) sets up somewhere different each day (`PLACES`, by the date: the Market Square, the District street, Verdance's farm road, Fellhaven, Sapphire's quay, Enigma's docking bay) — added to that world's interactions and actors as it loads. *What have you got?* opens his wares (`BridgeInteractions.choose`):
