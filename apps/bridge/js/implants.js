@@ -87,6 +87,7 @@ var BridgeImplants = (function () {
   };
   var SHOPS = {
     street:   { title: 'DOC SALLOW\'S CHROME', who: 'DOC SALLOW', tiers: ['street', 'trophy'], tune: 0,
+                steady: { takes: { chrome_part: 2, circuit: 1 }, days: 7 },   // A5: parts from the Undercity, half the glitches for a week
                 line: 'A RIPPER IN A STAINED APRON, A JEWELLER\'S LOUPE IN ONE EYE. "CASH, NO NAMES, NO REFUNDS. IT MIGHT HICCUP. EVERYTHING DOWN HERE HICCUPS."' },
     clinic:   { title: 'CHROME CLINIC — IMPLANT SUITE', who: 'DR. NAKURI', tiers: ['clinic'], tune: 60,
                 line: 'NAKURI PULLS UP A SCHEMATIC OF YOU, TURNING SLOWLY. "CLINIC GRADE: FITTED, TESTED, GUARANTEED. AND IF YOU\'VE LET SOMEONE DOWNSTAIRS PUT JUNK IN YOU, I CAN TUNE IT."' },
@@ -173,7 +174,26 @@ var BridgeImplants = (function () {
   function tick() {
     if (typeof document !== 'undefined' && document.hidden) return;
     var p = (fighting() ? 1 / 12 : 1 / 48);
-    SLOTS.forEach(function (k) { if (glitchy(k) && Math.random() < p) glitch(k); });
+    SLOTS.forEach(function (k) { if (glitchy(k) && Math.random() < p * (steadied(k) ? 0.5 : 1)) glitch(k); });
+  }
+  // Doc Sallow's steadying (a shop's `steady: { takes: { id: n }, days }`, spec-deeper-worlds A5): parts from your pack
+  // instead of coins, and a street piece glitches half as often until `steady` (a time) on its slot runs out
+  function steadied(slot) { var s = state.slots[slot]; return !!(s && s.steady && s.steady > Date.now() && glitchy(slot)); }
+  function daysLeft(slot) { var s = state.slots[slot]; return s && s.steady ? Math.max(0, Math.ceil((s.steady - Date.now()) / 86400000)) : 0; }
+  function partsShort(take) {
+    var inv = typeof BridgeInventory !== 'undefined' ? BridgeInventory : null, out = [];
+    Object.keys(take).forEach(function (id) { var n = inv ? inv.getCount(id) : 0; if (n < take[id]) out.push((take[id] - n) + ' ' + ((typeof BridgeItems !== 'undefined' && BridgeItems.get(id) || {}).name || id)); });
+    return out;
+  }
+  function steady(slot, def) {
+    if (!glitchy(slot)) return { ok: false, reason: 'steady' };
+    if (steadied(slot)) return { ok: false, reason: 'already' };
+    var short = partsShort(def.takes);
+    if (short.length) return { ok: false, reason: 'parts', short: short };
+    Object.keys(def.takes).forEach(function (id) { BridgeInventory.removeItem(id, def.takes[id]); });
+    state.slots[slot].steady = Date.now() + (def.days || 7) * 86400000;
+    changed();
+    return { ok: true };
   }
   if (typeof setInterval !== 'undefined') setInterval(tick, TICK);
 
@@ -189,6 +209,7 @@ var BridgeImplants = (function () {
     if (has(id)) return Promise.resolve({ ok: false, reason: 'have' });
     var inv = typeof BridgeInventory !== 'undefined' ? BridgeInventory : null;
     if (c.item && !(opts && opts.free) && !(inv && inv.getCount(c.item))) return Promise.resolve({ ok: false, reason: 'item' });
+    if (opts && opts.deposit && !(inv && inv.getCount(opts.deposit))) return Promise.resolve({ ok: false, reason: 'item' });
     var price = opts && opts.free ? 0 : opts && opts.price != null ? opts.price : c.price;
     return pay(price, 'implant:' + id).then(function (r) {
       if (!r.ok) return { ok: false, reason: r.reason || 'coins' };
@@ -285,8 +306,19 @@ var BridgeImplants = (function () {
             });
           } });
       }
+      if (S.steady && glitchy(slot)) {
+        var on = steadied(slot), need = Object.keys(S.steady.takes).map(function (id) { var n = S.steady.takes[id]; return n + ' ' + ((typeof BridgeItems !== 'undefined' && BridgeItems.get(id) || {}).name || id) + (n > 1 ? 's' : ''); }).join(' and ');
+        rows.push({ label: 'Steady: ' + inNow.name, sub: on ? SLOT_NAME[slot] + ' · steadied: half the glitches for ' + daysLeft(slot) + ' more day' + (daysLeft(slot) === 1 ? '' : 's')
+            : SLOT_NAME[slot] + ' · half the glitches for a week, for ' + need.toLowerCase(), note: on ? 'Steady' : 'parts', disabled: on,
+          draw: icon(slot, TIER_COL.street), pick: function () {
+            var r = steady(slot, S.steady);
+            if (!r.ok) return say(S.who, r.reason === 'parts' ? '"PARTS, NOT PROMISES. I NEED ' + need.toUpperCase() + '." YOU\'RE SHORT ' + r.short.join(' AND ').toUpperCase() + '.' : fail(r));
+            if (typeof BridgeAudio !== 'undefined') BridgeAudio.sfx('success');
+            say(S.who, 'HE TAKES THE PARTS WITHOUT LOOKING, OPENS YOUR ' + inNow.name.toUpperCase() + ' WITH A BUTTER KNIFE AND SWAPS WHAT\'S WORN. "THAT\'LL HOLD A WEEK. MOSTLY." (HALF THE GLITCHES FOR SEVEN DAYS)');
+          } });
+      }
     });
-    var have = SLOTS.filter(function (k) { return itemIn(k); }).map(function (k) { var c = itemIn(k); return c.name + (glitchy(k) ? ' (glitchy)' : ''); });
+    var have = SLOTS.filter(function (k) { return itemIn(k); }).map(function (k) { var c = itemIn(k); return c.name + (glitchy(k) ? (steadied(k) ? ' (steadied)' : ' (glitchy)') : ''); });
     BridgeInteractions.choose({
       title: S.title,
       text: S.line + (have.length ? '\n\nIN YOU NOW: ' + have.join(', ').toUpperCase() + '.' : ''),
@@ -295,25 +327,30 @@ var BridgeImplants = (function () {
   }
   function confirm(S, opts, id) {
     var c = CATALOG[id], pr = priceIn(S, c);
+    // a shop's deposit (`deposit: { item, off, sub }`: Iris Kade takes a chrome part off a designer piece) — not on top of a favour
+    var dep = S.deposit && !pr.favour && typeof BridgeInventory !== 'undefined' && BridgeInventory.getCount(S.deposit.item) > 0 && typeof BridgeItems !== 'undefined' ? BridgeItems.get(S.deposit.item) : null;
     BridgeInteractions.choose({
       title: c.name, text: c.blurb.toUpperCase() + '\n\n' + perkLine(c.perk).toUpperCase() + (c.tier === 'street' ? '\n\nSTREET CHROME: IT WILL GLITCH NOW AND THEN.' : '') +
         (itemIn(c.slot) ? '\n\nIT TAKES THE PLACE OF YOUR ' + itemIn(c.slot).name.toUpperCase() + '.' : '') +
         (pr.favour ? '\n\n' + (S.favour.line || 'AT CLINIC PRICE, AS A FAVOUR. ONCE.') : ''),
-      rows: [{ label: 'Put it in', sub: TIER_NAME[c.tier] + (pr.favour ? ' · ' + S.favour.name : ''), note: pr.price + ' coins', draw: icon(c.slot, TIER_COL[c.tier]), pick: function () {
-        install(id, { price: pr.price, favour: pr.favour }).then(function (r) {
+      rows: [{ label: 'Put it in', sub: TIER_NAME[c.tier] + (pr.favour ? ' · ' + S.favour.name : ''), note: pr.price + ' coins', draw: icon(c.slot, TIER_COL[c.tier]), pick: function () { put({ price: pr.price, favour: pr.favour }); } }]
+        .concat(dep ? [{ label: 'Put it in, a ' + dep.name.toLowerCase() + ' down', sub: S.deposit.sub || ('a ' + dep.name.toLowerCase() + ' from your pack as a deposit'), note: (pr.price - S.deposit.off) + ' coins', icon: S.deposit.item,
+          pick: function () { put({ price: pr.price - S.deposit.off, deposit: S.deposit.item }); } }] : []),
+      buttons: [{ label: 'Back', act: function () { open(opts); } }],
+      closeLabel: 'Not today'
+    });
+    function put(o) {
+        install(id, o).then(function (r) {
           if (!r.ok) return say(S.who, fail(r));
           if (typeof BridgeAudio !== 'undefined') BridgeAudio.sfx('success');
           say(S.who, c.tier === 'street' ? 'A NEEDLE, A BURN, A LONG MINUTE YOU WON\'T REMEMBER. THEN YOU\'RE UP, AND THE ' + c.name.toUpperCase() + ' IS PART OF YOU. MOSTLY.'
             : 'A HUM, A WARMTH, THE ROOM GOES SOFT FOR A MOMENT. WHEN IT COMES BACK, THE ' + c.name.toUpperCase() + ' FEELS LIKE IT WAS ALWAYS THERE.');
         });
-      } }],
-      buttons: [{ label: 'Back', act: function () { open(opts); } }],
-      closeLabel: 'Not today'
-    });
+    }
   }
 
   return { SLOTS: SLOTS, CATALOG: CATALOG, SHOPS: SHOPS, TIERS: TIER_NAME,
            open: open, shop: shop, register: register, install: install, remove: remove, tune: tune,
            installed: installed, has: has, tier: tier, bonus: bonus, damage: damage, crit: crit, absorb: absorb, speed: speed,
-           perkLine: perkLine, favourOpen: function (shopId) { return favourOpen(SHOPS[shopId]); }, priceIn: function (shopId, id) { return priceIn(SHOPS[shopId], CATALOG[id]); }, _glitch: glitch, _reset: function () { state = { slots: {} }; off = {}; whiff = false; changed(); } };
+           perkLine: perkLine, favourOpen: function (shopId) { return favourOpen(SHOPS[shopId]); }, priceIn: function (shopId, id) { return priceIn(SHOPS[shopId], CATALOG[id]); }, steadied: steadied, steady: function (slot) { return steady(slot, SHOPS.street.steady); }, _glitch: glitch, _tick: tick, _reset: function () { state = { slots: {} }; off = {}; whiff = false; changed(); } };
 })();

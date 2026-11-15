@@ -18,6 +18,8 @@ const ONLY = process.argv[3] || '';
     p.on('console', m => { if (m.type() === 'error' && !/Failed to load resource|supabase/i.test(m.text())) console.log('CONSOLE', m.text().slice(0, 200)); });
     await p.route(/supabase-js|supabase\.co|@supabase/, r => r.abort());
     await p.addInitScript(() => {
+      if (sessionStorage.getItem('ad_fresh')) return;                // once: a reload keeps what was saved
+      sessionStorage.setItem('ad_fresh', '1');
       ['bridge_quests', 'bridge_quest_meta', 'bridge_implants', 'bridge_under', 'bridge_letters', 'bridge_arcadia_deep', 'bridge_fish'].forEach(k => localStorage.removeItem(k));
       localStorage.setItem('bridge_ship_location', 'arcadia');
     });
@@ -184,6 +186,73 @@ const ONLY = process.argv[3] || '';
     await p.waitForTimeout(600);
     await p.screenshot({ path: OUT + '/ad_fish_platform.png' });
     await H.ev(() => BridgeFishing.close());
+    await b.contexts()[0].close();
+  }
+
+  // ---- A5 · Chrome you can tune -------------------------------------------------------------------------------------------
+  // street chrome in at Sallow's chair, steadied there for two chrome parts and a circuit (not without them), half the
+  // glitches for a week and still so after a reload; at LUMEN a chrome part down off a designer piece
+  if (part('tune')) {
+    const H = await open(), p = H.p;
+    await H.go('arcadia-chopshop', [6, 8]);
+    await H.use('THE CHAIR');
+    await H.pickRow('Scrap Knuckles'); await H.pickRow('Put it in'); await H.shut();
+    if (!await H.ev(() => BridgeImplants.has('scrap_knuckles'))) fail('no knuckles in');
+    await H.use('THE CHAIR');
+    const r0 = await H.rows();
+    console.log('the chair:', JSON.stringify(r0.filter(r => /Steady/.test(r))));
+    if (!r0.some(r => /Steady: Scrap Knuckles.*2 chrome parts and 1 circuit board/.test(r))) fail('no steadying row');
+    await H.pickRow('Steady: Scrap Knuckles');
+    if (!/PARTS, NOT PROMISES/.test(await H.said())) fail('steadied with no parts');
+    await H.shut();
+    if (await H.ev(() => BridgeImplants.steadied('arm'))) fail('steadied with no parts');
+    const raw = await H.ev(() => { const real = Math.random, fx = BridgeFX.spawnFloatingText; let n = 0; BridgeFX.spawnFloatingText = function () { n++; };
+      Math.random = () => 0.015; try { BridgeImplants._tick(); return n; } finally { Math.random = real; BridgeFX.spawnFloatingText = fx; } });
+    if (raw !== 1) fail('an unsteadied arm didn\'t glitch on a roll of 0.015: ' + raw);
+    await H.ev(() => { BridgeInventory.addItem('chrome_part', 3); BridgeInventory.addItem('circuit', 1); });
+    await H.use('THE CHAIR'); await H.pickRow('Steady: Scrap Knuckles');
+    if (!/HALF THE GLITCHES/.test(await H.said())) fail('no word of the steadying');
+    await p.screenshot({ path: OUT + '/ad_tune_done.png' });
+    await H.shut();
+    if (!await H.ev(() => BridgeImplants.steadied('arm'))) fail('not steadied');
+    if (await H.count('chrome_part') !== 1 || await H.count('circuit') !== 0) fail('the parts not taken: ' + await H.count('chrome_part') + ' chrome, ' + await H.count('circuit') + ' circuit');
+    const days = await H.ev(() => (BridgeImplants.installed().arm.steady - Date.now()) / 86400000);
+    if (days < 6.9 || days > 7.01) fail('steadied for ' + days + ' days');
+    await H.use('THE CHAIR');
+    const r1 = await H.rows();
+    if (!r1.some(r => /steadied: half the glitches for 7 more days/.test(r))) fail('the chair doesn\'t say it\'s steadied: ' + JSON.stringify(r1));
+    await p.screenshot({ path: OUT + '/ad_tune_chair.png' });
+    await H.shut();
+    const uses = await H.ev(() => BridgeUses.lines('chrome_part').map(l => l.t.replace(/<[^>]+>/g, '')));
+    console.log('chrome part, uses:', JSON.stringify(uses));
+    if (!uses.some(t => /Doc Sallow/.test(t)) || !uses.some(t => /Iris Kade/.test(t))) fail('the chrome part\'s uses');
+    // the glitch rate, halved: the tick's roll under a stubbed Math.random
+    // (a roll between half the odds and the odds: a glitch untuned, none steadied — about once in four minutes walking, now eight)
+    const rolls = await H.ev(() => { const real = Math.random, fx = BridgeFX.spawnFloatingText; let n = 0; BridgeFX.spawnFloatingText = function () { n++; };
+      Math.random = () => 0.015; try { BridgeImplants._tick(); const steadyN = n; return steadyN; } finally { Math.random = real; BridgeFX.spawnFloatingText = fx; } });
+    if (rolls !== 0) fail('a steadied arm glitched on a roll of 0.015');
+    // after a reload
+    await p.reload(); await p.waitForTimeout(2500);
+    if (!await H.ev(() => BridgeImplants.steadied('arm'))) fail('the steadying gone after a reload');
+    await H.ev(() => {
+      BridgeState.setPilot({ id: 't', name: 'ALYSSA', suit_color: 'purple' }); if (typeof BridgeIntro !== 'undefined') BridgeIntro.hide();
+      window._coins = 5000;
+      BridgeProgression.awardCoins = (n) => { window._coins += n; return Promise.resolve(window._coins); };
+      BridgeProgression.wagerCoins = (n) => { if (window._coins < n) return Promise.resolve({ ok: false }); window._coins -= n; return Promise.resolve({ ok: true, balance: window._coins }); };
+    });
+    // LUMEN: a chrome part down
+    await H.go('arcadia-boutique', [8, 8]);
+    await H.use('THE COLLECTION');
+    await H.pickRow('Seraph Arm');
+    const r2 = await H.rows(); console.log('Seraph Arm:', JSON.stringify(r2));
+    if (!r2.some(r => /a chrome part down.*2080 coins/.test(r))) fail('no deposit row');
+    await p.screenshot({ path: OUT + '/ad_tune_deposit.png' });
+    const c0 = await H.coins();
+    await H.pickRow('a chrome part down'); await p.waitForTimeout(600); await H.shut();
+    if (!await H.ev(() => BridgeImplants.has('seraph_arm'))) fail('the Seraph Arm not fitted');
+    if (c0 - await H.coins() !== 2080) fail('paid ' + (c0 - await H.coins()));
+    if (await H.count('chrome_part') !== 0) fail('the deposit not taken');
+    if (await H.ev(() => BridgeImplants.steadied('arm'))) fail('a designer arm still "steadied"');
     await b.contexts()[0].close();
   }
 
