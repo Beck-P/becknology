@@ -24,7 +24,7 @@ var BridgeDeeper = (function () {
     var d = null;
     try { d = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) { d = null; }
     d = d || {};
-    return { shod: d.shod || 0, ludd: d.ludd || 0, goat: d.goat || 0 };
+    return { shod: d.shod || 0, ludd: d.ludd || 0, goat: d.goat || 0, sat: d.sat || 0 };
   }
   function store() { try { localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) { /* private mode */ } }
   function say(t, x) { if (typeof BridgeInteractions !== 'undefined') BridgeInteractions.say(t, x); }
@@ -194,6 +194,133 @@ var BridgeDeeper = (function () {
   });
   register('deeper_goat', goat, 'Look');
   register('goat_home', goatHome, 'Ask');
+
+  // ---- V6 · the makers' wares at home -------------------------------------------------------------------------------
+  // Each of Thistlecombe's wares, used from your pack, becomes a piece for your homes (BridgeHome.give): a little side
+  // table with it on, drawn in code (32 × 48 native px, a 1 × 1 footprint), not in the furnishing shop (`shop: false`).
+  // The candles light (E): after dark in the room the light pools round them, and sitting by them warms you.
+  var WARES = {
+    stoneware_jug: { id: 'ware_jug', name: 'Stoneware Jug on a Stand', label: 'THE JUG', what: 'the stoneware jug' },
+    pottery_mug: { id: 'ware_cups', name: 'Thistle Cups on a Tray', label: 'THE CUPS', what: 'the cups' },
+    beeswax_candles: { id: 'ware_candles', name: 'Beeswax Candles', label: 'THE CANDLES', what: 'the candles' },
+    honey_crock: { id: 'ware_crock', name: 'Honey Crock on a Stool', label: 'THE HONEY CROCK', what: 'the honey crock' }
+  };
+  var wareArt = {};
+  function wareCanvas(pid, lit, flick) {
+    var key = pid + (lit ? ':' + (flick ? 1 : 0) : '');
+    if (wareArt[key]) return wareArt[key];
+    var c = document.createElement('canvas'); c.width = 32; c.height = 48;
+    var x = c.getContext('2d'), P = function (col, rs) { rs.forEach(function (r) { x.fillStyle = col; x.fillRect(r[0] * 2, r[1] * 2, r[2] * 2, r[3] * 2); }); };
+    var o = '#2a1808';
+    if (pid === 'ware_crock') {                                     // a three-legged stool, the crock on it
+      P(o, [[3, 15, 10, 3], [4, 18, 2, 6], [10, 18, 2, 6], [7, 18, 2, 5]]); P('#8a5a2e', [[4, 15, 8, 2]]); P('#b07a3e', [[4, 15, 8, 1]]); P('#6a4422', [[5, 18, 1, 5], [11, 18, 1, 5]]);
+      P(o, [[4, 7, 8, 9]]); P('#c89040', [[5, 9, 6, 6]]); P('#e8b860', [[5, 9, 2, 5]]); P('#f4e0b0', [[5, 8, 6, 1]]); P('#7a4e22', [[6, 6, 4, 2]]); P('#e0a030', [[8, 11, 2, 2]]);
+    } else {                                                        // a little round side table
+      P(o, [[1, 14, 14, 4], [3, 18, 2, 6], [11, 18, 2, 6]]); P('#7a4e22', [[2, 15, 12, 2]]); P('#9a6a32', [[2, 15, 12, 1]]); P('#5a3a1a', [[4, 18, 1, 5], [12, 18, 1, 5]]);
+      if (pid === 'ware_jug') {
+        P(o, [[5, 3, 6, 12], [10, 6, 3, 5]]); P('#3a6a9a', [[6, 5, 4, 9], [11, 7, 1, 3]]); P('#6a9aca', [[6, 5, 1, 8]]); P('#d8c8a8', [[6, 4, 4, 1]]); P('#2a4a6a', [[6, 13, 4, 1]]);
+      } else if (pid === 'ware_cups') {
+        P(o, [[2, 12, 12, 3], [3, 8, 4, 5], [9, 8, 4, 5]]); P('#c8a060', [[3, 13, 10, 1]]);
+        P('#4a8a4a', [[4, 9, 2, 3], [10, 9, 2, 3]]); P('#7ab06a', [[4, 9, 1, 3], [10, 9, 1, 3]]); P('#3a6a3a', [[6, 10, 1, 1], [12, 10, 1, 1]]);
+      } else if (pid === 'ware_candles') {
+        P(o, [[3, 12, 10, 3], [4, 6, 2, 7], [7, 4, 2, 9], [10, 7, 2, 6]]); P('#c8a040', [[3, 13, 10, 1]]);
+        P('#f0dc90', [[4, 7, 1, 6], [7, 5, 1, 8], [10, 8, 1, 5]]); P('#d8c070', [[5, 7, 1, 6], [8, 5, 1, 8], [11, 8, 1, 5]]);
+        if (lit) { P('#ffd060', [[4, 4 - (flick ? 1 : 0), 2, 2], [7, 2, 2, 2], [10, 5 - (flick ? 0 : 1), 2, 2]]); P('#fff4c0', [[4, 5 - (flick ? 1 : 0), 1, 1], [7, 3, 1, 1], [10, 6 - (flick ? 0 : 1), 1, 1]]); }
+        else P('#2a1808', [[5, 5, 1, 1], [8, 3, 1, 1], [11, 6, 1, 1]]);
+      }
+    }
+    wareArt[key] = c;
+    return c;
+  }
+  // the candles' light: their flames and a warm pool on the floor round the table, laid over the room with 'lighter'
+  var glowCv = null;
+  function candleGlow(q, now) {
+    if (!q || !q.lit) return null;
+    glowCv = glowCv || document.createElement('canvas'); glowCv.width = 32; glowCv.height = 48;
+    var g = glowCv.getContext('2d'), k = 0.85 + 0.15 * Math.sin(now / 160) * Math.sin(now / 97);
+    g.clearRect(0, 0, 32, 48);
+    g.globalAlpha = 0.22 * k; g.fillStyle = '#ff9a40';
+    [[2, 40, 28, 6], [6, 36, 20, 12], [0, 2, 32, 22]].forEach(function (r) { g.fillRect(r[0], r[1], r[2], r[3]); });
+    g.globalAlpha = 0.55 * k; g.fillStyle = '#ffd890'; g.fillRect(6, 2, 20, 12);
+    g.globalAlpha = 1;
+    return glowCv;
+  }
+  function warePiece(item) {
+    var W = WARES[item];
+    return { id: W.id, name: W.name, price: 0, w: 1, d: 1, shop: false, after: 'nebula_tank',
+             spr: { img: wareCanvas(W.id), sx: 0, sy: 0, sw: 32, sh: 48, ax: 0, ay: 16 },
+             live: function (q, now) { return wareCanvas(W.id, W.id === 'ware_candles' && q && q.lit, Math.floor(now / 140) % 2); },
+             glow: W.id === 'ware_candles' ? candleGlow : null,
+             use: { type: 'ware', label: W.label, prompt: W.id === 'ware_candles' ? 'PRESS E FOR THE CANDLES' : 'PRESS E TO LOOK', ware: W.id } };
+  }
+  if (typeof BridgeHome !== 'undefined' && BridgeHome.add) Object.keys(WARES).forEach(function (k) { BridgeHome.add(warePiece(k)); });
+  // from your pack (the Backpack's Use, or the hotbar): it goes with your things for your homes
+  function wareUse(item) {
+    var W = WARES[item];
+    if (!W || typeof BridgeHome === 'undefined' || !BridgeHome.give) return false;
+    if (!BridgeHome.give(W.id)) return false;
+    BridgeInventory.removeItem(item, 1);
+    sfx('pickup');
+    toast('For your homes', W.name, 'Put it out in any home of yours: Furnish (H)');
+    say(W.label, (W.what.charAt(0).toUpperCase() + W.what.slice(1)).toUpperCase() + ' GOES WITH YOUR THINGS FOR YOUR HOMES. IN ANY PLACE OF YOURS, FURNISH (H) AND IT\'S UNDER YOURS, READY TO PUT OUT.');
+    return true;
+  }
+  if (typeof BridgeItems !== 'undefined') Object.keys(WARES).forEach(function (k) {
+    var it = BridgeItems.get(k);
+    if (!it) return;
+    var eat = it.onUse;                                            // (the honey crock is food too: eat it, or keep it for home)
+    it.decor = { text: 'use it to put it out in any home of yours: a piece for the furnishing tray (H)' + (k === 'beeswax_candles' ? ', and lit after dark they warm the room' : '') };
+    it.onUse = function (inv) {
+      if (!eat) { wareUse(k); return false; }
+      var self = this;
+      choose({ title: it.name, text: 'EAT IT NOW, OR KEEP IT FOR A SHELF AT HOME?', rows: [
+        { label: 'Eat it', pick: function () { if (eat.call(self, inv)) inv.removeItem(k, 1); } },
+        { label: 'Keep it for home', sub: 'a piece for your homes', pick: function () { wareUse(k); } }], closeLabel: 'Neither' });
+      return false;
+    };
+  });
+  function wareAt(inter) {
+    var q = inter && inter._piece, now = q && typeof BridgeHome !== 'undefined' && BridgeHome.at ? BridgeHome.at(q.id, q.x, q.y) : null;
+    return now || q;
+  }
+  function homeNight() {
+    var w = here(), k = w && typeof BridgeClock !== 'undefined' && BridgeClock.sky ? BridgeClock.sky(w) : null;
+    return !k || !k.cycles ? true : k.sun < 0.35;                 // aboard and on worlds without a day, any time is evening
+  }
+  function useWare(inter) {
+    var q = wareAt(inter), id = inter.ware || (q && q.id);
+    if (id !== 'ware_candles') return say(inter.label, {
+      ware_jug: 'WREN POTTS\'S JUG, THE BLUE OF THE WEND. SOMEBODY HAS PUT A SPRIG OF SOMETHING IN IT. IT WAS YOU.',
+      ware_cups: 'TWO THISTLE MUGS ON A TRAY, THUMB-DENTS IN THE HANDLES. THE KETTLE & CRUMB USES THE SAME ONES. IT FEELS LIKE HAVING THE CAFE IN.',
+      ware_crock: 'A CROCK OF HONEY FROM WICK & COMB. THE LID HAS A LITTLE NOTCH FOR THE SPOON. THE SPOON IS MISSING. IT ALWAYS IS.'
+    }[id] || 'YOURS.');
+    if (typeof BridgePartner !== 'undefined' && BridgePartner.visiting && BridgePartner.visiting()) return say('THE CANDLES', q && q.lit ? 'THEIR CANDLES, LIT. THE ROOM SMELLS OF HONEY.' : 'THEIR CANDLES. BEST NOT.');
+    choose({
+      title: 'Beeswax candles',
+      text: q && q.lit ? 'THREE CANDLES BURNING LOW AND STEADY. THE ROOM SMELLS OF HONEY AND IS WARMER FOR THEM.' : 'THREE CANDLES FROM WICK & COMB, NOT YET LIT.',
+      rows: (q && q.lit ? [{ label: 'Sit by them a while', sub: homeNight() ? 'warm through, for when you go out' : 'better after dark', pick: function () {
+                 if (!homeNight()) return say('THE CANDLES', 'IN DAYLIGHT THEY\'RE JUST CANDLES. COME BACK AFTER DARK.');
+                 var day = Math.floor(Date.now() / 86400000);
+                 if (s.sat === day) return say('THE CANDLES', 'YOU SIT A WHILE LONGER. NOTHING MORE TO BE HAD FROM IT TONIGHT BUT THE QUIET, WHICH IS PLENTY.');
+                 s.sat = day; store();
+                 if (typeof BridgeInventory !== 'undefined' && BridgeInventory.restoreEnergy) BridgeInventory.restoreEnergy(15);
+                 if (typeof BridgeHoarfell !== 'undefined' && BridgeHoarfell.warm) BridgeHoarfell.warm(30);
+                 say('THE CANDLES', 'YOU SIT BY THEM UNTIL THE WAX HAS POOLED AND THE ROOM HAS GONE GOLD. YOU GET UP WARM RIGHT THROUGH, AND YOU STAY THAT WAY A WHILE.');
+               } },
+               { label: 'Put them out', pick: function () { setLit(q, false); } }]
+             : [{ label: 'Light them', pick: function () { setLit(q, true); } }]),
+      closeLabel: 'Leave them'
+    });
+  }
+  function setLit(q, on) {
+    if (!q) return;
+    q.lit = !!on;
+    var cur = typeof BridgeHome !== 'undefined' && BridgeHome.at ? BridgeHome.at(q.id, q.x, q.y) : null;
+    if (cur && cur !== q) cur.lit = !!on;
+    if (typeof BridgeHome !== 'undefined' && BridgeHome.persist) BridgeHome.persist();
+    sfx(on ? 'pickup' : 'step');
+  }
+  register('ware', useWare, 'Use');
 
   register('wat_shoe', shoe, 'Ask');
   register('ludd_grind', grind, 'Ask');

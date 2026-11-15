@@ -448,7 +448,7 @@ var BridgeHome = (function () {
   }
 
   function list() {             // the tray's cards: what you own (with what's spare), or the whole catalogue
-    if (ed.tab === 'shop') return pieces.slice();
+    if (ed.tab === 'shop') return pieces.filter(function (p) { return p.shop !== false; });   // (a piece you make, not buy — the makers' wares, js/deeper.js — isn't in the shop)
     var mine = pieces.filter(function (p) { return (save.have[p.id] || 0) > 0; });
     return mine.filter(function (p) { return spare(p.id) > 0; }).concat(mine.filter(function (p) { return spare(p.id) <= 0; }));     // spare ones first
   }
@@ -786,7 +786,9 @@ var BridgeHome = (function () {
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 
-  return { decorate: decorate, use: use, buy: buy, edit: edit, done: finish, owns: owns, editing: function () { return !!ed; },
+  /** One more of a piece for your homes, without a sale (the makers' wares, put out from your pack: js/deeper.js). */
+  function give(pid) { if (!byId[pid] && made.every(function (P) { return P.id !== pid; })) return false; save.have[pid] = (save.have[pid] || 0) + 1; store(); return true; }
+  return { decorate: decorate, use: use, buy: buy, edit: edit, done: finish, owns: owns, give: give, have: function (pid) { return save.have[pid] || 0; }, editing: function () { return !!ed; },
            reload: function () { save = load(); if (cur && ready) apply(); },      // (a partner's change: its pieces and what they do, afresh)
            pieces: function () { return pieces; }, piece: function (id) { return byId[id] || null; }, spare: spare, buyPiece: buyPiece, persist: store, add: add,
            // the piece of this kind on this spot in the place you're in, as saved now (an interaction's may be an old copy)

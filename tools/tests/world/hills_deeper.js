@@ -452,6 +452,54 @@ const ONLY = process.argv[3] || '';
     console.log('v7 done');
   }
 
+  // ---- V6 · the makers' wares at home ----
+  if (part('v6')) {
+    await p.evaluate(() => { localStorage.setItem('bridge_homes', JSON.stringify({ owned: { 'lumar-home': Date.now() }, have: {}, layout: { 'lumar-home': [] }, seen: { 'lumar-home': 1 } })); localStorage.removeItem('bridge_deeper'); });
+    await p.reload(); await p.waitForTimeout(2500);
+    await p.evaluate(() => { BridgeState.setPilot({ id: 't', name: 'BECK', suit_color: 'gold' }); BridgeIntro.hide(); });
+    for (const id of ['stoneware_jug', 'pottery_mug', 'beeswax_candles', 'honey_crock']) await give(id, 1);
+    const card = await p.evaluate(() => BridgeUses.html('beeswax_candles'));
+    if (!/any home of yours/.test(card)) fail('the candles\' card: ' + card.replace(/<[^>]+>/g, '').slice(0, 200));
+    // not in the furnishing shop
+    if (await p.evaluate(() => BridgeHome.pieces().filter(x => /^ware_/.test(x.id)).length) !== 4) fail('the four wares aren\'t pieces');
+    // used from the pack: a piece for your homes, the thing gone
+    await p.evaluate(() => ['stoneware_jug', 'pottery_mug', 'beeswax_candles'].forEach(id => BridgeItems.get(id).onUse(BridgeInventory)));
+    await p.waitForTimeout(600); await shut();
+    await p.evaluate(() => BridgeItems.get('honey_crock').onUse(BridgeInventory));      // (it's food too: eat it, or keep it for home)
+    await p.waitForTimeout(600);
+    await pick(/^Keep it for home/);
+    await p.waitForTimeout(600); await shut();
+    const have = await p.evaluate(() => ['ware_jug', 'ware_cups', 'ware_candles', 'ware_crock'].map(id => BridgeHome.have(id)).join(''));
+    if (have !== '1111') fail('pieces had: ' + have);
+    if (await count('beeswax_candles') || await count('stoneware_jug')) fail('the wares are still in the pack');
+    // put out in the White House (as the furnishing tray would leave them), then the candles lit
+    await p.evaluate(() => { const s = JSON.parse(localStorage.getItem('bridge_homes')); s.layout['lumar-home'] = [{ id: 'ware_jug', x: 4, y: 4 }, { id: 'ware_cups', x: 6, y: 4 }, { id: 'ware_candles', x: 9, y: 4 }, { id: 'ware_crock', x: 12, y: 4 }]; localStorage.setItem('bridge_homes', JSON.stringify(s)); BridgeHome.reload(); });
+    await go('lumar-home', [9, 7]);
+    const its = await p.evaluate(() => BridgeWorld.getWorld().interactions.filter(i => /^ware_/.test(i.piece || '')).map(i => i.label));
+    if (its.length !== 4) fail('ware interactions: ' + its.join(', '));
+    await p.screenshot({ path: OUT + '/hd_v6_unlit.png' });
+    await use('THE CANDLES');
+    await pick(/^Light them/);
+    await p.waitForTimeout(600);
+    if (!(await p.evaluate(() => (JSON.parse(localStorage.getItem('bridge_homes')).layout['lumar-home'].find(q => q.id === 'ware_candles') || {}).lit))) fail('the candles aren\'t lit in the save');
+    await shut();
+    await p.waitForTimeout(1500);
+    await p.screenshot({ path: OUT + '/hd_v6_lit.png' });
+    await p.evaluate(() => { for (let m = 0; m < 24 * 60 && BridgeClock.sky('lumar-home').sun >= 0.35; m += 5) BridgeClock._at(BridgeClock.now() + 5 * 60000); BridgeInventory.restoreEnergy(-30); });
+    const e0 = await p.evaluate(() => BridgeInventory.getStats().energy);
+    await use('THE CANDLES');
+    await pick(/^Sit by them/);
+    if (!/WARM RIGHT THROUGH/.test(await said())) fail('sitting by them');
+    await shut();
+    const e1 = await p.evaluate(() => BridgeInventory.getStats().energy);
+    if (!(e1 > e0)) fail('no energy from the candles: ' + e0 + ' → ' + e1);
+    if (!(await p.evaluate(() => { const h = JSON.parse(localStorage.getItem('bridge_hoarfell') || '{}'); return h.warm > Date.now(); }))) fail('not warm after the candles');
+    await use('THE JUG');
+    if (!/BLUE OF THE WEND/.test(await said())) fail('the jug');
+    await shut();
+    console.log('v6 done');
+  }
+
   console.log(errors ? 'FAILED with ' + errors + ' problem(s)' : 'OK');
   await b.close();
   process.exit(errors ? 1 : 0);
