@@ -244,7 +244,7 @@ var BridgeLumarDeep = (function () {
       title: 'Wanted', text: text,
       rows: list.map(function (b) {
         var got = st.bounty.beaten[b.id], paid = st.bounty.claimed[b.id];
-        return { label: b.ship.replace(/^the /, 'The ') + ' · ' + b.captain.toLowerCase().replace(/\b\w/g, function (c) { return c.toUpperCase(); }), sub: b.what + (got ? (paid ? ' · sunk and paid' : ' · sunk: claim it from Scarlet Dee') : ''),
+        return { label: b.ship.replace(/^the /, 'The '), sub: b.captain.toLowerCase().replace(/\b\w/g, function (c) { return c.toUpperCase(); }) + ' · ' + b.what + (got ? (paid ? ' · sunk and paid' : ' · sunk: claim it from Scarlet Dee') : ''),
                  note: paid ? '✓' : got ? 'claim' : b.pay + ' coins', info: true };
       }),
       closeLabel: 'Step back'
