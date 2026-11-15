@@ -36,7 +36,9 @@ rebuild should stand next to those and look like it belongs.
 - **Name parts by what they are** (`floor_*`, `path`, `grass`, `cobble`, `pond_water`, `roof_*`): the finish draws no
   lines inside the ground or between a roof's shingles, still water gets the Look Book water (`Kit.WATER_PARTS`: ponds,
   streams, basins, wells, troughs), and a fall (`waterfall`, `falls`, `cascade`, `weir`) runs with light and churns foam
-  where it lands, by name.
+  where it lands, by name. A fixture a pixel or two wide that should shine (a chandelier's gilt arms, candle flames,
+  crystal) gets `gleam` in its name and no line over it — otherwise the line darkens it all over and it looks unlit;
+  the estate and casino light fixtures do it when a scene sets `E.GLEAM = True` / `C.GLEAM = True`.
 - **Look at it before it ships:** the render at 2×, then in the game at dawn, noon, golden hour and night and in each
   season (`BridgeLit._force({ hour, season, weather })` in the console or a test), next to the reference images.
 - People: painted faces come from `characters.py` + `sprites_post.py`; talk portraits are **drawn** by `portraits.py`

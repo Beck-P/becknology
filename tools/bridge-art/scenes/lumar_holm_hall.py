@@ -98,7 +98,7 @@ for (x0, x1), ids in zip(((1.05, 2.4), (15.6, 16.95)), WONDERS):
 for (x, r) in ((1.6, 8.9), (16.4, 8.9)):                 # a palm in each front corner
     E.potted_palm(k, x, r)
     k.solid(x - 0.3, r - 0.3, x + 0.3, r + 0.3)
-E.chandelier(k, 9.0, 5.0, H - 0.4, rad=0.55, arms=6, tiers=1, chain_top=H, energy=70.0)
+E.chandelier(k, 9.0, 5.0, H - 0.4, rad=0.55, arms=6, tiers=1, chain_top=H, energy=70.0, gleam=True)
 A.hanging_lamp(k, 4.6, 6.0, energy=55, visible=False)
 A.hanging_lamp(k, 13.4, 6.0, energy=55, visible=False)
 k.render(OUT, light_states={'full': {'flicker': 1.0}, 'dim': {'flicker': 0.75}}, light_samples=int(os.environ.get('SCENE_SAMPLES', 128)),

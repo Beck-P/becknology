@@ -448,21 +448,28 @@ def column(k, cx, cr, H, neon=PINK):
     k.solid(cx - 0.3, cr - 0.3, cx + 0.3, cr + 0.3)
 
 
-def chandelier(k, cx, cr, z, s=1.0, chain_top=None, energy=40.0, col=WARM):
-    """Tiers of crystal drops on gold rings, a column of light down the middle."""
+# The chandeliers' gleam: a scene sets GLEAM = True to have their rings, drops and bulbs stay bright through the toy
+# finish; off, they render as they always have.
+GLEAM = False
+
+
+def chandelier(k, cx, cr, z, s=1.0, chain_top=None, energy=40.0, col=WARM, gleam=None):
+    """Tiers of crystal drops on gold rings, a column of light down the middle. gleam: the rings, drops and bulbs stay
+    bright through the toy finish (scene_post GLEAM_WORDS: no line drawn over them)."""
+    g = '_gleam' if (GLEAM if gleam is None else gleam) else ''
     chain_top = chain_top or z + 1.4
     k.tube((cx, cr, z + 0.55 * s), (cx, cr, chain_top), 0.02, (GOLD_D, 0.05), 'chain', verts=5)
-    k.cyl(cx, cr, z - 0.05 * s, z + 0.55 * s, 0.05 * s, (GOLD, 0.05), 'chand_stem', verts=8)
+    k.cyl(cx, cr, z - 0.05 * s, z + 0.55 * s, 0.05 * s, (GOLD, 0.05), 'chand_stem' + g, verts=8)
     for (rr, zz, n) in ((0.62, 0.0, 14), (0.45, 0.22, 11), (0.28, 0.42, 8)):
         rr *= s
         pts = ellipse(cx, cr, rr, rr, n=n * 2)
-        rail(k, pts, z + zz * s, 0.018, (GOLD, 0.05), 'chand_ring', verts=4)
+        rail(k, pts, z + zz * s, 0.018, (GOLD, 0.05), 'chand_ring' + g, verts=4)
         for i in range(n):
             a = 2 * math.pi * i / n
             x, r = cx + math.cos(a) * rr, cr + math.sin(a) * rr
-            k.blob(x, r, z + zz * s - 0.08 * s, 0.035 * s, 0.035 * s, 0.07 * s, '#fff4e0', 'crystal', emit=('#fff0d0', 0.9), segs=6)
-            k.sphere(x, r, z + zz * s + 0.04, 0.03 * s, 0.03 * s, '#fff8e8', 'candle_bulb', emit=(col, 1.0), segs=5)
-    k.blob(cx, cr, z - 0.18 * s, 0.07 * s, 0.07 * s, 0.14 * s, '#fff4e0', 'crystal', emit=('#fff0d0', 0.9), segs=8)
+            k.blob(x, r, z + zz * s - 0.08 * s, 0.035 * s, 0.035 * s, 0.07 * s, '#fff4e0', 'crystal' + g, emit=('#fff0d0', 0.9), segs=6)
+            k.sphere(x, r, z + zz * s + 0.04, 0.03 * s, 0.03 * s, '#fff8e8', 'candle_bulb' + g, emit=(col, 1.0), segs=5)
+    k.blob(cx, cr, z - 0.18 * s, 0.07 * s, 0.07 * s, 0.14 * s, '#fff4e0', 'crystal' + g, emit=('#fff0d0', 0.9), segs=8)
     k.point_light(cx, cr, z - 0.1, col, energy, radius=0.5 * s)
 
 

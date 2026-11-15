@@ -223,6 +223,9 @@ GROUND_WORDS = {'ground', 'grass', 'meadow', 'turf', 'path', 'paths', 'dirt', 's
 NOT_GROUND = {'roof', 'wall', 'post', 'rail', 'fence', 'house', 'stall', 'table', 'bench', 'tree', 'trunk', 'pot',
               'box', 'window', 'door', 'sign', 'lamp', 'lantern', 'pole', 'snowman', 'cart', 'boat', 'hull', 'crate'}
 ROOF_WORDS = {'roof', 'shingle', 'shingles', 'slate', 'slates', 'thatch', 'ridge', 'pantile', 'pantiles', 'eave', 'eaves'}
+# a fine bright fixture (a chandelier's gilt arms and candle flames, a candelabrum): parts a pixel or two wide, which a line
+# would turn dark all over — named with 'gleam' (the kits' `gleam=True`), they keep their own colour and light, unlined
+GLEAM_WORDS = {'gleam'}
 
 
 # falling water (a stream over a weir, a waterfall): the live light runs light down it and churns foam where it lands
@@ -259,9 +262,10 @@ def part_mask(ids_rgb, names, words):
     return np.isin(key, ks)
 
 
-def toy_lines(ids, depth, alpha, ground, roof):
+def toy_lines(ids, depth, alpha, ground, roof, gleam=None):
     """Line strength 0..1 per pixel: 1 on a thing where what's next to it lies behind it (or nothing does), 0.45 where
-    two things meet without a step in depth — never on the ground, and on a roof only its real edges."""
+    two things meet without a step in depth — never on the ground, and on a roof only its real edges; none on a gleam
+    part (GLEAM_WORDS)."""
     h, w = alpha.shape
     idk = (ids[..., 0].astype(np.int64) << 16) | (ids[..., 1].astype(np.int64) << 8) | ids[..., 2]
     line = np.zeros((h, w), np.float32)
@@ -276,6 +280,8 @@ def toy_lines(ids, depth, alpha, ground, roof):
         edge = mine & (farther | ~alpha[q])
         crease = mine & alpha[q] & ~ground[q] & ~farther & ~roof[p]
         line[p] = np.maximum(line[p], np.where(edge, 1.0, np.where(crease, 0.45, 0.0)))
+    if gleam is not None and gleam.any():
+        line[gleam] = 0.0
     return line
 
 
@@ -525,7 +531,7 @@ def main():
         if STYLE == 'toy':
             return apply_lines(img, line_)
         return lines(img, ids_, depth_, alpha_)
-    base_line = toy_lines(ids, depth, alpha, ground, roof)
+    base_line = toy_lines(ids, depth, alpha, ground, roof, part_mask(ids, names, GLEAM_WORDS))
 
     def emit(state, e):                               # lamps by day glow less (scenekit `_emit`)
         k = (meta.get('stateOpts') or {}).get(state, {}).get('emit', 1.0)
@@ -629,7 +635,7 @@ def main():
         x0, y0, x1, y1 = int(xs.min()), int(ys.min()), int(xs.max()) + 1, int(ys.max()) + 1
         imgs = {}
         vground, vroof = part_kinds(vids, names)
-        vline = toy_lines(vids, vdepth, va, vground, vroof)
+        vline = toy_lines(vids, vdepth, va, vground, vroof, part_mask(vids, names, GLEAM_WORDS))
         for state in meta['lightStates']:
             light = load16(os.path.join(vd, 'light_' + state + '.png'))
             img = finish(toon(valb, light, emit(state, vemi)), vids, vdepth, va, vline)

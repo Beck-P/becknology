@@ -876,24 +876,26 @@ def clock_on_mantel(k, cx, cr, z, wood=MARBLE_K):
     k.sphere(cx, cr, z + 0.43, 0.035, 0.035, GILT, 'clock_finial', segs=8)
 
 
-def candelabrum(k, cx, cr, z, arms=3, s=1.0, col=SILVER, lit=True, energy=3.0, group='flicker'):
-    """A branched candlestick: a round foot, a turned stem, curving arms with cups, candles and flames."""
-    k.cyl(cx, cr, z, z + 0.03 * s, 0.09 * s, col, 'candelabrum', verts=12)
-    k.cyl(cx, cr, z + 0.03 * s, z + 0.08 * s, 0.05 * s, col, 'candelabrum', verts=10)
-    k.cyl(cx, cr, z + 0.08 * s, z + 0.36 * s, 0.018 * s, col, 'candelabrum', verts=8)
-    k.sphere(cx, cr, z + 0.2 * s, 0.035 * s, 0.035 * s, col, 'candelabrum', segs=8)
+def candelabrum(k, cx, cr, z, arms=3, s=1.0, col=SILVER, lit=True, energy=3.0, group='flicker', gleam=None):
+    """A branched candlestick: a round foot, a turned stem, curving arms with cups, candles and flames.
+    gleam: stays bright through the toy finish (see chandelier)."""
+    g = '_gleam' if (GLEAM if gleam is None else gleam) else ''
+    k.cyl(cx, cr, z, z + 0.03 * s, 0.09 * s, col, 'candelabrum' + g, verts=12)
+    k.cyl(cx, cr, z + 0.03 * s, z + 0.08 * s, 0.05 * s, col, 'candelabrum' + g, verts=10)
+    k.cyl(cx, cr, z + 0.08 * s, z + 0.36 * s, 0.018 * s, col, 'candelabrum' + g, verts=8)
+    k.sphere(cx, cr, z + 0.2 * s, 0.035 * s, 0.035 * s, col, 'candelabrum' + g, segs=8)
     tops = [(cx, cr, z + 0.42 * s)]
     if arms >= 3:
         for a in ([0, math.pi] if arms == 3 else [0, math.pi / 2, math.pi, 3 * math.pi / 2]):
             ex, er = cx + math.cos(a) * 0.15 * s, cr + math.sin(a) * 0.06 * s
-            k.tube((cx, cr, z + 0.34 * s), (ex, er, z + 0.3 * s), 0.012 * s, col, 'candelabrum', verts=5)
-            k.tube((ex, er, z + 0.3 * s), (ex, er, z + 0.36 * s), 0.012 * s, col, 'candelabrum', verts=5)
+            k.tube((cx, cr, z + 0.34 * s), (ex, er, z + 0.3 * s), 0.012 * s, col, 'candelabrum' + g, verts=5)
+            k.tube((ex, er, z + 0.3 * s), (ex, er, z + 0.36 * s), 0.012 * s, col, 'candelabrum' + g, verts=5)
             tops.append((ex, er, z + 0.36 * s))
     for (x, r, zz) in tops:
-        k.cyl(x, r, zz - 0.02 * s, zz, 0.035 * s, col, 'candelabrum', verts=8)
-        k.cyl(x, r, zz, zz + 0.13 * s, 0.017 * s, CANDLE, 'candle', verts=6)
+        k.cyl(x, r, zz - 0.02 * s, zz, 0.035 * s, col, 'candelabrum' + g, verts=8)
+        k.cyl(x, r, zz, zz + 0.13 * s, 0.017 * s, CANDLE, 'candle' + g, verts=6)
         if lit:
-            k.sphere(x, r, zz + 0.16 * s, 0.016 * s, 0.03 * s, FLAME_HOT, 'flame', emit=(FLAME_HOT, 4.0), segs=6)
+            k.sphere(x, r, zz + 0.16 * s, 0.016 * s, 0.03 * s, FLAME_HOT, 'flame' + g, emit=(FLAME_HOT, 4.0), segs=6)
     if lit and energy:
         k.point_light(cx, cr + 0.1, z + 0.6 * s, '#ffb868', energy, radius=0.08, group=group)
 
@@ -953,16 +955,23 @@ def vase_of_flowers(k, cx, cr, z, s=1.0, col='#2a4a8a', band='#f0ece4', kind='ro
 
 
 # ---- light ------------------------------------------------------------------------------------------------------------
-def chandelier(k, cx, cr, z, rad=0.62, arms=8, tiers=2, chain_top=None, energy=110.0, col=GILT, group='lamp'):
+# The light fixtures' gleam (chandelier, torchere, candelabrum and every builder that places one): a scene sets GLEAM = True
+# to have their arms, candles, flames and crystal stay bright through the toy finish; off, they render as they always have.
+GLEAM = False
+
+
+def chandelier(k, cx, cr, z, rad=0.62, arms=8, tiers=2, chain_top=None, energy=110.0, col=GILT, group='lamp', gleam=None):
     """A crystal chandelier: a gilt stem of balusters, two tiers of curving arms with candles in cups, a prism under
-    every cup and festoons of beads swagged between the arms, a cascade of crystal under the bowl."""
+    every cup and festoons of beads swagged between the arms, a cascade of crystal under the bowl. gleam: the arms,
+    candles, flames and crystal stay bright through the toy finish (scene_post GLEAM_WORDS: no line drawn over them)."""
+    g = '_gleam' if (GLEAM if gleam is None else gleam) else ''
     top = chain_top or z + 1.2
     k.cyl(cx, cr, z + 0.75, top, 0.018, col, 'chandelier_chain', verts=6)
-    k.cyl(cx, cr, z + 0.62, z + 0.75, 0.09, col, 'chandelier', verts=12)
-    k.sphere(cx, cr, z + 0.5, 0.07, 0.12, (col, 0.04), 'chandelier', segs=12)
-    k.cyl(cx, cr, z + 0.12, z + 0.42, 0.035, col, 'chandelier', verts=10)
-    k.sphere(cx, cr, z + 0.08, 0.13, 0.08, (col, 0.04), 'chandelier', segs=14)
-    k.cone(cx, cr, z - 0.22, z + 0.02, 0.02, 0.12, ('#e8f0f4', 0.0), 'crystal', emit=('#8a9aa0', 0.35), verts=10)
+    k.cyl(cx, cr, z + 0.62, z + 0.75, 0.09, col, 'chandelier' + g, verts=12)
+    k.sphere(cx, cr, z + 0.5, 0.07, 0.12, (col, 0.04), 'chandelier' + g, segs=12)
+    k.cyl(cx, cr, z + 0.12, z + 0.42, 0.035, col, 'chandelier' + g, verts=10)
+    k.sphere(cx, cr, z + 0.08, 0.13, 0.08, (col, 0.04), 'chandelier' + g, segs=14)
+    k.cone(cx, cr, z - 0.22, z + 0.02, 0.02, 0.12, ('#e8f0f4', 0.0), 'crystal' + g, emit=('#8a9aa0', 0.35), verts=10)
     beads, prisms, flames = [], [], []
     for t in range(tiers):
         R = rad * (1.0 if t == 0 else 0.55)
@@ -973,10 +982,10 @@ def chandelier(k, cx, cr, z, rad=0.62, arms=8, tiers=2, chain_top=None, energy=1
             a = 2 * math.pi * (i + 0.5 * t) / n
             ex, er = cx + math.cos(a) * R, cr + math.sin(a) * R * 0.9
             mx, mr = cx + math.cos(a) * R * 0.55, cr + math.sin(a) * R * 0.5
-            k.tube((cx, cr, zt + 0.02), (mx, mr, zt - 0.08), 0.017, col, 'chandelier', verts=5)
-            k.tube((mx, mr, zt - 0.08), (ex, er, zt + 0.04), 0.017, col, 'chandelier', verts=5)
-            k.cyl(ex, er, zt + 0.04, zt + 0.08, 0.045, col, 'chandelier', verts=8)
-            k.cyl(ex, er, zt + 0.08, zt + 0.2, 0.017, CANDLE, 'candle', verts=6)
+            k.tube((cx, cr, zt + 0.02), (mx, mr, zt - 0.08), 0.017, col, 'chandelier' + g, verts=5)
+            k.tube((mx, mr, zt - 0.08), (ex, er, zt + 0.04), 0.017, col, 'chandelier' + g, verts=5)
+            k.cyl(ex, er, zt + 0.04, zt + 0.08, 0.045, col, 'chandelier' + g, verts=8)
+            k.cyl(ex, er, zt + 0.08, zt + 0.2, 0.017, CANDLE, 'candle' + g, verts=6)
             flames.append((ex, er, zt + 0.23))
             prisms.append((ex, er, zt + 0.03))
             tips.append((ex, er, zt + 0.04))
@@ -985,10 +994,10 @@ def chandelier(k, cx, cr, z, rad=0.62, arms=8, tiers=2, chain_top=None, energy=1
                 u = j / 6
                 beads.append((p[0] + (q[0] - p[0]) * u, p[1] + (q[1] - p[1]) * u, p[2] - 0.12 * math.sin(math.pi * u)))
     for (x, r, zz) in flames:
-        k.sphere(x, r, zz, 0.018, 0.034, FLAME_HOT, 'flame', emit=(FLAME_HOT, 4.0), segs=6)
+        k.sphere(x, r, zz, 0.018, 0.034, FLAME_HOT, 'flame' + g, emit=(FLAME_HOT, 4.0), segs=6)
     for (x, r, zz) in prisms:
-        k.cone(x, r, zz - 0.14, zz - 0.01, 0.025, 0.004, ('#eef4f8', 0.0), 'crystal', emit=('#a0b0b8', 0.45), verts=6)
-    k.boxes([(x - 0.014, r - 0.014, zz - 0.014, x + 0.014, r + 0.014, zz + 0.014) for (x, r, zz) in beads], '#f0f6fa', 'crystal_bead',
+        k.cone(x, r, zz - 0.14, zz - 0.01, 0.025, 0.004, ('#eef4f8', 0.0), 'crystal' + g, emit=('#a0b0b8', 0.45), verts=6)
+    k.boxes([(x - 0.014, r - 0.014, zz - 0.014, x + 0.014, r + 0.014, zz + 0.014) for (x, r, zz) in beads], '#f0f6fa', 'crystal_bead' + g,
             emit=('#a8b8c0', 0.5))
     k.point_light(cx, cr + 0.05, z + 0.1, '#ffd49a', energy, radius=0.45, group=group)
 
@@ -1006,20 +1015,22 @@ def sconce(k, cx, r_face, z=1.75, arms=2, col=GILT, energy=5.0, group='lamp'):
     k.point_light(cx, r_face + 0.3, z + 0.1, '#ffc078', energy, radius=0.1, group=group)
 
 
-def torchere(k, cx, cr, h=1.75, arms=5, col=GILT, energy=10.0, group='flicker'):
-    """A floor candelabrum: a tripod of scrolled feet, a tall turned stem with a knop or two, a crown of candles."""
+def torchere(k, cx, cr, h=1.75, arms=5, col=GILT, energy=10.0, group='flicker', gleam=None):
+    """A floor candelabrum: a tripod of scrolled feet, a tall turned stem with a knop or two, a crown of candles.
+    gleam: stays bright through the toy finish (see chandelier)."""
+    g = '_gleam' if (GLEAM if gleam is None else gleam) else ''
     for a in (math.pi / 2, math.pi / 2 + 2.094, math.pi / 2 + 4.189):
-        k.tube((cx, cr, 0.18), (cx + math.cos(a) * 0.2, cr + math.sin(a) * 0.16, 0.02), 0.025, col, 'torchere', verts=5)
-        k.sphere(cx + math.cos(a) * 0.2, cr + math.sin(a) * 0.16, 0.03, 0.035, 0.03, col, 'torchere', segs=6)
-    k.cyl(cx, cr, 0.12, h - 0.2, 0.025, col, 'torchere', verts=8)
+        k.tube((cx, cr, 0.18), (cx + math.cos(a) * 0.2, cr + math.sin(a) * 0.16, 0.02), 0.025, col, 'torchere' + g, verts=5)
+        k.sphere(cx + math.cos(a) * 0.2, cr + math.sin(a) * 0.16, 0.03, 0.035, 0.03, col, 'torchere' + g, segs=6)
+    k.cyl(cx, cr, 0.12, h - 0.2, 0.025, col, 'torchere' + g, verts=8)
     for z in (0.3, h * 0.55):
-        k.sphere(cx, cr, z, 0.05, 0.07, (col, 0.04), 'torchere', segs=8)
-    k.cyl(cx, cr, h - 0.22, h - 0.18, 0.14, col, 'torchere', verts=10)
+        k.sphere(cx, cr, z, 0.05, 0.07, (col, 0.04), 'torchere' + g, segs=8)
+    k.cyl(cx, cr, h - 0.22, h - 0.18, 0.14, col, 'torchere' + g, verts=10)
     for i in range(arms):
         a = 2 * math.pi * i / arms
         x, r = (cx, cr) if i == 0 and arms % 2 else (cx + math.cos(a) * 0.13, cr + math.sin(a) * 0.1)
-        k.cyl(x, r, h - 0.18, h - 0.04, 0.018, CANDLE, 'candle', verts=6)
-        k.sphere(x, r, h - 0.01, 0.017, 0.032, FLAME_HOT, 'flame', emit=(FLAME_HOT, 4.0), segs=6)
+        k.cyl(x, r, h - 0.18, h - 0.04, 0.018, CANDLE, 'candle' + g, verts=6)
+        k.sphere(x, r, h - 0.01, 0.017, 0.032, FLAME_HOT, 'flame' + g, emit=(FLAME_HOT, 4.0), segs=6)
     k.point_light(cx, cr + 0.1, h + 0.25, '#ffb868', energy, radius=0.15, group=group)
     k.solid(cx - 0.22, cr - 0.18, cx + 0.22, cr + 0.18)
 
