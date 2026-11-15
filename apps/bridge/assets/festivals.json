@@ -85,6 +85,35 @@
     }
   },
 
+  "ice_fair": {
+    "name": "The Ice Fair",
+    "planet": "hoarfell", "season": "winter", "world": "hoarfell-promenade", "place": "the promenade by the rink",
+    "line": "Torches round the rink, a derby through the ice, and the race down Pinewood",
+    "poster": "THE ICE FAIR, THE LAST WEEKEND OF WINTER, ON THE PROMENADE. THE ICE DERBY (BIGGEST FISH THROUGH THE ICE, FOR ITS KIND - TOVE MEASURES) AND THE PINEWOOD RACE (LIV KEEPS THE CLOCK). CHESTNUTS. FONDUE. FALL OVER ON THE RINK AT NO EXTRA CHARGE.",
+    "hours": ["morning", "late"], "music": "fair",
+    "props": [["derby_board", 10, 14], ["derby_board", 23, 14], ["stall", 6, 14], ["brazier", 13, 14], ["brazier", 21, 14], ["brazier", 3, 15], ["brazier", 27, 15]],
+    "contests": [
+      {
+        "kind": "derby", "score": "kind", "at": [10, 14], "label": "ICE DERBY", "judge": "Tove",
+        "title": "the ice derby", "judging": "THE BIGGEST FISH THROUGH THE ICE ON HOARFELL THIS ICE FAIR, AGAINST THE BIGGEST OF ITS KIND. TOVE MEASURES, AND ARGUES.",
+        "bring": "Fish through the ice anywhere on Hoarfell while it's on - Fellhaven's ice hole. A big char scores; a big frostfin scores just as well.",
+        "rivals": [["Tove", "arctic_char", 55, 86], ["Ansgar Holm", "arctic_char", 48, 80], ["Old Bryn", "frostfin", 50, 84]],
+        "prizes": [[600, "blue_rosette"], [250, "red_rosette"], [100, "yellow_rosette"]]
+      },
+      {
+        "kind": "times", "run": "pinewood", "at": [23, 14], "label": "RACE BOARD", "judge": "Liv",
+        "title": "the Pinewood race", "judging": "PINEWOOD, GATE TO ARCH, FASTEST TIME THIS ICE FAIR. LIV CHALKS THEM UP AND UNDERLINES HER OWN.",
+        "bring": "Ski Pinewood (the blue) on the pistes while it's on - from its start hut, against the clock. Your quickest counts.",
+        "rivals": [["Liv Sandvik", 13, 14.5], ["Juno Pike", 14, 17], ["Ysolde Rann", 15.5, 19]],
+        "prizes": [[600, "blue_rosette"], [250, "red_rosette"], [100, "yellow_rosette"]]
+      }
+    ],
+    "stall": { "at": [6, 14], "label": "CHESTNUT STALL", "items": [{ "id": "roast_chestnuts", "price": 4 }, { "id": "fondue", "price": 12 }, { "id": "hot_cocoa", "price": 5 }] },
+    "crowd": {
+      "kaspar": [6, 13, "down"], "tove": [11, 13, "down"], "liv": [23, 13, "down"], "ansgar": [15, 16, "up"], "juno": [20, 16, "up"], "ysolde": [8, 16, "up"], "bryn": [26, 16, "left"]
+    }
+  },
+
   "lantern_tide": {
     "name": "Lantern Tide",
     "planet": "lumar", "season": "autumn", "world": "lumar-crown", "place": "Crownhaven quay",
