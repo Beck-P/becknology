@@ -205,7 +205,8 @@ def wildflowers(k, x0, r0, x1, r1, n, cols=('#f0d040', '#e05070', '#a070e0', '#f
         k.sphere(x, r, h, 0.035, 0.03, k.rng.choice(cols), 'flower', segs=5)
 
 
-def apple_tree(k, cx, cr, h=2.4):
+def apple_tree(k, cx, cr, h=2.4, solid=True):
+    """solid=False: the scene blocks its trunk itself (a narrower footprint)."""
     lobes = W.tree(k, cx, cr, h=h, tone='#3e7a34', lean=k.rng.uniform(-0.08, 0.08))
     for i in range(14):                                       # apples on the crown's face, toward you
         x, r, z, rx, ry, rz = lobes[i % len(lobes)]
@@ -213,7 +214,8 @@ def apple_tree(k, cx, cr, h=2.4):
         w = math.sqrt(1 - u * u)
         k.sphere(x + w * math.cos(a) * rx * 1.04, r + w * math.sin(a) * ry * 1.04, z + u * rz * 1.04, 0.065, 0.065,
                  ('#d02a2a', 0.2), 'apple', segs=6)
-    k.solid(cx - 0.4, cr - 0.4, cx + 0.4, cr + 0.4)
+    if solid:
+        k.solid(cx - 0.4, cr - 0.4, cx + 0.4, cr + 0.4)
 
 
 def seed_stall(k, x0, x1, r0, r1):
