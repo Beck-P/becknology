@@ -145,8 +145,25 @@ def height(x, r):
     return z
 
 
+def ice_look(x, r):
+    """Where the ice shows: in_ice with its ends drawn in to a wandering point (the patches were cut square across the
+    run). The ski data's zones still read in_ice."""
+    if not in_ice(x, r):
+        return False
+    for (run, a, b, lo, hi) in ICE:
+        if a <= r <= b:
+            c, h = centre(run, r), half(run, r)
+            t = min(r - a, b - r) / 1.6                                # 0 at an end, 1 once 1.6 rows in
+            if t >= 1:
+                return True
+            mid = c + (lo + hi) / 2 * h + 0.3 * n2(r, 0, 1.3, 77)
+            span = (hi - lo) * h / 2 * (0.25 + 0.75 * t) + 0.25 * n2(x, r, 2.0, 78)
+            return abs(x - mid) <= span
+    return True
+
+
 def material(x, r):
-    if in_ice(x, r):
+    if ice_look(x, r):
         return 'ice'
     if jump_at(x, r) > 0.02:
         return 'kicker'
@@ -174,8 +191,29 @@ crest = {(x, r) for x in range(-2, COLS + 2) for r in range(-5, 1)}
 ground_cells = [(x, r) for x in range(-1, COLS + 1) for r in range(-3, ROWS + 1) if (x, r) not in walls and (x, r) not in crest]
 I.ground(k, ground_cells, material, ALB, step=0.125, bump=0.01, seed=13, height=height, dither=0.07)
 gm = (lambda x, r: material(x, r), ALB)
-HW = I.ridge(k, sorted(walls), top=2.8, slope=1.3, seed=23, rock='#d6dee9', strata=('#6a7284', '#525a6c', '#7c8496'),
-             moss=N.ROOF_SNOW, foot=0.5, patchy=False, ground=gm)
+
+
+def wall_edge(x, r):
+    """How far into a couloir wall (x, r) is: the walls' feet follow the gully's own line, three-quarters of a tile back
+    from where the run's solid tiles end, wandering a little (built on whole tiles, they stepped a tile at a time)."""
+    c, h = centre('couloir', r), half('couloir', r)
+    wob = 0.18 * n2(x, r, 1.1, 31)
+    if x < c:
+        d = min((c - h - 0.4 - 0.75 + wob) - x, x + 2.0)                 # (and down at the map's edge, as before)
+    else:
+        e = c + h + 0.4
+        d = min(x - (e + 0.75 + wob), (e + 3.2 + wob) - x)
+    return min(d, r - 14.0, 55.0 - r)
+
+
+wall_mesh = set(walls)                                                   # the mesh reaches a column past the solid tiles
+for r in range(14, 55):
+    c, h = centre('couloir', r + 0.5), half('couloir', r + 0.5)
+    wall_mesh.add((int(math.floor(c - h - 0.4)), r))
+    wall_mesh.add((int(math.ceil(c + h + 0.4)) - 1, r))
+    wall_mesh.add((int(math.ceil(c + h + 0.4)) + 3, r))
+HW = I.ridge(k, sorted(wall_mesh), top=2.8, slope=1.3, seed=23, rock='#d6dee9', strata=('#6a7284', '#525a6c', '#7c8496'),
+             moss=N.ROOF_SNOW, patchy=False, ground=gm, edge=wall_edge)
 HC = I.ridge(k, sorted(crest), top=2.4, slope=1.6, seed=29, rock='#d6dee9', strata=('#5e6678', '#485062', '#727a8c'),
              moss=N.ROOF_SNOW, foot=0.7, patchy=False, ground=gm)
 for (x, r) in walls | crest:
