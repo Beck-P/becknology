@@ -275,6 +275,7 @@ var BridgeMap = (function () {
     if (has('board') || has('notice_board')) out.push('the board\'s requests, new each day');
     if (typeof BridgeFestivals !== 'undefined' && BridgeFestivals.soon) BridgeFestivals.soon(wid).forEach(function (s) { out.push(s); });   // on now, or this weekend
     if (typeof BridgeEvents !== 'undefined' && BridgeEvents.live && wid === here()) BridgeEvents.live(wid).forEach(function (e) { if (e.name) out.push(e.name + ', on now'); });
+    if (typeof BridgeLumarDeep !== 'undefined' && BridgeLumarDeep.comeBack) BridgeLumarDeep.comeBack(wid).forEach(function (s) { out.push(s); });   // the riddle, the bounties, the Sovereign, the booths
     if (typeof BridgeBusiness !== 'undefined' && BridgeBusiness.all) BridgeBusiness.all().forEach(function (d) {
       if (d.world === wid && BridgeBusiness.owned(d.id)) out.push('takings at your ' + d.name.replace(/^The /, ''));
     });

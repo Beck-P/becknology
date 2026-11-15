@@ -827,6 +827,34 @@ The empire plan's chunk 5 ("magic things are the prize": the Workshop's highest 
 - **Plans**: the three people's are `workshop` topics in assets/people.json (`keeper`, `registrar`, `tern_pell`; js/workshop.js `SHOPS`); a relic's waking is known as soon as you've found the relic (`wakes`, js/trophies.js `has`).
 - **The cabinet** is two glazed walnut cabinets in the hall's back corners, three shelves each (`scenes/lumar_holm_hall.py`, spots of kind `shelf`): js/trophies.js draws each wonder on its shelf once made (from its own pixel art, `wonder_<id>` items) behind a pane of glass, its plate says what it does and when it was made; an empty shelf names what goes there and whose plan it is. A woken relic stays in its case in the hall, its plate saying it's been woken.
 
+### Lumar, deeper (L4–L7, L9)
+Beck: "wide but not very deep… not super clear on what to actually do with everything." The rest of
+`_claude_docs/spec-deeper-worlds.md`'s Lumar items (L1 boards, L2 glass and lantern, L3 the Admiral and L8 the scarf were
+built before): the capital's yards, Cinder Key's posters, the dragon's room and the Old Bridge's booths given something to
+come back for. No new people, no renders, no scene-script edits: the people in these are the ones already there or
+spoken of in the text (the Arsenal's clerk, the booth keepers). `js/lumar-deep.js` (BridgeLumarDeep) holds it all;
+interactions of type `lumardeep` (`act`), set by `decorate` on the labels already drawn. State in localStorage
+`bridge_lumar_deep` (`sov`, `bounty`, `riddle`, `line`; cloud-saved). Test: `world/lumar_deeper.js`
+(`node world/lumar_deeper.js <shots> sovereign|bounty|riddle|booths` for one part; shots `ld_*.png`).
+- **L7 · The Sovereign II.** THE ARSENAL (the office at 52, 14 in `lumar-crown-arsenal`) is the clerk of the cheque's
+  ledger of what the galleon on the stocks still wants — your share, the same for every pilot (`NEEDS`: 12 oak planks,
+  8 iron bars, 10 rope, 6 pitch, 4 sailcloth: all things the Workshop makes; never logs). *Put in* takes from your pack,
+  then the holds of your ships lying at Crownhaven (not the holm's store: the Arsenal's lighters fetch from the quay).
+  With all 40 in (`sov.done`) she launches **on the next regatta Friday** (js/race.js `REGATTA`'s day and hours): a
+  happening at the Arsenal, js/events.js `sovereign`, `due` from `BridgeLumarDeep.launchDue(slot)` — every twenty-minute
+  slot of a regatta Friday after your share went in, until you've seen her go (and the slot she went in, so the crowd
+  stays to cheer). Agnes Rook (`npc-smith`) and Commodore Harrow (`npc-academy`) on the quay south of the stocks
+  (45, 29 / 51, 29), the yard's crowd gathered round 48, 30, THE LAUNCH (48, 29) and ON THE STOCKS taken over:
+  *knock out the last shore* (`shore`) — or stay to the end and a shipwright does it for you (`watched`, the event's
+  `end`). Either way, once: 600 coins (`PAY`), your name in the Arsenal's book (THE ARSENAL becomes the book: the
+  Crown's friends and you, dated), and the yard's plan for the first of `PLANS` you don't know (long nine, bow chaser,
+  copper sheathing, carronade). After, ON THE STOCKS is her sister's keel and FITTING OUT is the Sovereign herself
+  (the warship already drawn alongside). Led to by Commodore Harrow's *Heard anything?* (lead `sovereign`, moot once
+  your share's in: a lead's `unless: 'gate:<name>'` asks a gate a module registered with `BridgeQuests.gate`), the
+  Journal's *Next up* (your count, then the launch), the Map's *Come back for*; the materials' cards say so.
+  **Two pilots** each put in their own share; the needs are the same, the launch is each one's own (two pilots both
+  ready see it in the same slot; a partner whose share isn't in sees nothing at the Arsenal).
+
 ### The Peddler, magic things and the curios
 `js/magic.js` (BridgeMagic; localStorage `bridge_magic`). **Wendel Crane, Peddler of Oddments** (`npc-peddler`, a witch-hatted Blender NPC; people.json `peddler`, found by the label PEDDLER in any of his worlds) sets up somewhere different each day (`PLACES`, by the date: the Market Square, the District street, Verdance's farm road, Fellhaven, Sapphire's quay, Enigma's docking bay) — added to that world's interactions and actors as it loads. *What have you got?* opens his wares (`BridgeInteractions.choose`):
 - **Moonlit Wand** (weapon): F casts a bolt of moonlight seven tiles the way you face, through the first creature it meets (30, via `BridgeItems.strike`), 2 energy a cast (most of it back after a breath — see *Energy and the second wind* under Fighting); bolts are drawn and moved in a `'*'` scene `over` hook.

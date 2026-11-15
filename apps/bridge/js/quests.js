@@ -300,6 +300,7 @@ var BridgeQuests = (function () {
       if (u === 'holm') return typeof BridgeHolm !== 'undefined' && BridgeHolm.owned();
       if (k[0] === 'crew') return typeof BridgeCrew !== 'undefined' && BridgeCrew.isHired(k[1]);
       if (k[0] === 'quest') return !!(state[k[1]] && state[k[1]].done);
+      if (k[0] === 'gate') return !!(GATES[k[1]] && GATES[k[1]]());   // a module's own word (js/lumar-deep.js: your share's in)
     } catch (e) { /* a module missing: worth telling */ }
     return false;
   }
@@ -557,6 +558,7 @@ var BridgeQuests = (function () {
       }
     }
     if (wid && typeof BridgeBoards !== 'undefined') BridgeBoards.nextUp(wid).forEach(function (b) { out.push(b); });   // a request here you can fill now
+    if (typeof BridgeLumarDeep !== 'undefined') BridgeLumarDeep.nextUp(wid).forEach(function (b) { out.push(b); });   // the Sovereign, a bounty to claim, the dragon's riddle
     if (typeof BridgeFestivals !== 'undefined' && BridgeFestivals.nextUp) BridgeFestivals.nextUp().forEach(function (b) { out.push(b); });   // a festival on, or this weekend
     if (typeof BridgeInventory !== 'undefined' && BridgeInventory.freeSlots && BridgeInventory.freeSlots() === 0) {
       out.push({ tag: 'Pack', title: 'Your pack is full', text: 'Sell to a trader, or leave things in a chest: the sea chest on the bridge, the locker in your quarters.' });

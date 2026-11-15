@@ -57,6 +57,7 @@ const SUITES = {
     ['world/firsthour.js', SHOTS],
     ['world/small_stories.js', SHOTS],
     ['world/arcadia_deeper.js', SHOTS],
+    ['world/lumar_deeper.js', SHOTS],
     ['world/rumours.js', SHOTS],
     ['world/events.js', SHOTS],
     ['world/boards.js', SHOTS],

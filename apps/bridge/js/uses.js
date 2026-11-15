@@ -89,7 +89,7 @@ var BridgeUses = (function () {
         });
       }
       // what a module says its own things are for (`USES`: { id, t, p } — the rosettes' roll of honour, js/festivals.js)
-      [has('BridgeFestivals') && BridgeFestivals.USES, has('BridgeArcadiaDeep') && BridgeArcadiaDeep.USES].forEach(function (list) { (list || []).forEach(function (u) { add(u.id, { k: 'own', t: u.t, p: u.p }); }); });
+      [has('BridgeFestivals') && BridgeFestivals.USES, has('BridgeArcadiaDeep') && BridgeArcadiaDeep.USES, has('BridgeLumarDeep') && BridgeLumarDeep.USES].forEach(function (list) { (list || []).forEach(function (u) { add(u.id, { k: 'own', t: u.t, p: u.p }); }); });
       if (has('BridgeTrade')) {
         var M = BridgeTrade.MARKET || {}, G = BridgeTrade.GOODS || {}, H = BridgeTrade.HAUL || {};
         Object.keys(G).concat(Object.keys(H)).forEach(function (id) {

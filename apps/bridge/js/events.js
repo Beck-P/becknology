@@ -365,6 +365,22 @@ var BridgeEvents = (function () {
       tick: function (L) { boatResult(L); },
       note: 'Toy boats raced in Crownhaven\'s fountain'
     },
+    // the Sovereign II goes down the ways (js/lumar-deep.js, L7): only for a pilot whose share is in, on a regatta Friday,
+    // every slot of the day until they've seen her go. Agnes Rook on the ways, the Commodore come down from the Hill, the
+    // yard and the quay crowded south of the stocks; you knock out the last shore (or watch someone else do it)
+    sovereign: {
+      world: 'lumar-crown-arsenal', name: 'The Sovereign II\'s launch', len: 6, w: 1, at: [48, 27],
+      hint: 'The yard\'s turned out — the Sovereign II is going down the ways!', sfx: 'peal', loop: { name: 'horn', every: 40, near: 24 },
+      cast: [{ sheet: 'npc-smith', x: 45, y: 29, f: 'up' }, { sheet: 'npc-academy', x: 51, y: 29, f: 'up' }],
+      gather: { x: 48, y: 30.4, r: 3, n: 12, face: [48, 26] },
+      say: [[3, 0, 'STAND CLEAR OF THE WAYS!'], [30, 1, 'FOR THE CROWN AND THE REGATTA!'], [75, 0, 'WHERE\'S OUR CAPTAIN WITH THE MAUL?'], [200, 'at', 'SHE\'S AWAY!']],
+      talk: [{ x: 48, y: 29, label: 'THE LAUNCH', prompt: 'PRESS E TO KNOCK OUT THE LAST SHORE', on: function () { if (typeof BridgeLumarDeep !== 'undefined') BridgeLumarDeep.shore(); } }],
+      take: [{ label: 'ON THE STOCKS', prompt: 'PRESS E TO KNOCK OUT THE LAST SHORE', on: function () { if (typeof BridgeLumarDeep !== 'undefined') BridgeLumarDeep.shore(); } }],
+      when: function () { return false; },                             // (never drawn at random: due)
+      due: function (slot) { return typeof BridgeLumarDeep !== 'undefined' && BridgeLumarDeep.launchDue ? BridgeLumarDeep.launchDue(slot) : null; },
+      end: function (L) { if (now() >= L.end - 3000 && typeof BridgeLumarDeep !== 'undefined' && !BridgeLumarDeep.launched()) BridgeLumarDeep.watched(); },
+      note: 'The Sovereign II launched at the Arsenal'
+    },
     fiddler: {
       world: 'lumar-square', name: 'A fiddler by the fountain', len: 5, w: 3, at: [13, 10], when: dry,
       hint: 'A fiddler\'s struck up by the fountain', loop: { name: 'fiddle', every: 4.8, near: 14 },
