@@ -741,6 +741,19 @@ var BridgeValley = (function () {
     return out;
   }
 
+  // The Last Monk done (assets/quests.json `last-monk`), the monastery is Brother Anselm's again by day: its cold ones
+  // come up from the glacier only after dark, and of an evening the valley's yetis climb the stair to sit at the top of it
+  function monkHome() { return typeof BridgeQuests !== 'undefined' && BridgeQuests.has && BridgeQuests.has('last-monk'); }
+  // by the planet's clock, not the sun (Hoarfell's summer has a midnight sun): 'evening' from two-thirds of the way
+  // through its day, 'night' the fifth either side of midnight, 'day' the rest
+  function partNow(worldId) {
+    var s = typeof BridgeClock !== 'undefined' && BridgeClock.sky ? BridgeClock.sky(worldId) : null;
+    if (!s || !s.cycles || !s.len) return 'day';
+    var x = s.t / s.len;
+    return x >= 0.8 || x < 0.2 ? 'night' : x >= 0.66 ? 'evening' : 'day';
+  }
+  function quiet(worldId) { return worldId === 'hoarfell-monastery' && monkHome() && partNow(worldId) !== 'night'; }
+  function evening(worldId) { return worldId === 'hoarfell-monastery' && monkHome() && partNow(worldId) === 'evening'; }
   function decorate(worldId, data) {
     var V = data.valley;
     if (!ROSTER[worldId] && !V) return;
@@ -748,7 +761,7 @@ var BridgeValley = (function () {
     data.__valley = true;
     if (!data.onFaint && worldId !== 'hoarfell-valley') data.onFaint = FAINT;
     if (!data.onFaint) data.onFaint = { world: worldId, spawn: (data.spawns && data.spawns.player) || null, who: FAINT.who, line: FAINT.line };
-    if (typeof BridgeCombat !== 'undefined') {
+    if (typeof BridgeCombat !== 'undefined' && !quiet(worldId)) {
       spots(worldId, data).forEach(function (s) {
         if (!KINDS[s.kind] || !open(data, s.x, s.y)) return;
         if (s.kind === 'wyrm' && save.wyrm === today()) return;           // once a day
@@ -765,7 +778,9 @@ var BridgeValley = (function () {
   }
 
   // ---- the yetis ----------------------------------------------------------------------------------------------------
-  var FOODS = ['strawberry', 'apple', 'honey', 'sweet_roll', 'roast_chestnuts', 'edelweiss', 'honey_cake', 'pumpkin_pie', 'arctic_char', 'fondue'];
+  var FOODS = ['strawberry', 'apple', 'honey', 'sweet_roll', 'roast_chestnuts', 'edelweiss', 'honey_cake', 'pumpkin_pie', 'arctic_char', 'fondue', 'rime_shell'];
+  // not food: what a yeti lines its cache with (spec-deeper-worlds H1). Given one, it trusts you this much more at once
+  var TREATS = { rime_shell: 2 };
   var yetis = [], walker = null, trail = [], lastPos = null;
   function yeti(id) { return save.yetis[id] || (save.yetis[id] = { trust: 0, fed: null, met: false, shown: false }); }
   function yetiSpots(worldId, data) {
@@ -783,6 +798,15 @@ var BridgeValley = (function () {
     yetis = [];
     walker = null;
     yetiSpots(worldId, data).forEach(function (c, i) { addYeti(data, c[0], c[1], worldId + '#' + i, i); });
+    // the Last Monk done: of an evening the valley's own two yetis (the same ones, trust and names and all) sit at the
+    // head of the monastery's stair, where Anselm leaves them berries and salt. Visitors: no cache or spring of theirs here
+    if (evening(worldId)) {
+      var sp0 = (data.spawns && data.spawns.player) || [22, 33];
+      [[-3, -3], [3, -3]].forEach(function (d, i) {
+        var c = nearOpen(data, sp0[0] + d[0], sp0[1] + d[1]);
+        if (c) addYeti(data, c[0], c[1], 'hoarfell-valley#' + i, i, true);
+      });
+    }
     // the one that trusts you most, at five, walks with you in every part of the valley
     var best = null;
     Object.keys(save.yetis).forEach(function (id) { if (save.yetis[id].trust >= 5 && (!best || save.yetis[id].trust > save.yetis[best].trust)) best = id; });
@@ -796,16 +820,24 @@ var BridgeValley = (function () {
       walker = { world: data, yeti: here };
     }
   }
-  function addYeti(data, x, y, id, i) {
+  function addYeti(data, x, y, id, i, visiting) {
     var Y = yeti(id);
     if (!Y.name) Y.name = NAMES[Math.abs(i) % NAMES.length];
     var inter = { x: x, y: y, type: 'yeti', yeti: id, label: Y.met ? Y.name : 'YETI', prompt: 'PRESS E TO OFFER SOMETHING' };
     data.interactions.push(inter);
-    var o = { id: id, inter: inter, fx: x, fy: y, home: [x, y], state: 'wander', until: 0, goal: null, face: 1, sit: false, seed: i * 7.3 };
+    var o = { id: id, inter: inter, fx: x, fy: y, home: [x, y], state: 'wander', until: 0, goal: null, face: 1, sit: false, seed: i * 7.3, visiting: !!visiting };
     yetis.push(o);
     // at three it shows you something: a cache of hoar crystals, or a hot spring nobody else knows
-    if (Y.trust >= 3) giftAt(data, o, i);
+    if (Y.trust >= 3 && !visiting) giftAt(data, o, i);
     return o;
+  }
+  function nearOpen(data, x, y) {                    // the nearest open cell to (x, y) with nothing on it, within 4 tiles
+    for (var d = 0; d <= 4; d++) for (var dy = -d; dy <= d; dy++) for (var dx = -d; dx <= d; dx++) {
+      if (Math.max(Math.abs(dx), Math.abs(dy)) !== d) continue;
+      var cx = x + dx, cy = y + dy;
+      if (open(data, cx, cy) && !data.interactions.some(function (q) { return q.x === cx && q.y === cy; })) return [cx, cy];
+    }
+    return null;
   }
   function giftAt(data, o, i) {
     var r = rnd(o.id + ':gift'), best = null;
@@ -849,7 +881,8 @@ var BridgeValley = (function () {
     if (Y.fed === today()) return say(Y.name, Y.name + ' HAS EATEN TODAY. IT PUSHES YOUR HAND AWAY, GENTLY.');
     if (!BridgeInventory.removeItem(id, 1)) return;
     Y.fed = today();
-    Y.trust = Math.min(5, Y.trust + 1);
+    var was = Y.trust;
+    Y.trust = Math.min(5, Y.trust + (TREATS[id] || 1));
     var first = !Y.met;
     Y.met = true;
     inter.label = Y.name;
@@ -863,10 +896,14 @@ var BridgeValley = (function () {
       4: Y.name + ' EATS AND HOOTS AND PATS YOUR HEAD, HARD ENOUGH TO PUSH YOUR HAT DOWN OVER YOUR EYES.',
       5: Y.name + ' EATS, THEN STANDS AND WAITS FOR YOU, LOOKING THE WAY YOU\'RE GOING. FROM NOW ON IT WALKS WITH YOU IN THE VALLEY, AND WHAT LIVES HERE KEEPS ITS DISTANCE.'
     };
-    say(Y.name, lines[Y.trust] || lines[4]);
+    var said = lines[Y.trust] || lines[4];
+    if (TREATS[id]) said = (first ? 'IT TAKES THE SHELL FROM YOUR PALM WITH TWO HUGE FINGERS, TURNS IT TO THE LIGHT, AND TUCKS IT AWAY IN ITS FUR - FOR THE CACHE. IT MAKES A SOUND LIKE "' + Y.name + '". THAT\'S ITS NAME, NEAR AS YOU CAN SAY IT.'
+                                  : Y.name + ' TURNS THE SHELL TO THE LIGHT AND TUCKS IT AWAY IN ITS FUR, FOR THE CACHE. IT LOOKS AT YOU AS IF YOU\'D UNDERSTOOD SOMETHING.') +
+                          '\n\n' + (Y.trust >= 5 ? lines[5].replace(Y.name + ' EATS, THEN', 'THEN IT') : Y.trust >= 3 && was < 3 ? lines[3].replace(Y.name + ' EATS, THEN', 'THEN IT') : 'IT TRUSTS YOU A GOOD DEAL MORE FOR IT.');
+    say(Y.name, said);
     if (first) toast('A friend in the snow', 'The yeti\'s name is ' + Y.name, 'Feed it once a day and it trusts you a little more');
-    if (Y.trust === 3 && o) { var w = BridgeWorld.getWorld(); if (w) giftAt(w, o, yetis.indexOf(o)); }
-    if (Y.trust === 5 && o) { o.walks = true; walker = { world: BridgeWorld.getWorld(), yeti: o }; }
+    if (Y.trust >= 3 && was < 3 && o && !o.visiting) { var w = BridgeWorld.getWorld(); if (w) giftAt(w, o, yetis.indexOf(o)); }
+    if (Y.trust === 5 && was < 5 && o) { o.walks = true; walker = { world: BridgeWorld.getWorld(), yeti: o }; }
   }
   function useGift(inter) {
     var key = inter.yeti + ':' + (inter.spring ? 'spring' : 'cache') + ':' + today();
@@ -1194,7 +1231,7 @@ var BridgeValley = (function () {
     return addYeti(w, x, y, 'test#' + (i || 0), i || 0);
   }
 
-  return { decorate: decorate, KINDS: KINDS, ROSTER: ROSTER, FOODS: FOODS,
+  return { decorate: decorate, KINDS: KINDS, ROSTER: ROSTER, FOODS: FOODS, TREATS: TREATS, quiet: quiet, evening: evening, part: partNow,
            _spawn: _spawn, _yeti: _yeti, _yetis: function () { return yetis; }, _walker: function () { return walker; },
            _drawYeti: drawYeti, _feed: function (o, id) { BridgeInventory.addItem(id, 1); feed(o, o.inter, id); }, _use: useYeti, _gift: useGift,
            _day: function (n) { shift = n; }, _save: function () { return save; }, _hazards: function () { return hazards; },

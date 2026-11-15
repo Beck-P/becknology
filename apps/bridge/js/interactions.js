@@ -445,7 +445,11 @@ var BridgeInteractions = (function () {
     if (inter.action && typeof BridgeActions !== 'undefined' && (/^(sit|sleep|view)$/.test(inter.action) || inter.type === 'deck')) {
       BridgeActions.run(inter); return;
     }
-    if (OWN[inter.type]) { OWN[inter.type](inter); return; }        // a type some module handles itself (register)
+    if (OWN[inter.type]) {                                           // a type some module handles itself (register); the clues
+      inter.__clues = hits;                                          // found just now ride along, so it can show a clue's `say`
+      try { OWN[inter.type](inter); } finally { delete inter.__clues; }
+      return;
+    }
     switch (inter.type) {
       case 'app':
         // the Bridge's own games open over the world, like the arcade cabinets (no reload)

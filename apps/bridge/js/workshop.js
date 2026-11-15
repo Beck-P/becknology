@@ -51,7 +51,8 @@ var BridgeWorkshop = (function () {
     moonglass: 'the Ferryman on Midnight Isle, a few a day', moon_salt: 'the Ferryman, by the crate, into a hold',
     roseite: 'Rose Cove\'s terraces and the Rose Mine', sapphire_crystal: 'Sapphire\'s hills and the mine\'s middle floors',
     midnight_crystal: 'among the ruins on Midnight Isle', star_iron: 'the Rose Mine, floor 13 and down',
-    songstone: 'the Rose Mine\'s deepest floors', gloam_scale: 'the Gloamserpent, out on the Midnight Sea'
+    songstone: 'the Rose Mine\'s deepest floors', gloam_scale: 'the Gloamserpent, out on the Midnight Sea',
+    golem_core: 'the rime golems in the cliff monastery, in Hoarfell\'s hidden valley', wyrm_scale: 'the glacier wyrm, at the heart of Hoarfell\'s hidden valley (once a day)'
   };
 
   // kind: make (a material or a tool, onto the racks) | gun | fit (a part, fitted to a ship) | home (a piece for your
@@ -78,10 +79,12 @@ var BridgeWorkshop = (function () {
     moon_lantern: { kind: 'fit', group: 'fittings', in: { moonglass: 2, copper_sheet: 1, glass: 1 }, mins: 240, plan: true },
     ironwood:     { kind: 'fit', group: 'fittings', in: { oak_plank: 8, iron_bar: 4, star_iron: 2, pitch: 3 }, mins: 360, plan: true },
     gloamscale:   { kind: 'fit', group: 'fittings', in: { gloam_scale: 5, copper_sheet: 3, pitch: 2 }, mins: 480, plan: true },
+    wyrmscale:    { kind: 'fit', group: 'fittings', in: { wyrm_scale: 4, iron_bar: 4, pitch: 2 }, mins: 360 },   // Hoarfell's valley: its wyrm's scales
     iron_pickaxe: { kind: 'make', group: 'tools', in: { iron_bar: 2, oak_plank: 1 }, out: ['iron_pickaxe', 1], mins: 40 },
     star_pickaxe: { kind: 'make', group: 'tools', in: { star_iron: 3, iron_bar: 1, oak_plank: 1 }, out: ['star_pickaxe', 1], mins: 120, plan: true },
     prospector_pick: { kind: 'make', group: 'tools', in: { star_iron: 3, songstone: 1, copper_sheet: 1, oak_plank: 1 }, out: ['prospector_pick', 1], mins: 240, plan: true },
     greenheart_rod: { kind: 'make', group: 'tools', in: { oak_plank: 2, rope: 1, copper_sheet: 1 }, out: ['greenheart_rod', 1], mins: 90, plan: true },
+    hearthstone:  { kind: 'make', group: 'tools', in: { golem_core: 1, copper_sheet: 1 }, out: ['hearthstone', 1], mins: 60 },   // a golem core, its rime knocked off
     oak_table:    { kind: 'home', group: 'home', in: { oak_plank: 3 }, mins: 30 },
     trunk:        { kind: 'home', group: 'home', in: { plank: 3, iron_bar: 1 }, mins: 40 },
     crystal_lamp: { kind: 'home', group: 'home', in: { glass: 2, copper_sheet: 1, sapphire_crystal: 2 }, mins: 60 },
@@ -249,6 +252,14 @@ var BridgeWorkshop = (function () {
     ironwood: function (ctx, x, y, u) { boards(ctx, x, y, u, '#4a3424', '#6a4a30', '#ffe080'); },
     sheathing: function (ctx, x, y, u) { plates(ctx, x, y, u, '#c87a3a', '#f0b070', '#6a3a18'); },
     roseite: function (ctx, x, y, u) { plates(ctx, x, y, u, '#e070a0', '#ffd0e8', '#6a2a4a'); },
+    wyrmscale: function (ctx, x, y, u) {
+      px(ctx, x, y, u, '#0a1220', [[1, 3, 14, 11]]);
+      for (var r = 0; r < 3; r++) for (var c = 0; c < 4; c++) {
+        var cx = 2 + c * 3 + (r % 2), cy = 4 + r * 3;
+        px(ctx, x, y, u, '#3a6a9a', [[cx, cy, 3, 3]]); px(ctx, x, y, u, '#8ac8ec', [[cx, cy, 2, 1]]); px(ctx, x, y, u, '#a080e0', [[cx + 2, cy + 1, 1, 1]]);
+      }
+      px(ctx, x, y, u, '#4a4a54', [[1, 7, 14, 1]]);
+    },
     gloamscale: function (ctx, x, y, u) {
       px(ctx, x, y, u, '#0c1410', [[1, 3, 14, 11]]);
       for (var r = 0; r < 3; r++) for (var c = 0; c < 4; c++) {

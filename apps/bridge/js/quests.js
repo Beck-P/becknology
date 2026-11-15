@@ -56,9 +56,22 @@ var BridgeQuests = (function () {
   }
 
   // ---- finding clues ----------------------------------------------------------------------
+  // things a clue takes from your pack as it's found (`takes: { id: n }`) and something it wants you to have with you
+  // (`holds: [ids]`, any one of them; `holdsName` says it in words): what's still missing, [] when you're ready
+  function inv() { return typeof BridgeInventory !== 'undefined' ? BridgeInventory : null; }
+  function iname(id) { var it = typeof BridgeItems !== 'undefined' && BridgeItems.get(id); return it ? it.name : String(id).replace(/_/g, ' '); }
+  function missing(c) {
+    var I = inv(), out = [];
+    if (!I) return out;
+    Object.keys(c.takes || {}).forEach(function (id) { var have = I.getCount(id); if (have < c.takes[id]) out.push(c.takes[id] + ' ' + iname(id) + (have ? ' (you have ' + have + ')' : '')); });
+    if (c.holds && ![].concat(c.holds).some(function (id) { return I.getCount(id) > 0; })) out.push(c.holdsName || iname([].concat(c.holds)[0]));
+    return out;
+  }
+  function take(c) { var I = inv(); if (I) Object.keys(c.takes || {}).forEach(function (id) { I.removeItem(id, c.takes[id]); }); }
   function onInteract(worldId, inter) {
     var hits = [];                                 // the clues found just now (js/interactions.js shows a clue's `say`)
     if (!defs || !inter) return hits;
+    var lacking = null;                            // a clue that's ready but for what it takes: said in a toast
     var was = {};                                  // done before this — so a sequel can't start on the same word that ended the quest before it
     Object.keys(defs).forEach(function (id) { was[id] = !!(state[id] && state[id].done); });
     Object.keys(defs).forEach(function (id) {
@@ -70,11 +83,16 @@ var BridgeQuests = (function () {
         var wm = c.on.world, wid = inter.home ? inter.home.world : worldId;   // someone visiting counts as at home (js/routines.js)
         if (!(wm === wid || (wm.slice(-1) === '*' && wid.indexOf(wm.slice(0, -1)) === 0)) || c.on.label !== inter.label) return;   // 'lumar-rose-mine-*': any floor
         if (!ready(id, q, c)) return;
+        if (state[id] && state[id].clues[c.id]) return;
+        var short = missing(c);
+        if (short.length) { lacking = lacking || { q: q, c: c, short: short }; return; }
         if (meta.aside[id] && state[id]) delete meta.aside[id], saveMeta();   // went back to it: it's picked up again
+        take(c);
         findClue(id, c, hits);
       });
     });
     if (hits.length) { trSig = null; refreshTracker(); }
+    else if (lacking) toast(lacking.q.title, lacking.c.lack || 'Not yet', 'You need ' + lacking.short.join(' and '), false);
     return hits;
   }
   // a clue found: its toast, the quest begun or finished (its reward, a keepsake, the rumour it hands on to)
