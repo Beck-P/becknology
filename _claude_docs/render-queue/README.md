@@ -25,13 +25,12 @@ cores, an interior much less.
 ## The queue
 | Patch | Scene scripts | What it fixes | Look at afterwards |
 |---|---|---|---|
-| `arcadia-terraces.patch` | `scenes/arcadia_terraces.py` → `arcadia-terraces` | Cascade Tower's front was rows of big white window squares: darker glass, slimmer bars, fewer and dimmer lit offices with desks, screens, blinds and plants; the flats across the gap and the lit floors over the train tunnel toned down the same way. The script replays the old random rolls so nothing placed after the tower moves. Also in it (world JSON): Halo's two patio heaters and Cirrus's three cocktail tables, which you could walk through, are solid. | The tower front (the top sections of the look-over); `world/arcadia_terraces.js`. |
 | `lumar-crown-hill.patch` | `scenes/lumar_crown_hill.py` → `lumar-crown-hill` (needs `assets_capital.py`'s `flagged(z=)`, already in) | The gravel walks, the parade ground and the observatory terrace come out striped because the gravel sits exactly level with the grass; the gravel is raised a touch. | The Hill's parade ground, the walks and the terrace. `world/capital.js`. |
-| `hoarfell-valley-heart-stubli.patch` | `scenes/hoarfell_valley.py` → `hoarfell-valley`; `scenes/hoarfell_heart.py` → `hoarfell-heart`; `scenes/hoarfell_promenade.py` → `hoarfell-promenade` | **The hidden valley:** the mani wall's square stones stepped along a diagonal read as a white staircase — one wall built along its line, stones leant on its face, snow in lumps; the stream ran under the herders' shelter's roof — moved east; the snow-to-moss edge ran in 4-px steps — a finer ground (1/12 tile, not yet tried in Blender: preview first) with a wet-grass band between thaw and moss. **The heart:** the ribs laid across the rows stacked into straight posts and read as a picket fence — a spine down the rows, ribs arching across the columns, half sunk, the near ones broken; the RIBS interaction moves to 9,14 (quests and tests that use it: grep the label). **The promenade:** the Stübli's name was buried in the roof's snow — raised clear. Three renders (the valley and the heart about an hour and a half each on four free cores, the promenade under an hour). | The mani wall and the stream by the shelter; the ribs from where a player walks in, and that the valley's fights and *The Last Monk*'s clues still work (`combat/valley.js`, `world/hoarfell_quest.js`, `world/hoarfell_e.js`); the Stübli's sign readable at a desktop and a phone. |
+| `hoarfell-promenade-signs.patch` | `scenes/hoarfell_promenade.py` → `hoarfell-promenade` | **The promenade's signs:** the Stübli's name was buried in the roof's snow — raised clear on a board standing on the eave; the après-ski bar's name, a quarter tile high under its eave, couldn't be read — a board along the roof's front edge with letters half a tile high. One render, under an hour. (The valley's and the heart's parts of this patch have landed.) | The two signs readable at a desktop and a phone; `world/hoarfell_e.js`. |
 
-## Sylvara's closed places (four still to open)
-The Boughs and the Hollow Bough tavern are live. Still closed (`BridgeSylvara.OPEN` in `apps/bridge/js/worlds/sylvara.js` lists what's open): the falls (`sylvara-falls`), the cave behind them (`sylvara-fallcave`), Mirror Lake (`sylvara-lake`) and the Deepwood
-(`sylvara-deepwood`) — scripted, never rendered at full samples (about 70 minutes each outdoors on four free cores;
+## Sylvara's closed places (two still to open)
+The Boughs, the Hollow Bough tavern, the falls and the cave behind them are live. Still closed (`BridgeSylvara.OPEN` in `apps/bridge/js/worlds/sylvara.js` lists what's open): Mirror Lake (`sylvara-lake`) and the Deepwood
+(`sylvara-deepwood`) — scripted, never rendered at full samples (about 25 minutes each outdoors on four free cores — the falls took 24;
 preview first at low samples, fix what the preview shows — the Boughs needed crowns lowered off the walkways, bridges
 moved out from behind trunks and two houses off bridge ends — then render in full). `apps/bridge/CLAUDE.md`, *Sylvara's
 city, the Silverrun and the Deepwood (workstream F)*, says how a place opens: render, `scene_post.py`, the ways in put
@@ -39,7 +38,7 @@ back into the open worlds, its people and crowd line, `OPEN`, `atlas.py`. Two he
 (run from the repo root; they read commit `e93d7dc`, where the closed places' doors and people were kept — a shallow
 clone needs `git fetch --unshallow` first):
 ```
-python3 _claude_docs/render-queue/sylvara/restore_doors.py sylvara-falls       # the doors that lead to it, back into the open worlds' JSON
+python3 _claude_docs/render-queue/sylvara/restore_doors.py sylvara-lake        # the doors that lead to it, back into the open worlds' JSON
 python3 _claude_docs/render-queue/sylvara/restore_person.py <person-id>        # e.g. Fennick (the tavern), Sorrel — ids as in e93d7dc's people.json
 ```
 `tools/tests/world/sylvara_places.js` walks the city and goes into the tavern for Fennick's cider; extend it for each

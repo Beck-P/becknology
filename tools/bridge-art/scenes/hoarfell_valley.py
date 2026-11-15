@@ -14,6 +14,7 @@ with a fire. Tile units: x = column, r = row (toward the camera), z = height.
 """
 import json
 import math
+import random
 import os
 import sys
 
@@ -46,7 +47,7 @@ def sm(a, b, t):
 # ---- warmth: where the springs are, the snow gives out --------------------------------------------------------------------
 SPRINGS = [(26.0, 17.0, 4), (33.4, 22.0, 3), (20.6, 25.4, 3)]           # each terrace's top pool (x, r) and how many steps
 WARM = [(26.0, 19.0, 7.0), (33.4, 23.0, 5.0), (20.6, 27.0, 5.0), (25.0, 31.0, 6.0)]
-STREAM = [(26.0, 21.0), (25.2, 24.0), (24.4, 28.0), (25.6, 32.0), (24.8, 36.0), (26.2, 40.0), (25.6, 46.0)]
+STREAM = [(26.0, 21.0), (25.2, 24.0), (24.4, 28.0), (25.6, 32.0), (24.8, 36.0), (26.6, 40.5), (27.0, 46.0)]   # (clear of the shelter)
 
 
 def warmth(x, r):
@@ -96,16 +97,18 @@ def material(x, r):
         return 'grass'
     if w > 0.5:
         return 'moss'
+    if w > 0.45:                                    # wet, flattened grass coming through: the edge in steps, not a cliff
+        return 'thaw_grass'
     if w > 0.36:
         return 'thaw'
     return 'snow'
 
 
 cells = [(c, r) for c in range(-1, COLS + 1) for r in range(-10, ROWS + 1)]
-I.ground(k, cells, material, {'snow': (N.SNOW, 0.04), 'thaw': ('#c8d0c4', 0.08), 'moss': ('#5a7a42', 0.14), 'grass': ('#4a7a3a', 0.12),
+I.ground(k, cells, material, {'snow': (N.SNOW, 0.04), 'thaw': ('#d2d9cc', 0.08), 'thaw_grass': ('#8c9a72', 0.12), 'moss': ('#5a7a42', 0.14), 'grass': ('#4a7a3a', 0.12),
                               'path': ('#8a7a5e', 0.12), 'trodden': (N.PACKED, 0.06), 'stream_bed': ('#6a6a5a', 0.12),
                               'scree': ('#8a8c94', 0.2)},
-         step=0.25 if QUICK else 0.125, bump=0.012, seed=61, height=height, dither=0.08)
+         step=0.25 if QUICK else 1 / 12, bump=0.012, seed=61, height=height, dither=0.11)
 # the grass and moss grow over the warm ground (the meadow's tufts, flowers where it's warmest)
 warm_cells = [(c, r) for c in range(COLS) for r in range(ROWS) if warmth(c + 0.5, r + 0.5) > 0.55 and stream_d(c + 0.5, r + 0.5) > 0.6]
 I.tufts(k, warm_cells, '#4a7a3a', per_cell=0.6 if QUICK else 1.4, avoid=lambda x, r: trail_d(x, r) < 0.6 or stream_d(x, r) < 0.5, flowers=0.5)
@@ -124,11 +127,11 @@ for (ax, ar), (bx, br) in zip(STREAM, STREAM[1:]):
         pts.append((ax + (bx - ax) * t, ar + (br - ar) * t))
 pts.append(STREAM[-1])
 for (ax, ar), (bx, br) in zip(pts, pts[1:]):
-    z = min(height(ax, ar), height(bx, br)) + 0.05
+    za, zb = height(ax, ar) + 0.05, height(bx, br) + 0.05                # each end on its own bed, so no step shows the bed between
     L = math.hypot(bx - ax, br - ar)
     nx, nr = -(br - ar) / L, (bx - ax) / L
     w = 0.3
-    k.quads([((ax - nx * w, ar - nr * w, z), (bx - nx * w, br - nr * w, z), (bx + nx * w, br + nr * w, z), (ax + nx * w, ar + nr * w, z))],
+    k.quads([((ax - nx * w, ar - nr * w, za), (bx - nx * w, br - nr * w, zb), (bx + nx * w, br + nr * w, zb), (ax + nx * w, ar + nr * w, za))],
             ('#3a8a9a', 0.04), 'stream_water')
 for (x, r) in pts[::3]:                                                 # stones along its banks
     for s_ in (-1, 1):
@@ -208,14 +211,58 @@ for _ in range(60 if not QUICK else 30):                                # junipe
                 k.blob(x + k.rng.uniform(-0.35, 0.35), r + k.rng.uniform(-0.25, 0.25), height(x, r) + 0.08, k.rng.uniform(0.18, 0.3),
                        k.rng.uniform(0.14, 0.24), 0.12, (shade('#2e4a34', k.rng.uniform(0.85, 1.2)), 0.18), 'juniper', segs=7)
 # a mani wall beside the path to the stair: a long low wall of carved stones, each one a prayer
+# (one wall at its own angle, built along the line — square stones stepped along a diagonal read as a white staircase)
+MA, MB = (27.6, 23.6), (30.6, 17.6)
+mr = random.Random(211)
+segs_ = 7
+for i in range(segs_):                                                   # the wall in a few lengths, each sitting on the ground
+    t0, t1 = i / segs_, (i + 1) / segs_
+    xa, ra = MA[0] + (MB[0] - MA[0]) * t0, MA[1] + (MB[1] - MA[1]) * t0
+    xb, rb = MA[0] + (MB[0] - MA[0]) * t1, MA[1] + (MB[1] - MA[1]) * t1
+    z = min(height(xa, ra), height(xb, rb))
+    k.bar(xa, ra, xb, rb, z - 0.05, z + 0.4 + mr.uniform(-0.03, 0.03), 0.42, (shade('#8a8478', mr.uniform(0.92, 1.06)), 0.18), 'mani_wall', bevel=0.03)
+L_ = math.hypot(MB[0] - MA[0], MB[1] - MA[1])
+ux_, ur_ = (MB[0] - MA[0]) / L_, (MB[1] - MA[1]) / L_
+nx_, nr_ = ur_, -ux_                                                     # its face toward the south-west, where the path is
+if nr_ < 0:
+    nx_, nr_ = -nx_, -nr_
+d_ = 0.15
+while d_ < L_ - 0.15:                                                    # the carved stones leant along its face, each its own
+    x, r = MA[0] + ux_ * d_, MA[1] + ur_ * d_
+    z = height(x, r)
+    w_ = mr.uniform(0.18, 0.3)
+    k.bar(x + nx_ * 0.22, r + nr_ * 0.22, x + nx_ * 0.22 + ux_ * w_, r + nr_ * 0.22 + ur_ * w_, z + 0.06, z + mr.uniform(0.26, 0.38), 0.05,
+          (mr.choice(('#b0a890', '#9aa6a8', '#a89a84', '#c0b49a')), 0.15), 'mani_stone')
+    d_ += w_ + mr.uniform(0.03, 0.08)
+def wall_top(d):
+    i_ = min(segs_ - 1, int(d / L_ * segs_))
+    return min(height(MA[0] + (MB[0] - MA[0]) * i_ / segs_, MA[1] + (MB[1] - MA[1]) * i_ / segs_),
+               height(MA[0] + (MB[0] - MA[0]) * (i_ + 1) / segs_, MA[1] + (MB[1] - MA[1]) * (i_ + 1) / segs_)) + 0.37
+
+
+d_ = 0.06
+while d_ < L_ - 0.12:                                                    # the carved stones piled along the top, each its own tone and tilt
+    w_ = mr.uniform(0.14, 0.26)
+    o_ = mr.uniform(-0.05, 0.05)
+    x, r = MA[0] + ux_ * d_ + nx_ * o_, MA[1] + ur_ * d_ + nr_ * o_
+    zt = wall_top(d_)
+    k.bar(x, r, x + ux_ * w_, r + ur_ * w_, zt, zt + mr.uniform(0.05, 0.11), mr.uniform(0.26, 0.36),
+          (shade(mr.choice(('#b0a890', '#9aa6a8', '#a89a84', '#c0b49a', '#7e8a8c')), mr.uniform(0.9, 1.08)), 0.15), 'mani_stone')
+    d_ += w_ + mr.uniform(0.02, 0.05)
+d_ = 0.1
+while d_ < L_ - 0.1:                                                     # a little snow left on the top in thin patches (warm ground: most has gone)
+    x, r = MA[0] + ux_ * d_, MA[1] + ur_ * d_
+    if mr.random() < (0.5 if d_ > L_ * 0.75 else 0.12):                  # a little more at the cold north end
+        o_ = mr.uniform(-0.06, 0.06)
+        zt_ = wall_top(d_) + 0.07                                         # on the stones
+        k.blob(x + nx_ * o_, r + nr_ * o_, zt_ - 0.01, mr.uniform(0.12, 0.22), 0.12,
+               mr.uniform(0.015, 0.025), (N.ROOF_SNOW, 0.05), 'mani_snow', segs=7)
+    d_ += mr.uniform(0.25, 0.5)
 for i in range(14):
     t = i / 13
-    x, r = 27.6 + (30.6 - 27.6) * t, 23.6 + (17.6 - 23.6) * t
-    z = height(x, r)
-    k.box(x - 0.24, r - 0.2, z, x + 0.24, r + 0.2, z + 0.42, (shade('#8a8478', k.rng.uniform(0.9, 1.08)), 0.18), 'mani_wall', bevel=0.03)
-    k.box(x - 0.2, r + 0.2, z + 0.12, x + 0.2, r + 0.22, z + 0.36, (k.rng.choice(('#b0a890', '#9aa6a8', '#a89a84')), 0.15), 'mani_stone')
-    k.box(x - 0.25, r - 0.21, z + 0.42, x + 0.25, r + 0.21, z + 0.5, (N.ROOF_SNOW, 0.05), 'mani_snow')
+    x, r = MA[0] + (MB[0] - MA[0]) * t, MA[1] + (MB[1] - MA[1]) * t
     k.solid(x - 0.2, r - 0.2, x + 0.2, r + 0.2)
+    k.rng.uniform(0.9, 1.08), k.rng.choice((0, 1, 2))       # the dice the old wall threw, so everything after it stays put
 
 
 # ---- trees: larches on the west slopes, pines on the east, a few birches by the warm water ---------------------------------

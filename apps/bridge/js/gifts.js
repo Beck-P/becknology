@@ -44,9 +44,9 @@ var BridgeGifts = (function () {
               loveLine: 'HMM. HMPH. WELL. THAT IS A VERY FINE THING. I SHALL KEEP IT IN MY DESK AND NOT TELL THE CADETS WHO GAVE IT ME.' },
     ione: { love: ['star_pearl', 'fallen_star'], like: ['sapphire_crystal', 'honey_cake', 'sea_glass'], hate: ['old_boot'],
               loveLine: 'A STAR, FALLEN, IN MY HAND. DO YOU KNOW HOW LONG I\'VE WANTED TO HOLD ONE? I\'M GOING TO WEIGH IT. I\'M GOING TO WEIGH IT TWICE.' },
-    mudlark: { love: ['old_boot', 'harbour_crab'], like: ['bread', 'mug_of_ale', 'silver_nail'], hate: ['posy'],
+    mudlark: { love: ['old_boot', 'harbour_crab', 'toffee_ship'], like: ['bread', 'mug_of_ale', 'silver_nail'], hate: ['posy'],
                loveLine: 'A BOOT! A RIGHT BOOT! I\'VE HAD THE LEFT FOR NINE YEARS. OH, YOU DON\'T KNOW WHAT YOU\'VE DONE. I COULD CRY.' },
-    crier: { love: ['mug_of_ale', 'honey_cake'], like: ['bread', 'apple', 'silverfin'], hate: ['old_boot'],
+    crier: { love: ['mug_of_ale', 'honey_cake'], like: ['bread', 'apple', 'silverfin', 'toffee_ship'], hate: ['old_boot'],
              loveLine: 'OYEZ, OYEZ! A KINDNESS ON THE OLD TOWN\'S STREETS! I SHALL CRY IT AT EVERY CORNER, AND TWICE AT THE WELL!' },
     rowena: { love: ['pocket_watch', 'spore_silk', 'star_pearl'], like: ['bread', 'honey_cake', 'sapphire_crystal'], hate: ['old_boot'],
               loveLine: 'FOR ME? NOBODY BRINGS THE HARBOURMISTRESS ANYTHING BUT PAPERWORK. THANK YOU. TRULY.' },
@@ -94,7 +94,7 @@ var BridgeGifts = (function () {
     regular: { love: ['mug_of_ale', 'bowl_of_stew'], like: ['turnip', 'bread', 'roast_chestnuts'], hate: ['strawberry'] },
     merchant: { love: ['heron_coin', 'star_pearl'], like: ['silver_ore', 'silverfin'], hate: ['old_boot'] },
     stranger: { love: ['songstone', 'heartsong'], like: ['moonstone', 'star_iron'], hate: ['apple'] },
-    pip: { love: ['strawberry', 'sweet_roll', 'heron_coin'], like: ['apple', 'honey', 'sea_glass', 'hot_cocoa'], hate: ['turnip', 'carrot'],
+    pip: { love: ['strawberry', 'sweet_roll', 'heron_coin', 'toffee_ship'], like: ['apple', 'honey', 'sea_glass', 'hot_cocoa'], hate: ['turnip', 'carrot'],
            loveLine: 'NO WAY. FOR ME? I\'M NOT SHARING IT. ...OKAY ONE BITE. NO. MINE.' },
     nakuri: { love: ['health_draught', 'antidote'], like: ['honey', 'apple', 'carrot'], hate: ['mug_of_ale'] },
     tinker: { love: ['star_iron', 'silver_nail'], like: ['iron_ore', 'silver_ore', 'old_boot'], hate: ['strawberry'],
@@ -257,7 +257,7 @@ var BridgeGifts = (function () {
                        loveLine: 'IT HOLDS A LITTLE LIGHT, LIKE THE WELL DOES. I\'LL HANG IT IN THE LANTERN BY THE GREAT TREE. WHEN YOU PASS, IT WILL BE A LITTLE BRIGHTER.' },
     elf_weaver: { love: ['heron_feather', 'sunflower', 'strawberry'], like: ['posy', 'honey', 'sea_glass'], hate: ['stone', 'old_boot'],
                   loveLine: 'OH, THE COLOUR OF IT. THAT\'S GOING INTO A CLOAK. YOU\'LL KNOW IT WHEN YOU SEE A WARDEN WEARING IT.' },
-    elf_child: { love: ['honey_cake', 'strawberry', 'sweet_roll', 'goldfish_bag'], like: ['apple', 'posy', 'sea_glass', 'heron_feather'], hate: ['turnip'],
+    elf_child: { love: ['honey_cake', 'strawberry', 'sweet_roll', 'goldfish_bag', 'toffee_ship'], like: ['apple', 'posy', 'sea_glass', 'heron_feather'], hate: ['turnip'],
                  loveLine: 'FOR ME? FOR ACTUALLY ME? I\'M GOING TO KEEP IT FOREVER. OR EAT IT. PROBABLY EAT IT.' }
   };
   var NOT = { key: 1, map: 1, seed: 1 };                  // things that aren't gifts
