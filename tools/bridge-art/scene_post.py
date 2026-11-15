@@ -225,6 +225,13 @@ NOT_GROUND = {'roof', 'wall', 'post', 'rail', 'fence', 'house', 'stall', 'table'
 ROOF_WORDS = {'roof', 'shingle', 'shingles', 'slate', 'slates', 'thatch', 'ridge', 'pantile', 'pantiles', 'eave', 'eaves'}
 
 
+# The small lit parts of a light fitting (a chandelier's gilt arms and crystals, a candle stand's branches, the candles and
+# their flames), by the word 'lustre' in their names (the kits' fixture builders): a part 1–2 px wide is all edge, so the
+# toy line would darken all of it (gold to grey-brown, a flame to grey-blue — a light that looks unlit). On these the line
+# is drawn on what's behind them instead, round them, as the older finish did, and the part itself stays bright.
+LUSTRE_WORDS = {'lustre'}
+LUSTRE_RING = 0.8   # the line round a lustre part, on what's behind it
+
 # falling water (a stream over a weir, a waterfall): the live light runs light down it and churns foam where it lands
 FALL_WORDS = {'waterfall', 'falls', 'cascade', 'weir', 'spillway'}
 
@@ -259,9 +266,10 @@ def part_mask(ids_rgb, names, words):
     return np.isin(key, ks)
 
 
-def toy_lines(ids, depth, alpha, ground, roof):
+def toy_lines(ids, depth, alpha, ground, roof, lustre=None):
     """Line strength 0..1 per pixel: 1 on a thing where what's next to it lies behind it (or nothing does), 0.45 where
-    two things meet without a step in depth — never on the ground, and on a roof only its real edges."""
+    two things meet without a step in depth — never on the ground, and on a roof only its real edges. Never on a lustre
+    part (LUSTRE_WORDS) either: round it, on what lies behind it."""
     h, w = alpha.shape
     idk = (ids[..., 0].astype(np.int64) << 16) | (ids[..., 1].astype(np.int64) << 8) | ids[..., 2]
     line = np.zeros((h, w), np.float32)
@@ -276,6 +284,11 @@ def toy_lines(ids, depth, alpha, ground, roof):
         edge = mine & (farther | ~alpha[q])
         crease = mine & alpha[q] & ~ground[q] & ~farther & ~roof[p]
         line[p] = np.maximum(line[p], np.where(edge, 1.0, np.where(crease, 0.45, 0.0)))
+        if lustre is not None:
+            ring = alpha[p] & ~lustre[p] & lustre[q] & ((dep[p] - dep[q]) > 0.06)
+            line[p] = np.maximum(line[p], np.where(ring, LUSTRE_RING, 0.0))
+    if lustre is not None:
+        line[lustre] = 0.0
     return line
 
 
@@ -525,7 +538,8 @@ def main():
         if STYLE == 'toy':
             return apply_lines(img, line_)
         return lines(img, ids_, depth_, alpha_)
-    base_line = toy_lines(ids, depth, alpha, ground, roof)
+    lustre = part_mask(ids, names, LUSTRE_WORDS)
+    base_line = toy_lines(ids, depth, alpha, ground, roof, lustre if lustre.any() else None)
 
     def emit(state, e):                               # lamps by day glow less (scenekit `_emit`)
         k = (meta.get('stateOpts') or {}).get(state, {}).get('emit', 1.0)
@@ -629,7 +643,8 @@ def main():
         x0, y0, x1, y1 = int(xs.min()), int(ys.min()), int(xs.max()) + 1, int(ys.max()) + 1
         imgs = {}
         vground, vroof = part_kinds(vids, names)
-        vline = toy_lines(vids, vdepth, va, vground, vroof)
+        vlus = part_mask(vids, names, LUSTRE_WORDS)
+        vline = toy_lines(vids, vdepth, va, vground, vroof, vlus if vlus.any() else None)
         for state in meta['lightStates']:
             light = load16(os.path.join(vd, 'light_' + state + '.png'))
             img = finish(toon(valb, light, emit(state, vemi)), vids, vdepth, va, vline)

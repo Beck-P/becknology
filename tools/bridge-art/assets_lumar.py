@@ -161,9 +161,11 @@ def barrel(k, cx, cr, h=0.9, radius=0.34, upright=True, tone=WOOD):
     k.solid(cx - 0.3, cr - 0.3, cx + 0.3, cr + 0.3)
 
 
-def candle(k, cx, cr, z, light=True, energy=1.5):
-    k.cyl(cx, cr, z, z + 0.14, 0.035, CANDLE, 'candle', verts=8)
-    k.sphere(cx, cr, z + 0.19, 0.03, 0.05, FIRE_HOT, 'flame', emit=(FIRE_HOT, 4.0), segs=8)
+def candle(k, cx, cr, z, light=True, energy=1.5, lustre=False):
+    """lustre: part of a light fitting (a candle stand's crown): kept bright in the toy finish (scene_post LUSTRE_WORDS)."""
+    tag = '_lustre' if lustre else ''
+    k.cyl(cx, cr, z, z + 0.14, 0.035, CANDLE, 'candle' + tag, verts=8)
+    k.sphere(cx, cr, z + 0.19, 0.03, 0.05, FIRE_HOT, 'flame' + tag, emit=(FIRE_HOT, 4.0), segs=8)
     if light:
         k.point_light(cx, cr, z + 0.45, "#ffb060", energy, radius=0.08, group="flicker")
 
