@@ -188,6 +188,7 @@ for (x, r) in ((18.0, 8.0), (21.0, 7.6), (23.8, 8.2)):
     A.fondue_table(k, x, r, cloth='#f0e8d8', check=False)
     A.bistro_chair(k, x - 0.55, r - 0.1)
     A.bistro_chair(k, x + 0.55, r - 0.1)
+    k.solid(x - 0.4, r - 0.4, x + 0.4, r + 0.2)                 # you walk round a table, not through it
 for x in (19.5, 22.4):
     A.heater(k, x, 8.9)
 # the east terrace: loungers round a fire pit
@@ -216,7 +217,7 @@ A.horse(k, 17.2, 13.4, facing=-1, coat='#4a2e1c')
 k.box(15.2, 10.4, 0.0, 15.4, 10.6, 1.4, ('#3a2416', 0.06), 'post')
 k.box(14.6, 10.45, 1.15, 16.0, 10.55, 1.55, ('#2a1a12', 0.05), 'sign_board')
 G.letters(k, 'SLEIGHS', 'CinzelDecorative-Bold', 15.3, 10.56, 1.2, size=0.22, col=A.GILT, lit=True, energy=2)
-k.solid(14.6, 10.3, 16.0, 10.7)
+k.solid_post(15.3, 10.5)                    # only its post: the way onto the terrace runs under the board
 for (x, r) in ((13.6, 11.0), (42.4, 11.0), (14.0, 15.2), (43.6, 15.2), (14.0, 20.6), (43.6, 20.6), (26.6, 15.2), (29.4, 15.2)):
     W.lantern_post(k, x, r, h=2.4, energy=30)
 for (x0, x1, r) in ((33.0, 34.6, 13.8), (36.6, 38.2, 13.8), (39.8, 41.4, 13.8)):
