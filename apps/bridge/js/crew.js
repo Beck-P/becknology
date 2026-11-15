@@ -88,7 +88,9 @@ var BridgeCrew = (function () {
       if (p && p.crew && p.crew.ashore && p.crew.board && !over) {   // her board says so (Desh's departures board: your name for CREW WANTED)
         var bd = p.crew.board, pl = typeof BridgeState !== 'undefined' && BridgeState.getPilot ? BridgeState.getPilot() : null;
         data.interactions.forEach(function (it) {
-          if (it.label === bd.label && typeof it.dialog === 'string') it.dialog = it.dialog.replace(bd.was, bd.now.replace('{pilot}', String(pl && pl.name || 'YOU').toUpperCase()));
+          if (it.label !== bd.label) return;
+          var now = bd.now.replace('{pilot}', String(pl && pl.name || 'YOU').toUpperCase());
+          ['dialog', 'flavour'].forEach(function (k) { if (typeof it[k] === 'string') it[k] = it[k].replace(bd.was, now); });   // (a requests board keeps its words as `flavour`, js/boards.js)
         });
       }
       if (!p || !p.crew || !p.sheet || p.crew.ashore) return;    // (one who keeps her own post ashore — Desh and the Old Mercy — stays there)

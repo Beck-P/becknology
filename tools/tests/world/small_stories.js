@@ -266,9 +266,11 @@ const ONLY = process.argv[3] || '';
     await use('STAR-READER');
     if (!await has('ithils-star/ask')) fail('not begun at Ithil');
     if (await has('ithils-star/star')) fail('a star given with none in the pack');
-    const lackToast = await p.evaluate(() => [...document.querySelectorAll('.quest-toast, #quest-toast, .qt-toast, [class*="toast"]')].map(e => e.innerText).join(' | '));
-    if (!/You need 1 Fallen Star/.test(lackToast)) fail('no toast saying what\'s missing: ' + lackToast.slice(0, 200));
     if ((await topics())[0] !== 'Where do they fall?') fail('Ithil\'s first topic: ' + JSON.stringify(await topics()));
+    await shut(); await p.waitForTimeout(3000);
+    await use('STAR-READER');                                           // (again, with the quest begun: now it says what's missing)
+    const lackToast = await p.evaluate(() => [...document.querySelectorAll('.quest-toast')].map(e => e.innerText).join(' | '));
+    if (!/You need 1 Fallen Star/.test(lackToast)) fail('no toast saying what\'s missing: ' + lackToast.slice(0, 200));
     await shut();
     const lead = await p.evaluate(() => BridgeQuests.leads('ithils-star', 2).join(' / '));
     if (!/starfall/i.test(lead) || !/forecast/.test(lead)) fail('the lead: ' + lead);
