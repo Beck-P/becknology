@@ -43,6 +43,13 @@ LIP = 19.0                                                       # world row of 
 FOOT = LIP + 0.55                                                # world row of the cliff's foot (the gorge starts)
 SH = DROP * C45                                                  # the gorge's shift north
 
+
+def lip(x):
+    """The cliff's edge wanders a tile or so in and out away from the falls and the stair (a straight edge right across
+    the map read as a wall); between x 14.5 and 27.5 it's LIP, where the stair, the falls and the ledge are."""
+    calm = A.smooth(13.0, 14.5, x) * A.smooth(29.0, 27.5, x)
+    return LIP + (1 - calm) * (0.9 * math.sin(x * 0.37 + 1.3) + 0.5 * math.sin(x * 0.91 + 0.4))
+
 # ---- the rivers (world rows; below the falls the rows are the gorge's, already shifted) ------------------------------------
 UP = A.spline([(22.5, -3.0), (22.8, 2.4), (25.0, 6.6), (24.4, 10.6), (24.0, 14.0), (23.4, 17.0), (23.2, 19.4)], 6)
 DEEP = A.spline([(24.2, 12.4), (28.6, 13.6), (34.0, 14.6), (40.0, 14.2), (46.0, 15.0), (53.0, 15.4)], 6)
@@ -85,12 +92,12 @@ def cliff(x, r):
     stair = 15.6 < x < 18.4
     if stair:
         return A.smooth(17.4, FOOT + 1.2, r)
-    return A.smooth(LIP + 0.1, FOOT, r)
+    return A.smooth(lip(x) + 0.1, lip(x) + 0.55, r)
 
 
 def zfn(x, r):
     lvl = cliff(x, r)
-    top = 0.12 + 0.15 * (A.noise(x, r, 0.4, 3) - 0.5) + 0.25 * A.smooth(LIP - 4.0, LIP - 0.5, r) * (1 - A.smooth(15.6, 18.0, x) * A.smooth(18.4, 16.0, x))
+    top = 0.12 + 0.15 * (A.noise(x, r, 0.4, 3) - 0.5) + 0.25 * A.smooth(lip(x) - 4.0, lip(x) - 0.5, r) * (1 - A.smooth(15.6, 18.0, x) * A.smooth(18.4, 16.0, x))
     bot = LZ + 0.1 + 0.12 * (A.noise(x, r, 0.5, 4) - 0.5)
     z = top + (bot - top) * lvl
     # the river beds
@@ -140,6 +147,8 @@ def mat(x, r):
     if path_d(x, r) < 0.55 + jit:
         return 'path'
     n = A.noise(x, r, 0.8, 7)
+    if lvl > 0.5:                                                # the gorge's floor lies in the cliff's shade: darker moss
+        return 'litter' if n > 0.8 else 'moss_dark' if n < 0.6 else 'moss'
     return 'litter' if n > 0.74 else 'moss_dark' if n < 0.32 else 'moss'
 
 
@@ -154,17 +163,17 @@ for i in range(70):
     x = rng.uniform(-1.0, COLS + 1.0)
     if 15.4 < x < 18.6:
         continue
-    r = rng.uniform(LIP - 0.1, FOOT + 0.1)
+    r = rng.uniform(lip(x) - 0.1, lip(x) + 0.65)
     z = rng.uniform(LZ + 0.2, 0.2)
     s = rng.uniform(0.35, 0.7)
     k.rock(x, r + 0.05, z, s, s * 0.45, s * 0.7, (shade('#6e6c5c', rng.uniform(0.82, 1.12)), 0.35), part='cliff_rock', segs=9)
     if rng.random() < 0.4:
         k.blob(x, r + 0.1, z + s * 0.6, s * 0.7, s * 0.3, s * 0.15, (shade(A.MOSS_L, rng.uniform(0.85, 1.1)), 0.4), 'rock_moss', segs=8)
 # strata: ledges of rock across the face, each band its own tone, moss along their tops, dark where water seeps down
-def face_r(z):
-    """Where the face is at height z (it falls from the lip's top to the gorge's floor between LIP + 0.1 and FOOT)."""
+def face_r(z, x):
+    """Where the face is at height z (it falls from the lip's top to the gorge's floor between lip + 0.1 and lip + 0.55)."""
     t = min(1.0, max(0.0, (0.15 - z) / (0.15 - LZ)))
-    return LIP + 0.1 + (FOOT - LIP - 0.1) * t
+    return lip(x) + 0.1 + 0.45 * t
 
 
 BANDS = ['#7a7464', '#68645a', '#857c68', '#5e5a50', '#746e60']
@@ -174,9 +183,9 @@ while zb > LZ + 0.15:
     tone = BANDS[bi % len(BANDS)]
     x = -1.2
     while x < COLS + 1.2:
-        w = rng.uniform(0.6, 1.6)
+        w = rng.uniform(0.8, 2.4)
         if not (15.4 < x + w / 2 < 18.6) and not (fx0_ - 0.3 < x + w / 2 < fx1_ + 0.3):
-            rr = face_r(zb)
+            rr = face_r(zb, x + w / 2)
             h = rng.uniform(0.2, 0.32)
             k.box(x, rr - 0.05, zb - h, x + w * 0.96, rr + rng.uniform(0.08, 0.16), zb, (shade(tone, rng.uniform(0.9, 1.08)), 0.38), 'cliff_ledge')
             if rng.random() < 0.45:                                  # moss along the ledge's top
@@ -191,7 +200,7 @@ for i in range(16):                                              # ferns hanging
     x = rng.uniform(0, COLS)
     if 15.4 < x < 18.6 or 20.6 < x < 26.0:
         continue
-    A.fern(k, L, x, LIP + 0.25, s=rng.uniform(0.5, 0.7), z=rng.uniform(LZ * 0.5, -0.1), tone='#4a8a3a')
+    A.fern(k, L, x, lip(x) + 0.25, s=rng.uniform(0.5, 0.7), z=rng.uniform(LZ * 0.5, -0.1), tone='#4a8a3a')
 
 # ---- the falls: the lip, the water pouring over it in strands, foam and spray at the foot ----------------------------------
 fx0, fx1 = fx0_, fx1_
@@ -211,14 +220,14 @@ for i in range(n):
     strands[i % 2] += [q1, q2]
 k.quads(strands[0], ('#e2f2f4', 0.15), 'falls')
 k.quads(strands[1], ('#a4d0dc', 0.15), 'falls_shade')
-for _ in range(110):
-    x = rng.uniform(fx0 - 0.5, fx1 + 0.5)
-    r = rng.uniform(FOOT, FOOT + 1.8)
-    s = rng.uniform(0.07, 0.18)
+for _ in range(220):
+    x = rng.uniform(fx0 - 0.4, fx1 + 0.4)
+    r = FOOT + rng.uniform(0, 1.8) ** 1.6 / 1.8 ** 0.6
+    s = rng.uniform(0.04, 0.1) * (1.4 if r < FOOT + 0.5 else 1.0)
     k.blob(x, r, LWZ + 0.02, s, s * 0.8, 0.03, ('#eef6f6', 0.15), 'foam', segs=7)
-for _ in range(24):                                              # spray clouds over the pool
-    x = rng.uniform(fx0, fx1)
-    k.blob(x, FOOT + rng.uniform(0.2, 0.9), LWZ + rng.uniform(0.2, 0.7), rng.uniform(0.25, 0.45), 0.2, rng.uniform(0.15, 0.3), ('#e8f4f6', 0.1), 'spray', segs=8)
+for _ in range(14):                                              # spray over the foot of the falls
+    x = rng.uniform(fx0 + 0.3, fx1 - 0.3)
+    k.blob(x, FOOT + rng.uniform(0.1, 0.4), LWZ + rng.uniform(0.15, 0.5), rng.uniform(0.12, 0.22), 0.1, rng.uniform(0.08, 0.16), ('#e8f4f6', 0.1), 'spray', segs=8)
 # the cave behind the curtain: a dark arch in the cliff, the ledge to it
 cx_, cz = 23.4, LZ
 k.cyl_y(cx_, LIP + 0.1, FOOT - 0.05, cz + 0.55, 0.55, 0.7, ('#0e0c0a', 0.3), 'cave_mouth', verts=16)
@@ -250,8 +259,9 @@ z0 = zfn(rx, rr_)
 for i in range(2):
     for x in (rx - 0.6, rx + 0.6):
         k.cyl(x, rr_, z0, z0 + 0.5 + i * 0.36, 0.04, (A.ELFWOOD_D, 0.25), 'rack', verts=5)
-    k.blob(rx, rr_ - 0.1, z0 + 0.62 + i * 0.36, 1.05, 0.22, 0.09, ('#e4dcc4', 0.3), 'canoe_stowed', segs=12)
-    k.blob(rx, rr_ - 0.1, z0 + 0.58 + i * 0.36, 1.06, 0.23, 0.04, ('#5a3e26', 0.3), 'canoe_gunwale', segs=12)
+    k.box(rx - 0.68, rr_ - 0.05, z0 + 0.46 + i * 0.36, rx + 0.68, rr_ + 0.05, z0 + 0.52 + i * 0.36, (A.ELFWOOD_D, 0.25), 'rack_bar')
+    k.blob(rx, rr_ - 0.1, z0 + 0.62 + i * 0.36, 1.05, 0.22, 0.09, (('#a8743e', '#8a5a30')[i], 0.3), 'canoe_stowed', segs=12)
+    k.blob(rx, rr_ - 0.1, z0 + 0.66 + i * 0.36, 1.0, 0.16, 0.05, ('#3a2416', 0.3), 'canoe_inside', segs=12)
 
 # ---- a footbridge of split logs over the river near the top, so both banks join (the canoe goes under) -----------------
 FB_R = 1.4
