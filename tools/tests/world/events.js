@@ -13,7 +13,7 @@ const CASES = [
   ['auction', 'lumar-tern', 28, 18, '2026-10-14T03:20', 20],
   ['celebrity', 'arcadia-street', 46, 11, '2026-10-14T21:00', 40],
   ['parcel', 'arcadia-street', 30, 11, '2026-10-14T21:00', 30],
-  ['collection', 'arcadia-undercity', 30, 14, '2026-10-14T21:00', 40],
+  ['collection', 'arcadia-undercity', 22, 10, '2026-10-14T21:00', 40],
   ['surge', 'arcadia-undercity', 40, 23, '2026-10-14T21:00', 30],
   ['stirring', 'arcadia-sump', 60, 30, '2026-10-14T21:00', 20],
   ['brownout', 'arcadia-street', 20, 11, '2026-10-14T21:00', 22],

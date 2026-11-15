@@ -255,6 +255,8 @@ for (a0, a1) in SEGS:
     U.stack_signs(k, a0 + 0.4, a1 - 0.4, BF, z0=1.7, z1=3.3, n=max(1, int((a1 - a0) / 4)), rng=rng)
     k.box(a0, BF - 0.05, 1.55, a1, BF + 0.2, 1.65, '#1e1c24', 'awning_ledge')
     k.solid(a0, BB, a1, BF)
+    k.solid(a0, BB - 2.0, a1, BB)       # the strip behind it, hidden under its roof on screen (rows 15-16; row 14,
+    #                                     the stalls' customer side, you're only half behind it)
 for (a0, a1) in ALLEYS:                                                            # the alleys through: wet, a tube, a cable over
     U.fluoro(k, dr, (a0 + a1) / 2, (BB + BF) / 2, 2.6, w=0.9, hang=BT + 0.4, energy=18)
     D.cable(k, (a0, BB + 0.6, BT - 0.2), (a1, BB + 1.4, BT - 0.1), sag=0.25, lights=['#ffd080', '#80e0ff'], n=6)
@@ -344,6 +346,9 @@ U.stall(k, dr, 12.0, 15.0, 12.6, kind='skewers', rng=rng, name='串焼')
 U.stall(k, dr, 25.6, 28.8, 12.6, kind='drinks', rng=rng, name='DRINKS')
 U.stall(k, dr, 29.4, 32.4, 12.6, kind='junk', rng=rng)
 U.stall(k, dr, 18.6, 21.6, 12.6, kind='tea', rng=rng, name='茶')
+for (sx0, sx1, srb) in ((1.0, 4.4, 12.4), (5.0, 8.2, 12.4), (12.0, 15.0, 12.6), (18.6, 21.6, 12.6)):   # (the drinks and junk
+    # stalls are served from behind, over their counters: the lane behind them stays open)
+    k.solid(sx0, srb - 1.0, sx1, srb)                   # behind a stall: its tarp stands over you on screen
 Y.holo_kiosk(k, 35.0, 13.4)
 Y.vending_machine(k, 36.2, RF + 0.05, body='#1a2a40')
 k.solid(35.7, RF, 36.7, RF + 0.75)
