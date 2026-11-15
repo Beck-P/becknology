@@ -80,7 +80,7 @@ for (x, r) in ((5.0, 9.0), (17.5, 6.0), (6.0, 5.0), (11.0, 10.0), (18.0, 10.0)):
     k.point_light(x, r, 3.0, '#ffd8a8', 38, radius=0.6, group='lamp')
 E.torchere(k, 4.2, 2.5, h=1.7, energy=8)                                       # between the glass and the window, clear of the way through
 
-render(k, OUT)
+render(k, OUT, ambient=('#5a4a40', 1.25))     # a warm night ambient keeps the floor in one band of the toy finish
 
 I = [
     door('STAIRS', 2, 10, 'lumar-manor', [2, 10], prompt='PRESS E TO GO DOWN'),
