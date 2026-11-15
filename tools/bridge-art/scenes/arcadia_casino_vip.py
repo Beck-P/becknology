@@ -14,6 +14,7 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from scenekit import Kit, apply_world, shade  # noqa: E402
 import assets_casino as C                     # noqa: E402
+C.GLEAM = True                                    # chandeliers and candles stay bright through the toy finish
 import assets_cyber as Y                      # noqa: E402
 import assets_district as D                   # noqa: E402
 import assets_signs as S                      # noqa: E402
