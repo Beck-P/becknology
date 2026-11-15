@@ -17,6 +17,7 @@ the master bedroom up the stairs (places within places, each furnishable). The o
 import sys
 
 from _manor import A, E, Kit, THETA, C45, render, look, door, write_world  # noqa: F401
+E.GLEAM = True                                    # chandeliers and candles stay bright through the toy finish
 from scenekit import shade
 
 OUT = sys.argv[1]
