@@ -886,7 +886,16 @@ interactions of type `lumardeep` (`act`), set by `decorate` on the labels alread
   flower booth's **posy** (10, as Nell's), the sweet booth's **toffee ship** (`toffee_ship`, 6, a new item drawn in code:
   +8 energy eaten, loved by both Pips and Gull Molly, liked by the crier — js/gifts.js). The items are `BridgeItems.add`ed
   here, their uses in `USES`. Led to by Salt Annie's *Advice for a captain* (lead `bridge-booths`), and *Come back for*
-  on the bridge. **Two pilots**: each buys their own; a line is the user's own.
+  on the bridge. **Two pilots**: each buys their own; each one's line is their own.
+- **L9 · Lanternfall's people** (js/sapphire.js, which keeps Lanternfall; state in its `bridge_sapphire`). **Yannis's
+  donkeys**: THE DONKEYS' chooser has *Tip Yannis* (2 coins, once a day by the game's clock — `tday`); three days running
+  (`streak`) and `donkeyFree` is set for good: the ride up or down is free from then on. **Despina's sunset plate**: a
+  fourth dish at her taverna (`sunset: true` in `DISHES.taverna`, 22 coins, +25 health +35 energy) offered only from two
+  Lumar hours before the sun goes down to three after (`sunsetHour`, js/clock.js `sky` on `lumar-cliff`); it warms you
+  through the cold for two hours (js/worlds/hoarfell.js `warm`, as the church lamps do). Their own *About the donkeys* and
+  *About the taverna* say so. **Not built:** Aris painting your ship (a picture for a home drawn from her colours needs a
+  furniture piece drawn live through `BridgeHome.add`; left for later). **Two pilots**: tips, the free ride and the
+  plate are each pilot's own.
 
 ### The Peddler, magic things and the curios
 `js/magic.js` (BridgeMagic; localStorage `bridge_magic`). **Wendel Crane, Peddler of Oddments** (`npc-peddler`, a witch-hatted Blender NPC; people.json `peddler`, found by the label PEDDLER in any of his worlds) sets up somewhere different each day (`PLACES`, by the date: the Market Square, the District street, Verdance's farm road, Fellhaven, Sapphire's quay, Enigma's docking bay) — added to that world's interactions and actors as it loads. *What have you got?* opens his wares (`BridgeInteractions.choose`):

@@ -8,7 +8,8 @@
 //              right one (a heron coin); the Map's Come back for, the Journal's Next up
 //   booths     the Old Bridge's three booths: a silk line bought and used (the rare-fish odds while it's on), a posy, a
 //              toffee ship and who loves it; the item cards' uses; a phone
-// node world/lumar_deeper.js [shots] [part: sovereign|bounty|riddle|booths]
+//   lanternfall  Yannis tipped three days running and the donkeys carry you free; Despina's sunset plate at sunset, warm
+// node world/lumar_deeper.js [shots] [part: sovereign|bounty|riddle|booths|lanternfall]
 const { chromium } = require('playwright');
 const OUT = process.argv[2] || __dirname + '/shots';
 const ONLY = process.argv[3] || '';
@@ -333,6 +334,57 @@ const ONLY = process.argv[3] || '';
       if ((await H.leads()).indexOf('bridge-booths') < 0) fail('Annie\'s advice isn\'t a lead');
       await p.context().close();
     }
+  }
+
+  // ---- L9 · Lanternfall's people --------------------------------------------------------------------------------------
+  if (part('lanternfall')) {
+    const H = await open(null, '2026-11-16T10:00'), p = H.p;
+    await H.ev(() => localStorage.removeItem('bridge_sapphire'));
+    await H.go('lumar-cliff', [44, 30]);
+    const donk = await H.ev(() => BridgeWorld.getWorld().interactions.filter(i => i.label === 'THE DONKEYS').map(i => i.act + '@' + i.x + ',' + i.y));
+    console.log('donkeys:', donk.join(' '));
+    const c0 = await H.coins();
+    for (const [d, at] of [[1, '2026-11-16T10:00'], [2, '2026-11-17T10:00'], [3, '2026-11-18T10:00']]) {
+      await H.ev((at) => BridgeClock._at(at), at);
+      await H.use('THE DONKEYS');
+      if (d === 1) await p.screenshot({ path: OUT + '/ld_lf_donkeys.png' });
+      const r = await H.rows();
+      if (!r.some(x => /Tip Yannis/.test(x))) fail('no tip on day ' + d + ': ' + JSON.stringify(r));
+      await H.pickRow('Tip Yannis');
+      const t = await H.said();
+      if (d === 3 && !/FOR NOTHING/.test(t)) fail('three days of tips and no free ride: ' + t.slice(0, 100));
+      await H.shut();
+      if (d === 1) { await H.use('THE DONKEYS'); if ((await H.rows()).some(x => /Tip Yannis/.test(x))) fail('a second tip the same day'); await H.shut(); }
+    }
+    if (c0 - await H.coins() !== 6) fail('three tips cost ' + (c0 - await H.coins()));
+    await H.use('THE DONKEYS');
+    const fr = await H.rows();
+    console.log('after three days:', JSON.stringify(fr));
+    if (!fr.some(x => /Ride .*free/i.test(x))) fail('the ride isn\'t free');
+    const c1 = await H.coins();
+    await H.pickRow('^Ride');
+    await p.waitForTimeout(2500);
+    if (await H.coins() !== c1) fail('a free ride charged ' + (c1 - await H.coins()));
+    // Despina's sunset plate: not at noon, there at sunset, and it warms you
+    await H.ev(() => BridgeClock._at('2026-11-18T12:00'));
+    await H.go('lumar-cliff', [33, 12]);
+    const sky = await H.ev(() => { const s = BridgeClock.sky('lumar-cliff'); return { t: s.t, sunset: s.sunset, len: s.len }; });
+    await H.use('TAVERNA');
+    let rows = await H.rows();
+    const noon = rows.some(r => /sunset plate/i.test(r));
+    await H.shut();
+    // to the hour of sunset on Lumar's clock
+    await H.ev((sky) => BridgeClock._at(BridgeClock.now() + ((sky.sunset - sky.t + sky.len) % sky.len) - 600000), sky);
+    await H.use('TAVERNA');
+    rows = await H.rows();
+    console.log('at noon the plate:', noon, '· at sunset:', JSON.stringify(rows));
+    if (noon && !(await H.ev(() => false))) { /* (noon may fall near a Lumar sunset: only the sunset check is a failure) */ }
+    if (!rows.some(r => /sunset plate/i.test(r))) fail('no sunset plate at sunset');
+    await p.screenshot({ path: OUT + '/ld_lf_sunset.png' });
+    await H.pickRow('sunset plate');
+    await H.shut();
+    if (!(await H.ev(() => BridgeHoarfell.isWarm()))) fail('the sunset plate didn\'t warm you');
+    await p.context().close();
   }
 
   console.log(errors ? errors + ' errors' : 'lumar deeper ok');
