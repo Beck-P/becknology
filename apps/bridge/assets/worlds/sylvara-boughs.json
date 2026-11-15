@@ -3847,6 +3847,18 @@
       "prompt": "PRESS E TO KNOCK",
       "home": 6,
       "dialog": "SOMEONE CALLS \"IT'S OPEN!\" AND THEN, AFTER A PAUSE, \"IT ISN'T, ACTUALLY. SORRY. WRONG DOOR.\""
+    },
+    {
+      "x": 31,
+      "y": 11,
+      "type": "enter_world",
+      "label": "THE HOLLOW BOUGH",
+      "prompt": "PRESS E TO GO IN",
+      "target": "sylvara-tavern",
+      "spawn": [
+        12,
+        14
+      ]
     }
   ],
   "designTiles": [

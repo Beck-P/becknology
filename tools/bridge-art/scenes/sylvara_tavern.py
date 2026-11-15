@@ -73,7 +73,22 @@ for (x, z) in ((6.0, 2.6), (12.0, 3.0), (18.0, 2.6)):
 # ---- the bar: one polished root along the east side, kegs and shelves behind -------------------------------------------------
 LU.bar_counter(k, 17.0, 22.6, 5.6, 6.4)
 k.box(16.6, 5.6, 0.0, 17.4, 9.0, 1.0, (HEART_L, 0.18), 'bar_end')            # the counter turns down the room
-k.box(16.5, 5.5, 1.0, 17.5, 9.1, 1.08, (shade(HEART_L, 1.15), 0.12), 'bar_top')
+for i, (a, b) in enumerate(((16.5, 16.84), (16.84, 17.17), (17.17, 17.5))):    # the top in three worn boards
+    k.box(a, 5.5, 1.0, b - 0.012, 9.1, 1.08, (shade(HEART_L, (1.18, 1.06, 1.12)[i]), 0.12), 'bar_top')
+for i in range(12):                                              # the root's end dressed: staves down its face and end, a kick
+    rr = 5.75 + i * 0.28                                         # board and a brass foot rail, the top's lip darker
+    k.box(16.57, rr, 0.08, 16.6, rr + 0.22, 0.92, (shade(HEART_D, 0.9 + 0.12 * (i % 2)), 0.2), 'bar_panel')
+for i in range(3):
+    xx = 16.66 + i * 0.24
+    k.box(xx, 9.0, 0.08, xx + 0.2, 9.03, 0.92, (shade(HEART_D, 0.95 + 0.1 * (i % 2)), 0.2), 'bar_panel')
+k.box(16.55, 5.6, 0.0, 16.62, 9.05, 0.1, ('#2a1a10', 0.2), 'bar_kick')
+k.cyl_y(16.42, 5.7, 8.95, 0.22, 0.025, 0.025, ('#c89848', 0.15), 'bar_rail', verts=6)
+k.box(16.46, 5.46, 0.98, 17.54, 9.14, 1.02, (shade(HEART_D, 0.8), 0.2), 'bar_lip')
+for (x, rr) in ((16.9, 6.5), (17.05, 7.6), (16.85, 8.6), (18.7, 5.8), (21.6, 5.85)):           # mugs and a bottle left out
+    LU.mug(k, x, rr, 1.08)
+k.cyl(17.1, 8.1, 1.08, 1.38, 0.05, ('#2a5a32', 0.1), 'bottle', verts=8)
+k.cyl(17.1, 8.1, 1.38, 1.46, 0.02, ('#2a5a32', 0.1), 'bottle', verts=6)
+k.blob(17.0, 6.9, 1.12, 0.14, 0.1, 0.05, ('#e8c070', 0.3), 'honeycake', segs=8)
 for x in (18.0, 19.4, 20.8):
     LU.beer_tap(k, x, 5.9, 1.06)
 LU.keg_rack(k, 17.8, 22.4, 3.3, levels=2)
@@ -106,7 +121,7 @@ for (x0, x1, rr) in ((9.2, 11.0, 10.2), (12.4, 14.2, 10.2)):
     LU.bench(k, x0, x1, rr)
 
 # ---- tables and stools across the floor ---------------------------------------------------------------------------------
-TABLES = [(5.6, 9.6), (8.0, 5.6), (15.2, 11.4), (4.4, 12.2), (19.8, 11.8)]
+TABLES = [(5.6, 9.6), (8.0, 5.6), (15.2, 11.4), (4.4, 12.2), (19.8, 11.8), (14.4, 5.4), (9.4, 12.8)]
 for (x, rr) in TABLES:
     LU.round_table(k, x, rr)
     for (dx, dr) in ((-0.7, 0.0), (0.7, 0.0), (0.0, 0.62)):
@@ -126,11 +141,20 @@ k.tube((3.6, 4.32, 0.95), (3.62, 4.3, 1.35), 0.025, ('#5a3a20', 0.25), 'lute', v
 k.poly([(2.6, 2.56, 3.0), (4.0, 2.56, 3.0), (4.0, 2.55, 1.6), (3.3, 2.54, 1.3), (2.6, 2.55, 1.6)], ('#2a5a2e', 0.3), 'banner')
 k.blob(3.3, 2.53, 2.3, 0.16, 0.01, 0.24, (E.GOLD, 0.25), 'banner_leaf', segs=8)
 k.solid(1.2, 3.2, 4.6, 4.6)
+k.cyl(2.9, 3.7, 0.22, 0.62, 0.22, ('#8a5a34', 0.2), 'drum', verts=14)           # a hand drum, a cushion for the harper,
+k.cyl(2.9, 3.7, 0.62, 0.65, 0.23, ('#e8dcc0', 0.3), 'drum_skin', verts=14)      # a music stand with its sheet
+for i in range(6):
+    a = i / 6 * math.tau
+    k.box(2.9 + math.cos(a) * 0.22 - 0.015, 3.7 + math.sin(a) * 0.18 - 0.015, 0.25, 2.9 + math.cos(a) * 0.22 + 0.015, 3.7 + math.sin(a) * 0.18 + 0.015, 0.6, ('#d0a040', 0.2), 'drum_cord')
+k.blob(1.7, 4.45, 0.3, 0.26, 0.22, 0.08, ('#2a5a2e', 0.4), 'cushion', segs=10)
+k.tube((4.2, 3.5, 0.22), (4.2, 3.5, 1.05), 0.02, (A.ELFWOOD_D, 0.25), 'music_stand', verts=5)
+k.poly([(3.98, 3.56, 0.98), (4.42, 3.56, 0.98), (4.42, 3.6, 1.28), (3.98, 3.6, 1.28)], ('#efe2c4', 0.4), 'music_sheet')
+k.box(1.2, 6.38, 0.0, 4.6, 6.44, 0.22, ('#5a3a24', 0.2), 'stage_edge')
 
 # ---- lanterns hung from the ribs, barrels, a coat peg, a rug by the fire -----------------------------------------------------
-for (x, rr) in ((4.0, 6.0), (12.0, 4.6), (20.0, 9.6), (8.0, 11.0), (16.0, 8.0)):
-    k.cyl(x, rr, 2.5, H - 0.2, 0.006, (E.GOLD, 0.25), 'chain', verts=4)
-    E.leaf_lantern(k, x, rr, 2.4, s=0.16, energy=18.0)
+for (x, rr) in ((4.0, 6.0), (12.0, 4.6), (20.0, 9.6), (8.0, 11.0), (16.0, 8.0), (17.6, 12.2), (2.8, 10.4)):
+    k.cyl(x, rr, 2.62, H - 0.2, 0.012, (E.GOLD, 0.25), 'chain', verts=4)
+    E.leaf_lantern(k, x, rr, 2.6, s=0.22, energy=14.0)
 for (x, rr) in ((1.6, 12.6), (2.4, 12.8), (22.0, 12.6)):
     LU.barrel(k, x, rr, h=0.8, radius=0.3)
     k.solid(x - 0.3, rr - 0.3, x + 0.3, rr + 0.3)
@@ -160,6 +184,17 @@ with k.foliage('leaf'):
             if i % 4 == 2:
                 k.blob(x, 2.78, z - 0.08, 0.05, 0.05, 0.05, (rng.choice(('#f0e0a0', '#f0b0c8', '#c8a8f0')), 0.35), 'garland_flower', segs=6)
 LU.rug(k, 3.4, 8.6, 7.6, 10.8, col='#6a3a2a', trim='#d0a040')
+LU.rug(k, 18.2, 10.6, 21.6, 13.0, col='#3a4a6a', trim='#d0a040')
+for (x, rr) in ((22.2, 7.9), (22.3, 10.7)):                       # casks and sacks against the east wall
+    LU.barrel(k, x, rr, h=0.7, radius=0.28)
+    k.solid(x - 0.3, rr - 0.3, x + 0.3, rr + 0.3)
+for (x, rr, c) in ((22.2, 8.7, '#c8b080'), (22.35, 9.2, '#b8a070')):
+    k.blob(x, rr, 0.28, 0.26, 0.22, 0.28, (c, 0.4), 'sack', segs=9)
+k.solid(21.9, 8.4, 22.6, 9.5)
+rng2 = __import__('random').Random(77)                             # knots and wear in the planks (on their own dice)
+for _ in range(60):
+    x, rr = rng2.uniform(1.4, 22.6), rng2.uniform(3.0, 13.8)
+    k.blob(x, rr, -0.005, rng2.uniform(0.05, 0.1), rng2.uniform(0.03, 0.05), 0.01, ('#5a3a24', 0.2), 'floor_knot', segs=6)
 k.box(4.8, 3.0, 0.22, 5.4, 3.12, 1.4, ('#22281e', 0.3), 'chalkboard')
 k.box(4.76, 2.98, 1.4, 5.44, 3.14, 1.46, (A.ELFWOOD_D, 0.3), 'chalkboard_frame')
 LU.barrel(k, 5.4, 4.8, h=0.6, radius=0.26)
