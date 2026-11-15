@@ -19,6 +19,7 @@ The look is Hoarfell's (apps/bridge/CLAUDE.md, *Hoarfell*), finished as toys: cr
 gilt, warm windows, and snow on whatever faces up.
 """
 import math
+import random
 
 from scenekit import shade
 import assets_town as W
@@ -717,9 +718,10 @@ def track(k, x0, x1, r, gauge=0.5, ballast='#8a8478', snow=True):
         qb(k, x0, r + dr - 0.015, 0.17, x1, r + dr + 0.015, 0.18, ('#c8ccd4', 0.03), 'rail')
 
 
-def platform(k, x0, x1, r0, r1, z=0.35, canopy=True, edge='#e0c040', span=None):
+def platform(k, x0, x1, r0, r1, z=0.35, canopy=True, edge='#e0c040', span=None, glazed=False):
     """A station platform: stone edged, a yellow line, flagged top; a canopy of glass on cast-iron columns with
-    lacy brackets and a valance of fretted boards, lamps hanging."""
+    lacy brackets and a valance of fretted boards, lamps hanging. glazed: the canopy's two slopes built as glass on iron
+    bars with the snow lying along its gutters and ridge (glazed_canopy) instead of one grey band and one white slab."""
     rng = _r(k)
     qb(k, x0, r0, 0.0, x1, r1, z, (STONE_D, 0.08), 'platform_wall')
     r = r0
@@ -747,13 +749,16 @@ def platform(k, x0, x1, r0, r1, z=0.35, canopy=True, edge='#e0c040', span=None):
             for s in (-1, 1):
                 k.tube((cx, rc, h - 0.4), (cx + s * 0.6, rc, h - 0.02), 0.02, ('#2a4a3a', 0.06), 'bracket', verts=4)
             k.solid_post(cx, rc)
-        qb(k, x0 - 0.1, r0 - 0.1, h, x1 + 0.1, r1 + 0.2, h + 0.08, ('#2a4a3a', 0.06), 'canopy_frame')
-        k.quads([((x0 - 0.1, r0 - 0.1, h + 0.08), (x1 + 0.1, r0 - 0.1, h + 0.08), (x1 + 0.1, rc, h + 0.35), (x0 - 0.1, rc, h + 0.35))],
-                ('#5a6270', 0.05), 'roof_canopy')
-        k.quads([((x0 - 0.1, rc, h + 0.35), (x1 + 0.1, rc, h + 0.35), (x1 + 0.1, r1 + 0.2, h + 0.08), (x0 - 0.1, r1 + 0.2, h + 0.08))],
-                ('#5a6270', 0.05), 'roof_canopy')
-        k.quads([((x0 - 0.05, rc + 0.05, h + 0.36), (x1 + 0.05, rc + 0.05, h + 0.36), (x1 + 0.05, r1 + 0.12, h + 0.14), (x0 - 0.05, r1 + 0.12, h + 0.14))],
-                (SNOW, 0.03), 'roof_snow')
+        if glazed:
+            glazed_canopy(k, x0 - 0.1, x1 + 0.1, r0 - 0.1, rc, r1 + 0.2, h + 0.08, h + 0.35, cols)
+        else:
+            qb(k, x0 - 0.1, r0 - 0.1, h, x1 + 0.1, r1 + 0.2, h + 0.08, ('#2a4a3a', 0.06), 'canopy_frame')
+            k.quads([((x0 - 0.1, r0 - 0.1, h + 0.08), (x1 + 0.1, r0 - 0.1, h + 0.08), (x1 + 0.1, rc, h + 0.35), (x0 - 0.1, rc, h + 0.35))],
+                    ('#5a6270', 0.05), 'roof_canopy')
+            k.quads([((x0 - 0.1, rc, h + 0.35), (x1 + 0.1, rc, h + 0.35), (x1 + 0.1, r1 + 0.2, h + 0.08), (x0 - 0.1, r1 + 0.2, h + 0.08))],
+                    ('#5a6270', 0.05), 'roof_canopy')
+            k.quads([((x0 - 0.05, rc + 0.05, h + 0.36), (x1 + 0.05, rc + 0.05, h + 0.36), (x1 + 0.05, r1 + 0.12, h + 0.14), (x0 - 0.05, r1 + 0.12, h + 0.14))],
+                    (SNOW, 0.03), 'roof_snow')
         x = x0 - 0.1
         while x < x1 + 0.1:                                         # the fretted valance along the front
             qb(k, x, r1 + 0.18, h - 0.22, x + 0.1, r1 + 0.22, h + 0.06, ('#e8e0cc', 0.05), 'valance')
@@ -764,6 +769,63 @@ def platform(k, x0, x1, r0, r1, z=0.35, canopy=True, edge='#e0c040', span=None):
             qb(k, lx - 0.006, rc, h - 0.5, lx + 0.006, rc + 0.01, h, IRON, 'chain')
             W.lantern(k, lx, rc, h - 0.8, h - 0.5, s=0.09, energy=8)
     return z
+
+
+def glazed_canopy(k, X0, X1, RB, RC, RF, he, hr, cols, iron='#2a4a3a', glass='#8098b0', seed=7):
+    """A glazed ridge canopy under snow, as it reads from the game's 45°: two slopes of glass (RB→RC at the back, RC→RF in
+    front, from the eaves at he up to the ridge at hr) on a few iron rafters over the columns, a gutter along each eave
+    and a cap along the ridge; the snow lies in bands along the gutters and the ridge, ragged-edged, the glass showing
+    between. (A first try laid snow pane by pane down the slopes: from above those read as white posts.) Its own dice."""
+    rng = random.Random(seed)
+
+    def zb(r):                                                       # the back slope's height at row r
+        return he + (hr - he) * (r - RB) / (RC - RB)
+
+    def zf(r):                                                       # the front slope's
+        return hr - (hr - he) * (r - RC) / (RF - RC)
+    k.quads([((X0, RB, he), (X1, RB, he), (X1, RC, hr), (X0, RC, hr))], (shade(glass, 0.86), 0.05), 'roof_glass')
+    k.quads([((X0, RC, hr), (X1, RC, hr), (X1, RF, he), (X0, RF, he))], (glass, 0.05), 'roof_glass')
+    # iron: a rafter over every column and one between, the ends, a gutter along each eave, the ridge cap
+    xs = sorted(set([X0 + 0.04, X1 - 0.04] + [c for c in cols] + [(a + b) / 2 for a, b in zip(cols, cols[1:])]))
+    for x in xs:
+        k.tube((x, RB, he + 0.02), (x, RC, hr + 0.02), 0.028, (iron, 0.05), 'canopy_bar', verts=4)
+        k.tube((x, RC, hr + 0.02), (x, RF, he + 0.02), 0.028, (iron, 0.05), 'canopy_bar', verts=4)
+    for x in xs[:-1]:                                                # light glazing bars between the rafters
+        nxt = xs[xs.index(x) + 1]
+        n = max(1, int(round((nxt - x) / 0.85)))
+        for j in range(1, n):
+            gx = x + (nxt - x) * j / n
+            k.tube((gx, RB, he + 0.012), (gx, RC, hr + 0.012), 0.012, (shade(iron, 1.15), 0.05), 'canopy_bar', verts=4)
+            k.tube((gx, RC, hr + 0.012), (gx, RF, he + 0.012), 0.012, (shade(iron, 1.15), 0.05), 'canopy_bar', verts=4)
+    k.box(X0, RF - 0.05, he - 0.1, X1, RF + 0.03, he + 0.03, (iron, 0.05), 'gutter')
+    k.box(X0, RB - 0.03, he - 0.1, X1, RB + 0.05, he + 0.03, (iron, 0.05), 'gutter')
+    k.tube((X0, RC, hr + 0.03), (X1, RC, hr + 0.03), 0.04, (iron, 0.05), 'ridge_cap', verts=6)
+
+    # the snow: bands along the front gutter (widest: it slides down and banks there), the ridge and the back gutter
+    def band(edge, inward, lo, hi, zfun, lift):
+        """A ragged-edged strip from row `edge` `inward` (+1 or -1) by a width wandering between lo and hi."""
+        step, quads, ph1, ph2 = 0.22, [], rng.uniform(0, 6), rng.uniform(0, 6)
+        xa = X0
+        wa = lo + (hi - lo) * rng.random()
+        while xa < X1 - 1e-6:
+            xb = min(X1, xa + step)
+            wb = lo + (hi - lo) * (0.5 + 0.3 * math.sin(xb * 0.9 + ph1) + 0.2 * math.sin(xb * 2.7 + ph2)) + rng.uniform(-0.03, 0.03)
+            wb = max(lo * 0.7, min(hi, wb))
+            ra2, rb2 = edge + inward * wa, edge + inward * wb
+            quads.append(((xa, edge, zfun(edge) + lift), (xb, edge, zfun(edge) + lift), (xb, rb2, zfun(rb2) + lift), (xa, ra2, zfun(ra2) + lift)))
+            xa, wa = xb, wb
+        k.quads(quads, (SNOW, 0.03), 'roof_snow')
+    band(RF, -1, 0.3, 0.55, zf, 0.035)
+    band(RC, 1, 0.1, 0.24, zf, 0.04)
+    band(RC, -1, 0.1, 0.22, zb, 0.04)
+    band(RB, 1, 0.16, 0.32, zb, 0.035)
+    k.box(X0, RF - 0.02, he - 0.02, X1, RF + 0.05, he + 0.05, (SNOW, 0.03), 'roof_snow')   # the snow's lip over the front gutter
+    x = X0 + 0.1
+    while x < X1 - 0.1:                                              # lumps where it has banked against the rafters
+        if rng.random() < 0.45:
+            r = RF - rng.uniform(0.15, 0.35)
+            k.blob(x, r, zf(r) + 0.04, rng.uniform(0.12, 0.22), 0.08, 0.03, (SNOW, 0.03), 'roof_snow', segs=6)
+        x += rng.uniform(0.5, 0.9)
 
 
 def station_house(k, x0, x1, r_back, r_front, clock=True, col=STONE, roof=SLATE, door_x=None, windows=()):

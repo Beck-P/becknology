@@ -339,7 +339,7 @@ HK.tub(k, 35.6, 25.4, blooms=('#f0f0f8', '#c8d8f0'))
 A.station_house(k, 23.4, 32.6, 29.6, 32.4, door_x=28.0, windows=[24.8, 26.3, 29.7, 31.2])
 k.box(25.6, 32.44, 2.42, 30.4, 32.48, 2.74, ('#2a4a3a', 0.05), 'sign_board')
 G.letters(k, 'AURELLE', 'CinzelDecorative-Bold', 28.0, 32.48, 2.46, size=0.24, col=A.GILT, lit=True, energy=2)
-PZ = A.platform(k, 6.0, 52.0, 32.6, 35.6, z=0.06, span=(21.0, 35.0))
+PZ = A.platform(k, 6.0, 52.0, 32.6, 35.6, z=0.06, span=(21.0, 35.0), glazed=True)
 A.track(k, -1.0, COLS + 1.0, 36.8)
 A.track(k, -1.0, COLS + 1.0, 38.6, snow=True)
 TRAIN_X0 = 31.0
