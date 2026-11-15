@@ -197,7 +197,7 @@ const SCREENS = global.PHONE_SCREENS || [   // (world/phone_pass_old.js hands in
   async function closeByTap(p) {
     const before = await openPanels(p);
     if (!before.length) return true;
-    const box = await p.evaluate((sel) => {
+    const find = () => p.evaluate((sel) => {
       const vis = (e) => { const s = getComputedStyle(e), r = e.getBoundingClientRect(); return s.display !== 'none' && s.visibility !== 'hidden' && r.width > 4 && r.height > 4; };
       const pns = [...document.querySelectorAll(sel)].filter(vis), pn = pns.find(e => e.matches('.world-dialog')) || pns.pop();   // a dialog over a panel first
       const els = [...pn.querySelectorAll('button, .wd-opt, .wd-btn, .wd-hint, .qj-close, [data-act], [role=button], .gm-x, .gm-close, .wd-sell-row.pick')].filter(vis);
@@ -209,11 +209,14 @@ const SCREENS = global.PHONE_SCREENS || [   // (world/phone_pass_old.js hands in
       const r = t.getBoundingClientRect();
       return { x: r.x + Math.min(r.width / 2, 40), y: r.y + Math.min(r.height / 2, 20), what: e ? e.textContent.trim().slice(0, 20) || e.className : 'the card' };
     }, PANELS);
+    let box = await find();
     for (let i = 0; i < 8; i++) {                                         // (a long line: a page a tap)
+      if (i) { const again = await p.evaluate(() => { const e = document.querySelector('[data-pp-closing]'); return !!(e && e.isConnected); }) && await openPanels(p); if (again && again.length) box = Object.assign(await find(), { what: box.what }); }   // (measured again: a card still sliding in moves)
+      if (process.env.PP_DEBUG) console.log('  close: tap', JSON.stringify(box), await p.evaluate(([x, y]) => { const e = document.elementFromPoint(x, y); return e ? (e.id || e.className || e.tagName) + '' : 'nothing'; }, [box.x, box.y]));
       await tapAt(p, box.x, box.y); await p.waitForTimeout(700);
       const gone = await p.evaluate(() => { const e = document.querySelector('[data-pp-closing]'); if (!e || !e.isConnected) return true; const c = getComputedStyle(e); return c.display === 'none' || c.visibility === 'hidden' || +c.opacity < 0.05 || e.getBoundingClientRect().width < 4; });
       if (gone) return box.what;                                            // (that screen: a panel under it, the fishing, may stay)
-      if (box.what !== 'the card' && !/^skip/i.test(box.what)) break;        // a line typing out: the first tap (on it, or its Skip) finishes it
+      if (box.what !== 'the card' && !/skip/i.test(box.what)) break;          // a line typing out: the first tap (on it, or its Skip) finishes it
     }
     return false;
   }

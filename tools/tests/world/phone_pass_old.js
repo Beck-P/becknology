@@ -196,7 +196,9 @@ global.PHONE_EXTRA = async ({ page, go, useIt, press, audit, closeByTap, tapAt, 
         }
       }
       if (!ONLY || ONLY.indexOf('fight') >= 0) {
-        await p.evaluate(() => BridgeSeaFight._spawn('cutter')); await p.waitForTimeout(2500);
+        await p.evaluate(() => BridgeSeaFight._spawn('cutter'));
+        await p.waitForFunction(() => !!document.getElementById('sloop-menu'), null, { timeout: 10000 }).catch(() => {});   // her hail, answered before the line
+        await p.waitForTimeout(400);
         await p.evaluate(() => { const m = document.getElementById('sloop-menu'); if (m) { const bs = [...m.querySelectorAll('button')].filter(e => !e.disabled), b = bs.find(e => /^Fight/.test(e.textContent)) || bs.find(e => /Run for it|Got it/.test(e.textContent)); b && b.click(); } }); await p.waitForTimeout(1500);
         await p.screenshot({ path: OUT + '/po_fight_hud_' + size + '.png' });
         await sayOver(p, 'fight_' + size);
