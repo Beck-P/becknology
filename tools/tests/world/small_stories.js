@@ -54,11 +54,31 @@ const ONLY = process.argv[3] || '';
   const carried = () => p.evaluate(() => BridgeKeyItems.carried().map(i => i.id).join(','));
   const tracker = () => p.evaluate(() => { const t = document.getElementById('quest-tracker'); return t && t.classList.contains('on') ? t.innerText : ''; });
   const part = (n) => !ONLY || ONLY === n;
+  // The clock, pinned (BridgeClock._at): people keep a day (js/routines.js) — just after midnight ET Brambleford's have
+  // all gone home and their labels aren't in the square — so each part pins a working hour before it loads a place:
+  // from now (or SS_AT, an ISO time, to try the test as if run then) forward a minute at a time to the first moment on a
+  // weekday (Mon–Thu ET: no festival weekend) when everyone named is at their own spot (`where(id).home`; someone who
+  // keeps no day counts as there). The same result at any real time.
+  const BASE = process.env.SS_AT ? Date.parse(process.env.SS_AT) : Date.now();
+  const pin = async (ids, label) => {
+    const at = await p.evaluate(([ids, base]) => {
+      for (let m = 0; m < 6 * 24 * 60; m += 5) {
+        const ms = base + m * 60000;
+        BridgeClock._at(ms);
+        if (BridgeClock.etParts().dow > 3) continue;
+        if (ids.every(id => { if (!BridgeRoutines._stop(id)) return true; const w = BridgeRoutines.where(id); return !!(w && w.home); })) return ms;   // (no day kept, or at home — `where` is null when away)
+      }
+      return null;
+    }, [ids, BASE]);
+    if (at == null) { fail('no working hour found for ' + label); return; }
+    console.log('clock pinned for ' + label + ':', new Date(at).toISOString());
+  };
   // the letter in the rack on the bridge, once it's done (js/talk.js checkMail): who it's from
   const mail = (q) => p.evaluate((q) => BridgeTalk.checkMail().then(() => { const m = BridgeTalk.letters().find(m => m.key === 'quest:' + q); return m ? m.name : null; }), q);
 
   // ---- Edda's Book: the rumour at the Hayloft, six pages, the backs, four apples, the pie ----
   if (part('edda')) {
+    await pin(['bridget', 'mags', 'wat', 'nell', 'ludd', 'hollin'], 'Brambleford');
     await go('verdance-village', [15, 13]);
     if ((await p.evaluate(() => BridgeQuests.startsHere('verdance-village')))['BRIDGET'] !== 'eddas-book') fail('no gold ! over Bridget');
     await use('MAGS'); await ask('Gossip'); await shut();
@@ -137,6 +157,7 @@ const ONLY = process.argv[3] || '';
   // ---- The Admiral: the crier, the Keep, Pim, the mudlark's tag, the bosun, the cat on the loggia, the parrot on the
   // crane, both home at the chandler's ----
   if (part('admiral')) {
+    await pin(['crier', 'pim', 'mudlark', 'bosun'], 'Crownhaven');
     await go('lumar-crown-oldtown', [36, 15]);
     await use('TOWN CRIER'); await ask('The news'); await shut();
     if ((await p.evaluate(() => BridgeQuests.rumours())).indexOf('admiral') >= 0) fail('heard as a rumour from the one who starts it, after it started');
@@ -197,6 +218,7 @@ const ONLY = process.argv[3] || '';
 
   // ---- Desh: signed on at the spaceport (her perk on every hold), still with the Old Mercy, trading both ways ----
   if (part('desh')) {
+    await pin(['desh'], 'the spaceport');
     await p.evaluate(() => {
       window._coins = 400;
       BridgeProgression.awardCoins = (n) => { window._coins += n; return Promise.resolve(window._coins); };
@@ -258,6 +280,7 @@ const ONLY = process.argv[3] || '';
 
   // ---- Ithil's star: Dr Vesper's word of her, nothing without a star, one given, the dial and the telescope ----
   if (part('ithil')) {
+    await pin(['elf_starreader', 'ione'], 'the Crown');
     await go('lumar-crown-hill', [30, 20]);
     await use('ASTRONOMER'); await ask('Fallen stars'); await shut();
     if ((await p.evaluate(() => BridgeQuests.rumours())).indexOf('ithils-star') < 0) fail('Dr Vesper\'s word didn\'t make a rumour');
@@ -320,6 +343,7 @@ const ONLY = process.argv[3] || '';
     await m.route(/supabase-js|supabase\.co|@supabase/, r => r.abort());
     await m.goto('http://127.0.0.1:8766/'); await m.waitForTimeout(2500);
     await m.evaluate(() => { localStorage.removeItem('bridge_quests'); localStorage.removeItem('bridge_quest_meta'); BridgeState.setPilot({ id: 't2', name: 'BECK', suit_color: 'blue' }); if (typeof BridgeIntro !== 'undefined') BridgeIntro.hide(); });
+    await m.evaluate((ms) => BridgeClock._at(ms), await p.evaluate(() => BridgeClock.now()));   // (the main page's pinned hour)
     await m.evaluate(() => new Promise(r => BridgeWorld.load('lumar-crown-oldtown', () => { BridgeState.transition('world', { worldId: 'lumar-crown-oldtown', spawn: { x: 40, y: 15 } }); r(); })));
     await m.waitForTimeout(3000);
     await m.evaluate(() => { const i = BridgeWorld.getWorld().interactions.find(i => i.label === 'TOWN CRIER'); BridgeInteractions.execute(i); });
