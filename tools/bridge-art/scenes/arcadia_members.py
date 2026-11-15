@@ -15,6 +15,7 @@ import math
 import sys
 
 from _spires_room import SP, E, CA, PH, S, Kit, shade, render, look, out_door, write_world  # noqa: F401
+E.GLEAM = True                                    # chandeliers and candles stay bright through the toy finish
 
 OUT = sys.argv[1]
 WID = 'arcadia-members'
