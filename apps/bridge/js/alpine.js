@@ -242,14 +242,48 @@ var BridgeAlpine = (function () {
     ]);
   }
 
-  // Maison Vautrin: furs (a coat that keeps the cold out, in style) and a watch
+  // Maison Vautrin: furs (a coat that keeps the cold out, in style) and a watch. She makes the coat of your own ice-wolf
+  // pelts for a fraction of the rail's price, and once you've a coat she buys the pelts you bring (the valley's loot:
+  // spec-deeper-worlds H1). What she wants is in WANTS below, which js/uses.js reads for the pelt's card.
+  var FURS = { pelts: 4, fee: 300, buys: 36 };
   function vautrin() {
-    if (typeof BridgeGear !== 'undefined' && BridgeGear.open && BridgeGear.SHOPS && BridgeGear.SHOPS.vautrin) return BridgeGear.open({ shop: 'vautrin' });
-    say('MAISON VAUTRIN', 'COATS OF EVERY FUR ON BRASS RAILS AND A GLASS CASE OF WATCHES. MADAME VAUTRIN LOOKS AT YOUR FLIGHT SUIT THE WAY A DOCTOR LOOKS AT A WOUND.');
+    var G = typeof BridgeGear !== 'undefined' && BridgeGear.SHOPS && BridgeGear.SHOPS.vautrin ? BridgeGear : null;
+    if (!G) return say('MAISON VAUTRIN', 'COATS OF EVERY FUR ON BRASS RAILS AND A GLASS CASE OF WATCHES. MADAME VAUTRIN LOOKS AT YOUR FLIGHT SUIT THE WAY A DOCTOR LOOKS AT A WOUND.');
+    var have = typeof BridgeInventory !== 'undefined' ? BridgeInventory.getCount('wolf_pelt') : 0;
+    var coat = G.owns && G.owns('suit', 'furs'), rows = [];
+    if (!coat) rows.push({ label: 'Furs from your own pelts', icon: 'wolf_pelt', sub: have >= FURS.pelts ? 'four ice-wolf pelts and ' + FURS.fee + ' coins, made while you wait'
+                             : FURS.pelts + ' ice-wolf pelts and ' + FURS.fee + ' coins - you have ' + have + '. The wolves of the hidden valley carry them',
+                           note: FURS.fee + ' coins', disabled: have < FURS.pelts, pick: function () {
+      pay(FURS.fee, 'gear:furs_pelts', function () {
+        if (!BridgeInventory.removeItem('wolf_pelt', FURS.pelts)) return;
+        G.grant('suit', 'furs');
+        sfx('coin');
+        note('Aurelle Furs', 'Made of your own pelts at Maison Vautrin');
+        say('MAISON VAUTRIN', 'SHE TURNS THE PELTS OVER ONE BY ONE, BLOWS INTO THE FUR TO SEE THE BLUE AT THE ROOTS, AND NODS. "ICE WOLF. NOBODY BRINGS ME ICE WOLF."\n\nAN HOUR LATER YOU WALK OUT IN A LONG WHITE COAT THAT FITS LIKE IT WAS ALWAYS YOURS. THE COLD CAN\'T GET IN. "BRING ME MORE," SHE SAYS. "I WILL PAY."');
+      });
+    } });
+    else rows.push({ label: 'Sell her your pelts', icon: 'wolf_pelt', sub: have ? 'you have ' + have + ' - she pays ' + FURS.buys + ' each' : 'she pays ' + FURS.buys + ' for an ice-wolf pelt',
+                     disabled: !have, pick: function () {
+      BridgeInteractions.execute({ type: 'sell', label: 'MAISON VAUTRIN', buys: [{ id: 'wolf_pelt', price: FURS.buys }],
+        dialog: '"ICE WOLF. FOR THE COLLARS - THE GUESTS FROM LUMAR WANT TO BE WARM AND THEY WANT EVERYONE TO KNOW IT."' });
+    } });
+    rows.push({ label: 'The rail', sub: 'coats, a thermal suit, the Vautrin Chronograph', pick: function () { G.open({ shop: 'vautrin' }); } });
+    choose('Maison Vautrin', coat ? 'MADAME VAUTRIN LOOKS AT YOUR COAT, THEN AT YOU, AND ALMOST SMILES. "IT WEARS WELL. YOU HAVE BROUGHT ME SOMETHING?"'
+                                  : 'COATS OF EVERY FUR ON BRASS RAILS AND A GLASS CASE OF WATCHES. MADAME VAUTRIN LOOKS AT YOUR FLIGHT SUIT THE WAY A DOCTOR LOOKS AT A WOUND.\n\n"TWELVE HUNDRED FOR A COAT OFF THE RAIL. OR BRING ME FOUR PELTS OF ICE WOLF, AND I MAKE YOU ONE FOR THE WORK ALONE."', rows, 'Leave');
   }
+  // what the valley's loot is wanted for here (js/uses.js reads this): { id, n, who, world, what }
+  var WANTS = [
+    { id: 'wolf_pelt', n: FURS.pelts, who: 'Maison Vautrin', world: 'hoarfell-aurelle', what: FURS.pelts + ' and ' + FURS.fee + ' coins make you the Aurelle Furs (the rail asks 1,200); after that she buys them at ' + FURS.buys }
+  ];
 
   // ---- the hidden valley's landmarks (type `vale`; its creatures and yetis are js/valley.js's) ---------------------------------
+  // The Last Monk (assets/quests.json `last-monk`) has clues on some of these: a clue found here hands its `say` along
+  // (js/interactions.js `__clues`), shown in place of the usual words, and the places change as the story moves.
+  var MONK = 'last-monk';
+  function Q(k) { return typeof BridgeQuests !== 'undefined' && BridgeQuests.has ? BridgeQuests.has(k) : false; }
+  function moment(inter) { var m = (inter.__clues || []).filter(function (c) { return c.say; })[0]; return m ? m.say : null; }
   function vale(inter) {
+    var m = moment(inter);
     switch (inter.label) {
       case 'THE WAY OUT':
         return choose('The way out', 'THE PATH CLIMBS BACK UP THROUGH THE LARCHES TOWARD THE COL. A LONG DAY OVER THE TOP AND DOWN THE GLACIER TO AURELLE - OR DOWN THE OTHER SIDE TO FELLHAVEN IF THE GUIDES ARE KIND.', [
@@ -264,9 +298,11 @@ var BridgeAlpine = (function () {
       case 'HOT SPRING':
         warm(30); health(30); energy(30); sfx('splash'); float('+30', '#ffd890');
         if (save.bathed !== today()) { save.bathed = today(); store(); note('A hot spring', 'Warm from below, in the hidden valley'); }
-        return say('HOT SPRING', night()
+        if (m) return say('HOT SPRING', m);
+        return say('HOT SPRING', (night()
           ? 'YOU SLIDE INTO WATER AS HOT AS A BATH, THE STARS THICK OVER THE VALLEY, STEAM CURLING UP PAST THE MONASTERY\'S LAMPS ON ITS CLIFF.'
-          : 'YOU SLIDE INTO WATER AS HOT AS A BATH. IT SMELLS OF STONE AND SOMETHING GREEN. SNOW ON THE SLOPES, MOSS UNDER YOUR HAND, STEAM EVERYWHERE. THE COLD CAN\'T FIND YOU FOR HALF AN HOUR.');
+          : 'YOU SLIDE INTO WATER AS HOT AS A BATH. IT SMELLS OF STONE AND SOMETHING GREEN. SNOW ON THE SLOPES, MOSS UNDER YOUR HAND, STEAM EVERYWHERE. THE COLD CAN\'T FIND YOU FOR HALF AN HOUR.') +
+          (Q(MONK + '/spring') ? '\n\nUP AT THE TOP OF THE TERRACES THE SPRING\'S MOUTH RUNS FREE, AND TWO GREY STONES SIT IN IT, WORN SMOOTH.' : ''));
       case 'PRAYER WHEELS':
         sfx('chime');
         if (save.wheels !== today()) { save.wheels = today(); store(); energy(25); health(15); float('+25 EN', '#60c8ff');
@@ -274,9 +310,14 @@ var BridgeAlpine = (function () {
         return say('PRAYER WHEELS', 'THE WHEELS ARE STILL TURNING FROM THIS MORNING.');
       case 'THE BELL':
         var cold = (BridgeWorld.getWorld().interactions || []).filter(function (h) { return h.type === 'hostile' && h._hp > 0; }).length;
-        if (cold && !save.bell) return say('THE BELL', 'YOU PULL THE ROPE. THE BELL GIVES A DEAD CLUNK, MUFFLED IN RIME. ACROSS THE COURTYARD SOMETHING COLD TURNS TOWARD THE SOUND. NOT WHILE THEY STILL KEEP THE PLACE.');
+        // the Last Monk's last step (its clue found just now): the fears laid, the lamps lit and the spring running, it rings
+        // whoever's still in the courtyard
+        if (cold && !save.bell && !m) return say('THE BELL', 'YOU PULL THE ROPE. THE BELL GIVES A DEAD CLUNK, MUFFLED IN RIME. ACROSS THE COURTYARD SOMETHING COLD TURNS TOWARD THE SOUND. NOT WHILE THEY STILL KEEP THE PLACE.');
         sfx('peal');
-        if (!save.bell) { save.bell = true; store(); note('The bell rings', 'The cliff monastery, its courtyard clear'); }
+        var first = !save.bell;
+        if (first) { save.bell = true; store(); note('The bell rings', 'The cliff monastery, its courtyard clear'); }
+        if (m) { refit(BridgeWorld.getWorld()); return say('THE BELL', m + (first ? '\n\nAND ON THE FAR SIDE OF THE COURTYARD THE ICE ON THE NORTH-EAST GATE CRACKS FROM TOP TO BOTTOM.' : '')); }
+        if (Q(MONK)) return say('THE BELL', 'YOU RING IT FOR THE PLEASURE OF IT. THE NOTE GOES OUT OVER THE VALLEY AND ROUND THE CLIFFS, AND FROM THE HALL BROTHER ANSELM CALLS: "AGAIN!"');
         return say('THE BELL', 'YOU HAUL ON THE ROPE AND THE BELL SWINGS FREE OF ITS RIME. ITS NOTE GOES OUT OVER THE VALLEY, ROUND THE CLIFFS AND BACK. ACROSS THE COURTYARD THE ICE ON THE NORTH-EAST GATE CRACKS FROM TOP TO BOTTOM.');
       case 'THE ICE GATE':
         if (!save.bell) return say('THE ICE GATE', 'THE GATE IN THE OLD WALL, ITS DOORS SEALED UNDER A HAND\'S DEPTH OF BLUE ICE. A CHILL COMES OFF IT LIKE BREATH. CARVED OVER IT: A BELL, AND A SERPENT UNDER WAVES OF SNOW.');
@@ -285,8 +326,31 @@ var BridgeAlpine = (function () {
           { label: 'Go through', sub: 'the heart of the valley', pick: function () { BridgeWorld.enterWorld('hoarfell-heart'); } }
         ], 'Not yet');
       case 'CHORTEN':
-        return say('CHORTEN', 'A WHITE STUPA, ITS GILT SPIRE BRIGHT AGAINST THE SNOW. PAINTED EYES ON ITS TOP LOOK OUT OVER THE VALLEY IN EVERY DIRECTION. SOMEONE HAS LEFT A JUNIPER SPRIG AND A COIN AT ITS FOOT.');
+        if (m) { sfx('chime'); return say('CHORTEN', m); }
+        return say('CHORTEN', 'A WHITE STUPA, ITS GILT SPIRE BRIGHT AGAINST THE SNOW. PAINTED EYES ON ITS TOP LOOK OUT OVER THE VALLEY IN EVERY DIRECTION. SOMEONE HAS LEFT A JUNIPER SPRIG AND A COIN AT ITS FOOT.' +
+          (Q(MONK + '/fears') ? ' AND, LINED UP BESIDE THEM, THREE EMPTY PHIALS, CLEAN AS RAIN.' : ''));
+      // the monastery once the Last Monk has moved on (refit, below): the fountain a warm bath, the hall a warm bed
+      case 'THE HALL':
+        if (m) return say('THE HALL', m);
+        if (!Q(MONK)) return say('THE HALL', inter.dialog || 'THE GREAT DOORS STAND OPEN A HAND\'S WIDTH.');
+        if (typeof BridgeActions === 'undefined' || !BridgeActions.rest) { health(999); energy(999); warm(60); return say('THE HALL', 'YOU SLEEP ON THE WARM FLOOR.'); }
+        return BridgeActions.rest({ rate: 1.2, text: 'The hall, lamplit: rows of cushions on a floor the spring runs under again, the gilt figure dry at last, Brother Anselm humming somewhere at the back.',
+          rested: 'You wake warm through. Anselm has left a bowl of butter tea by your cushion, still steaming.', onTick: function (dt) { warm(dt * 2); }, woke: function () { warm(60); } });
+      case 'FOUNTAIN':
+        if (m) return say('FOUNTAIN', m);
+        if (!Q(MONK + '/spring')) return say('FOUNTAIN', inter.dialog || 'THE FOUNTAIN FROZE MID-LEAP.');
+        warm(30); health(30); energy(30); sfx('splash'); float('+30', '#ffd890');
+        return say('FOUNTAIN', 'THE FOUNTAIN RUNS AGAIN, FED FROM THE SPRING BELOW, AND ITS BASIN STEAMS LIKE A BATH. YOU SIT ON THE RIM WITH YOUR BOOTS OFF AND YOUR FEET IN THE WATER. THE SPARROW HAS GONE ABOUT ITS BUSINESS. WARM FOR HALF AN HOUR.');
     }
+  }
+  // the monastery as the Last Monk goes: the fountain and the hall are taken over by `vale` (labels kept, so clues still
+  // match) once there's something to do at them - the fountain a bath once the spring runs, the hall a bed once Anselm's home
+  function refit(data) {
+    if (!data || !data.interactions) return;
+    data.interactions.forEach(function (i) {
+      if (i.label === 'FOUNTAIN' && Q(MONK + '/spring')) { i.type = 'vale'; i.prompt = 'PRESS E TO BATHE'; }
+      if (i.label === 'THE HALL' && Q(MONK)) { i.type = 'vale'; i.prompt = 'PRESS E TO REST'; }
+    });
   }
 
   // ---- the railway ------------------------------------------------------------------------------------------------------
@@ -331,6 +395,7 @@ var BridgeAlpine = (function () {
       if (spot) data.interactions.push({ x: spot[0], y: spot[1], type: 'enter_world', label: 'THE PROMENADE', prompt: 'PRESS E TO WALK DOWN',
         target: 'hoarfell-promenade', spawn: [42, 17] });
     }
+    if (worldId === 'hoarfell-monastery') refit(data);   // the Last Monk: the fountain and the hall
     // the gear on Maison Vautrin's rail
     if (typeof BridgeGear !== 'undefined' && BridgeGear.SHOPS && !BridgeGear.SHOPS.vautrin) addVautrin();
   }
@@ -381,5 +446,5 @@ var BridgeAlpine = (function () {
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 
-  return { use: use, ride: ride, decorate: decorate, railway: railway, SHOPS: SHOPS, _save: function () { return save; } };
+  return { use: use, ride: ride, decorate: decorate, railway: railway, SHOPS: SHOPS, WANTS: WANTS, FURS: FURS, vale: vale, refit: refit, _save: function () { return save; } };
 })();

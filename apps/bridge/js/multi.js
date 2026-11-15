@@ -471,7 +471,7 @@ var BridgeMulti = (function () {
     if (!d || !d.label || typeof BridgeQuests === 'undefined') return;
     var before = BridgeQuests.found().length;
     sharing = true;
-    try { BridgeQuests.onInteract(d.w, { label: d.label }); } finally { sharing = false; }
+    try { BridgeQuests.onInteract(d.w, { label: d.label, shared: true }); } finally { sharing = false; }   // shared: the finder paid what the clue takes
     if (BridgeQuests.found().length > before) { var p = N() && N().peer(from); toast('Found together', 'With ' + cap(p ? p.name : 'your mate'), 'It\'s in your journal too'); }
   }
   shareClues();

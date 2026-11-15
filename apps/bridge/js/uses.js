@@ -41,7 +41,8 @@ var BridgeUses = (function () {
   // ---- the index: id → the facts about what it's for -------------------------------------------------------------
   function keyNow() {
     return [count(people()), has('BridgeBusiness') && BridgeBusiness.all ? BridgeBusiness.all().length : 0,
-            has('BridgeFestivals') && BridgeFestivals.all ? count(BridgeFestivals.all()) : 0, has('BridgeItems') ? count(BridgeItems.all()) : 0].join(':');
+            has('BridgeFestivals') && BridgeFestivals.all ? count(BridgeFestivals.all()) : 0, has('BridgeItems') ? count(BridgeItems.all()) : 0,
+            has('BridgeQuests') && BridgeQuests.defs ? count(BridgeQuests.defs()) : 0].join(':');
   }
   function index() {
     var k = keyNow();
@@ -90,6 +91,17 @@ var BridgeUses = (function () {
         });
       }
       if (has('BridgeTrophies') && BridgeTrophies.T) Object.keys(BridgeTrophies.T).forEach(function (id) { add(id, { k: 'hall' }); });
+      // someone in particular who buys it (a `sell` topic in people.json), beyond the best price on the worth line
+      Object.keys(P).forEach(function (pid) { (P[pid].topics || []).forEach(function (t) { (t.sell || []).forEach(function (b) { add(b.id, { k: 'buyer', pid: pid, price: b.price }); }); }); });
+      // what a module wants it for (`WANTS`: { id, n, who, world, what } — Maison Vautrin and the pelts, js/alpine.js)
+      [has('BridgeAlpine') && BridgeAlpine.WANTS].forEach(function (list) { (list || []).forEach(function (w) { add(w.id, { k: 'want', who: w.who, world: w.world, what: w.what }); }); });
+      // the yetis of Hoarfell's hidden valley, fed once a day (js/valley.js FOODS; TREATS win their trust faster)
+      if (has('BridgeValley') && BridgeValley.FOODS) BridgeValley.FOODS.forEach(function (id) { add(id, { k: 'yeti', treat: (BridgeValley.TREATS || {})[id] || 0 }); });
+      // a quest step that takes it from your pack (quests.json, a clue's `takes`)
+      if (has('BridgeQuests') && BridgeQuests.defs) {
+        var QD = BridgeQuests.defs();
+        Object.keys(QD).forEach(function (qid) { (QD[qid].clues || []).forEach(function (c) { Object.keys(c.takes || {}).forEach(function (id) { add(id, { k: 'quest', q: qid, title: QD[qid].title, n: c.takes[id] }); }); }); });
+      }
       if (has('BridgeImplants') && BridgeImplants.CATALOG) {
         var C = BridgeImplants.CATALOG;
         Object.keys(C).forEach(function (k2) { if (C[k2].item) add(C[k2].item, { k: 'implant', name: C[k2].name }); });
@@ -149,6 +161,18 @@ var BridgeUses = (function () {
     if (it.type === 'part') push('part', 9, '<b>A ship\'s part:</b> a harbourmaster fits it to one of yours');
     if (it.type === 'wonder') push('wonder', 9, '<b>A wonder:</b> it goes in the Cabinet of Wonders in your hall');
     if (/^tmap_/.test(id)) push('map', 9, '<b>A treasure map:</b> follow it to where something\'s buried');
+    (by.quest || []).forEach(function (f) {
+      if (has('BridgeQuests') && BridgeQuests.has && BridgeQuests.has(f.q)) return;   // (done: not wanted any more)
+      push('quest', 9, '<b>A quest:</b> ' + esc(f.title) + ' wants ' + f.n);
+    });
+    (by.want || []).forEach(function (f) { push('want', 8, '<b>Wanted</b> at ' + esc(f.who) + (f.world ? ' (' + esc(place(f.world)) + ')' : '') + ': ' + esc(f.what)); });
+    if (by.buyer) {
+      var bs = by.buyer.map(function (f) { var w = who(f.pid); return w ? (w.met ? w.t : cap(w.t)) : null; }).filter(function (n, i, a) { return n && a.indexOf(n) === i; });
+      if (bs.length) push('buyer', 4, '<b>Bought by</b> ' + esc(list(bs, 3)) + ', for more than a trader pays');
+    }
+    (by.yeti || []).slice(0, 1).forEach(function (f) {
+      push('yeti', f.treat ? 7 : 3, '<b>A yeti</b> in Hoarfell\'s hidden valley takes it, once a day' + (f.treat ? ', and trusts you ' + (f.treat === 2 ? 'twice' : f.treat + ' times') + ' as fast for it' : ''));
+    });
     if (by.order) {
       var boards = [];
       if (by.order.some(function (f) { return f.board === 'farm'; })) boards.push('the farm\'s board');
