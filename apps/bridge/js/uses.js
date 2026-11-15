@@ -168,7 +168,7 @@ var BridgeUses = (function () {
     (by.want || []).forEach(function (f) { push('want', 8, '<b>Wanted</b> at ' + esc(f.who) + (f.world ? ' (' + esc(place(f.world)) + ')' : '') + ': ' + esc(f.what)); });
     if (by.buyer) {
       var bs = by.buyer.map(function (f) { var w = who(f.pid); return w ? (w.met ? w.t : cap(w.t)) : null; }).filter(function (n, i, a) { return n && a.indexOf(n) === i; });
-      if (bs.length) push('buyer', 6, '<b>Bought by</b> ' + esc(list(bs, 3)) + ', for more than a trader pays');
+      if (bs.length) push('buyer', 4, '<b>Bought by</b> ' + esc(list(bs, 3)) + ', for more than a trader pays');
     }
     (by.yeti || []).slice(0, 1).forEach(function (f) {
       push('yeti', f.treat ? 7 : 3, '<b>A yeti</b> in Hoarfell\'s hidden valley takes it, once a day' + (f.treat ? ', and trusts you ' + (f.treat === 2 ? 'twice' : f.treat + ' times') + ' as fast for it' : ''));
