@@ -444,13 +444,13 @@ var BridgeEvents = (function () {
     },
     // Arcadia below (js/undercity.js): the Saints collecting down the market, a downpour through the grates, the Sump stirring
     collection: {
-      world: 'arcadia-undercity', name: 'The Saints come collecting', len: 3, w: 3, at: [20, 15],
+      world: 'arcadia-undercity', name: 'The Saints come collecting', len: 3, w: 3, at: [23, 10],
       hint: 'Two Rust Saints are working down the stalls, collecting', sfx: 'thud',
-      cast: [{ sheet: 'npc-saint-a', path: [[58, 15.4], [40, 15.4], [21, 15.2], [15, 15.2]], speed: 0.5, from: 1, end: 'up' },
-             { sheet: 'npc-saint-b', path: [[59, 16.0], [41, 16.0], [22, 15.9], [16, 15.9]], speed: 0.5, from: 2, end: 'up' }],
+      cast: [{ sheet: 'npc-saint-a', path: [[58, 10.4], [49.4, 10.4], [49.4, 11.0], [43.4, 11.0], [43.4, 10.4], [21, 10.4], [15, 10.4]], speed: 0.5, from: 1, end: 'up' },
+             { sheet: 'npc-saint-b', path: [[59, 9.9], [50, 9.9], [50, 11.2], [42.6, 11.2], [42.6, 9.9], [22, 9.9], [16, 9.9]], speed: 0.5, from: 2, end: 'up' }],
       say: [[6, 0, 'DUES, GRANDAD. SAME AS EVERY WEEK.'], [50, 1, 'THE SAINTS SAY THANK YOU.'], [96, 0, 'NEXT!'], [120, 'at', 'NOT AGAIN...']],
       react: 'look',
-      talk: [{ x: 16, y: 14, label: 'THE SAINTS', prompt: 'PRESS E TO STAND UP TO THEM', on: function (L) { saintsStand(L); } }],
+      talk: [{ x: 16, y: 10, label: 'THE SAINTS', prompt: 'PRESS E TO STAND UP TO THEM', on: function (L) { saintsStand(L); } }],
       note: 'The Rust Saints came collecting in the Warrens'
     },
     surge: {

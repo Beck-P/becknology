@@ -172,6 +172,7 @@ k.solid(58.2, RF, 61.5, RF + 1.1)
 
 # ---- the berths ------------------------------------------------------------------------------------------------------------
 P.hauler(k, 3.0, 19.4, L=15.0, name='OLD MERCY', reg='OM-7741')
+k.solid(3.6, 15.0, 17.7, 17.0)                       # the strip behind her: her hull stands over it on screen (you'd vanish)
 k.solid(3.0 + 15 * 0.36, 20.9, 3.0 + 15 * 0.6, 22.7)                                        # her ramp and what spilled off it
 k.solid(3.0 + 15 * 0.36 - 0.6, 22.2, 3.0 + 15 * 0.36 + 2.6, 23.0)
 K.fuel_cells(k, 19.6, 24.2)
@@ -195,6 +196,7 @@ k.box(57.05, 16.6, 1.0, 57.75, 16.62, 1.6, '#141c2c', 'cab_rank_screen', emit=('
 S.letters(k, 'AIR CAB', 'RussoOne', 57.4, 16.62, 1.92, size=0.24, col='#ffd860', energy=5)
 k.solid(57.0, 15.9, 57.8, 16.6)
 P.hauler(k, 61.4, 21.8, L=8.6, hull='#6a7068', trim='#2a2e30', name='SLOW HAZARD', reg='SH-0013', ramp_at=(0.4, 0.75))
+k.solid(62.0, 18.0, 69.7, 20.0)                      # likewise behind her
 k.solid(61.4 + 8.6 * 0.4, 23.3, 61.4 + 8.6 * 0.75, 25.1)
 
 for (x, r) in ((23.6, 15.6), (49.4, 15.6), (23.6, 27.0), (57.8, 27.0), (0.4, 27.0), (71.4, 17.4)):
