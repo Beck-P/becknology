@@ -256,6 +256,71 @@ const ONLY = process.argv[3] || '';
     console.log('desh hired', await p.evaluate(() => BridgeCrew.isHired('desh')));
   }
 
+  // ---- Ithil's star: Dr Vesper's word of her, nothing without a star, one given, the dial and the telescope ----
+  if (part('ithil')) {
+    await go('lumar-crown-hill', [30, 20]);
+    await use('ASTRONOMER'); await ask('Fallen stars'); await shut();
+    if ((await p.evaluate(() => BridgeQuests.rumours())).indexOf('ithils-star') < 0) fail('Dr Vesper\'s word didn\'t make a rumour');
+    await go('sylvara-crown', [27, 11]);
+    await p.evaluate(() => BridgeInventory.removeItem('fallen_star', BridgeInventory.getCount('fallen_star')));
+    await use('STAR-READER');
+    if (!await has('ithils-star/ask')) fail('not begun at Ithil');
+    if (await has('ithils-star/star')) fail('a star given with none in the pack');
+    if ((await topics())[0] !== 'Where do they fall?') fail('Ithil\'s first topic: ' + JSON.stringify(await topics()));
+    await shut();
+    const lead = await p.evaluate(() => BridgeQuests.leads('ithils-star', 2).join(' / '));
+    if (!/starfall/i.test(lead) || !/forecast/.test(lead)) fail('the lead: ' + lead);
+    const fsu = await p.evaluate(() => BridgeUses.lines('fallen_star').map(l => l.t.replace(/<[^>]+>/g, '')).join(' / '));
+    console.log('fallen star uses:', fsu);
+    if (!/A Star of Your Own wants one/.test(fsu)) fail('the fallen star\'s card doesn\'t say Ithil wants one');
+    await use('THE STAR DIAL');
+    if (/SPARK/.test(await said())) fail('a star on the dial already');
+    await shut();
+    await p.evaluate(() => BridgeInventory.addItem('fallen_star', 2));     // (as a starfall night drops them: js/weather.js BridgeLoot.spawn)
+    await use('STAR-READER');
+    if (!await has('ithils-star/star')) fail('the star not given');
+    if (await count('fallen_star') !== 1) fail('fallen stars left: ' + await count('fallen_star'));
+    if ((await topics())[0] !== 'Your star') fail('Ithil\'s first topic after: ' + JSON.stringify(await topics()));
+    await ask('Your star');
+    await p.screenshot({ path: OUT + '/ss_ithil_star.png' });
+    await shut();
+    await use('THE STAR DIAL');
+    const dial = await said();
+    if (!/ALYSSA'S SPARK/.test(dial)) fail('the dial: ' + dial.slice(-160));
+    await p.screenshot({ path: OUT + '/ss_ithil_dial.png' });
+    await shut(); await p.waitForTimeout(3000); await shut();
+    if (!await has('ithils-star')) fail('A Star of Your Own not done');
+    await use('TELESCOPE');
+    const scope = await said();
+    console.log('telescope:', scope.slice(-120).replace(/\n/g, ' '));
+    if (!/ALYSSA'S SPARK/.test(scope) && !/CLOUD/.test(scope)) fail('the telescope doesn\'t find your star');
+    await shut();
+    if (await mail('ithils-star') !== 'Ithil') fail('no letter from Ithil: ' + await mail('ithils-star'));
+    console.log('ithils-star', await has('ithils-star'));
+  }
+
+  // ---- on a phone: a story's words, the tracker and a quest thing's card at a narrow touch size ----
+  if (!ONLY || ONLY === 'phone') {
+    const m = await (await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 })).newPage();
+    m.on('pageerror', e => { errors++; console.log('PAGEERR(phone)', e.message); });
+    await m.route(/supabase-js|supabase\.co|@supabase/, r => r.abort());
+    await m.goto('http://127.0.0.1:8766/'); await m.waitForTimeout(2500);
+    await m.evaluate(() => { localStorage.removeItem('bridge_quests'); localStorage.removeItem('bridge_quest_meta'); BridgeState.setPilot({ id: 't2', name: 'BECK', suit_color: 'blue' }); if (typeof BridgeIntro !== 'undefined') BridgeIntro.hide(); });
+    await m.evaluate(() => new Promise(r => BridgeWorld.load('lumar-crown-oldtown', () => { BridgeState.transition('world', { worldId: 'lumar-crown-oldtown', spawn: { x: 40, y: 15 } }); r(); })));
+    await m.waitForTimeout(3000);
+    await m.evaluate(() => { const i = BridgeWorld.getWorld().interactions.find(i => i.label === 'TOWN CRIER'); BridgeInteractions.execute(i); });
+    await m.waitForTimeout(2500);
+    await m.screenshot({ path: OUT + '/ss_phone_crier.png' });
+    await m.evaluate(() => { const b = [...document.querySelectorAll('.wd-opt')].find(e => /goodbye/i.test(e.textContent)); if (b) b.click(); });
+    await m.waitForTimeout(800);
+    await m.evaluate(() => { const i = BridgeWorld.getWorld().interactions.find(i => i.label === 'THE OLD KEEP'); BridgeInteractions.execute(i); });
+    await m.waitForTimeout(4000);
+    await m.screenshot({ path: OUT + '/ss_phone_keep.png' });
+    const tr = await m.evaluate(() => { const t = document.getElementById('quest-tracker'); return t && t.classList.contains('on') ? t.innerText : ''; });
+    if (!/The Admiral/.test(tr)) fail('no tracker on the phone: ' + tr);
+    await m.close();
+  }
+
   console.log('errors', errors);
   await b.close();
 })();

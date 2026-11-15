@@ -22,7 +22,8 @@
  *        (js/farm.js `stormsBetween`); a heat wave dries a watering out twice as fast (`heat()`).
  *   Hoarfell  a blizzard's cold bites through a Thermal Suit and twice as hard without (js/worlds/hoarfell.js `cold()`),
  *        and drains a climber faster (js/climb.js `climb()`) — the lodge and the huts are shelter.
- *   Sylvara   a starfall night drops fallen stars near you; pick them up (Mirelle buys them).
+ *   Sylvara   a starfall night drops fallen stars near you; pick them up (Mirelle buys them; Ithil wants one, and once
+ *             she's named you a star they come more often, nine a night instead of six).
  *   Arcadia   a blackout kills the neon (all but a torch's worth round you); the Neon Royale runs on generators.
  *   Business  open-air trade falls off in a storm, a blizzard or a blackout; the taverns fill up (js/business.js `trade()`).
  *
@@ -377,8 +378,9 @@ var BridgeWeather = (function () {
     var spell = 'sylvara:' + w.from;
     save.stars = save.stars && save.stars.spell === spell ? save.stars : { spell: spell, n: 0 };
     if (!fall.next) fall.next = t + 20000;
-    if (a > 0.6 && t > fall.next && save.stars.n < 6) {          // one comes down a few steps from you
-      fall.next = t + 70000 + hash('fn' + Math.floor(t)) * 40000;
+    var named = typeof BridgeQuests !== 'undefined' && BridgeQuests.has && BridgeQuests.has('ithils-star/star');   // a star of your own sends its friends (Ithil, assets/quests.json)
+    if (a > 0.6 && t > fall.next && save.stars.n < (named ? 9 : 6)) {   // one comes down a few steps from you
+      fall.next = t + (named ? 45000 + hash('fn' + Math.floor(t)) * 30000 : 70000 + hash('fn' + Math.floor(t)) * 40000);
       stars.push({ t0: t, x: px + 260, y: py - 240, dx: -260, dy: 240, dur: 1300, land: true });
     }
     ctx.save(); ctx.globalCompositeOperation = 'lighter';

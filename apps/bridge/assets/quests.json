@@ -692,6 +692,54 @@
       "text": "OYEZ!\n\nThat's just habit. Captain Huxley can't hold a pen any more, so he's asked me to write, and I'm paid by the word, so here are a great many.\n\nThe cat sits on the sill. The parrot sits on the curtain rail. They have not looked at each other since Tuesday, which the Captain says is a sign of deep affection. He says you're to have the run of his window any time, and that the parrot has learned your name. I would not ask it to say it.\n\nTwo Admirals home. Best news I've cried all year.\n\nBarnaby Toll, Town Crier"
     }
   },
+  "ithils-star": {
+    "title": "A Star of Your Own",
+    "where": "Sylvara · the Crown",
+    "reward": 180,
+    "start": "Ithil the star-reader has watched the stars fall into the wood for a hundred years and never once been quick enough to catch one. If you find one, she'd like to see it.",
+    "rumour": "Dr Vesper at Crownhaven's Observatory says the elves' star-reader, Ithil, has never once held a fallen star.",
+    "begin": "ask",
+    "done": "Ithil held the fallen star for a long time, then set a star of your own in silver on the dial, between the Harp and the Stag. The telescope knows where it is. On a starfall night, she says, it sends its friends down to find you.",
+    "clues": [
+      {
+        "id": "ask",
+        "on": {
+          "world": "sylvara-crown",
+          "label": "STAR-READER"
+        },
+        "text": "Ithil reads the stars from the Crown, the platform at the top of the Great Tree. On starfall nights they come down into the wood, little and warm, and she has never once been quick enough to catch one.",
+        "hint": "The elves' star-reader keeps the platform at the very top of the Great Tree: the Heartwood Stair, up from the hall."
+      },
+      {
+        "id": "star",
+        "after": "ask",
+        "have": {
+          "fallen_star": 1
+        },
+        "take": true,
+        "on": {
+          "world": "sylvara-crown",
+          "label": "STAR-READER"
+        },
+        "text": "You put a fallen star in Ithil's hands. She held it a long time, humming back at it, and then named a star for you.",
+        "hint": "Bring Ithil a fallen star. On a starfall night on Sylvara (the forecast says when) one comes down close by you after dark: pick it up and climb to the Crown."
+      },
+      {
+        "id": "dial",
+        "after": "star",
+        "on": {
+          "world": "sylvara-crown",
+          "label": "THE STAR DIAL"
+        },
+        "text": "On the star dial, in new silver between the Harp and the Stag, a small star with your name.",
+        "hint": "Ithil has set something new on the star dial. Go and read it."
+      }
+    ],
+    "letter": {
+      "from": "elf_starreader",
+      "text": "Star-friend,\n\nI kept it. I hope that's all right. It sits on the rail by the telescope and hums when the sky is clear, and Aerin says it's the first thing in a hundred years that's made me look down.\n\nYour star rose at the second hour last night, exactly where I put it. It is very small and very steady, which I think suits you. I have told the queen. She asked whether I'd name one for her. I said she would have to catch her own.\n\nIthil, of the Crown"
+    }
+  },
   "wren": {
     "title": "The Wren",
     "where": "Enigma Station",
