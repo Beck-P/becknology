@@ -1,0 +1,123 @@
+{
+  "_doc": "Leads: gossip that points at something real that isn't a quest (CLAUDE.md, Rumours that lead somewhere). A people.json topic with `lead: <id>` puts one in the Journal under Rumours (js/quests.js `lead`). Each: title, where (said in the Journal), text (the way to it, plainly), kind (boss, place, shop, buyer, maker, crew, secret, event, fight, climb, fishing, board, festival, person), world + label (the thing it points at: the Journal's Map button, and using it follows the lead; no label: arriving there does; no world: that label anywhere), and optionally festival (an id in festivals.json), board ('farm' or a planet in js/boards.js), when ('bloom' or 'festival': a line of when it's next, worked out as it's shown), unless ('holm', 'crew:<id>', 'quest:<id>': not worth telling once that's true). tools/tests/world/rumours.js checks every one against the game.",
+  "dredge": {
+    "title": "The Dredge", "where": "Arcadia · the Sump", "kind": "boss", "world": "arcadia-sump",
+    "text": "Once a day a dredger the size of a room hauls itself out of the black water in the Sump, under the Undercity. Beat it for sump pearls and chrome."
+  },
+  "crown-room": {
+    "title": "The Crown Room", "where": "Arcadia · the Neon Royale", "kind": "place", "world": "arcadia-casino", "label": "THE CROWN ROOM",
+    "text": "The Duchess keeps her own table up past the velvet rope. Win 1,000 at the Card Room's poker tables and Bruno lets you up."
+  },
+  "gold-chips": {
+    "title": "Gold chips", "where": "Arcadia · the Neon Royale", "kind": "shop", "world": "arcadia-casino", "label": "THE BOUTIQUE",
+    "text": "The Royale's boutique sells real gold chips, too good to bet. Mama Keiko on Lantern Row and Inspector Halloran at the spaceport would treasure one."
+  },
+  "mori-kitchen": {
+    "title": "Chef Mori's kitchen", "where": "Arcadia · Aurum, off the Royale's floor", "kind": "buyer", "world": "arcadia-casino-dining", "label": "CHEF MORI",
+    "text": "Chef Mori at Aurum pays more than anyone for food grown under a real sun: starfruit above all, then pumpkins, honey and strawberries from Verdance."
+  },
+  "desh-crew": {
+    "title": "Crew wanted on the Old Mercy", "where": "Arcadia · the spaceport", "kind": "crew", "world": "arcadia-spaceport", "label": "CAPTAIN DESH", "unless": "crew:desh",
+    "text": "Captain Desh is signing on at the spaceport. With her on your books, every ship you own carries a tenth more."
+  },
+  "lumen": {
+    "title": "LUMEN", "where": "Arcadia · the Spires", "kind": "shop", "world": "arcadia-boutique", "label": "THE COLLECTION",
+    "text": "Iris Kade's boutique up in the Spires fits designer chrome: the finest implants in the city, starlight optics among them."
+  },
+  "undercroft-bell": {
+    "title": "A drowned bell", "where": "Lumar · Midnight Isle", "kind": "secret", "world": "lumar-midnight", "label": "THE UNDERCROFT",
+    "text": "The Undercroft under Midnight Isle opens every night, a new crypt each time. Among the relics in its chests there's a drowned bell."
+  },
+  "morwen-cold": {
+    "title": "Cold things for the sorceress", "where": "Lumar · Midnight Isle", "kind": "buyer", "world": "lumar-midnight-tower", "label": "SORCERESS",
+    "text": "Morwen, in her tower on Midnight Isle, buys bat wings and wraith essence from Hoarfell's hidden valley. Mirelle in Sylvara does too."
+  },
+  "starling-holm": {
+    "title": "Starling Holm", "where": "Lumar · the Emerald Sea", "kind": "place", "world": "lumar-holm", "label": "FOR SALE", "unless": "holm",
+    "text": "A small island in the Emerald Sea with a cottage on it and a FOR SALE sign. Whoever buys it can build: a workshop, a slipway, a hall."
+  },
+  "saltmere-lockets": {
+    "title": "Drowned lockets", "where": "Lumar · Saltmere", "kind": "fight", "world": "lumar-saltmere", "label": "THE DROWNED STREET",
+    "text": "The drowned in Saltmere's sunken street carry lockets, and so does the ghost ship on the Midnight Sea. Vesper Quick, the fence on Cinder Key, buys every one."
+  },
+  "stormwatch": {
+    "title": "Old Wick's barometer", "where": "Lumar · Cinder Key", "kind": "place", "world": "lumar-cinder-stormwatch", "label": "BAROMETER BOARD",
+    "text": "Up in the Stormwatch on Cinder Key, Old Wick's barometer board reads what every sea will do for the next few hours."
+  },
+  "lanternfall-bell": {
+    "title": "The bells of Lanternfall", "where": "Lumar · Lanternfall", "kind": "place", "world": "lumar-cliff", "label": "BELL",
+    "text": "Lanternfall rings its church bells for every boat that comes in through the caldera's mouth. Pull the rope yourself, once a day."
+  },
+  "nerys-caldera": {
+    "title": "Caldera fish", "where": "Lumar · the floating market", "kind": "buyer", "world": "lumar-sapphire-market", "label": "NERYS",
+    "text": "What you catch off Lanternfall's jetty fetches its best price from Nerys on Sapphire Port's floating market: sapphire rays, glass swordfish, even a crownfin."
+  },
+  "glassworks-pipe": {
+    "title": "The glassblower's pipe", "where": "Lumar · Sapphire Port", "kind": "maker", "world": "lumar-sapphire-glassworks", "label": "THE PIPE",
+    "text": "Ione at the Sapphire Glassworks lets anyone try the pipe, and the first go each day is free. A float that comes out round can go on the shelf in your quarters."
+  },
+  "rosewell-bath": {
+    "title": "The hot baths", "where": "Lumar · Rosewell, above Rose Cove", "kind": "place", "world": "lumar-rose-bathhouse", "label": "THE BATH",
+    "text": "Rosewell's bathhouse fills from springs that come up hot through the crystals. A bath puts your health and energy back and keeps the cold off for hours."
+  },
+  "lanternfall-islet": {
+    "title": "The islet after dark", "where": "Lumar · Lanternfall", "kind": "place", "world": "lumar-cliff", "label": "THE VIEW",
+    "text": "Look out from Lanternfall's parapet after dark: the islet glows red in the black bay, and the zigzag's lamps run down the cliff to the water."
+  },
+  "rose-songstone": {
+    "title": "Songstone", "where": "Lumar · the Rose Mine", "kind": "place", "world": "lumar-rose-mine", "label": "THE LIFT",
+    "text": "Songstone comes out of the Rose Mine's deepest floors. Hob at the mine buys it, and Kassia on the floating market pays a little more."
+  },
+  "caldera-lantern": {
+    "title": "Lanterns that never blow out", "where": "Lumar · Lanternfall", "kind": "maker", "world": "lumar-cliff", "label": "LANTERN MAKER",
+    "text": "The lantern maker on Lanternfall's zigzag sells caldera lanterns that burn in any wind. Carry one after dark and fish come up to its light."
+  },
+  "bath-tile": {
+    "title": "The tile that's different", "where": "Lumar · Rosewell's bathhouse", "kind": "secret", "world": "lumar-rose-bathhouse", "label": "TILES",
+    "text": "A hundred blue tiles in Rosewell's bathhouse, all the same, says Oda. The girl who made them says one isn't. Look low."
+  },
+  "sea-clock": {
+    "title": "A clock that keeps Lumar's hours", "where": "Lumar · Crownhaven's Canal Quarter", "kind": "maker", "world": "lumar-crown-canals", "label": "INSTRUMENT MAKER",
+    "text": "Oswin Brassworth in the Canal Quarter makes chronometers that keep Lumar's eight-hour day, and a wrist one too."
+  },
+  "spore-bloom": {
+    "title": "The spore bloom", "where": "Lumar · every sea", "kind": "event", "world": "lumar-crown-hill", "label": "TELESCOPE", "when": "bloom",
+    "text": "A night or two a month the whole spore sea lights up, each sea its own colour, and the fish bite better. Dr Vesper on Crownhaven's Hill turns her telescope down for it."
+  },
+  "catch-auction": {
+    "title": "The catch auction", "where": "Lumar · Crownhaven's quay", "kind": "event", "world": "lumar-crown", "label": "FISH MARKET",
+    "text": "When the boats come in, the catch goes under the hammer by Crownhaven's fish market (and on Diggen's Point, Tern Holm, Sapphire Port, Rose Cove and Crimson Reach). Bid for it."
+  },
+  "silk-trees": {
+    "title": "Silk cocoons", "where": "Lumar · Rosewell, above Rose Cove", "kind": "maker", "world": "lumar-rose-springs", "label": "SILK TREES",
+    "text": "The silk moths' trees in Rosewell give up cocoons every day. Bring Seren five and she weaves a spore silk scarf: a gift anyone loves."
+  },
+  "summit-register": {
+    "title": "The summit register", "where": "Hoarfell · the Hoarspire", "kind": "climb", "world": "hoarfell-summit", "label": "SUMMIT REGISTER",
+    "text": "Climb the Hoarspire from Fellhaven (the route board's at the foot of the face) and sign the register at the top. Hoar crystals glint in the rock off the line."
+  },
+  "ice-hole": {
+    "title": "Char under the ice", "where": "Hoarfell · Fellhaven", "kind": "fishing", "world": "hoarfell", "label": "ICE HOLE",
+    "text": "There's a hole cut in the pond ice in Fellhaven. Arctic char come up through it, frostfin now and then, and Tove at the cocoa hut buys both."
+  },
+  "high-route": {
+    "title": "Skiing the bowl", "where": "Hoarfell · Aurelle", "kind": "place", "world": "hoarfell-aurelle", "label": "BUREAU DES GUIDES",
+    "text": "The guides' bureau in Aurelle takes you over the High Route: the glacier, the Col du Vent, and a bowl with no poles in it, down to Bram's refuge."
+  },
+  "juno-park": {
+    "title": "Juno's score", "where": "Hoarfell · the Park", "kind": "place", "world": "hoarfell-park", "label": "SCOREBOARD",
+    "text": "Juno's name is at the top of the Park's scoreboard: 7,500, every rail in one combo. Beat it and she pays."
+  },
+  "harvest-fair": {
+    "title": "The Harvest Fair", "where": "Verdance · Brambleford", "kind": "festival", "festival": "harvest_fair", "world": "verdance-village", "when": "festival",
+    "text": "The last weekend of Verdance's autumn, Brambleford puts on its Harvest Fair: Old Ludd judges the produce, and the best pumpkin takes the rosette."
+  },
+  "farm-orders": {
+    "title": "The farm's order board", "where": "Verdance · the farm", "kind": "board", "board": "farm", "world": "verdance", "label": "NOTICE BOARD",
+    "text": "The board by the farm on Verdance posts orders every day from people across the worlds (Tove wants pumpkins for the lift crew). They pay well over a sale."
+  },
+  "peddler": {
+    "title": "Wendel the Peddler", "where": "somewhere new each day", "kind": "person", "label": "PEDDLER",
+    "text": "Wendel Crane sets up somewhere different every day: the Market Square, Arcadia's street, Brambleford's square, Fellhaven, Sapphire Port's quay, Enigma's dock. He sells things that do things."
+  }
+}

@@ -31,11 +31,14 @@
 var BridgeQuests = (function () {
   var KEY = 'bridge_quests';
   var defs = null;
+  var LEADS = null;                                  // assets/leads.json: what gossip points at when it isn't a quest
   var state = {};
   var toastEl = null, toastTimer = null, pill = null;
 
   function load() {
     try { state = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { state = {}; }
+    fetch('/bridge/assets/leads.json?v=' + Date.now()).then(function (r) { return r.json(); })    // gossip that isn't a quest
+      .then(function (d) { delete d._doc; LEADS = d; if (shown()) render(); }).catch(function () { LEADS = {}; });
     return fetch('/bridge/assets/quests.json?v=' + Date.now()).then(function (r) { return r.json(); })
       .then(function (d) { defs = d; }).catch(function () { defs = {}; });
   }
@@ -71,7 +74,8 @@ var BridgeQuests = (function () {
   function onInteract(worldId, inter) {
     var hits = [];                                 // the clues found just now (js/interactions.js shows a clue's `say`)
     if (!defs || !inter) return hits;
-    var lacking = null;                            // a clue that's ready but for what it takes: said in a toast
+    if (!inter.shared && inter.label) leadHit(inter.home ? inter.home.world : worldId, inter.label);   // a rumour followed up
+    var lacking = null;                           // a clue that's ready but for what it takes: said in a toast
     var was = {};                                  // done before this — so a sequel can't start on the same word that ended the quest before it
     Object.keys(defs).forEach(function (id) { was[id] = !!(state[id] && state[id].done); });
     Object.keys(defs).forEach(function (id) {
@@ -276,6 +280,74 @@ var BridgeQuests = (function () {
     return Object.keys(meta.heard).filter(function (id) { return defs && defs[id] && !state[id]; })
       .sort(function (a, b) { return meta.heard[b].t - meta.heard[a].t; });
   }
+
+  // ---- leads: gossip that points at something that isn't a quest (assets/leads.json) ---------------------------------
+  // A topic with `lead: <id>` (people.json) puts it in the journal under Rumours, beside the quests you've heard of: what
+  // it is, where, who said it, the way to it, and a Map button once you've been there. Using the thing it names (its
+  // world and label; a lead with no label: setting foot there; no world: that label anywhere) follows it up and it goes.
+  // Kept in bridge_quest_meta `leads` ({ id: { t, who, done } }), so it's cloud-saved with the rest.
+  if (!meta.leads) meta.leads = {};
+  function moot(L) {                                 // true already, so not worth telling (you own the holm, Desh is crew…)
+    var u = String(L.unless || ''), k = u.split(':');
+    try {
+      if (u === 'holm') return typeof BridgeHolm !== 'undefined' && BridgeHolm.owned();
+      if (k[0] === 'crew') return typeof BridgeCrew !== 'undefined' && BridgeCrew.isHired(k[1]);
+      if (k[0] === 'quest') return !!(state[k[1]] && state[k[1]].done);
+    } catch (e) { /* a module missing: worth telling */ }
+    return false;
+  }
+  function lead(ids, who) {
+    var news = [];
+    [].concat(ids || []).forEach(function (id) {
+      var L = LEADS && LEADS[id];
+      if (!L || meta.leads[id] || moot(L)) return;
+      meta.leads[id] = { t: Date.now(), who: who || '' };
+      news.push(id);
+    });
+    if (!news.length) return news;
+    saveMeta();
+    var L0 = LEADS[news[0]];
+    setTimeout(function () { toast('Rumour', L0.title, L0.text); }, 400);
+    if (shown()) render();
+    return news;
+  }
+  function leadsOpen() {                             // heard, not followed up: newest first
+    return Object.keys(meta.leads).filter(function (id) {
+      var L = LEADS && LEADS[id], m = meta.leads[id];
+      if (!L || m.done) return false;
+      if (moot(L)) { m.done = Date.now(); saveMeta(); return false; }
+      return true;
+    }).sort(function (a, b) { return meta.leads[b].t - meta.leads[a].t; });
+  }
+  function follow(id) {
+    var L = LEADS[id], m = meta.leads[id];
+    if (!m || m.done) return;
+    m.done = Date.now(); saveMeta();
+    note('Followed up', L.title, L.where);
+    if (shown()) render();
+  }
+  function leadHit(worldId, label) {                 // something used, or somewhere reached (label null)
+    if (!LEADS) return;
+    Object.keys(meta.leads).forEach(function (id) {
+      var L = LEADS[id], m = meta.leads[id];
+      if (!L || m.done) return;
+      if (label == null ? (!L.label && L.world && inWorld(L.world, worldId)) : (L.label === label && (!L.world || inWorld(L.world, worldId)))) follow(id);
+    });
+  }
+  // a lead's text, and when it's next where that changes (the bloom, a festival)
+  function leadText(L) {
+    var t = L.text, w = '';
+    try {
+      if (L.when === 'bloom' && typeof BridgeBloom !== 'undefined' && BridgeBloom.label) w = BridgeBloom.label() + '.';
+      if (L.when === 'festival' && L.festival && typeof BridgeFestivals !== 'undefined' && BridgeFestivals.next) {
+        var ms = BridgeFestivals.next(L.festival);
+        if (ms === 0) w = 'On now.';
+        else if (ms != null) { var d = Math.max(1, Math.ceil(ms / 86400000)); w = 'Next in ' + d + (d === 1 ? ' day.' : ' days.'); }
+      }
+    } catch (e) { /* no date: the lead on its own */ }
+    return w ? t + ' ' + w : t;
+  }
+  function leadWorld(L) { return L.world && beenTo(L.world) ? L.world.replace(/-\*$/, '') : null; }
   // the leads for a quest: its findable clues' hints, the ones where you are first; a quest not begun leads to its start
   function leads(id, n) {
     var q = defs && defs[id];
@@ -379,6 +451,7 @@ var BridgeQuests = (function () {
       did('arrive', { world: worldId });
       if (typeof BridgeShip !== 'undefined' && BridgeShip.isShipWorld && BridgeShip.isShipWorld(worldId)) did('aboard', { world: worldId });
     }
+    if (worldId) leadHit(worldId, null);               // a rumour about a place: you got there
     if (!worldId || seen[worldId]) return;
     seen[worldId] = Date.now();
     try { localStorage.setItem('bridge_log_seen', JSON.stringify(seen)); } catch (e) { /* private mode */ }
@@ -457,6 +530,10 @@ var BridgeQuests = (function () {
       var b = beginOf(id);
       out.push({ tag: 'Rumour', title: defs[id].title, text: leads(id, 1)[0] || defs[id].rumour || '', world: b.on && beenTo(b.on.world) ? b.on.world.replace(/-\*$/, '') : null });
     });
+    // gossip that isn't a quest: the one about where you are now first, else (nothing else on) the newest
+    var lo = leadsOpen(), loHere = lo.filter(function (id) { return LEADS[id].world && inWorld(LEADS[id].world, wid); })[0];
+    var loPick = loHere || (!active.length && !out.some(function (n) { return n.tag === 'Rumour'; }) ? lo[0] : null);
+    if (loPick) out.push({ tag: loHere ? 'Here' : 'Rumour', title: LEADS[loPick].title, text: leadText(LEADS[loPick]), world: leadWorld(LEADS[loPick]) });
     if (typeof BridgeBusiness !== 'undefined') BridgeBusiness.summary().forEach(function (b) {
       if (b.pending > 0) out.push({ tag: 'Takings', title: b.pending + ' coins waiting', text: 'at ' + b.name + '.' });
     });
@@ -473,6 +550,7 @@ var BridgeQuests = (function () {
       }
     }
     if (wid && typeof BridgeBoards !== 'undefined') BridgeBoards.nextUp(wid).forEach(function (b) { out.push(b); });   // a request here you can fill now
+    if (typeof BridgeFestivals !== 'undefined' && BridgeFestivals.nextUp) BridgeFestivals.nextUp().forEach(function (b) { out.push(b); });   // a festival on, or this weekend
     if (typeof BridgeInventory !== 'undefined' && BridgeInventory.freeSlots && BridgeInventory.freeSlots() === 0) {
       out.push({ tag: 'Pack', title: 'Your pack is full', text: 'Sell to a trader, or leave things in a chest: the sea chest on the bridge, the locker in your quarters.' });
     }
@@ -482,7 +560,7 @@ var BridgeQuests = (function () {
         return !BridgePeople.met(pid) && all[pid].at.some(function (a) { return a.world === wid; });
       }).length;
       if (unmet) out.push({ tag: 'Here', title: unmet === 1 ? 'Someone here you haven\'t met' : unmet + ' people here you haven\'t met',
-                            text: 'Walk up and talk (' + (document.documentElement.classList.contains('touch') ? 'A' : 'E') + '). Their rumours start quests.' });
+                            text: 'Walk up and talk (' + (document.documentElement.classList.contains('touch') ? 'A' : 'E') + ') and ask what they\'ve heard: gossip that leads somewhere goes in your journal.' });
     }
     if (m && m.newDoors) {
       var nd = m.newDoors(wid);
@@ -538,14 +616,24 @@ var BridgeQuests = (function () {
       }).join('') + '</details>';
     }
     // rumours: quests you've heard of and not begun, with where to start
-    var rs = rumours();
-    if (rs.length) qh += '<div class="jn-sub">Rumours</div>' + rs.map(function (id) {
-      var q = defs[id], h = meta.heard[id];
+    var rs = rumours(), lo = leadsOpen();
+    // and the gossip that isn't a quest, among them by when you heard it
+    var heardAll = rs.map(function (id) { return { q: id, t: meta.heard[id].t }; }).concat(lo.map(function (id) { return { l: id, t: meta.leads[id].t }; }))
+      .sort(function (a, b) { return b.t - a.t; });
+    if (heardAll.length) qh += '<div class="jn-sub">Rumours</div>' + heardAll.map(function (r) {
+      if (r.l) {
+        var L = LEADS[r.l], m = meta.leads[r.l], w = leadWorld(L);
+        return '<article class="jn-quest rumour jn-lead" data-lead="' + esc(r.l) + '"><div class="jn-q-head"><span class="jn-q-title">' + esc(L.title) + '</span>' +
+          (w ? '<button type="button" class="gm-btn gm-btn-sm jn-go" data-w="' + esc(w) + '">Map</button>' : '') +
+          '<button type="button" class="gm-btn gm-btn-sm jn-forget" data-l="' + esc(r.l) + '">Done</button></div>' +
+          '<div class="jn-q-where">' + esc(L.where || '') + (m.who ? ' · heard from ' + esc(m.who) : '') + '</div><p class="jn-q-text">' + esc(leadText(L)) + '</p></article>';
+      }
+      var id = r.q, q = defs[id], h = meta.heard[id];
       return '<article class="jn-quest rumour' + (tr === id ? ' tracked' : '') + '"><div class="jn-q-head"><span class="jn-q-title">' + esc(q.title) + '</span>' + trackBtn(id) + '</div>' +
         '<div class="jn-q-where">' + esc(q.where) + (h.who ? ' · heard from ' + esc(h.who) : '') + '</div><p class="jn-q-text">' + esc(q.rumour || q.start) + '</p>' +
         '<ul class="jn-clues">' + leads(id).map(function (l) { return li(esc(l), 'lead'); }).join('') + '</ul></article>';
     }).join('');
-    left += section('Quests', ids.length ? going.length + ' under way' : rs.length ? rs.length + ' heard of' : '', qh || '<div class="jn-empty">None yet. People\'s rumours, odd things lying about and the notes on boards start them.</div>');
+    left += section('Quests', ids.length ? going.length + ' under way' : heardAll.length ? heardAll.length + ' heard of' : '', qh || '<div class="jn-empty">None yet. People\'s rumours, odd things lying about and the notes on boards start them.</div>');
     // the log
     if (logged.length) {
       var shown = logAll ? logged : logged.slice(0, 10);
@@ -562,6 +650,9 @@ var BridgeQuests = (function () {
     });
     page.querySelectorAll('.jn-track').forEach(function (b) {
       b.addEventListener('click', function (e) { e.stopPropagation(); track(b.getAttribute('data-q')); });
+    });
+    page.querySelectorAll('.jn-forget').forEach(function (b) {          // a rumour you're done with (followed up, or not for you)
+      b.addEventListener('click', function (e) { e.stopPropagation(); var id = b.getAttribute('data-l'); if (meta.leads[id]) { meta.leads[id].done = Date.now(); saveMeta(); render(); } });
     });
     page.querySelectorAll('.jn-aside').forEach(function (b) {
       b.addEventListener('click', function (e) { e.stopPropagation(); setAside(b.getAttribute('data-q'), true); });
@@ -696,6 +787,9 @@ var BridgeQuests = (function () {
   return { onInteract: onInteract, open: open, close: close, toggle: toggle, toast: toast, summary: summary, note: note, arrived: arrived,
            visited: function () { return seen; }, whereNext: function (id) { return defs && defs[id] ? whereNext(id) : []; }, render: function () { if (shown()) render(); },
            log: function () { return logged.slice(); },
+           // gossip that isn't a quest (assets/leads.json): hear one, what's open, the table itself
+           lead: lead, leadsOpen: function () { return LEADS ? leadsOpen() : []; }, leadDefs: function () { return LEADS || {}; },
+           leadText: function (id) { return LEADS && LEADS[id] ? leadText(LEADS[id]) : ''; },
            found: found, finished: finished, has: has, defs: function () { return defs || {}; }, def: function (id) { return defs ? defs[id] || null : null; },
            progress: function (id) { return defs && defs[id] ? progress(id) : null; },
            startsHere: function (wid) { return defs ? startsHere(wid) : {}; }, hear: hear, rumours: function () { return defs ? rumours() : []; },

@@ -91,7 +91,22 @@ var BridgeCatalog = (function () {
     return s.items.map(function (k) { return getItemByKey(k); }).filter(Boolean);
   }
   function getShopMeta(shopKey) { return SHOPS[shopKey] || SHOPS[DEFAULT_SHOP]; }
-  function sellPriceOf(item) { return Math.max(1, Math.floor((item.price || 0) * SELL_RATIO)); }
+  function sellPriceOf(item) {
+    if (made(item.key) > 0) {                     // one you made and put up yourself (a glass float you blew, js/items.js decor): its own worth, not the shop's
+      var it = typeof BridgeItems !== 'undefined' && BridgeItems.get(item.key);
+      return Math.max(1, it && it.value ? it.value : 1);
+    }
+    return Math.max(1, Math.floor((item.price || 0) * SELL_RATIO));
+  }
+  // decor you made rather than bought, by key (localStorage bridge_made_decor, a bridge_* key so it's cloud-saved): sold
+  // for what the thing itself is worth, so putting up a float you blew for five coins never pays the shop's price
+  var MADE = 'bridge_made_decor';
+  function madeAll() { try { return JSON.parse(localStorage.getItem(MADE) || '{}') || {}; } catch (e) { return {}; } }
+  function made(key) { return madeAll()[key] || 0; }
+  function madeAdd(key, n) {
+    var m = madeAll(); m[key] = Math.max(0, (m[key] || 0) + n); if (!m[key]) delete m[key];
+    try { localStorage.setItem(MADE, JSON.stringify(m)); } catch (e) { /* private mode */ }
+  }
 
   // ---- Open / close ----
   var overlayEl = null;
@@ -405,6 +420,7 @@ var BridgeCatalog = (function () {
     setFeedback('SELLING…', '#80e0e8');
     BridgeProgression.sellItem(itemKey, price).then(function (res) {
       if (res && res.ok) {
+        if (made(itemKey) > 0) madeAdd(itemKey, -1);
         setFeedback('SOLD · ' + item.name.toUpperCase() + ' (+ 🪙 ' + price + ')', '#ffe080');
         refreshView();
         if (typeof BridgeQuarters !== 'undefined' && BridgeQuarters.refreshDecor) {
@@ -775,6 +791,7 @@ var BridgeCatalog = (function () {
     isOpen: function () { return open; },
     getCatalog: getCatalog,
     getItemByKey: getItemByKey,
+    made: made, madeAdd: madeAdd,
     sellPriceOf: sellPriceOf
   };
 })();

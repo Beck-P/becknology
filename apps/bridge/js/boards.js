@@ -304,13 +304,15 @@ var BridgeBoards = (function () {
     if (!REQUESTS[planet]) return say(inter.label, inter.flavour || '');
     choose({
       title: title(inter.label),
-      text: (inter.flavour ? inter.flavour + '\n\n' : '') + (HEAD[planet] || '') + ' ' + leftText(planet),
+      text: (inter.flavour ? inter.flavour + '\n\n' : '') + posters(planet) + (HEAD[planet] || '') + ' ' + leftText(planet),
       rows: rows(planet, function () { open(inter); }),
       closeLabel: 'Done'
     });
   }
   /** Hoarfell's lines for the lodge's board (js/lodge.js). */
-  function head(planet) { return (HEAD[planet] || '') + ' ' + leftText(planet); }
+  function head(planet) { return posters(planet) + (HEAD[planet] || '') + ' ' + leftText(planet); }
+  // a festival on or coming on this planet: its bill, pinned over the requests (js/festivals.js `poster`)
+  function posters(planet) { var P = typeof BridgeFestivals !== 'undefined' && BridgeFestivals.posters ? BridgeFestivals.posters(planet) : []; return P.length ? P.join('\n\n') + '\n\n' : ''; }
 
   // ---- in the world --------------------------------------------------------------------------------------------------------
   var registered = false;

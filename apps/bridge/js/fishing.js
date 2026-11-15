@@ -190,12 +190,29 @@ var BridgeFishing = (function () {
       log.casts += 1; store();
       if (fishes[0]) { fishes[0].s = 3 + Math.floor(Math.random() * 3); fishes[0].x = Math.random() < 0.5 ? -10 : NW + 10; }   // a new one to come for it
       var lucky = typeof BridgeInventory !== 'undefined' && BridgeInventory.getCount && BridgeInventory.getCount('lucky_horseshoe') > 0;
-      var wait = (1500 + Math.random() * 3500) * (lucky ? 0.6 : 1) * (rod() ? 0.85 : 1) * (perfect ? 0.8 : 1) * (typeof BridgeWonders !== 'undefined' ? BridgeWonders.bite() : 1) * (typeof BridgeCodex !== 'undefined' && BridgeCodex.bonus('fish') ? 0.85 : 1);   // the horseshoe (and the rod, and the Tidecaller's Pearl): they bite sooner
+      var wait = (1500 + Math.random() * 3500) * (lucky ? 0.6 : 1) * (rod() ? 0.85 : 1) * (perfect ? 0.8 : 1) * (typeof BridgeWonders !== 'undefined' ? BridgeWonders.bite() : 1) * (typeof BridgeCodex !== 'undefined' && BridgeCodex.bonus('fish') ? 0.85 : 1) * lampPull();   // the horseshoe (and the rod, and the Tidecaller's Pearl, and a lantern after dark): they bite sooner
       // what takes the hook is decided as it lands (so its shadow can come for it, bigger for a rarer fish)
       set('wait', { power: power, perfect: perfect, wait: wait, nibbles: [], catchId: pick(st.pool, power), treasure: null, snap: false, hooked: false });
       var n = Math.floor(Math.random() * 3);
       for (var i = 0; i < n; i++) st.nibbles.push(500 + Math.random() * (st.wait - 900));
     }
+  }
+
+  // a lantern carried after dark (an item's `carried: { bite, dark }`: the caldera lantern, the leaf lantern): fish come up
+  // to its light. The best one you carry counts, not all of them
+  function lampPull() {
+    if (typeof BridgeInventory === 'undefined' || !BridgeInventory.getAll || typeof BridgeItems === 'undefined') return 1;
+    var all = BridgeInventory.getAll(), k = 1, dark = null;
+    Object.keys(all).forEach(function (id) {
+      var c = all[id] > 0 && (BridgeItems.get(id) || {}).carried;
+      if (!c || !c.bite || c.bite >= k) return;
+      if (c.dark) {
+        if (dark === null) { var w = typeof BridgeWorld !== 'undefined' && BridgeWorld.getWorldId ? BridgeWorld.getWorldId() : ''; var K = typeof BridgeClock !== 'undefined' && BridgeClock.sky ? BridgeClock.sky(w || 'lumar') : null; dark = !K || K.sun == null ? false : K.sun < 0.3; }
+        if (!dark) return;
+      }
+      k = c.bite;
+    });
+    return k;
   }
 
   function hook() {
@@ -243,7 +260,7 @@ var BridgeFishing = (function () {
       c.n += 1;
       best = !junk && size > c.best;
       if (best) c.best = size;
-      if (!junk && typeof BridgeFestivals !== 'undefined') BridgeFestivals.caught(id, size);     // a derby on? (js/festivals.js)
+      if (!junk && typeof BridgeFestivals !== 'undefined') BridgeFestivals.caught(id, size, f[2], f[3]);     // a derby on? (js/festivals.js)
       if (!junk && typeof BridgeQuests !== 'undefined' && BridgeQuests.did) setTimeout(function () { BridgeQuests.did('catch', { id: id }); }, 2600);   // a deed (the first hour), once the card's had its moment
       var hold = st.hold && !junk ? st.hold : null;                       // at sea, fish go in her fish hold
       if (hold) {
@@ -819,7 +836,7 @@ var BridgeFishing = (function () {
     };
   }
 
-  return { decorate: decorate, open: open, close: close, journal: journal, _state: function () { return st; }, _cast: function () { return cast; },
+  return { decorate: decorate, open: open, close: close, journal: journal, lampPull: lampPull, _state: function () { return st; }, _cast: function () { return cast; },
            size: function (id) { var f = FIGHT[id]; return f ? [f[2], f[3]] : null; },       // the sizes it comes in, cm (js/aquarium.js)
            drawLine: function (c, k, hand, offX, offY, ts, now, bang) { if (st && st.t0 != null) drawLine(c, k, hand, offX, offY, ts, now, bang); },
            isOpen: function () { return !!st; } };
