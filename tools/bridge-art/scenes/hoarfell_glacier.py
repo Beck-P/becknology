@@ -102,6 +102,11 @@ def hidden_at(i, x):
 def height(x, r):
     if crev(x, r) > -0.04:                                             # the open crevasses: the snow stops at their lips
         return -3.0
+    return surface(x, r)
+
+
+def surface(x, r):
+    """The glacier's top as if no crack were open: where a crevasse's lips are (its walls are built down from here)."""
     d = ice_in(x, r)
     h = 0.0
     lo, hi = banks(r)
@@ -191,15 +196,15 @@ for i in range(len(CRACKS)):
         rings_c = []
         for (col, zz) in DEPTH:
             f = max(0.0, 1 - (zz / 2.8) ** 1.2) if zz < 2.8 else 0.0
-            near = [(x, crack_row(i, x) - crack_w(i, x) * f, height(x, crack_row(i, x)) + 0.01 - zz) for x in xs]
-            far_ = [(x, crack_row(i, x) + crack_w(i, x) * f, height(x, crack_row(i, x)) + 0.01 - zz) for x in reversed(xs)]
+            near = [(x, crack_row(i, x) - crack_w(i, x) * f, surface(x, crack_row(i, x)) + 0.01 - zz) for x in xs]
+            far_ = [(x, crack_row(i, x) + crack_w(i, x) * f, surface(x, crack_row(i, x)) + 0.01 - zz) for x in reversed(xs)]
             rings_c.append(near + far_)
         for j in range(len(rings_c) - 1):
             k.loft([rings_c[j], rings_c[j + 1]], (DEPTH[j][0], 0.08), 'crevasse', closed=True, smooth=False)
         for x in xs[2:-2:5]:
             w = crack_w(i, x)
             if w > 0.15:
-                z = height(x, crack_row(i, x))
+                z = surface(x, crack_row(i, x))
                 k.blob(x, crack_row(i, x) - w - 0.04, z, 0.22, 0.1, 0.06, (N.SNOW, 0.1), 'lip_snow', segs=6)
                 if k.rng.random() < 0.5:
                     k.tube((x, crack_row(i, x) - w + 0.03, z), (x, crack_row(i, x) - w + 0.03, z - 0.5), 0.05, (N.ICE, 0.05), 'icicle', rb=0.006, verts=5)
