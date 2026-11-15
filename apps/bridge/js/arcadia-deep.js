@@ -14,6 +14,7 @@
  *   A6  The Orrery, worth joining: Lady Perpetua deals Eights for stakes (js/eights.js `at`), Sir Augustin keeps a wager
  *       book on the week (the regatta's last start, the Pit's big bout), the members' book lists your firsts — an
  *       interaction type `orrery` (`act`: eights | wager | book), from people's topics (`use`) and the book itself.
+ *   A8  The Dive's darts (js/darts.js): The Drip's dartboard and the Lumar tavern's become `darts` interactions here.
  *
  *   BridgeArcadiaDeep.decorate(worldId, data)   (js/world.js, as a world loads)
  */
@@ -202,6 +203,8 @@ var BridgeArcadiaDeep = (function () {
   function decorate(worldId, data) {
     (data.interactions || []).forEach(function (it) {
       if (worldId === 'arcadia-members' && it.label === 'THE MEMBERS\' BOOK' && it.type === 'dialog') { it.type = 'orrery'; it.act = 'book'; it.prompt = 'PRESS E TO READ'; }
+      var D = has('BridgeDarts') && BridgeDarts.BOARDS[worldId];      // A8: the boards already on the walls (js/darts.js)
+      if (D && it.label === D.label && it.type === 'dialog') { it.type = 'darts'; it.prompt = 'PRESS E TO PLAY'; }
     });
   }
 

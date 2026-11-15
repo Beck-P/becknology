@@ -1405,6 +1405,16 @@ code. `js/arcadia-deep.js` (BridgeArcadiaDeep) holds the glue; each item's data 
   hand, newest first: elected, every quest seen through (dated), Saint Ruin, the Dredge, the Pit's three rounds, the
   Regatta Cup, legendary fish, beating Perpetua for money, a wager won (dated from the day the book first saw what the
   game keeps no date for). Mr Ashdown's *The members' book* says so.
+- **A8 · Darts** (js/darts.js, BridgeDarts; CSS `#darts` in css/bridge.css). The boards already drawn — The Drip's
+  DARTBOARD (13, 3) and the Lantern tavern's DART BOARD on Lumar (11, 2) — become `darts` interactions as their worlds
+  load (js/arcadia-deep.js `decorate`, `BOARDS`: who you play there — **Nell** at The Drip, 10 a side, a steady hand;
+  **Fenwick** the merchant at the tavern, 5, a shakier one — and what they say). Nell's *A game of darts?* opens it too.
+  They throw first (three darts aimed at the treble 20, straying by their `skill` in board radii); then you: a line sweeps
+  across the board — stop it — then one sweeps down — stop it — and the dart lands where they cross, a small wobble off.
+  Three each; the higher total takes the pot, level hands the stakes back. A real board (`ORDER`, trebles, doubles, 25
+  and the bull's 50; `score(x, y)`), drawn in code once a pixel at a time on cork, The Drip's with the photo of a man in a
+  Halcyon suit pinned to the bull (its old text). Keys: Space / E / Enter, Esc; touch: tap the board or the button (the
+  board fits a phone's width). No new art, no new people.
 
 ### Homes and furniture
 `js/home.js` (BridgeHome). Places of your own: **the White House** on Sapphire Port's square (`lumar-home`, `scenes/lumar_home.py`: hearth, two windows on the sea, bare boards; 1500 coins) and a **capsule apartment** over the District's Capsule Hotel (`arcadia-home`, `scenes/arcadia_home.py`: a strip window onto the live skyline and rain — the `'*'` behind hook draws them in `scene.sky` — the sleeping capsule, a kitchenette; 600 coins). **The farmhouse** on Verdance (`verdance-home`, `scenes/verdance_home.py`: Edda's kitchen in daylight — whitewash over green wainscot, the black range, a dresser of blue-and-white plates, two windows on the field, her kitchen table with the ledger) comes with the farm's deed (`HOMES[id].farm`: `owns` asks `BridgeHomestead.owned()`; the FARMHOUSE door goes in once it's yours, and Edda's rocking chair and bed are waiting the first time). Their doors are `home_door` interactions set on the street as worlds load (`HOMES[id].door`: the WHITE HOUSE door at 38,13 on Sapphire; the CAPSULE HOTEL on the street): the first time they offer the place for sale (`wagerCoins`, a menu option `home_buy`), then let you in. Each comes with two pieces to start. Aboard, **your quarters and the bridge** are yours already. The rooms are rendered empty; everything else is what you put in them. The legacy homes (*Legacy* below) are rendered furnished with their architecture and fixed pieces — the Penthouse's inside and roof deck, Ashcombe House's five rooms, the Starling — with open floor left round them for yours: a home can be several worlds (`part: '<home id>'` in HOMES: owned with that home, furnished on its own, no toast of its own), and a world can be a hotel you own (`resort`: owned once the holm's Starling is built).

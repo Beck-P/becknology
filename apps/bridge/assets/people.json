@@ -1865,6 +1865,15 @@
         "q": "Gossip",
         "a": "THEY SAY THE DREDGE CAME UP OUT OF THE CANAL BY THE OLD STATION LAST WEEK AND TOOK A WHOLE BRIDGE. THEY SAY THE SAINTS ARE SHORT OF MONEY. THEY SAY HALCYON WANTS TO PAVE THE SUMP OVER. THEY SAY A LOT, IN HERE.",
         "lead": "dredge"
+      },
+      {
+        "q": "A game of darts?",
+        "a": "",
+        "offer": "darts for a pot",
+        "use": {
+          "type": "darts",
+          "label": "DARTBOARD"
+        }
       }
     ]
   },

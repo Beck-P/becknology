@@ -2,7 +2,11 @@
 //   quest  Chrome All the Way Up (quests.json iris-arm): Nakuri's gossip, the gold ! over Sallow, Sallow → the clinic's
 //          file → the heap under Saint Ruin's throne (shut until he's beaten) → Tally in the Pit → Iris Kade in LUMEN;
 //          the hand and the arm held up and handed over, the reward, her favour (one designer piece at clinic price, once)
-// node world/arcadia_deeper.js [shots] [part: quest]
+//   fish   fishing in the Sump: a sump eel off the quay, sold to Teo; the platform's spot
+//   tune   street chrome steadied at Sallow's for parts; a chrome part down at LUMEN
+//   orrery Lady Perpetua's Eights, Sir Augustin's wager book settled, the members' book
+//   darts  The Drip's darts on a desktop (keys) and a phone (taps), the Lumar tavern's board
+// node world/arcadia_deeper.js [shots] [part: quest|fish|tune|orrery|darts]
 const { chromium } = require('playwright');
 const OUT = process.argv[2] || __dirname + '/shots';
 const ONLY = process.argv[3] || '';
@@ -322,6 +326,76 @@ const ONLY = process.argv[3] || '';
     if (!mb.some(r => /Beat Lady Perpetua/.test(r)) || !mb.some(r => /Won a wager off Sir Augustin/.test(r)) || !mb.some(r => /Elected to the Orrery/.test(r))) fail('the members\' book');
     await p.screenshot({ path: OUT + '/ad_orrery_members.png' });
     await H.shut();
+    await b.contexts()[0].close();
+  }
+
+  // ---- A8 · The Dive's darts --------------------------------------------------------------------------------------------
+  // the board's scoring; a game for 10 at The Drip on a desktop with the keys (Nell throws first, three darts each, the pot
+  // settled by the totals), a sure win paid, a game at a phone's touch viewport with taps, the Lumar tavern's board too
+  if (part('darts')) {
+    const H = await open(), p = H.p;
+    const sc = await H.ev(() => [[0, 0], [0, -0.585], [0, -0.95], [2, 0], [0, -0.3], [0.3, 0], [0, 0.08], [-0.3, 0]].map(a => BridgeDarts.score(a[0], a[1]).n));
+    if (JSON.stringify(sc) !== JSON.stringify([50, 60, 40, 0, 20, 6, 25, 11])) fail('the board scores ' + JSON.stringify(sc));
+    await H.go('arcadia-dive', [13, 5]);
+    if (await H.ev(() => (BridgeWorld.getWorld().interactions.find(i => i.label === 'DARTBOARD') || {}).type) !== 'darts') fail('The Drip\'s board isn\'t a game');
+    await H.use('DARTBOARD');
+    const c0 = await H.coins();
+    await H.pickRow('A game for 10'); await p.waitForTimeout(500);
+    if (!await H.ev(() => document.getElementById('darts').classList.contains('visible'))) fail('no darts panel');
+    if (c0 - await H.coins() !== 10) fail('the stake: ' + (c0 - await H.coins()));
+    await p.waitForFunction(() => { const g = BridgeDarts._g(); return g && g.phase === 'aimx'; }, null, { timeout: 15000 }).catch(() => fail('Nell never finished throwing'));
+    const nell = await H.ev(() => BridgeDarts._g().them.map(d => d.s.label));
+    console.log('Nell threw:', nell.join(', '));
+    if (nell.length !== 3) fail('Nell threw ' + nell.length);
+    await p.waitForTimeout(500);
+    for (let k = 0; k < 3; k++) {
+      await p.keyboard.press(' '); await p.waitForTimeout(250 + k * 90);
+      if (k === 0) await p.screenshot({ path: OUT + '/ad_darts_aim.png' });
+      await p.keyboard.press(' '); await p.waitForTimeout(400);
+    }
+    const end = await H.ev(() => BridgeDarts._g().over);
+    console.log('the game:', JSON.stringify(end), await H.ev(() => document.querySelector('#darts .dt-log').textContent));
+    if (!end) fail('three darts and no result');
+    const want = end ? (end.won ? 20 : end.level ? 10 : 0) : 0;
+    if ((await H.coins()) - (c0 - 10) !== want) fail('paid ' + ((await H.coins()) - (c0 - 10)) + ' for ' + JSON.stringify(end));
+    await p.screenshot({ path: OUT + '/ad_darts_done.png' });
+    // a sure win: three bulls against nothing
+    await p.keyboard.press(' '); await p.waitForTimeout(600);                    // Again (another 10)
+    const c1 = await H.coins();
+    await H.ev(() => { BridgeDarts._skip(); BridgeDarts._g().them = [0, 1, 2].map(() => ({ x: 2, y: 0, s: { n: 0, label: 'MISSED' } })); });
+    await H.ev(() => { BridgeDarts._throw(0, 0); BridgeDarts._throw(0, 0); BridgeDarts._throw(0, 0); });
+    const w2 = await H.ev(() => BridgeDarts._g().over);
+    if (!w2 || !w2.won || w2.you !== 150) fail('three bulls: ' + JSON.stringify(w2));
+    if ((await H.coins()) - c1 !== 20) fail('a win paid ' + ((await H.coins()) - c1));
+    await p.keyboard.press('Escape'); await p.waitForTimeout(300);
+    if (await H.ev(() => document.getElementById('darts').classList.contains('visible'))) fail('Esc didn\'t leave');
+    // Nell's topic opens the same
+    await H.use('NELL'); await H.ask('A game of darts?'); await p.waitForTimeout(400);
+    if (!(await H.rows()).some(r => /A game for 10/.test(r))) fail('Nell\'s topic doesn\'t offer a game');
+    await H.shut();
+    // the Lumar tavern's board: Fenwick
+    await H.go('lumar-tavern', [11, 3]);
+    if (await H.ev(() => (BridgeWorld.getWorld().interactions.find(i => i.label === 'DART BOARD') || {}).type) !== 'darts') fail('the tavern\'s board isn\'t a game');
+    await H.use('DART BOARD');
+    if (!/Darts with Fenwick/i.test(await H.ev(() => (document.querySelector('.world-dialog') || {}).innerText || ''))) fail('not Fenwick at the tavern');
+    await H.shut();
+    await b.contexts()[0].close();
+    // a phone: taps
+    const P = await open({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }), pp = P.p;
+    await P.go('arcadia-dive', [13, 5]);
+    await P.use('DARTBOARD'); await P.pickRow('Just a game'); await pp.waitForTimeout(400);
+    await pp.waitForFunction(() => { const g = BridgeDarts._g(); return g && g.phase === 'aimx'; }, null, { timeout: 15000 }).catch(() => fail('phone: Nell never finished'));
+    const box = await pp.evaluate(() => { const r = document.querySelector('#darts .dt-board').getBoundingClientRect(); return { x: r.x, y: r.y, w: r.width, h: r.height, vw: innerWidth }; });
+    console.log('phone board:', JSON.stringify(box));
+    if (box.x < 0 || box.x + box.w > box.vw + 1) fail('the board runs off a phone');
+    for (let k = 0; k < 3; k++) {
+      await pp.touchscreen.tap(box.x + box.w / 2, box.y + box.h / 2); await pp.waitForTimeout(300 + k * 70);
+      if (k === 1) await pp.screenshot({ path: OUT + '/ad_darts_phone_aim.png' });
+      await pp.touchscreen.tap(box.x + box.w / 2, box.y + box.h / 2); await pp.waitForTimeout(400);
+    }
+    const pe = await pp.evaluate(() => BridgeDarts._g() && BridgeDarts._g().over);
+    if (!pe) fail('phone: three taps each and no result');
+    await pp.screenshot({ path: OUT + '/ad_darts_phone.png' });
     await b.contexts()[0].close();
   }
 
