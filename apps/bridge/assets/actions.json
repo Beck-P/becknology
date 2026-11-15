@@ -383,25 +383,25 @@
     {
       "label": "BENCH",
       "x": 1,
-      "y": 8,
+      "y": 9,
       "add": true,
       "action": "sit",
       "seat": [
-        1.5,
-        8.4
+        1.75,
+        9.45
       ],
       "facing": "down",
       "dialog": "A BENCH FOR WAITING YOUR TURN. THE CABINETS BLEEP AT EACH OTHER IN THE DARK."
     },
     {
       "label": "BENCH",
-      "x": 11,
-      "y": 8,
+      "x": 16,
+      "y": 9,
       "add": true,
       "action": "sit",
       "seat": [
-        11.5,
-        8.4
+        16.25,
+        9.45
       ],
       "facing": "down",
       "dialog": "A BENCH UNDER THE HIGH-SCORE BOARD. SOMEONE'S INITIALS ARE AT THE TOP OF EVERY LIST: 'NUL'."
