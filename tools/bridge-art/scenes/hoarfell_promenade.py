@@ -112,11 +112,12 @@ SMOKE = []
 rm, zr = N.chalet(k, 3.6, 10.4, 5.0, 9.4, wall_h=2.1, rise=1.6, door_x=7.0, windows=[(4.6, 0.85), (9.4, 0.85)],
                   windows_up=[(5.6, 1.7), (8.4, 1.7)], chimney=4.4, balcony=True, lanterns=(6.3, 7.7))
 SMOKE.append(screen(4.4, rm - 0.15, zr + 0.7))
-k.box(5.2, 9.4, 2.2, 8.8, 9.46, 2.55, ('#3a2416', 0.05), 'sign_board')
-G.letters(k, 'Stübli', 'Pacifico', 7.0, 9.46, 2.22, size=0.3, col='#ffd890', lit=True, energy=4)
+k.box(5.0, 9.4, 2.15, 9.0, 9.46, 2.8, ('#3a2416', 0.05), 'sign_board')          # big enough to read from the promenade
+G.letters(k, 'Stübli', 'Pacifico', 7.0, 9.46, 2.2, size=0.46, col='#ffd890', lit=True, energy=5)
 N.hanging_sign(k, 10.2, 9.36, 1.4, 'mug')
-for (x, r) in ((4.6, 11.4), (9.4, 11.4), (7.0, 12.8)):
+for (x, r) in ((4.5, 11.4), (9.5, 11.4), (4.5, 13.3)):        # on tile centres, clear of the lane from the door
     A.fondue_table(k, x, r)
+    k.solid(x - 0.4, r - 0.4, x + 0.4, r + 0.2)                 # you walk round a table, not through it
     A.bistro_chair(k, x - 0.55, r - 0.1, cushion='#b82a2a')
     A.bistro_chair(k, x + 0.55, r - 0.1, cushion='#b82a2a')
 A.heater(k, 3.4, 12.6)
@@ -184,7 +185,7 @@ for (x, r) in ((1.6, 10.6), (2.8, 13.0), (11.6, 4.6), (22.0, 4.4), (43.0, 9.6), 
     k.solid(x - 0.3, r - 0.3, x + 0.3, r + 0.3)
 for _ in range(24):
     x, r = k.rng.uniform(1, 43), k.rng.uniform(19.4, 22.4)
-    if not (19.0 < x < 27.4) and not (12.0 < x < 13.0):
+    if not (19.0 < x < 27.4) and not (x < 13.0 and r > 19.4):             # (none on the station's or the terrace's boards)
         k.blob(x, r, 0.0, k.rng.uniform(0.4, 0.9), k.rng.uniform(0.2, 0.4), k.rng.uniform(0.05, 0.1), (N.SNOW, 0.04), 'drift', segs=9)
 k.cyl(26.6, 19.2, 0.0, 0.9, 0.05, ('#3a3c44', 0.05), 'telescope_post', verts=8)
 k.tube((26.6, 19.2, 1.0), (26.9, 19.6, 1.12), 0.08, ('#c8a050', 0.05), 'telescope', verts=10)
@@ -207,8 +208,9 @@ for xx in (1.5, 6.3):
 k.box(1.6, 20.95, 1.72, 6.2, 21.0, 2.1, ('#3a2416', 0.05), 'sign_board')
 G.letters(k, 'APRES-SKI', 'Righteous', 3.9, 21.0, 1.78, size=0.24, col='#ffd890', lit=True, energy=3)
 k.solid(1.5, 20.0, 6.3, 20.9)
-for (x, r) in ((8.0, 21.2), (10.6, 21.4), (8.6, 23.0)):
+for (x, r) in ((8.5, 21.3), (10.5, 21.4), (8.5, 22.9)):        # (x 7 left open: the way to the bar and the fire pit)
     A.fondue_table(k, x, r, cloth='#e8dcc8', check=False)
+    k.solid(x - 0.4, r - 0.4, x + 0.4, r + 0.2)
     A.bistro_chair(k, x - 0.55, r - 0.1)
     A.bistro_chair(k, x + 0.55, r - 0.1)
 A.fire_pit(k, 3.6, 22.8, rad=0.5)
