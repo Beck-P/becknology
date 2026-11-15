@@ -88,8 +88,11 @@ const BELOW = ['scrap_metal', 'circuit', 'chrome_part', 'sump_pearl', 'ruin_knuc
   const pelt = await card(p, 'wolf_pelt');
   console.log('wolf pelt:', (pelt.match(/Collection[^|]*/) || ['(none)'])[0]);
   expect('a set member: its set and how far along', /Collection: The valley · 6 of 6, complete/.test(pelt));
-  const fish = await card(p, 'goldfish_bag');
-  console.log('goldfish:', (fish.match(/Only worth[^|]*/) || ['(none)'])[0]);
+  // a thing good for nothing but a sale (the goldfish was one, till it went in fish tanks: world/rumours.js): a stand-in,
+  // so this stays true whatever gets a use next
+  await p.evaluate(() => { const all = BridgeItems.all(); all.wf_trinket = { id: 'wf_trinket', name: 'Test Trinket', desc: 'A stand-in.', type: 'material', stackable: true, value: 5, draw: BridgeItems.get('stone').draw }; BridgeInventory.addItem('wf_trinket', 1); BridgeMenu.close(); });
+  const fish = await card(p, 'wf_trinket');
+  console.log('a trinket:', (fish.match(/Only worth[^|]*/) || ['(none)'])[0]);
   expect('only worth selling, said plainly', /Only worth selling/.test(fish));
   const honey = await card(p, 'honey');
   const more = await p.evaluate(() => { const d = document.querySelector('#game-menu .bp-detail .uses'); return d ? { shown: d.querySelectorAll(':scope > ul > li').length, more: (d.querySelector('summary') || {}).textContent || '' } : null; });

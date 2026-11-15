@@ -2624,6 +2624,9 @@ html.menu-open #bridge-toast, html.menu-open #quarters-toast { visibility: hidde
 .jn-q-head .jn-track { margin-left: auto; padding: 1px 8px; font-size: 11px; }
 .jn-q-head .jn-aside { padding: 1px 8px; font-size: 11px; opacity: 0.75; }
 .jn-tracking { margin-left: auto; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--gm-accent); }
+.jn-lead .jn-q-head .jn-go { margin-left: auto; padding: 1px 8px; font-size: 11px; }
+.jn-lead .jn-q-head .jn-forget { padding: 1px 8px; font-size: 11px; opacity: 0.75; }
+.jn-lead .jn-q-title + .jn-forget { margin-left: auto; }
 .jn-sub { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--gm-dim); margin: 12px 0 6px; }
 
 /* ---- the quest tracker (js/quests.js refreshTracker): the quest you're following, top right under the coins ---- */
