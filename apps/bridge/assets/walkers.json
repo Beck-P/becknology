@@ -45,7 +45,7 @@
   ],
   "lumar-square": [
     { "sheet": "npc-townsman", "path": [[0, 17], [25, 17]], "speed": 1.0, "pause": 4000, "rest": "up" },
-    { "sheet": "npc-sailor", "path": [[5, 12], [11, 12]], "speed": 0.7, "pause": 6000, "rest": "down" }
+    { "sheet": "npc-sailor", "path": [[5, 12], [9, 12]], "speed": 0.7, "pause": 6000, "rest": "down" }
   ],
   "lumar-midnight": [],
   "lumar-crimson": [
@@ -66,13 +66,13 @@
   "lumar-crown": [
     { "sheet": "npc-sailor", "path": [[7, 30], [21, 30]], "speed": 1.0, "pause": 3500, "rest": "down" },
     { "sheet": "npc-dockhand", "path": [[42, 32], [58, 32]], "speed": 0.9, "pause": 5000, "rest": "down" },
-    { "sheet": "npc-townsman", "path": [[4, 23], [32, 23]], "speed": 0.8, "pause": 4000, "rest": "up" },
-    { "sheet": "npc-shopper", "path": [[36, 23], [51, 23]], "speed": 0.7, "pause": 6000, "rest": "up" },
+    { "sheet": "npc-townsman", "path": [[14, 22], [30, 22]], "speed": 0.8, "pause": 4000, "rest": "up" },
+    { "sheet": "npc-shopper", "path": [[33, 22], [43, 22]], "speed": 0.7, "pause": 6000, "rest": "up" },
     { "sheet": "npc-passerby", "path": [[29, 12], [29, 31]], "speed": 0.9, "pause": 3000, "rest": "down" },
     { "sheet": "npc-scholar", "path": [[25, 14], [38, 14]], "speed": 0.6, "pause": 7000, "rest": "up" },
     { "sheet": "npc-fishwife", "path": [[42, 20], [58, 20]], "speed": 0.7, "pause": 5000, "rest": "down" },
     { "sheet": "npc-watcher", "path": [[34, 17], [42, 17]], "speed": 0.6, "pause": 8000, "rest": "up" },
-    { "sheet": "npc-stranger", "path": [[10, 32], [25, 32]], "speed": 0.8, "pause": 4500, "rest": "down" }
+    { "sheet": "npc-stranger", "path": [[11, 32], [20, 32]], "speed": 0.8, "pause": 4500, "rest": "down" }
   ],
   "lumar-tern": [
     { "sheet": "npc-sailor", "path": [[4, 14], [26, 14]], "speed": 0.8, "pause": 5000, "rest": "down" },
