@@ -130,7 +130,7 @@ k.solid(1.2, 3.2, 4.6, 4.6)
 # ---- lanterns hung from the ribs, barrels, a coat peg, a rug by the fire -----------------------------------------------------
 for (x, rr) in ((4.0, 6.0), (12.0, 4.6), (20.0, 9.6), (8.0, 11.0), (16.0, 8.0)):
     k.cyl(x, rr, 2.5, H - 0.2, 0.006, (E.GOLD, 0.25), 'chain', verts=4)
-    E.leaf_lantern(k, x, rr, 2.4, s=0.16, energy=10.0)
+    E.leaf_lantern(k, x, rr, 2.4, s=0.16, energy=18.0)
 for (x, rr) in ((1.6, 12.6), (2.4, 12.8), (22.0, 12.6)):
     LU.barrel(k, x, rr, h=0.8, radius=0.3)
     k.solid(x - 0.3, rr - 0.3, x + 0.3, rr + 0.3)
@@ -138,8 +138,38 @@ LU.rug(k, 9.6, 9.4, 13.6, 11.4, col='#2a5a2e', trim='#d0a040')
 LU.coat_rack(k, 14.2, 13.2)
 k.solid(14.0, 13.0, 14.4, 13.4)
 
-R.merge_parts(k)                                                  # one mesh per look: each render pass quick (assets_sylvara_rich)
-k.render(OUT, light_states={'full': {}, 'dim': {'fire': 0.7}}, light_samples=int(os.environ.get('SAMPLES', 128)), world_light=('#3a3020', 0.4))
+# ---- the room's own life: ferns and mushrooms in the corners, bundles of herbs drying along the back wall, leaf garlands
+# swagged between the great ribs, a second rug, a cask on its side by the stage, the chalk board -----------------------------
+for (x, rr) in ((1.6, 7.4), (22.4, 9.6), (5.8, 13.2), (17.4, 13.2), (9.6, 3.0), (14.4, 3.0)):
+    E.fern(k, x, rr, s=0.5)
+    E.mushrooms(k, x + 0.3, rr - 0.15, n=3)
+for i in range(14):                                               # herbs drying, hung in bunches from a rail on the back wall
+    x = 5.0 + i * 0.85
+    if 11.0 < x < 13.0 or x > 16.8:
+        continue
+    k.tube((x, 2.5, 2.05), (x, 2.52, 1.7), 0.006, ('#c8b080', 0.25), 'string', verts=4)
+    k.blob(x, 2.55, 1.55, 0.09, 0.05, 0.16, (rng.choice(('#6a8a3a', '#8a7a3a', '#7a5a8a', '#5a7a3a')), 0.35), 'herbs', segs=7)
+k.tube((4.8, 2.5, 2.08), (16.6, 2.5, 2.08), 0.025, (A.ELFWOOD_D, 0.25), 'herb_rail', verts=6)
+with k.foliage('leaf'):
+    for (xa, xb) in ((4.0, 12.0), (12.0, 20.0)):                  # garlands swagged between the ribs, over the room
+        for i in range(17):
+            t = i / 16
+            x = xa + (xb - xa) * t
+            z = H * 0.82 - 0.7 * math.sin(math.pi * t)
+            k.blob(x, 2.7, z, 0.13, 0.1, 0.1, (shade('#4a8038', rng.uniform(0.85, 1.15)), 0.3), 'garland', segs=6)
+            if i % 4 == 2:
+                k.blob(x, 2.78, z - 0.08, 0.05, 0.05, 0.05, (rng.choice(('#f0e0a0', '#f0b0c8', '#c8a8f0')), 0.35), 'garland_flower', segs=6)
+LU.rug(k, 3.4, 8.6, 7.6, 10.8, col='#6a3a2a', trim='#d0a040')
+k.box(4.8, 3.0, 0.22, 5.4, 3.12, 1.4, ('#22281e', 0.3), 'chalkboard')
+k.box(4.76, 2.98, 1.4, 5.44, 3.14, 1.46, (A.ELFWOOD_D, 0.3), 'chalkboard_frame')
+LU.barrel(k, 5.4, 4.8, h=0.6, radius=0.26)
+k.solid(5.1, 4.5, 5.7, 5.1)
+# fill light under the ribs (the lanterns and the fire alone left the room in the dark)
+for (x, rr, e) in ((6.0, 8.0, 90), (17.0, 9.0, 80), (11.6, 12.0, 80), (4.6, 12.0, 60), (19.6, 4.8, 50)):
+    k.point_light(x, rr, 2.9, '#ffd090', e, radius=0.3)
+
+R.merge_parts(k)                                                 # one mesh per look: each render pass quick (assets_sylvara_rich)
+k.render(OUT, light_states={'full': {}, 'dim': {'fire': 0.7}}, light_samples=int(os.environ.get('SAMPLES', 128)), world_light=('#4a3c28', 0.6))
 
 w = json.load(open(WORLD)) if os.path.exists(WORLD) else {}
 w.update({'name': 'The Hollow Bough', 'width': COLS, 'height': ROWS, 'tileSize': 16, 'tileset': 'sylvara',

@@ -3752,18 +3752,6 @@
       ]
     },
     {
-      "x": 31,
-      "y": 11,
-      "type": "enter_world",
-      "label": "THE HOLLOW BOUGH",
-      "prompt": "PRESS E TO GO IN",
-      "target": "sylvara-tavern",
-      "spawn": [
-        12,
-        14
-      ]
-    },
-    {
       "x": 25,
       "y": 15,
       "type": "sylvan",
