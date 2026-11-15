@@ -17,9 +17,10 @@ import os
 import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
-from scenekit import Kit, THETA, apply_world  # noqa: E402
+from scenekit import Kit, THETA, apply_world, shade  # noqa: E402
 import assets_backs as B                       # noqa: E402
 import assets_cyber as Y                       # noqa: E402
+import assets_deck as D                        # noqa: E402
 import assets_lumar as A                       # noqa: E402
 import assets_ship as P                        # noqa: E402
 import assets_station as T                     # noqa: E402
@@ -38,11 +39,9 @@ A.floor_planks(k, 1, RF, 17, 11, tone='#5a3a1a')
 P.ship_back_wall(k, 0.5, 17.5, RF, H, pal=P.Q_WALL)
 P.ship_side_wall(k, 0.4, 1.0, 3.5, 7.0, H, pal=P.Q_WALL)          # the door back to the bridge, west
 P.ship_side_wall(k, 0.4, 1.0, 9.0, 11.0, H, pal=P.Q_WALL)
-k.box(0.4, 7.0, 2.3, 1.0, 9.0, H, (P.Q_WALL[1], 0.06), 'door_lintel')
-for rr in (7.0, 8.82):
-    k.box(0.4, rr, 0.0, 1.0, rr + 0.18, 2.3, (P.Q_WALL[0], 0.05), 'door_post')
-    k.box(0.98, rr + 0.06, 1.0, 1.01, rr + 0.12, 1.3, '#103038', 'door_led', emit=(P.CYAN, 0.85))
-k.box(0.4, 7.18, -0.01, 1.0, 8.82, 0.02, ('#2a3038', 0.08), 'threshold')
+k.box(0.4, 7.0, 2.62, 1.0, 9.0, H, (P.Q_WALL[1], 0.06), 'door_lintel')
+k.box(0.4, 7.0, -0.01, 1.0, 9.0, 0.02, ('#2a3038', 0.08), 'threshold')
+D.side_door(k, 1.0, 7.0, 9.0, 1, sign='BRIDGE')                    # the bridge's own doorway: framed, a lantern, its light
 P.ship_side_wall(k, 17.0, 17.6, 3.5, 11.0, H, pal=P.Q_WALL)
 k.box(0.4, 11.0, 0, 17.6, 11.6, 0.35, (P.Q_WALL[1], 0.06), 'front_wall')
 k.box(0.4, 11.0, 0.35, 17.6, 11.6, 0.4, P.Q_WALL[0], 'wall_cap')
@@ -52,14 +51,34 @@ A.rug(k, 3.2, 7.1, 6.0, 9.4, col='#2a3a5a', trim='#5cc8d0', pattern=True)
 A.rug(k, 10.6, 7.6, 16.4, 9.8, col='#4a2a3a', trim='#e8c040')
 
 
-def sheet(cx, cr, w, d, h, tag='#e8e0d0'):
-    """A dust sheet over something not found yet, a luggage tag on a string."""
-    k.box(cx - w / 2, cr - d / 2, 0.0, cx + w / 2, cr + d / 2, h * 0.7, ('#7a7a82', 0.12), 'sheet', bevel=0.08)
-    k.blob(cx, cr, h * 0.72, w * 0.55, d * 0.6, h * 0.3, ('#8a8a92', 0.12), 'sheet', segs=12)
-    for i in range(3):
-        x = cx - w / 2 + 0.1 + i * (w - 0.2) / 2
-        k.box(x - 0.02, cr + d / 2, 0.0, x + 0.02, cr + d / 2 + 0.03, h * 0.6, '#6a6a72', 'sheet_fold')
-    k.box(cx + w / 4, cr + d / 2 + 0.03, h * 0.4, cx + w / 4 + 0.12, cr + d / 2 + 0.04, h * 0.48, (tag, 0.05), 'tag')
+def sheet(cx, cr, w, d, h, tag='#e8e0d0', cab=False):
+    """A dust sheet over something not found yet: off-white calico thrown over its shape and tied round with a cord, a
+    flat top with the cloth turned down over its edges, folds hanging straight to a hem that pools a little on the
+    boards, the dark foot of what's under it showing, a luggage tag on a string. `cab`: an arcade cabinet's shape under
+    it (the marquee jutting forward at the top, the control panel's ledge). It used to be a grey box under a rounded
+    blob: a row of ghosts."""
+    cloth = '#d2c6aa'
+    x0, x1, r0, r1 = cx - w / 2, cx + w / 2, cr - d / 2, cr + d / 2
+    k.box(x0 + 0.05, r0 + 0.05, 0.0, x1 - 0.05, r1 - 0.02, 0.09, '#1a120c', 'sheet_foot')         # what's under it
+    k.box(x0, r0, 0.09, x1, r1, h - 0.07, (cloth, 0.1), 'sheet', bevel=0.015)
+    k.box(x0 - 0.03, r0 - 0.03, h - 0.08, x1 + 0.03, r1 + 0.03, h, (shade(cloth, 1.07), 0.1), 'sheet_top', bevel=0.015)
+    if cab:
+        k.box(x0 - 0.02, r1, h * 0.8, x1 + 0.02, r1 + 0.14, h - 0.02, (shade(cloth, 1.04), 0.1), 'sheet_marquee', bevel=0.015)
+        k.box(x0 - 0.02, r1, h * 0.42, x1 + 0.02, r1 + 0.2, h * 0.47, (shade(cloth, 1.05), 0.1), 'sheet_ledge', bevel=0.015)
+    n = max(3, int(w / 0.17))                                        # folds down the front, light and shade
+    for i in range(n):
+        x = x0 + (i + 0.5) * w / n
+        top = h * (0.4 if cab else 0.92) - (i % 2) * 0.12
+        k.box(x - 0.025, r1 + (0.2 if cab else 0.0), 0.09, x + 0.025, r1 + (0.23 if cab else 0.03), top,
+              (shade(cloth, 0.84 if i % 2 else 1.06), 0.1), 'sheet_fold')
+    for xs in (x0, x1):                                              # and down the sides
+        for j in range(2):
+            rr = r0 + (j + 0.5) * d / 2
+            k.box(xs - 0.02, rr - 0.025, 0.09, xs + 0.02, rr + 0.025, h * 0.85, (shade(cloth, 0.86), 0.1), 'sheet_fold')
+    k.box(x0 - 0.05, r0 - 0.04, 0.09, x1 + 0.05, r1 + (0.27 if cab else 0.07), 0.15, (shade(cloth, 0.93), 0.1), 'sheet_hem')
+    k.box(x0 - 0.015, r0 - 0.015, h * 0.6, x1 + 0.015, r1 + (0.215 if cab else 0.015), h * 0.6 + 0.04, '#7a5a34', 'sheet_cord')
+    k.box(cx + w / 4, r1 + (0.22 if cab else 0.02), h * 0.5, cx + w / 4 + 0.12, r1 + (0.23 if cab else 0.03), h * 0.58,
+          (tag, 0.05), 'tag')
 
 
 # ---- the slots (variants) ----------------------------------------------------------------------------
@@ -69,7 +88,7 @@ for key, art, cx, col in CABS:
     with k.variant('g_' + key, 'on'):
         Y.arcade_cabinet(k, cx, RF, art=art, marquee=col)
     with k.variant('g_' + key, 'off'):
-        sheet(cx, RF + 0.45, 0.85, 0.75, 2.05)
+        sheet(cx, RF + 0.4, 0.8, 0.62, 2.05, cab=True)
     k.solid(cx - 0.4, RF, cx + 0.4, RF + 0.9)
 with k.variant('g_splice', 'on'):
     B.splice_rig(k, 13.6, RF)
