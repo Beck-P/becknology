@@ -114,6 +114,26 @@
     }
   },
 
+  "moonwell_night": {
+    "name": "The Moonwell's Night",
+    "planet": "sylvara", "when": "fullmoon", "world": "sylvara", "place": "the Moonwell",
+    "line": "The full moon in the Moonwell, lanterns in the glade, and Mirelle judging the brews",
+    "hours": ["sunset", "dawn"], "music": "sylvara",
+    "props": [["table", 13, 22], ["table", 14, 22], ["leaf_lantern", 11, 23], ["leaf_lantern", 16, 23], ["leaf_lantern", 7, 22], ["leaf_lantern", 12, 19], ["stall", 19, 22]],
+    "contest": {
+      "kind": "show", "at": [13, 22], "label": "BREW TABLE", "judge": "Mirelle",
+      "title": "the brews", "judging": "MIRELLE UNSTOPPERS IT, HOLDS IT TO THE MOON, AND LETS ONE DROP FALL ON HER TONGUE. SHE HAS OPINIONS.",
+      "bring": "Bring a brew you made with Mirelle - the rarer the herbs, the better: a Tidecalm Elixir or a Dreamcap Draught scores best, a salve least.",
+      "entries": { "tidecalm_elixir": 10, "dreamcap_draught": 10, "hearthfire_draught": 9, "owl_eye_tincture": 9, "swiftwater_tonic": 6, "silverleaf_salve": 5, "moonpetal": 3 },
+      "rivals": [["Sefa", "silverleaf_salve"], ["Faelan", "swiftwater_tonic"], ["Brannoc", "owl_eye_tincture"], ["Ysane", "moonpetal"]],
+      "prizes": [[600, "blue_rosette"], [250, "red_rosette"], [100, "yellow_rosette"]]
+    },
+    "stall": { "at": [19, 22], "label": "MOON STALL", "items": [{ "id": "moon_cake", "price": 6 }, { "id": "starpear_cider", "price": 5 }, { "id": "waybread", "price": 9 }] },
+    "crowd": {
+      "elf_herbalist": [13, 21, "down"], "elf_grocer": [19, 21, "down"], "elf_bard": [11, 21, "right"], "elf_warden": [16, 21, "left"], "elf_lanternmaker": [12, 24, "up"], "elf_bowyer": [15, 24, "up"]
+    }
+  },
+
   "lantern_tide": {
     "name": "Lantern Tide",
     "planet": "lumar", "season": "autumn", "world": "lumar-crown", "place": "Crownhaven quay",
