@@ -143,6 +143,45 @@ const OUT = process.argv[2] || '/tmp';
   console.log('tavern: in, Fennick\'s shop, out');
   }
 
+  // every tile you can walk to from a spot, in the world loaded now (four ways, as you move)
+  const reach = (from) => p.evaluate((f) => {
+    const w = BridgeWorld.getWorld(), C = w.collisions, seen = new Set([f[0] + ',' + f[1]]), q = [f];
+    while (q.length) { const [x, y] = q.shift(); for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nx = x + dx, ny = y + dy, k = nx + ',' + ny;
+      if (C[ny] && C[ny][nx] === 0 && !seen.has(k)) { seen.add(k); q.push([nx, ny]); } } }
+    return [...seen];
+  }, from);
+  const near = (cells, x, y) => [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => cells.includes((x + dx) + ',' + (y + dy)));
+
+  if (await live(['sylvara-river', 'sylvara-falls'])) {
+  // ---- the falls on foot: down from the Silverrun, the warning post, the stair down the cliff to the pool and its rack,
+  // the ledge behind the falls, the way on to the lake; back up to the river -----------------------------------------------
+  await go('sylvara-river', [21, 37]);
+  const down = (await p.evaluate(() => BridgeWorld.getWorld().interactions.filter(i => i.target === 'sylvara-falls').map(i => [i.x, i.y])))[0];
+  if (!down) fail('no way from the Silverrun down to the falls');
+  else {
+    await stand(down[0], down[1] - 1, 'down'); await press(); await p.waitForTimeout(2200);
+    if (await p.evaluate(() => BridgeWorld.getWorld().name) !== 'the Falls') fail('the Silverrun\'s way down didn\'t reach the falls');
+  }
+  const at = await p.evaluate(() => [Math.round(BridgeCharacter.getX()), Math.round(BridgeCharacter.getY())]);
+  const cells = await reach(at);
+  const fw = await p.evaluate(() => BridgeWorld.getWorld());
+  const post = fw.interactions.find(i => i.label === 'WARNING POST');
+  if (!post || !near(cells, post.x, post.y)) fail('the warning post can\'t be reached');
+  const rack = fw.river && fw.river.racks && fw.river.racks[0];
+  if (!rack || !near(cells, rack[0], rack[1])) fail('the canoe rack at the pool can\'t be reached (down the stair)');
+  if (!cells.some(c => +c.split(',')[1] >= 30)) fail('the path on down below the falls can\'t be reached');
+  if (!cells.some(c => +c.split(',')[0] >= 34 && +c.split(',')[1] >= 24)) fail('the gorge east of the low river can\'t be reached (the footbridge below the pool)');
+  const ledge = fw.interactions.find(i => i.label === 'BEHIND THE FALLS');
+  if (await isOpen('sylvara-fallcave') && (!ledge || !near(cells, ledge.x, ledge.y))) fail('the ledge behind the falls can\'t be reached');
+  await stand(post.x, post.y + 1, 'up'); await press();
+  if (!/RED LEAF/.test(await text())) fail('the warning post says nothing');
+  await shut();
+  const up = (await inter('THE SILVERRUN'))[0];
+  await stand(up[0], up[1] + 1, 'up'); await press(); await p.waitForTimeout(2200);
+  if (await p.evaluate(() => BridgeWorld.getWorld().name) === 'the Falls') fail('the way up didn\'t lead back to the Silverrun');
+  console.log('falls: down from the river, reach', cells.length, 'tiles, the post, the stair to the rack, back up');
+  }
+
   // ---- brewing with Mirelle, and what the potions do ------------------------------------------------------------------
   await go('sylvara', [34, 13]);
   for (const [id, n] of [['emberroot', 1], ['roseite', 1], ['honey', 2], ['windthistle', 1], ['owlmoss', 1], ['moonstone', 1]]) await give(id, n);
