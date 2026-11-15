@@ -48,7 +48,7 @@ for i, (x, legend) in enumerate(((3.65, 'old_mossback'), (6.3, 'crownfin'), (9.0
     k.box(x - 0.28, 2.04, z - h - 0.2, x + 0.28, 2.08, z - h - 0.06, (E.GILT, 0.06), 'plate', bevel=0.01)
     SPOTS.append([legend, x, 2.09, z, 'board'])
 for x in (4.98, 7.62, 10.38, 13.02):
-    E.sconce(k, x, 2.0, z=1.85, energy=7.0)
+    E.sconce(k, x, 2.0, z=1.85, energy=3.0)
 k.box(1.0, 1.98, H - 0.42, 17.0, 2.12, H - 0.3, (OAK_D, 0.1), 'cornice')
 
 # ---- the plinths: the Lantern Beyond in the middle on the tallest, the deep's trophies and the rarest finds round it ---
@@ -99,10 +99,10 @@ for (x, r) in ((1.6, 8.9), (16.4, 8.9)):                 # a palm in each front 
     E.potted_palm(k, x, r)
     k.solid(x - 0.3, r - 0.3, x + 0.3, r + 0.3)
 E.chandelier(k, 9.0, 5.0, H - 0.4, rad=0.55, arms=6, tiers=1, chain_top=H, energy=70.0)
-A.hanging_lamp(k, 4.6, 6.0, energy=55, visible=False)
-A.hanging_lamp(k, 13.4, 6.0, energy=55, visible=False)
+A.hanging_lamp(k, 4.6, 6.0, energy=20, visible=False)
+A.hanging_lamp(k, 13.4, 6.0, energy=20, visible=False)
 k.render(OUT, light_states={'full': {'flicker': 1.0}, 'dim': {'flicker': 0.75}}, light_samples=int(os.environ.get('SCENE_SAMPLES', 128)),
-         world_light=('#343a50', 0.42))
+         world_light=('#5a4a40', 2.0))     # a warm ambient keeps the floor in one band of the toy finish
 
 w = json.load(open(WORLD)) if os.path.exists(WORLD) else {}
 w.update({'name': 'The Hall of Finds', 'width': COLS, 'height': ROWS, 'tileSize': 16, 'tileset': 'lumar',
