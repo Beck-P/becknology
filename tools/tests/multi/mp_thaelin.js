@@ -30,13 +30,18 @@ const { chromium, BECK, ALY, player, enter, reset } = require(process.argv[2] + 
   await use(beck, 'THE STAGE'); await shut(beck); await aly.waitForTimeout(1500); await shut(aly);
   [B, A] = await step('stage');
   if (A.found.indexOf('stage') < 0) bad('the stage\'s verse not found together');
-  // the falls aren't open: nothing for either
-  await beck.evaluate(() => BridgeQuests.onInteract('sylvara-fallcave', { label: 'THE CARVING' })); await aly.waitForTimeout(1200);
+  // the cave behind the falls is open: its verse found together in the cave, at the carving
+  await both('sylvara-fallcave', [10, 4], [11, 4]);
+  await use(beck, 'THE CARVING'); await shut(beck); await aly.waitForTimeout(1500); await shut(aly);
+  [B, A] = await step('cave');
+  if (A.found.indexOf('falls') < 0) bad('the cave\'s verse not found together');
+  // the lake isn't open: nothing for either
+  await beck.evaluate(() => BridgeQuests.onInteract('sylvara-lake', { label: 'FIRE RING' })); await aly.waitForTimeout(1200);
   [B, A] = await step('shut');
-  if (B.found.indexOf('falls') >= 0 || A.found.indexOf('falls') >= 0) bad('the falls\' verse found while shut');
-  // each place opens (the same game for both), and its verse is found together
-  for (const p of [beck, aly]) await p.evaluate(() => ['sylvara-falls', 'sylvara-fallcave', 'sylvara-lake', 'sylvara-deepwood'].forEach(i => BridgeSylvara.OPEN.push(i)));
-  for (const [w, l] of [['sylvara-fallcave', 'THE CARVING'], ['sylvara-lake', 'FIRE RING'], ['sylvara-deepwood', 'THE POOL']]) {
+  if (B.found.indexOf('lake') >= 0 || A.found.indexOf('lake') >= 0) bad('the lake\'s verse found while shut');
+  // the two still closed open (the same game for both), and each verse is found together
+  for (const p of [beck, aly]) await p.evaluate(() => ['sylvara-lake', 'sylvara-deepwood'].forEach(i => BridgeSylvara.OPEN.push(i)));
+  for (const [w, l] of [['sylvara-lake', 'FIRE RING'], ['sylvara-deepwood', 'THE POOL']]) {
     await beck.evaluate(([w, l]) => BridgeQuests.onInteract(w, { label: l }), [w, l]); await aly.waitForTimeout(1200);
   }
   [B, A] = await step('opened');
