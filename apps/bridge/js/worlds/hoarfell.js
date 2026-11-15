@@ -273,101 +273,372 @@ var BridgeHoarfell = (function () {
     }
   }
 
-  // the summit's sky: the range under the sky, a sea of cloud below the rim. Its colours follow the place's own render
-  // through the day (BridgeScene.sky: day, dusk and night weights) — the alpenglow Hoarfell is lit by, a deeper dusk,
-  // a moonlit night with the stars out; a render with only the one state keeps the alpenglow.
-  var PAL = {                    // sky top → horizon, the far and near range (fill, lit rim), the cloud sea (base, tops)
-    day:   { sky: ['#3a5698', '#6a8cc8', '#a8c0e4', '#f2dcd4'], far: ['#8a7ab0', '#ffd0c0'], near: ['#6a6098', '#f0b0b8'], cloud: ['#bcc6e0', '#dfe6f4', '#f6f8fc'], glow: [255, 230, 200] },
-    dusk:  { sky: ['#140e34', '#4a1e52', '#b04a5a', '#f08a5a'], far: ['#5a4a80', '#ffa080'], near: ['#46406e', '#e08070'], cloud: ['#9a7a9a', '#c08a98', '#d89aa0'], glow: [255, 150, 90] },
-    night: { sky: ['#03040e', '#0a1028', '#18224a', '#2a3660'], far: ['#1e2440', '#8090c0'], near: ['#161a32', '#6070a0'], cloud: ['#2a3050', '#3a4268', '#46507a'], glow: [190, 210, 255] }
-  };
+  // ---- the sky over the mountain ------------------------------------------------------------------------------------------
+  // Behind the summit, the face, the Ice Step, the Last Ridge, the promenade and the monastery (backdrop worlds) and in the
+  // summit bench's view. It follows the hour the place itself is lit for (BridgeLit's live light: the same hour, season and
+  // weather, so a preview or a test's forced hour moves it too; the planet's clock when there's no live light), in the toy
+  // finish: the sky in flat bands, a sun that rises over the east (right) and sets in the west (left) with a halo in flat
+  // rings, the moon in its phase crossing the night, stars in depth with the galaxy's band, the aurora on some cold nights,
+  // cirrus drifting and lens clouds parked over the high peaks, choughs wheeling and now and then a lammergeier gliding past,
+  // three ranges lit from the side the sun is on, and a sea of cloud banked in rows that slide with the camera at their
+  // depths. Everything that doesn't move is drawn once into a canvas (recoloured when the light changes) and blitted in
+  // whole pixels; per frame it's a few dozen drawImages and rects.
+  var REDUCE = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // the day on the 24-hour face, as the live light has it (js/litscene.js KEYS) — for a place without live light
+  var KEYS = [[0, '#060a1e', '#1a2448', 1, 0], [4.6, '#0a1032', '#28305c', 1, 0], [5.6, '#2c3668', '#c47c8c', 0.55, 0.35],
+              [6.6, '#6c8cc4', '#f6ba92', 0.08, 0.75], [8, '#78aeea', '#eae2ca', 0, 0.12], [12, '#5a9ee8', '#d2e8f6', 0, 0],
+              [16, '#68a4e6', '#e8e4cc', 0, 0.1], [18, '#7896d6', '#ffc68c', 0, 0.85], [19.2, '#5868a8', '#ff8e6c', 0.18, 1],
+              [20.2, '#283272', '#9c6a92', 0.62, 0.3], [21.5, '#0c1238', '#2a3062', 0.95, 0], [24, '#060a1e', '#1a2448', 1, 0]];
   function hex(c) { return [parseInt(c.slice(1, 3), 16), parseInt(c.slice(3, 5), 16), parseInt(c.slice(5, 7), 16)]; }
-  function blend(w, f) {         // the three palettes' colour f, weighted
-    var a = hex(f(PAL.day)), b = hex(f(PAL.dusk)), c = hex(f(PAL.night));
-    return 'rgb(' + [0, 1, 2].map(function (i) { return Math.round(a[i] * w.day + b[i] * w.dusk + c[i] * w.night); }).join(',') + ')';
+  function mix(a, b, t) { return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t]; }
+  function rgb(c, a) {
+    var s = Math.round(Math.max(0, Math.min(255, c[0]))) + ',' + Math.round(Math.max(0, Math.min(255, c[1]))) + ',' + Math.round(Math.max(0, Math.min(255, c[2])));
+    return a === undefined ? 'rgb(' + s + ')' : 'rgba(' + s + ',' + a.toFixed(3) + ')';
   }
-  function skyWeights() {
-    var wd = BridgeWorld.getWorld && BridgeWorld.getWorld(), id = wd && wd.scene && wd.scene.id;
-    var k = id && typeof BridgeScene !== 'undefined' && BridgeScene.sky ? BridgeScene.sky(id) : null;
-    return k ? { day: k.day, dusk: k.dusk, night: k.night } : { day: 1, dusk: 0, night: 0 };
+  function cl(v, a, b) { return v < a ? a : v > b ? b : v; }
+  function rnd(i) { var x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }
+  function clockHour(id) {                       // the 24-hour face from the planet's clock (as litscene's moment())
+    var k = typeof BridgeClock !== 'undefined' ? BridgeClock.sky(id) : null;
+    if (!k || !k.cycles || !k.len) return k && k.sun < 0.5 ? 0 : 12;
+    var x = k.t / k.len, rise = k.sunrise == null ? 0 : k.sunrise / k.len, set = k.sunset == null ? 1 : k.sunset / k.len;
+    if (x >= rise && x <= set) return 6 + 13.6 * (x - rise) / Math.max(1e-6, set - rise);
+    return (19.6 + 10.4 * (((x - set) % 1 + 1) % 1) / Math.max(1e-6, 1 - (set - rise))) % 24;
   }
+  // what the sky is doing: { h, zen, hor (0-255), night, golden, wx, wk, season }, worked out a few times a second
+  var ST = { at: 0, s: null };
+  function skyState() {
+    var t = Date.now();
+    if (ST.s && t - ST.at < 250) return ST.s;
+    var wd = BridgeWorld.getWorld && BridgeWorld.getWorld(), id = (wd && wd.scene && wd.scene.id) || 'hoarfell';
+    var Lt = typeof BridgeLit !== 'undefined' && BridgeLit.light ? BridgeLit.light(id) : null, s;
+    if (Lt && Lt.P && Lt.M) {
+      s = { h: Lt.M.h, zen: Lt.P.skyTop.map(function (v) { return v * 255; }), hor: Lt.P.skyHor.map(function (v) { return v * 255; }),
+            night: Lt.night, golden: Lt.golden, wx: Lt.M.wx, wk: Lt.M.wk || 0, season: Lt.M.season };
+    } else {
+      var h = clockHour(id), i = 0;
+      while (i < KEYS.length - 2 && KEYS[i + 1][0] <= h) i++;
+      var a = KEYS[i], b = KEYS[i + 1], f = (h - a[0]) / (b[0] - a[0]);
+      s = { h: h, zen: mix(hex(a[1]), hex(b[1]), f), hor: mix(hex(a[2]), hex(b[2]), f), night: a[3] + (b[3] - a[3]) * f, golden: a[4] + (b[4] - a[4]) * f,
+            wx: 'clear', wk: 0, season: null };
+      var w = typeof BridgeWeather !== 'undefined' && BridgeWeather.here ? BridgeWeather.here(id) : null;
+      if (w && w.k > 0.15) { s.wx = /snow|blizzard/.test(w.kind) ? 'snow' : /fog|mist/.test(w.kind) ? 'fog' : /cloud|gale|storm|rain/.test(w.kind) ? 'cloud' : 'clear'; s.wk = w.k; }
+    }
+    // thin mountain air: a deeper blue overhead by day
+    s.zen = mix(s.zen, [30, 58, 146], 0.32 * (1 - s.night) * (1 - s.golden * 0.5));
+    s.thick = s.wx === 'clear' ? 0 : s.wk * (s.wx === 'cloud' ? 0.55 : 0.9);          // how much the weather hides
+    s.up = s.h > 5.7 && s.h < 19.9;
+    s.u = cl((s.h - 6) / 13.6, 0, 1);
+    s.sunC = mix([255, 250, 236], [255, 168, 112], s.golden);
+    // cloud in sunlight and in its own shade, by the hour
+    var lit = mix(mix([255, 255, 255], s.sunC, 0.55), s.hor, 0.12), sh = mix(mix(s.hor, s.zen, 0.45 + 0.3 * s.golden), [255, 255, 255], 0.3 - 0.1 * s.golden);
+    s.cLit = mix(lit, [92, 106, 156], s.night * 0.82); s.cSh = mix(sh, [38, 46, 84], s.night * 0.8);
+    s.cMid = mix(s.cLit, s.cSh, 0.5);
+    ST = { at: t, s: s };
+    return s;
+  }
+  // kept for the glints on the ice (they take the sky's colour)
+  function skyWeights() { var s = skyState(); return { night: s.night, dusk: s.golden * (1 - s.night), day: Math.max(0, 1 - s.night - s.golden) }; }
+
+  // small images drawn once: a disc, a halo of flat rings, the moon in its phase, a lens cloud
+  var SPR = {};
+  function sprite(key, w, h, fn) {
+    if (SPR[key]) return SPR[key];
+    if (Object.keys(SPR).length > 60) SPR = {};
+    var c = document.createElement('canvas'); c.width = w; c.height = h;
+    fn(c.getContext('2d'), w, h);
+    return (SPR[key] = c);
+  }
+  function disc(g, cx, cy, rx, ry, col) {       // an ellipse of whole pixels, row by row
+    g.fillStyle = col;
+    for (var y = -ry; y <= ry; y++) { var w = Math.round(rx * Math.sqrt(Math.max(0, 1 - (y * y) / (ry * ry || 1)))); g.fillRect(Math.round(cx - w), Math.round(cy + y), w * 2 + 1, 1); }
+  }
+  function q8(c) { return c.map(function (v) { return Math.round(v / 8); }).join('.'); }
+
+  // the bands: the zenith to the horizon in flat steps, thinner as they near the horizon
+  function bands(ctx, w, hz, s) {
+    var N = 11, prev = 0;
+    for (var i = 0; i < N; i++) {
+      var y1 = i === N - 1 ? hz : Math.round(hz * (1 - Math.pow(1 - (i + 1) / N, 1.35)));
+      var t = Math.pow(i / (N - 1), 1.5);
+      var c = mix(s.zen, s.hor, t);
+      if (s.golden > 0.05 && i >= N - 4) c = mix(c, mix(s.hor, s.sunC, 0.4), s.golden * (i - N + 5) / 5 * 0.6);   // the warm belt
+      ctx.fillStyle = rgb(c); ctx.fillRect(0, prev, w, y1 - prev);
+      prev = y1;
+    }
+  }
+  function sun(ctx, w, hz, s) {
+    var k = (1 - s.thick) * cl((s.h - 5.6) * 2, 0, 1) * cl((20 - s.h) * 2, 0, 1);
+    if (k < 0.03) return;
+    var x = Math.round(w * (0.86 - 0.72 * s.u)), y = Math.round(hz + 4 - Math.sin(Math.PI * s.u) * hz * 0.92);
+    // the glow along the horizon under a low sun: wide flat rings, warm
+    if (s.golden > 0.08) {
+      var gk = s.golden * k, gw = Math.round(w * 0.32), gh = Math.round(hz * 0.34);
+      var G = sprite('hglow' + q8(s.sunC) + gw + 'x' + gh, gw * 2 + 2, gh * 2 + 2, function (g) {
+        [[1, 0.1], [0.68, 0.13], [0.4, 0.18]].forEach(function (r) { disc(g, gw + 1, gh + 1, Math.round(gw * r[0]), Math.round(gh * r[0]), rgb(s.sunC, r[1])); });
+      });
+      ctx.globalAlpha = Math.min(1, gk * 1.2); ctx.drawImage(G, x - gw - 1, Math.round(hz - gh * 0.55) - gh - 1); ctx.globalAlpha = 1;
+    }
+    var r = s.golden > 0.5 ? 7 : 6, S = sprite('sun' + q8(s.sunC) + r, 64, 64, function (g) {
+      [[30, 0.07], [20, 0.1], [13, 0.16]].forEach(function (q) { disc(g, 32, 32, q[0], q[0], rgb(s.sunC, q[1])); });
+      disc(g, 32, 32, r, r, rgb(mix(s.sunC, [255, 255, 255], 0.35)));
+      disc(g, 32, 32, r - 2, r - 2, rgb(mix(s.sunC, [255, 255, 255], 0.75)));
+    });
+    ctx.globalAlpha = k; ctx.drawImage(S, x - 32, y - 32); ctx.globalAlpha = 1;
+  }
+  function moon(ctx, w, hz, s) {
+    var k = cl((s.night - 0.15) * 2, 0, 1) * (1 - s.thick * 0.85);
+    if (k < 0.03) return;
+    var u = ((s.h - 19.6 + 24) % 24) / 10.4;
+    if (u > 1.05) return;
+    var x = Math.round(w * (0.84 - 0.68 * cl(u, 0, 1))), y = Math.round(hz - Math.sin(Math.PI * cl(u, 0.06, 0.94)) * hz * 0.78);
+    var ph = typeof BridgeClock !== 'undefined' && BridgeClock.moon ? BridgeClock.moon().phase : 0.5, pk = Math.round(ph * 24);
+    var M = sprite('moon' + pk + q8(s.zen), 48, 48, function (g) {
+      var p = pk / 24, R = 6, c = 24;
+      [[18, 0.06], [11, 0.1]].forEach(function (q) { disc(g, c, c, q[0], q[0], 'rgba(176,196,255,' + q[1] + ')'); });
+      disc(g, c, c, R, R, rgb(mix(s.zen, [220, 228, 250], 0.16)));          // the dark of it, earthshine
+      var cs = Math.cos(2 * Math.PI * p);
+      g.fillStyle = '#eaeff8';
+      for (var yy = -R; yy <= R; yy++) {
+        var hw = Math.sqrt(Math.max(0, R * R - yy * yy));
+        for (var xx = -Math.round(hw); xx <= Math.round(hw); xx++) {
+          var lit = p < 0.5 ? xx >= hw * cs : xx <= -hw * cs;
+          if (lit) g.fillRect(c + xx, c + yy, 1, 1);
+        }
+      }
+      g.globalCompositeOperation = 'source-atop'; g.fillStyle = '#c2cce0';     // the seas
+      g.fillRect(c - 3, c - 2, 2, 2); g.fillRect(c + 1, c + 1, 2, 1); g.fillRect(c - 1, c + 3, 1, 1); g.fillRect(c + 2, c - 3, 1, 1);
+    });
+    ctx.globalAlpha = k; ctx.drawImage(M, x - 24, y - 24); ctx.globalAlpha = 1;
+  }
+
+  // the stars, drawn once a size: three depths of them and the galaxy's band slanting up the sky (a white layer, laid on
+  // at the night's strength); a few bright ones twinkle in steps
+  var STARS = { key: '', c: null, bright: [] };
+  function stars(ctx, w, hz, s, now, ox) {
+    var k = cl((s.night - 0.25) * 1.6, 0, 1) * (1 - s.thick);
+    if (k < 0.02) return;
+    var key = w + 'x' + hz;
+    if (STARS.key !== key) {
+      var c = document.createElement('canvas'); c.width = w; c.height = hz;
+      var g = c.getContext('2d');
+      for (var x = 0; x < w; x++) {                                    // the band: two flat strips, a darker rift down it
+        var cy = hz * 0.95 - x * (hz * 0.9 / w) + Math.sin(x / 47) * 4;
+        g.fillStyle = 'rgba(200,210,255,0.05)'; g.fillRect(x, Math.round(cy - 22), 1, 44);
+        g.fillStyle = 'rgba(210,220,255,0.06)'; g.fillRect(x, Math.round(cy - 10 + Math.sin(x / 19) * 2), 1, 20);
+        g.fillStyle = 'rgba(0,0,20,0.08)'; g.fillRect(x, Math.round(cy - 2 + Math.sin(x / 13) * 3), 1, 3);
+      }
+      var n = Math.round(w * hz / 260);
+      for (var i = 0; i < n; i++) {
+        var sx = Math.floor(rnd(i * 3.1) * w), sy = Math.floor(rnd(i * 7.7) * hz), dep = rnd(i * 1.3);
+        var band = Math.abs(sy - (hz * 0.95 - sx * (hz * 0.9 / w))) < 18;
+        if (!band && dep < 0.35) continue;                                // the faint ones crowd the band
+        var a = dep > 0.93 ? 1 : dep > 0.7 ? 0.7 : 0.38, tint = rnd(i * 5.3);
+        g.fillStyle = tint > 0.85 ? 'rgba(255,214,180,' + a + ')' : tint < 0.15 ? 'rgba(180,200,255,' + a + ')' : 'rgba(240,244,255,' + a + ')';
+        g.fillRect(sx, sy, 1, 1);
+      }
+      STARS.bright = [];
+      for (var j = 0; j < 16; j++) STARS.bright.push([Math.floor(rnd(j * 9.1 + 4) * w), Math.floor(rnd(j * 2.9 + 1) * hz * 0.8), j]);
+      STARS.key = key; STARS.c = c;
+    }
+    var o = ((ox % w) + w) % w;
+    ctx.globalAlpha = k;
+    ctx.drawImage(STARS.c, o - w, 0); ctx.drawImage(STARS.c, o, 0);
+    STARS.bright.forEach(function (b) {
+      var on = REDUCE || rnd(b[2] * 3.7 + Math.floor(now / 900 + b[2] * 0.37)) > 0.22, x = (b[0] + o) % w, y = b[1];
+      ctx.fillStyle = '#f4f6ff'; ctx.fillRect(x, y, 1, 1);
+      if (on) { ctx.fillStyle = 'rgba(230,236,255,0.5)'; ctx.fillRect(x - 1, y, 3, 1); ctx.fillRect(x, y - 1, 1, 3); }
+    });
+    ctx.globalAlpha = 1;
+  }
+
+  // the aurora: curtains in flat bands of green into violet, swaying slowly (redrawn a few times a second, not every frame)
+  var AUR = { c: null, at: 0, key: '' };
+  function aurora(ctx, w, hz, s, now) {
+    var day = Math.floor(Date.now() / 86400000), cold = s.season === 'winter' || s.season === 'autumn' || s.season == null;
+    var on = (cold ? rnd(day * 3.3) > 0.3 : rnd(day * 7.7) > 0.75);
+    var k = on ? cl((s.night - 0.5) * 2.5, 0, 1) * (1 - s.thick) : 0;
+    if (k < 0.03) return;
+    var key = w + 'x' + hz;
+    if (!AUR.c || AUR.key !== key || (!REDUCE && now - AUR.at > 140)) {
+      var c = AUR.c && AUR.key === key ? AUR.c : document.createElement('canvas');
+      c.width = w; c.height = hz;
+      var g = c.getContext('2d'), t = REDUCE ? 0 : now;
+      g.clearRect(0, 0, w, hz);
+      for (var x = 0; x < w; x++) {
+        var y0 = hz * 0.3 + Math.sin(x / 110 + t / 5200) * hz * 0.08 + Math.sin(x / 37 + t / 2400) * 2;
+        var L = hz * (0.1 + 0.12 * (0.5 + 0.5 * Math.sin(x / 63 + t / 3300)));
+        var a = Math.round((0.45 + 0.55 * Math.sin(x * 0.7 + Math.sin(x / 23) * 3 + t / 1800) * (0.6 + 0.4 * Math.sin(x / 71 - t / 4100))) * 3) / 3;
+        if (a <= 0) continue;
+        var yb = Math.round(y0 + L);
+        g.fillStyle = 'rgba(190,255,220,' + (0.42 * a).toFixed(2) + ')'; g.fillRect(x, yb - 1, 1, 1);             // the bright lower hem
+        g.fillStyle = 'rgba(80,240,160,' + (0.26 * a).toFixed(2) + ')'; g.fillRect(x, Math.round(yb - L * 0.45), 1, Math.round(L * 0.45) - 1);
+        g.fillStyle = 'rgba(70,200,180,' + (0.15 * a).toFixed(2) + ')'; g.fillRect(x, Math.round(yb - L * 0.78), 1, Math.round(L * 0.33));
+        g.fillStyle = 'rgba(160,90,230,' + (0.1 * a).toFixed(2) + ')'; g.fillRect(x, Math.round(yb - L), 1, Math.round(L * 0.22));
+      }
+      AUR.c = c; AUR.at = now; AUR.key = key;
+    }
+    ctx.globalAlpha = k; ctx.drawImage(AUR.c, 0, 0); ctx.globalAlpha = 1;
+  }
+
+  // high cloud: wisps of cirrus (drifting) in a strip drawn once per light, and lens clouds parked over the far range's
+  // highest peaks (they ride with that range, as lenticulars stand still over their mountain)
+  var CIR = { key: '', c: null }, CW = 1536;
+  function cirrus(ctx, w, hz, s, now, offX) {
+    var key = q8(s.cLit) + q8(s.cSh) + hz;
+    if (CIR.key !== key) {
+      var H = Math.round(hz * 0.6), c = document.createElement('canvas'); c.width = CW; c.height = H;
+      var g = c.getContext('2d');
+      for (var i = 0; i < 16; i++) {
+        var x0 = Math.floor(rnd(i * 4.1 + 2) * CW), y0 = Math.floor(H * (0.12 + 0.8 * rnd(i * 6.7 + 1))), L = 50 + Math.floor(rnd(i * 2.3) * 120);
+        var rows = 2 + Math.floor(rnd(i * 8.9) * 3), bend = (rnd(i * 1.1) - 0.5) * 0.25;
+        for (var r = 0; r < rows; r++) {
+          var len = Math.round(L * (1 - r * 0.22) * (0.7 + 0.3 * rnd(i * 13 + r))), xs = x0 + Math.round(r * L * 0.12 + rnd(i * 5 + r) * 10);
+          for (var dx = 0; dx < len; dx += 2) {
+            var yy = Math.round(y0 + r + dx * bend * 0.2 + Math.sin(dx / 23 + i) * 1.2);
+            var edge = dx < 8 || dx > len - 10;
+            g.fillStyle = rgb(r === 0 && !edge ? s.cLit : s.cMid, edge ? 0.45 : 0.75);
+            g.fillRect((xs + dx) % CW, yy, 2, 1);
+          }
+        }
+      }
+      CIR.key = key; CIR.c = c;
+    }
+    var k = (1 - s.night * 0.65) * (0.55 + 0.45 * (1 - s.thick));
+    var o = Math.round(-(offX || 0) * 0.008 - (REDUCE ? 0 : now / 7000)) % CW;
+    if (o > 0) o -= CW;
+    ctx.globalAlpha = k;
+    for (var x = o; x < w; x += CW) ctx.drawImage(CIR.c, x, 0);
+    ctx.globalAlpha = 1;
+  }
+  var PEAKS = null;
+  function lensClouds(ctx, base, farIm, s, offX, w) {
+    if (!farIm) return;
+    if (!PEAKS) {                                                       // the far range's three highest summits, well apart
+      var c = document.createElement('canvas'); c.width = farIm.naturalWidth; c.height = farIm.naturalHeight;
+      var g = c.getContext('2d'); g.drawImage(farIm, 0, 0);
+      var d = g.getImageData(0, 0, c.width, c.height).data, tops = [];
+      for (var x = 0; x < c.width; x++) { var y = 0; while (y < c.height && !d[(y * c.width + x) * 4 + 3]) y++; tops.push(y); }
+      PEAKS = [];
+      for (var n = 0; n < 3; n++) {
+        var best = -1;
+        for (var x2 = 0; x2 < tops.length; x2++) if ((best < 0 || tops[x2] < tops[best]) && PEAKS.every(function (p) { return Math.min(Math.abs(p[0] - x2), tops.length - Math.abs(p[0] - x2)) > 220; })) best = x2;
+        if (best >= 0) PEAKS.push([best, tops[best]]);
+      }
+      PEAKS.W = c.width; PEAKS.H = c.height;
+    }
+    var k = (1 - s.night * 0.6) * (1 - s.thick * 0.7);
+    if (k < 0.05) return;
+    var ox = Math.round(-(offX || 0) * 0.015) % PEAKS.W;
+    if (ox > 0) ox -= PEAKS.W;
+    PEAKS.forEach(function (p, i) {
+      var L = sprite('lens' + i + q8(s.cLit) + q8(s.cSh), 110, 26, function (g) {
+        var plates = 2 + (i % 2), rx = 34 + i * 6;
+        for (var j = 0; j < plates; j++) {
+          var cy = 20 - j * 5, r = rx - j * 9;
+          disc(g, 55, cy, r, 3, rgb(s.cSh));                              // its shaded underside
+          disc(g, 55, cy - 1, r - 2, 2, rgb(s.cMid));
+          g.fillStyle = rgb(s.cLit); g.fillRect(55 - Math.round(r * 0.7), cy - 3, Math.round(r * 1.2), 1);    // the lit top
+        }
+      });
+      var y = base - 6 - PEAKS.H + p[1] - 30 - i * 3;
+      ctx.globalAlpha = k;
+      for (var x = ox + p[0] - 55; x < w; x += PEAKS.W) if (x > -110) ctx.drawImage(L, x, y);
+      ctx.globalAlpha = 1;
+    });
+  }
+
+  // choughs tumbling round the peaks in a loose flock, and now and then a lammergeier gliding across, wings held out
+  function birds(ctx, w, hz, s, now) {
+    if (s.night > 0.6 || s.thick > 0.6 || REDUCE) return;
+    var col = rgb(mix([28, 26, 38], s.hor, 0.25));
+    ctx.fillStyle = col;
+    var cx = w * (0.5 + 0.34 * Math.sin(now / 41000)), cy = hz * (0.58 + 0.12 * Math.sin(now / 13000));
+    for (var i = 0; i < 9; i++) {
+      var ang = now / (2600 + i * 310) + i * 2.1, rr = 8 + rnd(i * 3.3) * 26;
+      var x = Math.round(cx + Math.cos(ang) * rr * 1.6), y = Math.round(cy + Math.sin(ang) * rr * 0.6 + Math.sin(now / 700 + i) * 2);
+      var f = Math.floor(now / 150 + i * 1.7) % 4;
+      ctx.fillRect(x, y, 1, 1);
+      if (f === 0) { ctx.fillRect(x - 2, y - 1, 2, 1); ctx.fillRect(x + 1, y - 1, 2, 1); }
+      else if (f === 2) { ctx.fillRect(x - 2, y + 1, 2, 1); ctx.fillRect(x + 1, y + 1, 2, 1); }
+      else { ctx.fillRect(x - 2, y, 2, 1); ctx.fillRect(x + 1, y, 2, 1); }
+    }
+    var ph = (now / 70000) % 1;                                         // the lammergeier: once every seventy seconds
+    if (ph < 0.32) {
+      var e = ph / 0.32, ex = Math.round(w * (1.08 - 1.16 * e)), ey = Math.round(hz * (0.3 + 0.12 * e) + Math.sin(e * 9) * 3);
+      ctx.fillRect(ex - 6, ey, 13, 1); ctx.fillRect(ex - 4, ey - 1, 3, 1); ctx.fillRect(ex + 2, ey - 1, 3, 1);
+      ctx.fillRect(ex - 7, ey + 1, 2, 1); ctx.fillRect(ex + 6, ey + 1, 2, 1); ctx.fillRect(ex + 1, ey + 1, 4, 1);     // its wedge tail
+      ctx.fillStyle = rgb(mix([210, 150, 90], s.hor, 0.3)); ctx.fillRect(ex - 1, ey, 2, 1);                           // the rusty head
+    }
+  }
+
   function sky(ctx, w, h, now, still) {
     var v = !still && BridgeWorld.getView ? BridgeWorld.getView() : { offY: 0, offX: 0 };
-    var W = skyWeights();
-    var g = ctx.createLinearGradient(0, 0, 0, h);
-    [0, 0.4, 0.7, 1].forEach(function (at, i) { g.addColorStop(at, blend(W, function (p) { return p.sky[i]; })); });
-    ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
-    var starK = 0.05 * W.day + 0.95 * W.night + 0.45 * W.dusk;
-    for (var i = 0; i < (W.night > 0.3 ? 110 : 50); i++) {
-      var a = (0.25 + 0.35 * Math.abs(Math.sin(now / 1300 + i * 1.7))) * starK;
-      ctx.fillStyle = 'rgba(255,255,255,' + Math.min(1, a).toFixed(2) + ')';
-      ctx.fillRect((i * 137 + 11) % w, (i * 71) % Math.round(h * (i < 50 ? 0.35 : 0.55)), 1, 1);
-    }
-    var sunX = w * 0.2, sunY = h * (0.5 + 0.08 * W.dusk) + v.offY * 0.02;
-    var gl = PAL.day.glow.map(function (c, i) { return Math.round(c * W.day + PAL.dusk.glow[i] * W.dusk); }), ga = W.day + W.dusk;
-    if (ga > 0.02) {
-      var sg = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, h * 0.35);
-      sg.addColorStop(0, 'rgba(' + gl + ',' + (0.9 * ga).toFixed(2) + ')'); sg.addColorStop(0.08, 'rgba(' + gl + ',' + (0.6 * ga).toFixed(2) + ')'); sg.addColorStop(1, 'rgba(' + gl + ',0)');
-      ctx.fillStyle = sg; ctx.fillRect(0, 0, w, h);
-    }
-    if (W.night > 0.05) {                                      // the moon, high in the east, with a cold halo
-      var mx = Math.round(w * 0.74), my = Math.round(h * 0.16), mg = ctx.createRadialGradient(mx, my, 0, mx, my, h * 0.18);
-      mg.addColorStop(0, 'rgba(190,210,255,' + (0.35 * W.night).toFixed(2) + ')'); mg.addColorStop(1, 'rgba(190,210,255,0)');
-      ctx.fillStyle = mg; ctx.fillRect(0, 0, w, h);
-      ctx.globalAlpha = Math.min(1, W.night * 1.4);
-      ctx.fillStyle = '#e8eef8'; ctx.beginPath(); ctx.arc(mx, my, 5, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = '#c4cee0'; ctx.fillRect(mx - 2, my - 1, 2, 2); ctx.fillRect(mx + 1, my + 2, 1, 1);
-      ctx.globalAlpha = 1;
-    }
+    var s = skyState();
+    var base = Math.round(h * 0.64 + v.offY * 0.03), hz = Math.max(20, base - 4);
+    bands(ctx, w, hz, s);
+    ctx.fillStyle = rgb(s.hor); ctx.fillRect(0, hz, w, h - hz);
+    stars(ctx, w, hz, s, now, Math.round(-(v.offX || 0) * 0.004));
+    aurora(ctx, w, hz, s, now);
+    moon(ctx, w, hz, s);
+    sun(ctx, w, hz, s);
+    cirrus(ctx, w, hz, s, now, v.offX);
     // the far ranges: three bands of mountains (tools/bridge-art/hoarfell_range.py), coloured for the hour in flat bands,
-    // scrolled a whole pixel at a time; the sea of cloud below them, banked and drifting
-    var base = Math.round(h * 0.64 + v.offY * 0.03);
-    var lay = ranges(W);
+    // lit from the side the sun's on, scrolled a whole pixel at a time; haze laid flat over each one's lower slopes
+    var lay = ranges(s);
     if (lay) {
-      [[0, 0.015, -6], [1, 0.03, 6], [2, 0.05, 16]].forEach(function (L) {
+      lensClouds(ctx, base, RIMG[0], s, v.offX, w);
+      [[0, 0.015, -6, 0.25], [1, 0.03, 6, 0.14], [2, 0.05, 16, 0]].forEach(function (L) {
         var c = lay[L[0]], ox = Math.round(-(v.offX || 0) * L[1]) % c.width;
         if (ox > 0) ox -= c.width;
         var y = base + L[2] - c.height;
         for (var x = ox; x < w; x += c.width) ctx.drawImage(c, x, y);
+        if (L[3]) {
+          ctx.fillStyle = rgb(s.hor, L[3]); ctx.fillRect(0, y + Math.round(c.height * 0.62), w, Math.round(c.height * 0.38));
+        }
       });
     }
-    clouds(ctx, w, h, base, now, W);
+    birds(ctx, w, hz, s, now);
+    clouds(ctx, w, h, base, now, s, v.offX);
   }
 
   // ---- the ranges' colours through the day: four tones of snow and of rock, the line, the alpenglow on the peaks ----------
   var RPAL = {
-    day:   { snow: ['#9aa6d0', '#c0cce8', '#e4ecf8', '#fbfcff'], rock: ['#48527a', '#5e6890', '#7a84a8', '#969ebe'], line: '#262a4a', glow: [255, 214, 196], g: 0.18 },
-    dusk:  { snow: ['#6a5a90', '#9a7aa8', '#d8909c', '#ffb898'], rock: ['#33284e', '#463660', '#5e4672', '#7a5480'], line: '#1e1636', glow: [255, 136, 90], g: 0.55 },
+    day:   { snow: ['#9aaad4', '#c4d2ec', '#e6eefa', '#fcfdff'], rock: ['#48527a', '#5e6890', '#7a84a8', '#969ebe'], line: '#262a4a', glow: [255, 214, 196], g: 0.04 },
+    dusk:  { snow: ['#6a5a90', '#9a7aa8', '#e0949c', '#ffbc98'], rock: ['#33284e', '#463660', '#5e4672', '#7a5480'], line: '#1e1636', glow: [255, 136, 90], g: 0.6 },
     night: { snow: ['#2e3660', '#3e4a78', '#56649a', '#7a8aba'], rock: ['#121628', '#1a2038', '#222a48', '#2c3658'], line: '#080a16', glow: [0, 0, 0], g: 0 }
   };
   var RIMG = null, RCACHE = { key: '', lay: null };
-  function ranges(W) {
+  function ranges(s) {
     if (!RIMG) {
       RIMG = ['far', 'mid', 'near'].map(function (n) {
         var im = new Image(); im.src = '/bridge/assets/backdrops/hoarfell/range_' + n + '.png'; return im;
       });
     }
     if (!RIMG.every(function (im) { return im.complete && im.naturalWidth; })) return RCACHE.lay;
-    var key = [W.day, W.dusk, W.night].map(function (x) { return Math.round(x * 20); }).join(',');
+    var W = { night: s.night, dusk: s.golden * (1 - s.night), day: 0 }; W.day = Math.max(0, 1 - W.night - W.dusk);
+    // the light from the east in the morning, the west in the evening, both (overhead) about noon; the moon's at night
+    var f = s.up ? cl((s.h - 9.5) / 5, 0, 1) : cl(1 - ((s.h - 19.6 + 24) % 24) / 10.4, 0, 1);
+    var key = [W.day, W.dusk, W.night, f, s.thick].map(function (x) { return Math.round(x * 16); }).join(',') + q8(s.hor);
     if (RCACHE.key === key && RCACHE.lay) return RCACHE.lay;
-    function mix(f) {
-      var a = f(RPAL.day), b = f(RPAL.dusk), c = f(RPAL.night);
+    function pm(g) {
+      var a = g(RPAL.day), b = g(RPAL.dusk), c = g(RPAL.night);
       if (typeof a === 'string') { a = hex(a); b = hex(b); c = hex(c); }
       if (typeof a === 'number') return a * W.day + b * W.dusk + c * W.night;
       return [0, 1, 2].map(function (i) { return a[i] * W.day + b[i] * W.dusk + c[i] * W.night; });
     }
-    var snow = [0, 1, 2, 3].map(function (i) { return mix(function (p) { return p.snow[i]; }); });
-    var rock = [0, 1, 2, 3].map(function (i) { return mix(function (p) { return p.rock[i]; }); });
-    var line = mix(function (p) { return p.line; }), glow = mix(function (p) { return p.glow; }), gs = mix(function (p) { return p.g; });
+    var snow = [0, 1, 2, 3].map(function (i) { return pm(function (p) { return p.snow[i]; }); });
+    var rock = [0, 1, 2, 3].map(function (i) { return pm(function (p) { return p.rock[i]; }); });
+    var line = pm(function (p) { return p.line; }), glow = pm(function (p) { return p.glow; }), gs = pm(function (p) { return p.g; });
+    var sk = s.hor;
     RCACHE.lay = RIMG.map(function (im, li) {
       var c = document.createElement('canvas'); c.width = im.naturalWidth; c.height = im.naturalHeight;
       var x = c.getContext('2d'); x.drawImage(im, 0, 0);
       var d = x.getImageData(0, 0, c.width, c.height), p = d.data;
-      var haze = [0.35, 0.18, 0][li];                          // the farther, the more of the sky's colour
-      var sk = mix(function (q) { return q.sky[3]; });
+      var haze = Math.min(0.85, [0.36, 0.2, 0.04][li] + s.thick * [0.45, 0.35, 0.25][li]);   // the farther, the more of the sky
       for (var i = 0; i < p.length; i += 4) {
         if (!p[i + 3]) continue;
-        var band = Math.min(3, (p[i] / 64) | 0), m = p[i + 1], col;
+        var west = p[i] >> 4, east = p[i] & 15, L = (east + (west - east) * f) / 16;
+        var band = Math.min(3, (L * 4) | 0), m = p[i + 1], col;
         if (m === 255) col = line;
         else {
           col = (m === 128 ? snow : rock)[band];
@@ -385,43 +656,69 @@ var BridgeHoarfell = (function () {
     RCACHE.key = key;
     return RCACHE.lay;
   }
-  RPAL.day.sky = PAL.day.sky; RPAL.dusk.sky = PAL.dusk.sky; RPAL.night.sky = PAL.night.sky;
 
-  // the sea of cloud: banks of puffs in three flat tones (shadowed base, body, lit tops), each bank its own drift, laid out
-  // once from a seed so they never shuffle; a whole pixel at a time
-  var CL = null;
-  function rnd(i) { var x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }
-  function clouds(ctx, w, h, base, now, W) {
-    var c0 = blend(W, function (p) { return p.cloud[0]; }), c1 = blend(W, function (p) { return p.cloud[1]; }), c2 = blend(W, function (p) { return p.cloud[2]; });
-    var top = base + 4, span = 1024;
+  // the sea of cloud: rows of banked puffs in four flat tones (the shadowed base, the body, the lit tops, a bright rim on
+  // the sun's side at a low sun), laid out once from a seed and drawn once per light into a strip a row; each row slides
+  // with its own drift and with the camera at its depth (the far rows slowest), a whole pixel at a time
+  var CL = null, CLC = { key: '', rows: null }, SPAN = 1024, ROWH = 96, ROWS = 12;
+  function clouds(ctx, w, h, base, now, s, offX) {
+    var c0 = s.cSh, c1 = s.cMid, c2 = s.cLit, c3 = mix(mix(s.cLit, [255, 255, 255], 0.45), s.sunC, 0.2);
+    var top = base + 4;
     if (!CL) {
       CL = [];
-      for (var r = 0; r < 6; r++) {
-        var bank = [], x = 0, i = 0;
-        while (x < span) {
-          var big = rnd(r * 977 + i * 13) < 0.25;
-          var rx = (big ? 26 : 12) + rnd(r * 31 + i * 7) * (big ? 20 : 14) + r * 2;
-          bank.push({ x: x, rx: rx, ry: rx * (0.32 + 0.12 * rnd(i * 3 + r)), dy: Math.round((rnd(i * 5 + r * 17) - 0.5) * 6) });
-          x += rx * (0.9 + 0.7 * rnd(i * 11 + r));
+      for (var r = 0; r < ROWS; r++) {
+        var bank = [], x = 0, i = 0, sc = 0.62 + r * 0.16;                      // the nearer the row, the bigger its heaps
+        while (x < SPAN) {
+          var big = rnd(r * 977 + i * 13) < 0.3;
+          var rx = ((big ? 24 : 11) + rnd(r * 31 + i * 7) * (big ? 18 : 12)) * sc;
+          var pf = { x: x, rx: rx, ry: rx * (0.34 + 0.14 * rnd(i * 3 + r)), dy: Math.round((rnd(i * 5 + r * 17) - 0.5) * 7 * sc), kids: [] };
+          if (big) for (var j = 0; j < 2; j++) pf.kids.push([(rnd(i * 7 + j + r) - 0.5) * rx * 0.9, -pf.ry * (0.45 + 0.3 * rnd(i * 2 + j)), rx * (0.32 + 0.16 * rnd(i + j * 5))]);
+          bank.push(pf);
+          x += rx * (0.8 + 0.8 * rnd(i * 11 + r));
           i++;
         }
         CL.push(bank);
       }
     }
-    ctx.fillStyle = c0; ctx.fillRect(0, top + 6, w, h - top);
-    for (var r2 = 0; r2 < CL.length; r2++) {
-      var yy = top + 4 + r2 * (8 + r2 * 2), drift = Math.round(now / (900 + r2 * 400)) * (r2 % 2 ? 1 : -1);
-      for (var pass = 0; pass < 3; pass++) {
-        ctx.fillStyle = [c0, c1, c2][pass];
-        CL[r2].forEach(function (p) {
-          var cx = ((p.x + drift) % span + span) % span;
-          for (var o = cx - span; o < w + p.rx; o += span) {
-            if (o < -p.rx * 2) continue;
-            var k = [1, 0.86, 0.5][pass], up = [0, -2, -p.ry * 0.45][pass];
-            ctx.beginPath(); ctx.ellipse(Math.round(o), Math.round(yy + p.dy + up + (pass ? 0 : 2)), Math.round(p.rx * k), Math.max(2, Math.round(p.ry * k)), 0, 0, Math.PI * 2); ctx.fill();
+    var key = q8(c0) + q8(c2) + q8(c3) + Math.round(s.golden * 4) + (s.h > 12 ? 'e' : 'm');
+    if (CLC.key !== key) {
+      var side = s.h > 12 ? -1 : 1;                                          // the sun's side: west in the evening
+      CLC.rows = CL.map(function (bank) {
+        var cv = document.createElement('canvas'); cv.width = SPAN; cv.height = ROWH;
+        var g = cv.getContext('2d'), yy = ROWH - 26;
+        function ell(cx, cy, rx, ry) {
+          for (var o = -SPAN; o <= SPAN; o += SPAN) {
+            var x = cx + o;
+            if (x < -rx - 2 || x > SPAN + rx + 2) continue;
+            g.beginPath(); g.ellipse(Math.round(x), Math.round(cy), Math.max(1, Math.round(rx)), Math.max(1, Math.round(ry)), 0, 0, Math.PI * 2); g.fill();
           }
+        }
+        // the shade under every heap, then the bodies (the bumps on the big ones too), the lit caps, a bright rim at a low sun
+        g.fillStyle = rgb(c0); bank.forEach(function (p) { ell(p.x, yy + p.dy + 3, p.rx * 1.05, p.ry); });
+        g.fillStyle = rgb(c1); bank.forEach(function (p) {
+          ell(p.x, yy + p.dy, p.rx * 0.9, p.ry * 0.86);
+          p.kids.forEach(function (k) { ell(p.x + k[0], yy + p.dy + k[1], k[2], k[2] * 0.62); });
         });
-      }
+        g.fillStyle = rgb(c2); bank.forEach(function (p) {
+          ell(p.x + side * p.rx * 0.08, yy + p.dy - p.ry * 0.34, p.rx * 0.72, p.ry * 0.52);
+          p.kids.forEach(function (k) { ell(p.x + k[0] + side * k[2] * 0.12, yy + p.dy + k[1] - k[2] * 0.2, k[2] * 0.78, k[2] * 0.42); });
+        });
+        if (s.golden > 0.2) {
+          g.fillStyle = rgb(c3); bank.forEach(function (p) {
+            p.kids.forEach(function (k) { ell(p.x + k[0] + side * k[2] * 0.3, yy + p.dy + k[1] - k[2] * 0.36, k[2] * 0.42, Math.max(1, k[2] * 0.16)); });
+          });
+        }
+        g.fillStyle = rgb(c0); g.fillRect(0, yy + 8, SPAN, ROWH - yy - 8);
+        return cv;
+      });
+      CLC.key = key;
+    }
+    ctx.fillStyle = rgb(c0); ctx.fillRect(0, top + 6, w, h - top);
+    for (var r3 = 0, yr = top + 2; r3 < CLC.rows.length && yr - 40 < h; r3++) {
+      var drift = (REDUCE ? 0 : Math.round(now / (900 + r3 * 350))) * (r3 % 2 ? 1 : -1) - Math.round((offX || 0) * (0.05 + r3 * 0.03));
+      var ox = ((drift % SPAN) + SPAN) % SPAN - SPAN;
+      for (var x3 = ox; x3 < w; x3 += SPAN) ctx.drawImage(CLC.rows[r3], x3, yr - (ROWH - 26));
+      yr += Math.round(7 + r3 * 3.2);
     }
   }
 
