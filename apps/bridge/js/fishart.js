@@ -52,7 +52,9 @@ var BridgeFishArt = (function () {
     crownfin:       { depth: 0.32, peak: 0.45, tail: 'crescent', dorsal: 'crown', bill: true, line: true, glow: '#a0d0ff', c: ['#0a2a6a', '#2a5ac0', '#d0e8ff', '#4080e0', '#ffffff'] },
     dawnveil:       { shape: 'ray', veil: true, pattern: 'spots', glow: '#ffb0d8', c: ['#8a2a5a', '#e070a0', '#ffd0e8', '#ff90c0', '#fff0f8'] },
     emberjaw:       { depth: 0.22, peak: 0.4, tail: 'fork', dorsal: 'aft', jaw: 'fire', snout: true, pattern: 'flames', glow: '#ffa030', c: ['#3a0a08', '#8a1a10', '#e05a20', '#c02a10', '#ffd040'] },
-    nightglass:     { depth: 0.4, tail: 'coel', dorsal: 'low', lobes: true, pattern: 'stars', glow: '#a0a0ff', c: ['#0a0818', '#2a2850', '#5a5a90', '#3a3a70', '#d0d0ff'] }
+    nightglass:     { depth: 0.4, tail: 'coel', dorsal: 'low', lobes: true, pattern: 'stars', glow: '#a0a0ff', c: ['#0a0818', '#2a2850', '#5a5a90', '#3a3a70', '#d0d0ff'] },
+    // not caught: won at Lantern Row's scoop (js/oldquarter.js), and it lives in a fish tank (js/aquarium.js)
+    goldfish_bag:   { depth: 0.46, peak: 0.42, tail: 'fan', dorsal: 'low', c: ['#e05a08', '#ff9a1c', '#ffd890', '#ffb040', '#fff4d0'] }
   };
   var INK = '#0a0810';
 

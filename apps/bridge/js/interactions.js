@@ -1534,6 +1534,7 @@ var BridgeInteractions = (function () {
       if (face) face.set('neutral');
       say(t.a);
       if (t.rumour && typeof BridgeQuests !== 'undefined' && BridgeQuests.hear) BridgeQuests.hear(t.rumour, person.name);   // gossip about a quest: into the journal
+      if (t.lead && typeof BridgeQuests !== 'undefined' && BridgeQuests.lead) BridgeQuests.lead(t.lead, person.name);      // gossip about something else real (assets/leads.json)
       if (t.begin && typeof BridgeQuests !== 'undefined' && BridgeQuests.begin) BridgeQuests.begin(t.begin, person.name);  // asked for it (the first hour): under way now
     }
     function close() {

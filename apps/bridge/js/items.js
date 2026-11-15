@@ -194,6 +194,31 @@ var BridgeItems = (function () {
     ctx.fillRect(x + 4*u, y + 13*u, 8*u, u);
   }
 
+  // ---- Shared onUse for a thing you made that's also a piece of decor (`decor: { slot, key, text }`: the glass float you
+  // blow is the catalog's Glass Float, js/catalog.js): put up in your quarters for nothing, taken from your pack once it's
+  // there. One of each (the decor store keeps one a key); js/catalog.js remembers it was made, so it sells for its worth.
+  var decorBusy = false;
+  function decorUse(inv) {
+    var d = this.decor, self = this;
+    if (!d || decorBusy) return false;
+    function tell(t) { if (typeof BridgeInteractions !== 'undefined' && BridgeInteractions.say) BridgeInteractions.say(self.name.toUpperCase(), t); }
+    if (typeof BridgeProgression === 'undefined' || !BridgeProgression.purchaseDecor) { tell('NOWHERE TO PUT IT UP JUST NOW.'); return false; }
+    decorBusy = true;
+    BridgeProgression.purchaseDecor(d.slot, d.key, 0).then(function (res) {
+      decorBusy = false;
+      if (res && res.ok) {
+        inv.removeItem(self.id, 1);
+        if (typeof BridgeCatalog !== 'undefined' && BridgeCatalog.madeAdd) BridgeCatalog.madeAdd(d.key, 1);
+        if (typeof BridgeQuarters !== 'undefined' && BridgeQuarters.refreshDecor) BridgeQuarters.refreshDecor();
+        tell(res.destination === 'locker' ? 'THE SHELF IN YOUR QUARTERS HAS SOMETHING ON IT ALREADY, SO IT GOES IN YOUR LOCKER, READY TO SWAP IN.'
+                                          : 'IT GOES ON THE SHELF IN YOUR QUARTERS, WHERE THE LIGHT CAN COME THROUGH IT LIKE THE SEA.');
+        if (typeof BridgeQuests !== 'undefined' && BridgeQuests.toast) BridgeQuests.toast('Decor', self.name, 'On the shelf in your quarters');
+      } else if (res && res.reason === 'already_owned') tell('THERE\'S ONE IN YOUR QUARTERS ALREADY. KEEP THIS ONE FOR A GIFT, OR A WINDOW SOMEBODY ELSE HAS.');
+      else tell('YOU CAN\'T PUT IT UP JUST NOW. TRY AGAIN IN A MOMENT.');
+    }, function () { decorBusy = false; tell('YOU CAN\'T PUT IT UP JUST NOW. TRY AGAIN IN A MOMENT.'); });
+    return false;
+  }
+
   // ---- Shared onUse for any item whose effects field is HP/energy. The
   // function uses `this` to read effects so each entry shares the same
   // reference — keep behavior and the inventory-detail display in sync.
@@ -1710,9 +1735,11 @@ var BridgeItems = (function () {
     silk_scarf:    { id: 'silk_scarf', name: 'Spore Silk Scarf', desc: 'Woven for you on Seren\'s loom from five cocoons you gathered. It glows like a lamp turned low. Anyone would love it.',
                      type: 'material', stackable: true, draw: scarfIcon, value: 90 },
     glass_float:   { id: 'glass_float', name: 'Glass Float', desc: 'A fisherman\'s float of blue Sapphire glass in a net of cord. Hang one in a window and the light comes through it like the sea.',
-                     type: 'material', stackable: true, draw: floatIcon, value: 18 },
+                     type: 'material', stackable: true, draw: floatIcon, value: 18,
+                     decor: { slot: 'shelf', key: 'glass_float', text: 'use it from the hotbar to put it on the shelf in your quarters' }, onUse: decorUse },
     caldera_lantern: { id: 'caldera_lantern', name: 'Caldera Lantern', desc: 'Blue Sapphire glass in a tin frame, from the lantern maker at Lanternfall. It has never once blown out, she says.',
-                     type: 'material', stackable: true, draw: lanternIcon, value: 24 },
+                     type: 'material', stackable: true, draw: lanternIcon, value: 24,
+                     carried: { bite: 0.8, dark: true, text: 'after dark, fish come up to its light and bite sooner' } },
     glimmer_lantern: { id: 'glimmer_lantern', name: 'Glimmer Lantern', desc: 'A lantern that burns brighter near hidden things. Hold it to see them; use it to ask which way is warmer.',
                      type: 'tool', stackable: false, draw: lanternIcon, value: 80,
                      onUse: function () { if (typeof BridgeMagic !== 'undefined') BridgeMagic.lantern(); return false; } },

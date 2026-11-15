@@ -1806,6 +1806,7 @@ var BridgeEvents = (function () {
     autograph: { name: 'Autograph', desc: 'Signed in silver ink, outside the Neon Royale: "To my favourite pilot." Worth something to the right collector.', type: 'trophy', value: 40,
       draw: function (ctx, x, y, s) { var u = s / 16; px(ctx, x, y, u, O, [[2, 3, 12, 11]]); px(ctx, x, y, u, '#f4f0e8', [[3, 4, 10, 9]]); px(ctx, x, y, u, '#9a9ab8', [[4, 7, 3, 1], [6, 8, 4, 1], [9, 7, 2, 1], [10, 6, 2, 1]]); px(ctx, x, y, u, '#e870c0', [[11, 11, 1, 1]]); } },
     leaf_lantern: { name: 'Leaf Lantern', desc: 'Pressed on you by an elf in the lantern procession. It doesn\'t need oil and it doesn\'t go out.', type: 'trophy', value: 25,
+      carried: { bite: 0.8, dark: true, text: 'after dark, fish come up to its light and bite sooner' },
       draw: function (ctx, x, y, s) { var u = s / 16; px(ctx, x, y, u, O, [[6, 2, 4, 1], [5, 3, 6, 10]]); px(ctx, x, y, u, '#3e6e34', [[5, 3, 6, 2]]); px(ctx, x, y, u, '#e0a040', [[6, 5, 4, 7]]); px(ctx, x, y, u, '#fff0b8', [[7, 7, 2, 3]]); } }
   };
   function addItems() {

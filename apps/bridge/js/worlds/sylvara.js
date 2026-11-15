@@ -238,6 +238,25 @@ var BridgeSylvara = (function () {
     if (k === 'brew' && typeof BridgeBrewing !== 'undefined') return BridgeBrewing.open(line ? '"' + line + '"' : null);
     if (k === 'range' && typeof BridgeBows !== 'undefined') return BridgeBows.use({ kind: 'range' });
     if (k === 'canoe' && typeof BridgeCanoe !== 'undefined') return BridgeCanoe.hire(person, line);
+    if (k === 'fold') return fold(line);
+  }
+  // Wren folds a chip of the Crater's ember glass (Lumar, Cinder Key) behind the heads of fire arrows: one makes four
+  var MAKES = [{ in: 'ember_glass', n: 1, out: 'fire_arrow', makes: 4, where: 'Wren\'s lantern stall in the Rootmarket' }];   // (js/uses.js)
+  function fold(line, said) {
+    if (typeof BridgeInventory === 'undefined' || typeof BridgeInteractions === 'undefined') return;
+    var M = MAKES[0], have = BridgeInventory.getCount(M.in);
+    BridgeInteractions.choose({
+      title: 'Wren\'s fire arrows',
+      text: said || (line ? '"' + line + '"' : ''),
+      rows: [{ label: 'Fire arrows from ember glass', icon: M.out, sub: 'one piece of ember glass makes ' + M.makes, note: have ? 'you have ' + have : 'none on you', disabled: !have,
+               pick: function () {
+                 if (!BridgeInventory.removeItem(M.in, M.n)) return fold(line, 'YOU HAVEN\'T ANY EMBER GLASS ON YOU.');
+                 if (BridgeInventory.addItem(M.out, M.makes) === false) { BridgeInventory.addItem(M.in, M.n); return fold(line, 'YOUR PACK\'S FULL. MAKE ROOM AND COME BACK.'); }
+                 if (typeof BridgeAudio !== 'undefined') BridgeAudio.sfx('pickup');
+                 fold(line, 'SHE TAPS THE GLASS INTO CHIPS, TUCKS ONE BEHIND EACH HEAD AND BINDS THE TOW OVER IT. "FOUR. THEY\'LL CATCH THE MOMENT THEY LEAVE THE STRING."');
+               } }],
+      closeLabel: 'Done'
+    });
   }
 
   /** Every lantern of a group lit by fire arrows (js/bows.js): what that opens. */
@@ -488,5 +507,5 @@ var BridgeSylvara = (function () {
   }
   setTimeout(reg, 0);
 
-  return { over: over, decorate: decorate, use: use, topic: topic, groupLit: groupLit, rangeOpen: rangeHours, isOpen: isOpen, OPEN: OPEN, JOINS: JOINS, SHOPS: SHOPS };
+  return { over: over, decorate: decorate, use: use, topic: topic, MAKES: MAKES, groupLit: groupLit, rangeOpen: rangeHours, isOpen: isOpen, OPEN: OPEN, JOINS: JOINS, SHOPS: SHOPS };
 })();
