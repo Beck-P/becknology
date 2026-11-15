@@ -86,7 +86,10 @@ const NIGHT = '2026-10-16T07:20', DAY = '2026-10-16T12:00';           // Lumar's
   if (traders.wrong) bad(traders.wrong + ' traders shown in the Crimson or the Midnight Sea');
 
   // a crowded calm sea: the stretch of water with the most ships in view right now
-  const best = await p.evaluate(() => {
+  // (ships keep sailing while the camera gets there: look again, up to three times, before calling the sea quiet)
+  let best, vis;
+  for (let attempt = 0; attempt < 3; attempt++) {
+  best = await p.evaluate(() => {
     const T = Date.now() / 1000, S = BridgeSloop._shipsAt(T).filter(s => s.shown);
     let top = null, n = 0;
     S.forEach(a => { const c = S.filter(b => Math.abs(b.X - a.X) < 12 && Math.abs(b.Y - a.Y) < 8); if (c.length > n) { n = c.length; top = c; } });
@@ -95,8 +98,10 @@ const NIGHT = '2026-10-16T07:20', DAY = '2026-10-16T12:00';           // Lumar's
   });
   console.log('busiest water', best.n, 'ships on the routes there');
   await goTo(best.cx, best.cy);
-  let vis = await seen(true);
+  vis = await seen(true);
   console.log('in view', vis.length, JSON.stringify(vis.map(v => v.kind)));
+  if (vis.length >= 2) break;
+  }
   if (vis.length < 2) bad('a quiet sea where it should be busy: ' + vis.length + ' in view');
   vis = await seen();
   const me = await p.evaluate(() => { const b = BridgeSloop._boat(); return { x: b.x, r: b.r, h: b.h, L: 3.2, B: 1.23 }; });   // where she was as they were measured

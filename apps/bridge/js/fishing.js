@@ -667,6 +667,7 @@ var BridgeFishing = (function () {
   function esc(t) { return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 
   function onKey(e) {
+    if (!card && document.querySelector('#world-overlay .world-dialog')) return;   // a line over the water has the keys (its Esc or ✕ closed the rod too)
     var act = ['e', 'E', ' ', 'Enter'].indexOf(e.key) >= 0;
     if (act) keyDown = e.type === 'keydown';
     if (card) {

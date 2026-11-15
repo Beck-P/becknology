@@ -195,7 +195,7 @@ var BridgeVillage = (function () {
     if (!ringOpen()) return [];
     var rows = [], w = wantNow();
     if (judging()) rows.push({ label: 'Best Kept Village: the judge\'s report', sub: 'pinned on top, this week', note: 'read it', icon: verdict().rosette, pick: bestKept });
-    if (w) rows.push({ label: 'This week: ' + w.name.replace(/^A /, 'a ').replace(/^Tubs/, 'tubs'), sub: fmt(w.cost) + ' coins and ' + needsText(w), note: short(w).length ? 'need things' : 'can do', draw: ringIcon(w.kind), pick: function () { wantDetail(w); } });
+    if (w) rows.push({ label: 'This week: ' + w.name.replace(/^A /, 'a ').replace(/^Tubs/, 'tubs'), sub: fmt(w.cost) + ' coins and ' + needsText(w), note: short(w).length ? 'you\'re short - ' + (document.documentElement.classList.contains('touch') ? 'tap' : 'pick it') + ' to see' : 'you can pay for it now', draw: ringIcon(w.kind), pick: function () { wantDetail(w); } });
     else if (wantsDone().length < WANTS.length) rows.push({ label: 'Next week\'s little want', sub: 'goes up on Monday', disabled: true });
     wantsDone().forEach(function (d) { rows.push({ label: d.name, sub: 'done', draw: ringIcon(d.kind), disabled: true }); });
     return rows;

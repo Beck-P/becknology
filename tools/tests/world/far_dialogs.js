@@ -1,6 +1,6 @@
 const { chromium } = require('playwright');
-// Old long dialogs after the shared dialog changes of js/fardeep.js's work (a long read or verse: `wd-long`; a dialog
-// past 80% of a desktop window scrolls inside its card): Bess's topics at Diggen's Point, the Market Square's bulletin
+// Old long dialogs after the verse change of js/fardeep.js's work (js/interactions.js `reflow`: a paragraph starting
+// with two spaces keeps its lines) and the phone pass: Bess's topics at Diggen's Point, the Market Square's bulletin
 // board, the end of Under the Willow, each at desktop and phone size, measured to be on the screen and shot
 // (`shots/fd_old_*.png`). A look, with a check that nothing runs off the screen. node world/far_dialogs.js [shots]
 const OUT = process.argv[2] || __dirname + '/shots';
@@ -21,7 +21,7 @@ const OUT = process.argv[2] || __dirname + '/shots';
     const measure = async (name) => {
       await p.waitForTimeout(900); await finish(); await p.waitForTimeout(400);
       const r = await p.evaluate(() => { const d = document.querySelector('#world-overlay .world-dialog'); if (!d) return null; const b = d.getBoundingClientRect();
-        return { top: Math.round(b.top), bottom: Math.round(b.bottom), h: innerHeight, long: d.classList.contains('wd-long'), scrolls: d.scrollHeight > d.clientHeight + 2 }; });
+        return { top: Math.round(b.top), bottom: Math.round(b.bottom), h: innerHeight, scrolls: d.scrollHeight > d.clientHeight + 2 }; });
       console.log((phone ? 'phone ' : 'desktop ') + name + ':', JSON.stringify(r));
       if (!r || r.top < 0 || r.bottom > r.h + 1) fail(name + ' off the screen');
       await p.screenshot({ path: OUT + '/fd_old_' + name + (phone ? '_phone' : '') + '.png' });

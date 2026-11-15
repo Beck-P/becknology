@@ -971,11 +971,9 @@ html:not(.in-world):not(.keys-mode) .dpad { display: none !important; }
   padding: 16px 20px 12px;
   font-family: 'Pixelify Sans', 'Courier New', monospace;
   box-sizing: border-box;
+  max-height: calc(84vh - 8px); overflow-y: auto; overscroll-behavior: contain;   /* centred at 58%: never past the screen's foot; a long one scrolls */
 }
 .world-dialog.visible { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-/* a long one (Thaelin's whole song, js/fardeep.js) scrolls inside the card rather than running off the screen */
-html:not(.touch) .world-dialog { max-height: 80vh; overflow-y: auto; overscroll-behavior: contain; }
-html.touch body:has(.world-dialog.wd-long) #world-overlay { z-index: 74; }   /* on a phone a long read sits over the pills, the stick and the hotbar (it has its own Close) */
 .wd-body { flex: 1; min-width: 0; }
 .wd-title { font-size: 13px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; }
 .wd-text { font-size: 15px; line-height: 1.45; white-space: pre-wrap; min-height: 2.9em; }
@@ -1254,7 +1252,7 @@ html.touch #sound-pill .ip-key { display: none; }
 
 /* Fishing off the piers (js/fishing.js): a strip of night sea under the pier */
 #fishing {
-  position: fixed; left: 50%; bottom: 96px; transform: translateX(-50%); z-index: 40;      /* above the hotbar */
+  position: fixed; left: 50%; bottom: 96px; transform: translateX(-50%); z-index: 55;      /* over the coins (50): at the top of a phone its close sat under them */
   width: min(440px, 94vw); box-sizing: border-box; display: none; padding: 10px 12px 12px; border-radius: 6px;
   background: linear-gradient(180deg, rgba(26, 20, 14, 0.96), rgba(14, 10, 8, 0.96)); color: #e8dcc4;
   border: 1px solid rgba(224, 192, 96, 0.45); box-shadow: 0 12px 34px rgba(0, 0, 0, 0.6);
@@ -1759,21 +1757,46 @@ html.touch .world-dialog {
   html.touch .world-dialog.wd-has-art { max-height: calc(var(--vvh, 100vh) - 150px); }
 }
 @media (orientation: landscape) and (max-height: 520px) {
-  html.touch .world-dialog { width: min(600px, 94vw); padding: 10px 14px 8px; gap: 10px; }
+  html.touch .world-dialog { width: min(600px, 94vw); padding: 10px 14px 8px; gap: 10px; top: 50%; }   /* centred: at 58% a full-height card ran off the foot */
   html.touch .wd-portrait { width: 68px; height: 68px; flex-basis: 68px; }
   html.touch .wd-convo .wd-options { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-top: 6px; }
   html.touch .wd-opt { padding: 6px 10px; }
 }
 html.touch .wd-opt { min-height: 38px; }
+html.touch .wd-sell-row.pick { min-height: 38px; box-sizing: border-box; }   /* a chooser's row is a button too */
+/* a long conversation on a phone held upright (Bess has eleven topics): the face tucked into the corner so the topics
+   get the card's whole width, and seven or more go two to a row (Goodbye across the foot) — the card stays short enough
+   that what they said is still in view above them; anything longer still scrolls inside the card */
+@media (orientation: portrait) {
+  html.touch .world-dialog.wd-convo { display: block; }
+  html.touch .wd-convo .wd-portrait { float: left; margin: 0 10px 2px 0; }
+  html.touch .wd-convo .wd-options { clear: both; }
+  html.touch .wd-convo .wd-options:has(> .wd-opt:nth-child(7)) { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+  html.touch .wd-convo .wd-options:has(> .wd-opt:nth-child(7)) > .wd-opt { padding: 6px 8px; line-height: 1.2; }
+  html.touch .wd-convo .wd-options:has(> .wd-opt:nth-child(7)) > .wd-opt::before { display: none; }
+  html.touch .wd-convo .wd-options:has(> .wd-opt:nth-child(7)) > .wd-opt:last-child { grid-column: 1 / -1; text-align: center; }
+}
 /* the key-cap hint becomes a tappable close button in the corner (js/interactions.js sends it as Esc) */
 html.touch .world-dialog { position: fixed; }
 html.touch .wd-hint {
-  position: absolute; top: 8px; right: 10px; margin: 0; opacity: 0.85; cursor: pointer;
-  font-size: 12px; padding: 4px 10px; border-radius: 999px; border: 1px solid color-mix(in srgb, currentColor 30%, transparent);
+  position: absolute; top: 6px; right: 8px; margin: 0; opacity: 0.85; cursor: pointer; box-sizing: border-box;
+  min-height: 36px; min-width: 44px; justify-content: center;
+  font-size: 12px; padding: 4px 12px; border-radius: 999px; border: 1px solid color-mix(in srgb, currentColor 30%, transparent);
 }
+html.touch .world-dialog:has(.wd-hint) .wd-title { padding-right: 84px; }   /* clear of it */
 html.touch .wd-hint .ip-key { display: none; }
 html.touch .wd-hint::after { content: ' \2715'; }
 html.touch.controls-off #inventory-panel { opacity: 0 !important; pointer-events: none; }   /* a dialog has the bottom of the screen */
+html.touch.dialog-up .dpad { visibility: hidden !important; }                            /* any world dialog, a plain line too (js/interactions.js) */
+html.touch.dialog-up #inventory-panel { opacity: 0 !important; pointer-events: none; }
+html.dialog-up #world-overlay { z-index: 61; }   /* a dialog over the HUD — its pills (25), the coins (50), the hotbar (60) — never under it; the menu (65) and the item card stay over */
+.wd-sell-row.pick .sp-have:empty, .wd-sell-row.pick .sp-price:empty { display: none; }   /* (a row with no detail: no blank lines under it on a phone) */
+/* the game menu's small buttons on a phone: a finger's worth (the Map buttons, Here / All places, Sort, the pack's acts) */
+html.touch #game-menu .gm-btn, html.touch .mp-seg button { min-height: 36px; }
+html.touch #game-menu .gm-btn-sm { padding: 6px 12px; }
+html.touch .mp-pins .mp-pin::after { content: ''; position: absolute; inset: -9px; border-radius: 50%; }   /* a 20-px pin, a 38-px tap */
+html.touch .mp-key { min-height: 36px; }
+html.touch .uses-more summary, html.touch #game-menu .uses-more > summary { padding: 10px 0; margin-top: 0; }   /* "and N more" under an item's Uses */
 html.touch .nav-head .ip-key { display: none; }
 html.touch .nav-head::before { content: '\2039'; font-size: 22px; line-height: 14px; margin: -3px 2px 0 6px; }
 html.touch .nav-hint { display: none; }
@@ -1793,6 +1816,10 @@ html.touch .nav-hint { display: none; }
 }
 html.touch .qj-close .ip-key { font-size: 0; min-width: 26px; height: 22px; }   /* the journal's and the letter rack's */
 html.touch .qj-close .ip-key::after { content: '\2715'; font-size: 13px; }
+/* a finger's worth (36 px at least) round every close and every button of the shared panels on a phone (phone_pass.js) */
+html.touch .qj-close { min-width: 40px; min-height: 40px; display: inline-flex; align-items: center; justify-content: center; margin: -8px -6px -8px 0; }
+html.touch .e8-controls button, html.touch .dt-controls button, html.touch .wd-btn, html.touch .sp-b { min-height: 38px; }
+html.touch .sp-b { min-width: 38px; }
 
 /* ---- Homes: the Furnish pill and the furnishing tray (js/home.js) ----
    The tray is a world-themed dialog (parchment in Lumar, neon in Arcadia,
@@ -3052,7 +3079,7 @@ html.item-get #interact-prompt { display: none !important; }
 .gb-keys { font-size: 12px; color: #a89c84; margin-top: 4px; }
 /* ---- Eights in the Wayfarer's mess (js/eights.js): green baize in an oak rim, the cards drawn a pixel at a time ---- */
 #eights {
-  position: fixed; inset: 0; z-index: 40; display: none; align-items: center; justify-content: center;
+  position: fixed; inset: 0; z-index: 55;   /* over the coins' pill (50), which sat on the close button on a small phone */ display: none; align-items: center; justify-content: center;
   background: rgba(8, 6, 4, 0.55); font-family: 'Pixelify Sans', 'Courier New', monospace; font-variant-ligatures: none;
 }
 #eights.visible { display: flex; }
@@ -3094,7 +3121,7 @@ html.item-get #interact-prompt { display: none !important; }
 .e8-help { font-size: 10px; color: rgba(234, 242, 228, 0.5); text-align: center; }
 html.touch .e8-keys { display: none; }
 /* ---- darts in a bar (js/darts.js): the board drawn a pixel at a time on a cork wall, a sweep to aim ---- */
-#darts { position: fixed; inset: 0; z-index: 40; display: none; align-items: center; justify-content: center;
+#darts { position: fixed; inset: 0; z-index: 55;   /* (over the coins: see #eights) */ display: none; align-items: center; justify-content: center;
   background: rgba(6, 4, 8, 0.6); font-family: 'Pixelify Sans', 'Courier New', monospace; font-variant-ligatures: none; }
 #darts.visible { display: flex; }
 .dt-panel { width: min(460px, 96vw); max-height: 96vh; overflow: auto; box-sizing: border-box; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px;
@@ -3132,8 +3159,12 @@ html.touch .dt-keys { display: none; }
 #transit-ride .tr-level.flash { animation: tr-level 2.6s ease forwards; }
 @keyframes tr-level { 0% { opacity: 0; transform: translate(-50%, 6px); } 15% { opacity: 1; transform: translate(-50%, 0); } 75% { opacity: 1; } 100% { opacity: 0; } }
 #transit-ride.tr-cab .tr-level { top: 10vh; }
+/* a skippable cutscene says so (js/cinematic.js): Space on a desktop, a tap on a phone */
+.cine-skip { position: fixed; right: 18px; bottom: calc(14px + env(safe-area-inset-bottom)); z-index: 66; font-family: 'Pixelify Sans', 'Courier New', monospace;
+             font-size: 12px; color: rgba(232, 246, 255, 0.55); pointer-events: none; opacity: 0; transition: opacity 0.6s; }
+.cine-skip.on { opacity: 1; }
 #transit-ride .tr-skip { position: absolute; right: 18px; bottom: 14px; font-size: 12px; color: rgba(232, 246, 255, 0.55); pointer-events: none; }
-html.touch #transit-ride .tr-skip { display: none; }
+html.touch #transit-ride .tr-skip { bottom: calc(14px + env(safe-area-inset-bottom)); }   /* "Tap to skip" (js/transit.js) */
 #loop-banner { position: fixed; top: 64px; left: 50%; z-index: 31; transform: translate(-50%, -10px); opacity: 0; pointer-events: none;
   font-family: 'Pixelify Sans', 'Courier New', monospace; display: flex; gap: 10px; align-items: baseline; padding: 8px 16px; border-radius: 4px;
   background: rgba(6, 14, 24, 0.86); border: 1px solid rgba(92, 200, 208, 0.6); box-shadow: 0 0 18px rgba(92, 200, 208, 0.25); color: #e8f6ff;
