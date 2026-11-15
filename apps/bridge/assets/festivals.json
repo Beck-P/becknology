@@ -1,15 +1,60 @@
 {
-  "_doc": "One festival a season on a planet (js/festivals.js), on the weekend (Saturday and Sunday, Eastern time) of that season's last week. hours: [from, to] anchors (js/hours.js) of each planet-day the fair is open. crowd: who gathers where while it's open (js/routines.js) [x, y, facing, pose?]. props: what's put up [kind, x, y] (solid while the festival's on). contest: show (hand the judge produce) or derby (the biggest fish caught on the planet while it's on). music: the tune while it's open (js/audio.js THEMES).",
+  "_doc": "One festival a season on a planet (js/festivals.js). when: 'weekend' (the default: Saturday and Sunday, Eastern time, of that season's last week), 'fullmoon' (Sylvara: while the real moon is full, js/clock.js moon()), or 'bloom' (Lumar: a spore bloom day in that season, js/bloom.js; a season with none keeps its last weekend). hours: [from, to] anchors (js/hours.js) of each planet-day the contests are open. crowd: who gathers where while it's on (js/routines.js) [x, y, facing, pose?]. props: what's put up [kind, x, y] (solid while it's on; drawn in code, js/festivals.js prop()). contests (or one contest): show (hand the judge things from your pack: entries scores each kind, ±30% for how fine it is; your best counts), derby (the biggest fish caught on the planet while it's on: score 'kind' scores a fish against the biggest of its kind, 100 points, else centimetres; rivals [who, fish, low, high]) or times (your quickest run of a ski run while it's on: rivals [who, low s, high s]). Each pays a placing once a festival, coins and a rosette. show/title/judging: the contest's words. stall: what's sold. poster: a line pinned on the planet's notice boards while it's on or coming. music: the tune while it's open (js/audio.js THEMES).",
+
+  "blossom_show": {
+    "name": "The Blossom Show",
+    "planet": "verdance", "season": "spring", "world": "verdance-east", "place": "the green on Station Road",
+    "line": "Tubs of flowers on the green, and Nell and Marigold with a clipboard each",
+    "poster": "THE BLOSSOM SHOW ON THE GREEN, SATURDAY AND SUNDAY. FLOWERS, HONEY AND THINGS THAT SMELL NICE. JUDGES: NELL ASHBY, MARIGOLD LARKIN. NO GOATS.",
+    "hours": ["morning", "evening"], "music": "fair",
+    "props": [["table", 12, 20], ["table", 13, 20], ["flowers", 10, 20], ["flowers", 15, 20], ["stall", 18, 19], ["flowers", 19, 21], ["flowers", 11, 22]],
+    "contest": {
+      "kind": "show", "at": [12, 20], "label": "FLOWER TABLE", "judge": "Nell and Marigold",
+      "title": "the flower show", "judging": "NELL AND MARIGOLD LEAN IN, SNIFF, AND WRITE ON THEIR CLIPBOARDS WITHOUT LETTING THE OTHER SEE.",
+      "bring": "Bring what you've grown that flowers: moonflowers picked by night, sunflowers, a posy at a pinch - or what the bees made of them.",
+      "entries": { "moonflower": 10, "sunflower": 7, "beeswax_candles": 6, "honey": 5, "honey_crock": 6, "posy": 3, "strawberry": 4 },
+      "rivals": [["Hollin Ashby", "sunflower"], ["Percy Pennyworth", "sunflower"], ["Mags Tolley", "honey"], ["Wat Coldridge", "posy"]],
+      "prizes": [[600, "blue_rosette"], [250, "red_rosette"], [100, "yellow_rosette"]]
+    },
+    "stall": { "at": [18, 19], "label": "BLOSSOM STALL", "items": [{ "id": "blossom_tea", "price": 4 }, { "id": "violet_creams", "price": 5 }, { "id": "posy", "price": 10 }] },
+    "crowd": {
+      "nell": [12, 19, "down"], "marigold": [13, 19, "down"], "hollin": [18, 18, "down"], "percy": [14, 21, "up"], "hobb": [10, 21, "up"], "juniper": [17, 21, "left"]
+    }
+  },
+
+  "strawberry_supper": {
+    "name": "The Strawberry Supper",
+    "planet": "verdance", "season": "summer", "world": "verdance-village", "place": "the square by the Hayloft",
+    "line": "Long tables out of the Hayloft, and Bridget judging the fruit",
+    "poster": "THE STRAWBERRY SUPPER, THIS WEEKEND, TABLES OUT IN THE SQUARE BY THE HAYLOFT. BRING FRUIT, HONEY OR SOMETHING YOU'VE PRESSED. BRIDGET IS JUDGING AND HAS BEEN WARNED ABOUT FAVOURITES.",
+    "hours": ["afternoon", "late"], "music": "fair",
+    "props": [["table", 13, 17], ["table", 14, 17], ["table", 15, 17], ["table", 16, 17], ["berries", 12, 17], ["stall", 19, 13], ["hay", 9, 16], ["berries", 21, 14]],
+    "contest": {
+      "kind": "show", "at": [14, 17], "label": "SUPPER TABLE", "judge": "Bridget",
+      "title": "the fruit and honey", "judging": "BRIDGET TASTES A LITTLE OF EVERYTHING, WITH HER EYES SHUT, AND SAYS 'MM' IN SEVERAL DIFFERENT WAYS.",
+      "bring": "Bring summer off the farm: strawberries, a twin-moon melon, starfruit, honey, a jar of jam, your own cider.",
+      "entries": { "moonmelon": 10, "starfruit": 10, "strawberry": 7, "farm_cider": 8, "honey": 6, "jam": 5, "apple": 4, "egg": 3, "milk": 3 },
+      "rivals": [["Percy Pennyworth", "strawberry"], ["Nell Ashby", "honey"], ["Old Ludd", "apple"], ["Wat Coldridge", "egg"]],
+      "prizes": [[600, "blue_rosette"], [250, "red_rosette"], [100, "yellow_rosette"]]
+    },
+    "stall": { "at": [19, 13], "label": "SUPPER STALL", "items": [{ "id": "strawberries_cream", "price": 5 }, { "id": "elderflower_fizz", "price": 4 }, { "id": "ploughmans", "price": 7 }] },
+    "crowd": {
+      "bridget": [14, 16, "down"], "mags": [19, 12, "down"], "percy": [13, 18, "up"], "nell": [16, 18, "up"], "ludd": [17, 18, "up"], "wat": [11, 16, "right"], "hollin": [15, 16, "down"]
+    }
+  },
 
   "harvest_fair": {
     "name": "The Harvest Fair",
     "planet": "verdance", "season": "autumn", "world": "verdance-village", "place": "Brambleford square",
     "line": "Bunting and pies, and Old Ludd judging the produce",
+    "poster": "THE HARVEST FAIR IN THE SQUARE, SATURDAY AND SUNDAY. OLD LUDD JUDGES THE PRODUCE. EDDA'S PIE WELCOME, IF ANYONE'S GOT THE KNACK OF IT.",
     "hours": ["morning", "evening"], "music": "fair",
     "props": [["show_table", 12, 16], ["show_table", 13, 16], ["stall", 19, 13], ["stall", 20, 13], ["hay", 9, 16], ["pumpkins", 10, 16], ["hay", 16, 16], ["pumpkins", 21, 14], ["hay", 8, 18]],
     "contest": {
       "kind": "show", "at": [12, 16], "label": "JUDGING TABLE", "judge": "Old Ludd",
-      "entries": { "pumpkin": 9, "starfruit": 10, "sunflower": 7, "strawberry": 6, "carrot": 5, "turnip": 4, "apple": 5, "honey": 6, "egg": 4, "milk": 4 },
+      "title": "the produce show", "judging": "OLD LUDD WEIGHS IT, SNIFFS IT, HOLDS IT TO THE LIGHT.",
+      "bring": "Bring produce off the farm: a pumpkin, starfruit, a sunflower, apples, honey, eggs - and Edda's apple pie, if you have it.",
+      "entries": { "eddas_pie": 12, "pumpkin": 9, "starfruit": 10, "sunflower": 7, "strawberry": 6, "carrot": 5, "turnip": 4, "apple": 5, "honey": 6, "egg": 4, "milk": 4 },
       "rivals": [["Percy Pennyworth", "pumpkin"], ["Nell Ashby", "sunflower"], ["Hollin Ashby", "carrot"], ["Wat Coldridge", "turnip"]],
       "prizes": [[600, "blue_rosette"], [250, "red_rosette"], [100, "yellow_rosette"]]
     },
@@ -19,15 +64,39 @@
     }
   },
 
+  "cellar_fair": {
+    "name": "The Cellar Fair",
+    "planet": "verdance", "season": "winter", "world": "verdance-hill", "place": "Vinehallow square",
+    "line": "The casks come up from the cellar, and Rosalind Vane tastes what's in them",
+    "poster": "THE CELLAR FAIR AT VINEHALLOW, THIS WEEKEND, UNDER THE PLANE TREE. WINE BY ITS AGE, CHEESE FROM YOUR OWN MILK, CIDER, CROCKS. ROSALIND VANE TASTES. THE HILL IS STEEP; THE WINE IS WORTH IT.",
+    "hours": ["morning", "late"], "music": "fair",
+    "props": [["table", 14, 18], ["table", 15, 18], ["casks", 18, 20], ["casks", 17, 18], ["stall", 24, 18], ["casks", 23, 20], ["hay", 10, 21]],
+    "contest": {
+      "kind": "show", "at": [14, 18], "label": "TASTING TABLE", "judge": "Rosalind Vane",
+      "title": "the tasting", "judging": "ROSALIND SWIRLS IT, HOLDS IT UP TO THE WINTER LIGHT, AND WRITES SOMETHING VERY SMALL IN HER BOOK.",
+      "bring": "Bring what you've put by: wine from your own cask (the longer it's lain, the better it scores), your farmhouse cheese, your cider, a crock of honey.",
+      "entries": { "wine_grand": 14, "wine_fine": 11, "farm_cheese": 9, "wine": 8, "farm_cider": 7, "honey_crock": 6, "beeswax_candles": 5, "wine_young": 4, "jam": 4 },
+      "rivals": [["Ezra Cobb", "farm_cider"], ["Silas Wick", "honey_crock"], ["Hobb Tanner", "wine_young"], ["Wren Potts", "jam"]],
+      "prizes": [[600, "blue_rosette"], [250, "red_rosette"], [100, "yellow_rosette"]]
+    },
+    "stall": { "at": [24, 18], "label": "CELLAR STALL", "items": [{ "id": "mulled_wine", "price": 6 }, { "id": "cheese_toastie", "price": 5 }, { "id": "roast_chestnuts", "price": 4 }] },
+    "crowd": {
+      "rosalind": [14, 17, "down"], "hester": [15, 17, "down"], "ada": [24, 17, "down"], "ezra": [13, 19, "up"], "silas": [16, 19, "up"], "wren": [18, 19, "up"]
+    }
+  },
+
   "lantern_tide": {
     "name": "Lantern Tide",
     "planet": "lumar", "season": "autumn", "world": "lumar-crown", "place": "Crownhaven quay",
     "line": "Lanterns on the water for everyone the sea has kept",
+    "poster": "LANTERN TIDE ON CROWNHAVEN QUAY, THE LAST WEEKEND OF AUTUMN, AFTER DARK. LANTERNS AT THE STALL. THE DERBY: THE BIGGEST FISH ON LUMAR, THE BOSUN CHALKS THEM UP.",
     "hours": ["sunset", "small"], "music": "tide",
     "props": [["derby_board", 11, 32], ["stall", 44, 31], ["stall", 45, 31]],
     "lanterns": { "x": [6, 50], "y": [34.6, 45], "skip": [[12, 17], [21, 24]], "n": 72 },
     "contest": {
       "kind": "derby", "at": [11, 32], "label": "DERBY BOARD", "judge": "the Bosun",
+      "title": "the derby", "judging": "THE BIGGEST FISH LANDED ON LUMAR THIS LANTERN TIDE. THE BOSUN CHALKS THEM UP.",
+      "bring": "Fish anywhere on Lumar while it's on. Your biggest goes on the board.",
       "rivals": [["Old Pell", "moon_eel", 80, 132], ["Salt Annie", "bluefin", 55, 88], ["Cutter Joss", "spore_tuna", 70, 124]],
       "prizes": [[600, "blue_rosette"], [250, "red_rosette"], [100, "yellow_rosette"]]
     },

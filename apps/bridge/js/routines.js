@@ -70,7 +70,7 @@ var BridgeRoutines = (function () {
   function ids() {
     var out = Object.keys(R || {}).filter(function (id) { return id.charAt(0) !== '_' && !(typeof BridgeVillage !== 'undefined' && BridgeVillage.absent(id)); });   // (not before the village fund brings them: js/village.js)
     if (typeof BridgeFestivals !== 'undefined' && BridgeFestivals.on) BridgeFestivals.on().forEach(function (f) {
-      Object.keys(f.crowd || {}).forEach(function (id) { if (out.indexOf(id) < 0) out.push(id); });
+      Object.keys(f.crowd || {}).forEach(function (id) { if (out.indexOf(id) < 0 && !(typeof BridgeVillage !== 'undefined' && BridgeVillage.absent(id))) out.push(id); });
     });
     return out;
   }
@@ -150,6 +150,8 @@ var BridgeRoutines = (function () {
     var a = prevHere ? [prev.x, prev.y] : doorTo(W.data, prev && prev.world, homeHere && S.prev[2] && S.prev[2].via, curHere ? [cur.x, cur.y] : null);
     var b = curHere ? [cur.x, cur.y] : doorTo(W.data, cur && cur.world, homeHere && S.cur[2] && S.cur[2].via, a);
     var stand = curHere ? { x: cur.x, y: cur.y, facing: cur.facing, pose: cur.pose } : null;
+    if (a) a = [Math.round(a[0]), Math.round(a[1])];               // (a seated actor's spot can be between tiles: the walk's on whole ones)
+    if (b) b = [Math.round(b[0]), Math.round(b[1])];
     if (!a || !b || (a[0] === b[0] && a[1] === b[1])) return stand;
     var P = path(W.base, W.data.width, W.data.height, a, b, wid + ':' + a + '>' + b);
     if (!P) return stand;                                           // no way through: they're simply there

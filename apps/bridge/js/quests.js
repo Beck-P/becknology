@@ -473,6 +473,7 @@ var BridgeQuests = (function () {
       }
     }
     if (wid && typeof BridgeBoards !== 'undefined') BridgeBoards.nextUp(wid).forEach(function (b) { out.push(b); });   // a request here you can fill now
+    if (typeof BridgeFestivals !== 'undefined' && BridgeFestivals.nextUp) BridgeFestivals.nextUp().forEach(function (b) { out.push(b); });   // a festival on, or this weekend
     if (typeof BridgeInventory !== 'undefined' && BridgeInventory.freeSlots && BridgeInventory.freeSlots() === 0) {
       out.push({ tag: 'Pack', title: 'Your pack is full', text: 'Sell to a trader, or leave things in a chest: the sea chest on the bridge, the locker in your quarters.' });
     }

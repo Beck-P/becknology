@@ -539,6 +539,7 @@ var BridgeSki = (function () {
     var won = !!s.rival && total < s.rivalTime, beatPay = 0;
     if (won && !save.rival[id]) { save.rival[id] = 1; beatPay = D.beat; }
     store();
+    if (typeof BridgeFestivals !== 'undefined' && BridgeFestivals.timed) BridgeFestivals.timed(id, total);   // a race at a festival (the Ice Fair)
     if (typeof BridgeProgression !== 'undefined') {
       if (pay) BridgeProgression.awardCoins(pay, 'ski:' + id);
       if (beatPay) BridgeProgression.awardCoins(beatPay, 'ski_rival:' + id);

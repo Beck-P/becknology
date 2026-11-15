@@ -78,10 +78,13 @@ var BridgeUses = (function () {
       if (has('BridgeFestivals') && BridgeFestivals.all) {
         var F = BridgeFestivals.all() || {};
         Object.keys(F).forEach(function (fid) {
-          var c = F[fid] && F[fid].contest;
-          if (c && c.kind === 'show') Object.keys(c.entries || {}).forEach(function (id) { add(id, { k: 'show', fest: F[fid].name, season: F[fid].season }); });
+          ((F[fid] && (F[fid].contests || (F[fid].contest ? [F[fid].contest] : []))) || []).forEach(function (c) {
+            if (c && c.kind === 'show') Object.keys(c.entries || {}).forEach(function (id) { add(id, { k: 'show', fest: F[fid].name, season: F[fid].season || (F[fid].when === 'fullmoon' ? 'full moon' : '') }); });
+          });
         });
       }
+      // what a module says its own things are for (`USES`: { id, t, p } — the rosettes' roll of honour, js/festivals.js)
+      [has('BridgeFestivals') && BridgeFestivals.USES].forEach(function (list) { (list || []).forEach(function (u) { add(u.id, { k: 'own', t: u.t, p: u.p }); }); });
       if (has('BridgeTrade')) {
         var M = BridgeTrade.MARKET || {}, G = BridgeTrade.GOODS || {}, H = BridgeTrade.HAUL || {};
         Object.keys(G).concat(Object.keys(H)).forEach(function (id) {
@@ -200,6 +203,7 @@ var BridgeUses = (function () {
       var names = met.concat(Object.keys(unmet).map(function (t) { return unmet[t] > 1 ? t.replace(/^someone/, unmet[t] + ' people') : t; }));
       if (names.length) push('gift', 5, '<b>Loved as a gift</b> by ' + esc(list(names, 3)));
     }
+    (by.own || []).forEach(function (f) { push('own', f.p || 5, f.t); });
     (by.show || []).slice(0, 1).forEach(function (f) { push('show', 5, '<b>Show it</b> at ' + esc(the(f.fest)) + seasonWord(f.season)); });
     if (by.hall) push('hall', 5, '<b>A find:</b> it goes on show in your hall');
     if (!it.works && !eat && !by.plant && typeof it.onUse === 'function' && it.type !== 'plan' && !/^tmap_/.test(id)) {

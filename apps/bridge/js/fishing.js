@@ -243,7 +243,7 @@ var BridgeFishing = (function () {
       c.n += 1;
       best = !junk && size > c.best;
       if (best) c.best = size;
-      if (!junk && typeof BridgeFestivals !== 'undefined') BridgeFestivals.caught(id, size);     // a derby on? (js/festivals.js)
+      if (!junk && typeof BridgeFestivals !== 'undefined') BridgeFestivals.caught(id, size, f[2], f[3]);     // a derby on? (js/festivals.js)
       if (!junk && typeof BridgeQuests !== 'undefined' && BridgeQuests.did) setTimeout(function () { BridgeQuests.did('catch', { id: id }); }, 2600);   // a deed (the first hour), once the card's had its moment
       var hold = st.hold && !junk ? st.hold : null;                       // at sea, fish go in her fish hold
       if (hold) {
