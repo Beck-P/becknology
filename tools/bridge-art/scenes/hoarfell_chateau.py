@@ -14,6 +14,7 @@ import math
 import sys
 
 from _manor import A, E, Kit, THETA, C45, render, look, door, write_world  # noqa: F401
+E.GLEAM = True                                    # chandeliers and candles stay bright through the toy finish
 from scenekit import shade
 import assets_casino as C
 import assets_signs as G
