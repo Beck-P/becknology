@@ -12,6 +12,7 @@ windows in gold silk. Chevron parquet; open floor at the front and the sides for
 import sys
 
 from _manor import A, E, Kit, C45, render, look, door, write_world  # noqa: F401
+E.GLEAM = True                                    # chandeliers and candles stay bright through the toy finish
 from scenekit import shade
 
 OUT = sys.argv[1]
