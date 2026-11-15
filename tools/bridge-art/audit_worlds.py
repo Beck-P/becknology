@@ -171,6 +171,31 @@ for bid, b in records('businesses.json'):
     elif 'world' in b and not found(b['world'], b.get('label')):
         issues.append(('businesses.json', '%s not found at %s / %s' % (bid, b['world'], b.get('label'))))
 
+# the map (assets/atlas.json, tools/bridge-art/atlas.py): every place hangs off a landing or a pier by the ways the
+# atlas knows, or the menu's map shows it floating loose with no way to it (a door the JS adds goes in atlas.py EXTRA)
+ATLAS = json.load(open(os.path.join(ROOT, 'atlas.json')))
+MERGE_ATLAS = {'lumar-rose-mine-b', 'lumar-rose-mine-c', 'lumar-undercroft-b', 'lumar-undercroft-c'}   # floor layouts: one place on the map (atlas.py MERGE)
+OFF_MAP = {'arcadia-loop',                                   # the Loop's carriage: you ride it between its stations
+           'lumar-gloaming'}                                 # the ghost ship, boarded at sea (js/sloop.js)
+AG = collections.defaultdict(set)
+for wid, aw in ATLAS['worlds'].items():
+    for e in aw.get('exits', []):
+        AG[wid].add(e['to'])
+seen = set()
+for root in [s['root'] for s in ATLAS['systems']] + ATLAS['isles']:
+    q = [root]
+    seen.add(root)
+    while q:
+        n = q.pop()
+        for m in AG[n]:
+            if m not in seen:
+                seen.add(m)
+                q.append(m)
+for wid in sorted(set(ATLAS['worlds']) - seen - OFF_MAP):
+    issues.append(('atlas.json', '%s: no way to it on the map from a landing or a pier (atlas.py EXTRA?)' % wid))
+for wid in sorted(set(W) - set(ATLAS['worlds']) - set(MERGE_ATLAS)):
+    issues.append(('atlas.json', '%s is not on the map: re-run tools/bridge-art/atlas.py' % wid))
+
 for i in issues:
     print(*i)
 print(len(issues), 'issues;', len(W), 'worlds')

@@ -759,6 +759,7 @@ body::after {
 }
 .ip-verb { color: #ffd98a; font-weight: 600; letter-spacing: 0.3px; }
 .ip-label { color: rgba(242, 238, 230, 0.86); letter-spacing: 0.3px; }
+.ip-to { color: #9fe0e6; letter-spacing: 0.3px; white-space: nowrap; }   /* where a way out leads, when its name doesn't say */
 
 /* Quiet markers over games and exits (drawn on the canvas use the same
    palette); kept here for the HUD's exit button. */
