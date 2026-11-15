@@ -1796,6 +1796,7 @@ html.touch.dialog-up .dpad { visibility: hidden !important; }                   
 html.touch.dialog-up #inventory-panel { opacity: 0 !important; pointer-events: none; }
 html.dialog-up #world-overlay { z-index: 61; }   /* a dialog over the HUD — its pills (25), the coins (50), the hotbar (60) — never under it; the menu (65) and the item card stay over */
 html.at-sea.dialog-up #world-overlay { z-index: 74; }   /* at sea: over the sloop's canvas (60), stick (70), Chart and ⋯ (71) and her menu (72) — at 61 a line said at sea went under them */
+html.at-sea #world-overlay .world-hud { display: none; }   /* (and the island's way back, name and prompt, under the sloop's canvas till then, don't come up with it over her HUD) */
 html.touch:has(#sloop-menu) .dpad { visibility: hidden !important; }   /* the sloop's own menu, how to sail, a hail: the stick and A go while it's up, as for a dialog */
 .wd-sell-row.pick .sp-have:empty, .wd-sell-row.pick .sp-price:empty { display: none; }   /* (a row with no detail: no blank lines under it on a phone) */
 /* the game menu's small buttons on a phone: a finger's worth (the Map buttons, Here / All places, Sort, the pack's acts) */
@@ -1841,7 +1842,7 @@ html.touch .qj-close .ip-key { font-size: 0; min-width: 26px; height: 22px; }   
 html.touch .qj-close .ip-key::after { content: '\2715'; font-size: 13px; }
 /* a finger's worth (36 px at least) round every close and every button of the shared panels on a phone (phone_pass.js) */
 html.touch .qj-close { min-width: 40px; min-height: 40px; display: inline-flex; align-items: center; justify-content: center; margin: -8px -6px -8px 0; }
-html.touch .e8-controls button, html.touch .dt-controls button, html.touch .wd-btn, html.touch .sp-b, html.touch .pk-btn { min-height: 38px; }
+html.touch .e8-controls button, html.touch .dt-controls button, html.touch .wd-btn, html.touch .sp-b, html.touch .pk-btn, html.touch #down-banner .db-out { min-height: 38px; }
 html.touch .sp-b { min-width: 38px; }
 
 /* ---- Homes: the Furnish pill and the furnishing tray (js/home.js) ----

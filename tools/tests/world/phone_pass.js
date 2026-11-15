@@ -201,7 +201,7 @@ const SCREENS = global.PHONE_SCREENS || [   // (world/phone_pass_old.js hands in
       const vis = (e) => { const s = getComputedStyle(e), r = e.getBoundingClientRect(); return s.display !== 'none' && s.visibility !== 'hidden' && r.width > 4 && r.height > 4; };
       const pns = [...document.querySelectorAll(sel)].filter(vis), pn = pns.find(e => e.matches('.world-dialog')) || pns.pop();   // a dialog over a panel first
       const els = [...pn.querySelectorAll('button, .wd-opt, .wd-btn, .wd-hint, .qj-close, [data-act], .gm-x, .gm-close, .wd-sell-row.pick')].filter(vis);
-      const e = els.find(e => /^(✕|×|close|goodbye|leave|done|back|not now|walk away|never mind|cancel|stand up|quit|that's all|bye)\b/i.test(e.textContent.trim()) || /close/i.test(e.getAttribute('aria-label') || '') || e.classList.contains('wd-hint') || e.classList.contains('qj-close'))
+      const e = els.find(e => /^(✕|×|close|goodbye|leave|done|back|not now|walk away|never mind|cancel|stand up|quit|that's all|bye|got it|keep sailing)\b/i.test(e.textContent.trim()) || /close/i.test(e.getAttribute('aria-label') || '') || e.classList.contains('wd-hint') || e.classList.contains('qj-close'))
         || els.find(e => /(✕|×|close|goodbye|leave|done|not now|walk away|never mind|cancel)\s*$/i.test(e.textContent.trim()));
       document.querySelectorAll('[data-pp-closing]').forEach(x => x.removeAttribute('data-pp-closing')); pn.setAttribute('data-pp-closing', '1');
       const t = e || pn;

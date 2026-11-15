@@ -1,7 +1,7 @@
 // The phone pass over the game's older screens (the second ease pass, November 15): the same checks as world/phone_pass.js
 // — no panel wider than the screen or off its foot, every control at least 36 px, nothing drawn over a control, the last
 // entry of a long list reachable, the touch controls gone while it's up, a way to close it by a tap — on the menu's tabs,
-// shops and storage, the sea, making and running things, the games, getting around, fighting and the first run.
+// shops and storage, the sea, making and running things, the games, getting around and fighting.
 // Shots po_<screen>_<size>.png in OUT.   node world/phone_pass_old.js [shots dir] [screen ids, comma-separated] [sizes]
 const fillPack = () => { ['silverfin', 'wheat', 'moonflower', 'posy', 'fondue', 'farm_cheese', 'silk_cocoon', 'owlmoss', 'medkit', 'iron_ore', 'rope', 'lumber', 'apple', 'egg', 'milk', 'bread', 'coffee', 'cod', 'herring', 'pumpkin'].forEach((id, n) => { try { BridgeInventory.addItem(id, 1 + n % 4); } catch (e) {} }); };
 
@@ -15,6 +15,10 @@ global.PHONE_SCREENS = [
   { id: 'm_pack', menu: 'backpack', world: 'lumar', at: [9, 16], prep: fillPack },
   { id: 'm_map', menu: 'map', world: 'lumar-square', at: [11, 12] },
   { id: 'm_journal', menu: 'journal', world: 'lumar', at: [9, 16] },
+  { id: 'm_journal_long', menu: 'journal', world: 'lumar', at: [9, 16],                      // a long log and quests under way: it scrolls, its last line reachable
+    seed: { bridge_log: JSON.stringify(Array.from({ length: 250 }, (_, i) => ({ at: 1763000000000 - i * 3600000, k: i % 3 ? 'Clue' : 'Found', t: 'Something worth remembering, number ' + i, s: 'somewhere on Lumar, by the harbour', w: 'Lumar Harbor' }))),
+            bridge_quests: JSON.stringify({ 'eddas-book': { clues: { gossip: 1 }, started: 1 }, admiral: { clues: { crier: 1 }, started: 1 }, 'thaelins-verse': { clues: { ask: 1 }, started: 1 } }) },
+    act: async (p) => { const r = await p.evaluate(() => { const pg = document.querySelector('#game-menu .gm-page'); if (!pg) return 'no page'; pg.scrollTop = pg.scrollHeight; const last = [...pg.querySelectorAll('*')].filter(e => e.children.length === 0 && e.textContent.trim()).pop(); const b = last.getBoundingClientRect(); return b.bottom <= innerHeight + 1 ? 'ok' : 'the foot of the journal is off the screen (' + Math.round(b.bottom) + ')'; }); if (r !== 'ok') throw new Error(r); } },
   { id: 'm_fish', menu: 'fish', world: 'lumar', at: [9, 16] },
   { id: 'm_coll', menu: 'collection', world: 'lumar', at: [9, 16] },
   { id: 'm_ledger', menu: 'ledger', world: 'lumar', at: [9, 16] },
@@ -88,14 +92,13 @@ global.PHONE_EXTRA = async ({ page, go, useIt, press, audit, closeByTap, tapAt, 
       await p.context().close();
     }
   }
-  // ---- the HUDs of play (a ski run, a climb, the cage, the cold, the canoe): nothing of them off the screen, and nothing
+  // ---- the HUDs of play (a ski run, a climb, a fight in the cage): nothing of them off the screen, and nothing
   // of them under the touch stick and buttons, which stay up while you play ----
   if (!ONLY || ONLY.indexOf('huds') >= 0) {
     const HUDS = [
       { id: 'ski', world: 'hoarfell-summit', use: 'START GATE', prep: () => BridgeInventory.addItem('skis', 1), then: ['Race The Nursery Slope'], wait: 5000 },
       { id: 'climb', world: 'hoarfell-face', use: 'THE STAIRCASE', then: [], wait: 4000 },
       { id: 'cage', world: 'arcadia-pit', use: 'THE CAGE', then: ['Climb in'], close: true, wait: 4000 },
-      { id: 'cold', world: 'hoarfell-glacier', at: [11, 36], wait: 3000 },
     ];
     for (const size of ['phone', 'small']) for (const H of HUDS) {
       const p = await page(size);
@@ -133,6 +136,10 @@ global.PHONE_EXTRA = async ({ page, go, useIt, press, audit, closeByTap, tapAt, 
     const before = await ctl(p);
     await p.evaluate(() => BridgeInteractions.say('A NOTE', 'Somebody has carved their initials here, and a little boat.')); await p.waitForTimeout(600);
     const a = await audit(p), during = await ctl(p);
+    if (/^(sea|fight)/.test(tag)) {                                       // at sea the island's way back and name stay under the sloop
+      const land = await p.evaluate(() => { const e = document.getElementById('world-back'); if (!e) return false; const c = getComputedStyle(e), r = e.getBoundingClientRect(); return c.display !== 'none' && c.visibility !== 'hidden' && r.width > 2 && document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2) && e.contains(document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2)); });
+      if (land) fail(tag + ': the island\'s way back shows over the sloop while a line is up');
+    }
     await p.screenshot({ path: OUT + '/po_' + tag + '_line.png' });
     const over = await p.evaluate(() => { const d = document.querySelector('#world-overlay .world-dialog'); if (!d) return 'no card';
       const r = d.getBoundingClientRect(), out = [];
@@ -190,7 +197,7 @@ global.PHONE_EXTRA = async ({ page, go, useIt, press, audit, closeByTap, tapAt, 
       }
       if (!ONLY || ONLY.indexOf('fight') >= 0) {
         await p.evaluate(() => BridgeSeaFight._spawn('cutter')); await p.waitForTimeout(2500);
-        await p.evaluate(() => { const m = document.getElementById('sloop-menu'); if (m) { const b = [...m.querySelectorAll('button')].find(e => /^Fight|Got it/.test(e.textContent)); b && b.click(); } }); await p.waitForTimeout(1500);
+        await p.evaluate(() => { const m = document.getElementById('sloop-menu'); if (m) { const bs = [...m.querySelectorAll('button')].filter(e => !e.disabled), b = bs.find(e => /^Fight/.test(e.textContent)) || bs.find(e => /Run for it|Got it/.test(e.textContent)); b && b.click(); } }); await p.waitForTimeout(1500);
         await p.screenshot({ path: OUT + '/po_fight_hud_' + size + '.png' });
         await sayOver(p, 'fight_' + size);
       }

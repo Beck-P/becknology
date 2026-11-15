@@ -88,7 +88,7 @@ var BridgeLocker = (function () {
           'style="display:block;width:48px;height:48px;background:rgba(60,40,90,0.18);border-radius:4px;image-rendering:pixelated;"></canvas>' +
         '<div>' +
           '<div style="font-size:12px;letter-spacing:2px;color:#e0e0e0;">' + escapeHtml(item.name.toUpperCase()) + '</div>' +
-          '<div style="font-size:9px;letter-spacing:2px;color:#888;margin-top:2px;">SLOT: ' + escapeHtml(item.slot.toUpperCase()) + '</div>' +
+          '<div style="font-size:9px;letter-spacing:2px;color:#888;margin-top:2px;">SLOT: ' + escapeHtml(item.slot.replace(/_/g, ' ').toUpperCase()) + '</div>' +
         '</div>' +
         '<button class="locker-action" data-key="' + item.key + '" data-mode="' + mode + '" data-slot="' + item.slot + '" style="' +
           'padding:8px 14px;background:transparent;border:1px solid ' + actionColor + ';' +

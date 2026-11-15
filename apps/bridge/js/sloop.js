@@ -3875,6 +3875,7 @@ var BridgeSloop = (function () {
     }
     // the passage, top left: from, to, how far along (or, before a course: which island you're pointing at)
     var bx0 = px(20), by0 = px(18), bw = px(220);
+    if (touch()) bw = Math.max(px(150), Math.min(bw, canvas.width - px(150) - bx0));   // clear of Chart and ⋯ (top right on a phone): on a 360-px one they hid its right end
     ctx.fillStyle = 'rgba(6,10,20,0.72)'; ctx.fillRect(bx0 - px(8), by0 - px(10), bw + px(16), px(40));
     ctx.font = px(10) + 'px "Pixelify Sans", monospace'; ctx.textAlign = 'left'; ctx.fillStyle = '#c8d0e0';
     ctx.fillText(A.name.toUpperCase(), bx0, by0);

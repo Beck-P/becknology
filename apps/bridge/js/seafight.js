@@ -1084,6 +1084,7 @@ var BridgeSeaFight = (function () {
     var hull = captain() ? (mir ? mir.hull : 1) : sh.hull;          // aboard theirs: their hull
     if (!foe && hull > 0.995) return;
     var w = Math.round(170 * s), h = Math.round(8 * s), x = Math.round(W - w - 34 * s), y = Math.round(40 * s);   // top right, clear of the messages
+    if (document.documentElement.classList.contains('touch') && W / s < 700) { x = Math.round(W - w - 20 * s); y = Math.round(122 * s); }   // a phone: under Chart and ⋯ and the messages, not behind them
     ctx.save();
     ctx.fillStyle = 'rgba(6,10,20,0.72)'; ctx.fillRect(x - 8 * s, y - 16 * s, w + 16 * s, foe ? 58 * s : 30 * s);
     ctx.font = Math.round(9 * s) + 'px "Pixelify Sans", monospace'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';

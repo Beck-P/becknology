@@ -279,7 +279,7 @@ var BridgeCatalog = (function () {
         'style="display:block;width:64px;height:64px;background:rgba(60,40,90,0.18);border-radius:4px;image-rendering:pixelated;"></canvas>' +
       '<div>' +
         '<div style="font-size:13px;letter-spacing:2px;color:#e0e0e0;">' + escapeHtml(item.name.toUpperCase()) + '</div>' +
-        '<div style="font-size:10px;letter-spacing:2px;color:#888;margin-top:2px;">SLOT: ' + escapeHtml(item.slot.toUpperCase()) + '</div>' +
+        '<div style="font-size:10px;letter-spacing:2px;color:#888;margin-top:2px;">SLOT: ' + escapeHtml(item.slot.replace(/_/g, ' ').toUpperCase()) + '</div>' +
         '<div class="catalog-action" data-key="' + item.key + '" style="margin-top:8px;font-size:11px;letter-spacing:3px;color:#ffe080;">🪙 ' + item.price + '</div>' +
       '</div>' +
     '</div>';
