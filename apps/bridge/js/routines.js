@@ -285,6 +285,26 @@ var BridgeRoutines = (function () {
     var c = placeOf(S.cur, p, null);
     return c ? { world: c.world, x: c.x, y: c.y, home: S.cur[1] === 'home' } : null;
   }
+  /** For a quest's lead that names someone (js/quests.js): who keeps a day under that talk point (world, label), and if
+   *  they aren't at their own spot just now, where they are — { id, away: true, back: 'at dawn' } when they're off for
+   *  the night, { id, world } when they're out visiting — else null (there, or keeping no day). */
+  var WHEN = { midnight: 'after midnight', small: 'in the small hours', dawn: 'at dawn', sunrise: 'at sunrise', morning: 'in the morning',
+               noon: 'at noon', afternoon: 'in the afternoon', sunset: 'at sunset', evening: 'in the evening', late: 'late tonight' };
+  function whereabouts(world, label) {
+    var C = cast();
+    if (!R || !C || !label) return null;
+    var id = ids().filter(function (k) { var h = homeOf(C[k]); return h && h.label === label && (!world || String(world).replace(/-\*$/, '') === h.world || world.slice(-1) === '*' && h.world.indexOf(world.slice(0, -1)) === 0); })[0];
+    if (!id) return null;
+    var S = stopNow(id), home = homeOf(C[id]);
+    if (!S) return null;
+    if (S.cur[1] === 'away') {
+      var day = (R && R[id]) || [], nxt = null;
+      for (var k = 1; k <= day.length && !nxt; k++) { var e = day[(S.index + k) % day.length]; if (e && e[1] !== 'away') nxt = e; }
+      return { id: id, away: true, back: nxt && typeof nxt[0] === 'string' ? WHEN[nxt[0]] || 'later' : 'later' };
+    }
+    var c = placeOf(S.cur, C[id], null);
+    return c && c.world !== home.world ? { id: id, world: c.world } : null;
+  }
   /** A place's JSON as it stands now: who's out, who's visiting (the Map tab's markers). */
   function adjust(worldId, data) {
     var C = cast();
@@ -352,5 +372,5 @@ var BridgeRoutines = (function () {
   /** The people kept here and where they are this frame (the tests). */
   function here() { return W && W.people ? W.people.map(function (m) { return { id: m.id, st: m.st || null }; }) : []; }
 
-  return { decorate: decorate, where: where, adjust: adjust, _stop: stopNow, _check: check, _here: here };
+  return { decorate: decorate, where: where, whereabouts: whereabouts, adjust: adjust, _stop: stopNow, _check: check, _here: here };
 })();

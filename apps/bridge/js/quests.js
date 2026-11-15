@@ -371,7 +371,20 @@ var BridgeQuests = (function () {
     return open.slice(0, n || 99).map(hintOf);
   }
   // a lead in the words for how you're playing: `hintTouch` on a phone or tablet, where keys would mean nothing
-  function hintOf(c) { return document.documentElement.classList.contains('touch') && c.hintTouch ? c.hintTouch : c.hint; }
+  // and when it names someone who keeps hours (js/routines.js) and isn't at their spot just now, when they're back or
+  // where they've gone — so a lead never leaves you at an empty stall at night
+  function hintOf(c) {
+    var h = document.documentElement.classList.contains('touch') && c.hintTouch ? c.hintTouch : c.hint;
+    try {
+      var w = c.on && typeof BridgeRoutines !== 'undefined' && BridgeRoutines.whereabouts ? BridgeRoutines.whereabouts(c.on.world, c.on.label) : null;
+      if (w) {
+        var P = typeof BridgePeople !== 'undefined' && BridgePeople.all ? BridgePeople.all()[w.id] : null;
+        var who = P && P.name ? String(P.name).split(' ')[0] : 'They';
+        h += w.away ? ' (' + who + '’s gone home — back ' + w.back + '.)' : ' (' + who + ' is at ' + placeOf(w.world) + ' just now.)';
+      }
+    } catch (e) { /* no routine: the lead as written */ }
+    return h;
+  }
   // the quest the tracker follows: the one you chose, or the one you last moved on, or the newest rumour
   function tracked() {
     var t = meta.track;

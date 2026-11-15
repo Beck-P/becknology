@@ -835,6 +835,23 @@ var BridgeInteractions = (function () {
     return el;
   }
 
+  // While any world dialog is up — a plain line (say) included, which leaves the controls on — html.dialog-up hides the
+  // touch stick and buttons and the hotbar under it (css), so they never sit over the text; gone with the last dialog,
+  // so they come back exactly as they were (nothing here enables or disables the controls themselves).
+  (function () {
+    function sync() {
+      var ov = document.getElementById('world-overlay');
+      document.documentElement.classList.toggle('dialog-up', !!(ov && ov.querySelector('.world-dialog:not(.wd-home)')));   // (the furnishing tray keeps them: you move pieces with them)
+    }
+    function watch() {
+      var ov = document.getElementById('world-overlay');
+      if (!ov || typeof MutationObserver === 'undefined') return;
+      new MutationObserver(sync).observe(ov, { childList: true, subtree: false });
+      sync();
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', watch); else watch();
+  })();
+
   // On touch the hint is a close button: a tap does what its key does (Esc)
   document.addEventListener('click', function (e) {
     var h = e.target.closest && e.target.closest('.world-dialog .wd-hint');
