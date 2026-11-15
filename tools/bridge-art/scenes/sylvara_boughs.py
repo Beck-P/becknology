@@ -49,15 +49,15 @@ T = {
 DECKS = [
     (19.2, 25.0, 24.4, 27.8, 'se'),      # the lift's landing
     (29.6, 21.6, 33.6, 24.2, 'sew'),     # the stair head
-    (20.0, 10.2, 38.8, 12.4, 's'),       # the walk along the Hollow Bough
+    (16.6, 10.2, 38.8, 12.4, 's'),       # the walk along the Hollow Bough
     (24.0, 14.6, 27.4, 16.4, 'sew'),     # the nook under the tavern walk (the rope ladder's)
     (7.4, 11.4, 10.6, 13.6, 'nwe'),      # a lookout north of the homes
 ]
 BRIDGES = [  # a, b, width — all straight across or straight down (you walk four ways)
     ((13.4, 20.6), (16.8, 20.6), 1.3),   # the homes → the lift
     ((26.2, 19.6), (28.2, 19.6), 1.3),   # the lift → the stair tree
-    ((32.0, 12.2), (32.0, 14.9), 1.3),   # the tavern walk → the stair tree
-    ((22.6, 12.2), (22.6, 16.6), 1.3),   # the tavern walk → the lift
+    ((35.4, 12.2), (35.4, 16.4), 1.3),   # the tavern walk → the stair tree (off to the trunk's side, where you can see it)
+    ((17.4, 12.2), (17.4, 18.4), 1.3),   # the tavern walk → the lift (the same: never behind the trunk)
     ((15.8, 27.0), (19.4, 27.0), 1.3),   # the queen's trunk → the lift's landing
     ((9.0, 13.4), (9.0, 15.8), 1.2),     # the homes → the lookout
 ]
@@ -83,7 +83,9 @@ A.lower_canopy(k, -2, -9, COLS + 2, ROWS + 16, z=-7.8, n=60)
 A.lower_canopy(k, -2, -13, COLS + 2, ROWS + 18, z=-10.0, n=60)
 
 # ---- the trunks, the platforms ----------------------------------------------------------------------------------------
-TOP = {n: (10.0 if n == 'queen' else 6.5 if (ro or n == 'tavern') else 9.5) for n, (_x, _r, _rad, ro) in T.items()}   # the queen's goes higher: her stair winds up it
+# a platform's trunk rises only a little over its walkway, its crown sitting low on it and no wider than the trunk, so
+# neither hides the walkways and bridges beyond it (the queen's goes higher: her stair winds up it)
+TOP = {n: (8.0 if n == 'queen' else 5.0 if ro else 6.5 if n == 'tavern' else 9.5) for n, (_x, _r, _rad, ro) in T.items()}
 for i, (name, (x, r, rad, ro)) in enumerate(T.items()):
     A.column_trunk(k, x, r, rad, FLOOR, TOP[name], seed=60 + i)
 def gap_toward(name, x, r):
@@ -92,8 +94,8 @@ def gap_toward(name, x, r):
 
 
 gaps = {
-    'lift': [gap_toward('lift', 16.8, 20.6), gap_toward('lift', 26.2, 19.6), gap_toward('lift', 22.6, 16.6), math.pi / 2 - 0.3, math.pi / 2 + 0.3],
-    'stair': [gap_toward('stair', 28.2, 19.6), -math.pi / 2, math.pi / 2, 0.0],
+    'lift': [gap_toward('lift', 16.8, 20.6), gap_toward('lift', 26.2, 19.6), gap_toward('lift', 17.4, 18.2), math.pi / 2 - 0.3, math.pi / 2 + 0.3],
+    'stair': [gap_toward('stair', 28.2, 19.6), gap_toward('stair', 35.4, 16.2), math.pi / 2, 0.0],
     'homes': [gap_toward('homes', 13.4, 20.6), -math.pi / 2],
     'queen': [gap_toward('queen', 15.8, 27.0)],
     'owl': [math.pi],
@@ -111,11 +113,41 @@ for (a, b, w) in BRIDGES:
 # ---- the Hollow Bough: the tavern, along the north ---------------------------------------------------------------------
 TV = A.hollow_bough(k, 23.2, 38.6, 8.6, 0.95, 1.55, door_x=31.0)
 TAVERN_DOOR = (31, 10)
+# dressed so it reads as the tavern and not a log: lanterns strung along its face, ferns and sprays along its top and
+# trailing down, flower boxes under the windows, a carved arch of gold leaves round the door, kegs by the door
+bough_r = lambda x: 0.95 * (1.15 - 0.4 * (x - 23.2) / (38.6 - 23.2))          # its radius along its length
+for (xa, xb) in ((24.2, 29.8), (32.2, 37.8)):
+    A.lantern_string(k, (xa, 8.6 + bough_r(xa) * 0.92 + 0.05, 1.55 + bough_r(xa) * 0.55), (xb, 8.6 + bough_r(xb) * 0.92 + 0.05, 1.55 + bough_r(xb) * 0.55),
+                     n=6, sag=0.3, energy=1.4)
+with k.foliage('leaf'):
+    for i in range(16):                                               # ferns and sprays along its top, some trailing over the front
+        x = 23.8 + i * 0.92 + rng.uniform(-0.2, 0.2)
+        rb = bough_r(x)
+        W.leafy_crown(k, x, 8.6 + rng.uniform(-0.2, 0.15), 1.55 + rb * 1.05, rng.uniform(0.28, 0.42), 0.26, 0.2,
+                      shade(A.LEAF, rng.uniform(0.85, 1.1)), n=18, part='canopy', sprigs=True)
+        if i % 3 == 1:
+            for j in range(4):                                        # a trail of ivy down the face
+                k.blob(x + rng.uniform(-0.05, 0.05), 8.6 + rb * 0.9 + 0.04 + j * 0.02, 1.55 + rb * (0.85 - 0.28 * j), 0.1, 0.05, 0.12,
+                       (shade('#4a8038', rng.uniform(0.85, 1.15)), 0.3), 'ivy', segs=6)
+for wx in (31.0 - 1.8, 31.0 + 1.9, 31.0 + 3.4):                         # a box of flowers under each round window
+    rb = bough_r(wx)
+    k.box(wx - 0.3, 8.6 + rb * 0.92, 1.55 - 0.22, wx + 0.3, 8.6 + rb * 0.92 + 0.14, 1.55 - 0.12, (A.ELFWOOD_D, 0.3), 'window_box')
+    for j in range(5):
+        k.blob(wx - 0.24 + j * 0.12, 8.6 + rb * 0.92 + 0.07, 1.55 - 0.08, 0.05, 0.05, 0.05,
+               (rng.choice(('#f0e0a0', '#f0f0f0', '#c8a8f0', '#f0b0c8')), 0.35), 'flower', segs=6)
+for i in range(9):                                                    # the door's arch of gold leaves
+    a = math.pi * (0.1 + 0.8 * i / 8)
+    k.blob(31.0 + math.cos(a) * 0.68, TV[1] + 0.1, 1.55 - bough_r(31.0) * 0.35 + 0.5 + math.sin(a) * 0.62, 0.07, 0.03, 0.1, (A.GOLD, 0.25),
+           'arch_leaf', rot=(0, math.degrees(a) - 90, 0), segs=5)
+FLAT0 = A.Land(k, lambda x, r: 0.0, lambda x, r: None)
+for (bx, br_) in ((33.3, 10.6), (33.85, 10.75)):                        # kegs by the door
+    A.barrel(k, FLAT0, bx, br_, h=0.55, rad=0.22)
+    k.solid(bx - 0.22, br_ - 0.22, bx + 0.22, br_ + 0.22)
 
 # ---- homes on the platforms: each on its own little deck hung off a platform's outer edge, its door toward the trunk -----
 HOMES = []
 for (name, a, roof) in (('homes', -2.2, '#b07a3c'), ('homes', -0.9, '#8a6a3a'), ('homes', math.pi, '#6a7c8a'), ('queen', math.pi, '#6a5690'),
-                        ('queen', -2.3, '#a0703a'), ('lift', -2.45, '#9a5a3a'), ('stair', -0.7, '#7a8a5a')):
+                        ('queen', -2.3, '#a0703a'), ('lift', 2.5, '#9a5a3a'), ('stair', 2.4, '#7a8a5a')):
     tx, tr, rad, ro = T[name]
     px, pr = tx + math.cos(a) * (ro + 0.45), tr + math.sin(a) * (ro + 0.45) * 0.92
     A.deck(k, px - 1.0, pr - 0.9, px + 1.0, pr + 0.9)
@@ -137,7 +169,7 @@ k.cyl(LIFT_TOP[0], LIFT_TOP[1] + 0.9, 0.06, 0.12, 0.6, ('#8a6a3a', 0.3), 'basket
 A.lantern_post(k, A.Land(k, lambda x, r: 0.0, lambda x, r: None), 19.6, 25.5, energy=10.0)
 
 # ---- the Queen's Stair, winding up the queen's trunk to the Crown ------------------------------------------------------------
-A.spiral_stair(k, qx, qr, qrad * 1.2, 0.05, 9.0, turns=1.1, a0=math.pi * 0.35)
+A.spiral_stair(k, qx, qr, qrad * 1.2, 0.05, 7.6, turns=1.0, a0=math.pi * 0.35)
 QUEEN_FOOT = (int(qx + math.cos(math.pi * 0.35) * (qrad * 1.2 + 0.4)), int(qr + math.sin(math.pi * 0.35) * (qrad * 1.2 + 0.4) * 0.92))
 for (dx, dz) in ((-0.35, 0.0), (0.35, 0.0)):                      # banners either side of its foot: a gold leaf on green
     bxp, brp = QUEEN_FOOT[0] + 0.5 + dx * 2.2, QUEEN_FOOT[1] + 0.6
@@ -174,7 +206,7 @@ A.bench(k, A.Land(k, lambda x, r: 0.0, lambda x, r: None), 26.0, 27.2, 16.1)
 
 # ---- life on the walkways: lanterns, flower tubs, washing, a weaver's frame, crates -------------------------------------------
 FLAT = A.Land(k, lambda x, r: 0.0, lambda x, r: None)
-for (x, r) in ((12.4, 17.4), (5.0, 21.6), (25.4, 18.0), (18.0, 23.6), (33.4, 22.0), (35.4, 11.4), (27.4, 11.4), (15.0, 31.0), (8.4, 26.0), (42.8, 20.6)):
+for (x, r) in ((12.4, 17.4), (5.0, 21.6), (25.4, 18.0), (33.4, 22.0), (37.6, 11.4), (27.4, 11.4), (15.0, 31.0), (8.4, 26.0), (42.8, 20.6)):
     A.lantern_post(k, FLAT, x, r, energy=9.0)
 for (x, r) in ((6.0, 18.0), (19.4, 17.8), (30.6, 16.0), (14.2, 28.4), (36.8, 11.6), (24.4, 23.0)):
     k.cyl(x, r, 0.0, 0.3, 0.22, ('#8a5a3a', 0.3), 'tub', verts=12)
@@ -185,7 +217,7 @@ for (x, r) in ((5.4, 22.4), (8.0, 23.6)):
     k.solid_post(x, r)
 for (x, r) in ((29.0, 11.0), (36.0, 10.8), (23.2, 26.4)):
     A.clutter(k, FLAT, x, r)
-for (x0, x1, r) in ((25.2, 26.6, 11.9), (33.6, 35.0, 11.9)):
+for (x0, x1, r) in ((25.2, 26.6, 11.9), (32.0, 33.4, 11.9), (19.0, 20.4, 11.9)):
     A.bench(k, FLAT, x0, x1, r)
 
 # ---- the canopy round it all: crowns of the giants above, boughs closing in at the edges -----------------------------------
@@ -195,7 +227,7 @@ with k.foliage('leaf'):
                          (17.5, 3.0, 4.4, 1.0), (30.0, 2.2, 4.8, 1.0)):
         A.crown(k, x, r, z, s * 0.75)
 for name, (x, r, rad, ro) in T.items():                           # each giant goes on up into its own crown, seated over its top
-    A.crown(k, x, r - 0.1, TOP[name] + 0.55, rad * 0.4 + 0.15, hang=False)
+    A.crown(k, x, r - 0.1, TOP[name] + 0.45, rad * 0.42 if ro else rad * 0.4 + 0.15, hang=False)
 # leaves on the trunks at walkway height and sprays out over the drop
 with k.foliage('leaf'):
     for name, (x, r, rad, ro) in T.items():
