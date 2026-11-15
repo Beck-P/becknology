@@ -436,7 +436,7 @@ flow_deep = [to_tile(x, r) + [0.4] for (x, r) in DEEP[2::3]]
 w['river'] = {'water': water_rows, 'flow': flow + flow_low, 'flows': [flow_deep], 'width': 3.0,
               'down': {'edge': 'bottom', 'target': 'sylvara-lake', 'at': [24, 1]},
               'forks': [{'edge': 'right', 'target': 'sylvara-deepwood', 'at': [1, 16]}],
-              'landings': [[19, 16], [18, 16], [19, int(23.4)], [20, LEDGE_T]],
+              'landings': [[21, 15], [19, 16], [18, 16], [19, int(23.4)], [20, LEDGE_T]],   # (21, 15): the bank by the landing deck, alongside the water
               'racks': [[int(rx), int(rr_ + SH) + 1]]}
 w['interactions'] = [
     {'x': 16, 'y': 0, 'type': 'enter_world', 'label': 'THE SILVERRUN', 'prompt': 'PRESS E TO WALK UP THE RIVER', 'target': 'sylvara-river', 'spawn': [21, 38]},

@@ -174,7 +174,13 @@ var BridgeCanoe = (function () {
     if (pending && pending.target === worldId) {
       var p = pending;
       pending = null;
-      setTimeout(function () { if (BridgeWorld.getWorldId() === worldId) board(p.at[0] + 0.5, p.at[1] + 0.5, p.th); }, 0);
+      // the world's id switches only once its transition is under way, after this runs: wait for it (a single check on
+      // the next tick found the old stretch still current and you arrived on foot, the canoe lost)
+      var tries = 0;
+      (function arrive() {
+        if (BridgeWorld.getWorldId() === worldId) { if (!st) board(p.at[0] + 0.5, p.at[1] + 0.5, p.th); }
+        else if (++tries < 60) setTimeout(arrive, 50);
+      })();
     }
     refresh(data, worldId);                          // its racks (and your moored canoe) as it loads
   }
@@ -209,11 +215,26 @@ var BridgeCanoe = (function () {
     var hx = waterAt(w, nx + Math.sign(st.vx + c[0]) * 0.3, st.y), hy = waterAt(w, st.x, ny + Math.sign(st.vy + c[1]) * 0.3);
     if (hx) st.x = nx; else { st.vx *= -0.25; bump(); }
     if (hy) st.y = ny; else { st.vy *= -0.25; bump(); }
+    // head-on into a rock with water either side of it (one stands on the falls' current line): ease round it toward the
+    // nearer open side, or the current pins you there for good
+    var my = st.vy + c[1], mx = st.vx + c[0];
+    if (!hy && Math.abs(my) > 0.05) st.x += roundBy(w, st.x, st.y + Math.sign(my) * 0.5, 'x') * dt;
+    else if (!hx && Math.abs(mx) > 0.05) st.y += roundBy(w, st.x + Math.sign(mx) * 0.5, st.y, 'y') * dt;
     if (waterAt(w, st.x, st.y) === 2 && Math.random() < dt * 2) { st.bump = performance.now(); st.th += (Math.random() - 0.5) * 0.3; }
     var now = performance.now();
     if (now - (st.wakeAt || 0) > 90 && (Math.hypot(st.vx + c[0], st.vy + c[1]) > 0.4)) { st.wakeAt = now; st.wake.push({ x: st.x, y: st.y, th: st.th, t: now }); }
     st.wake = st.wake.filter(function (p) { return now - p.t < 1400; });
     pose();
+  }
+  /** Which way round what's ahead at (x, y) along the other axis: −1.6 or +1.6 tiles a second toward the nearer side that's
+   *  water (0 when neither is). */
+  function roundBy(w, x, y, axis) {
+    var v = axis === 'x' ? x : y, f = v - Math.floor(v), lo = f + 0.1, hi = 1.1 - f;
+    var at = function (d) { return axis === 'x' ? waterAt(w, x + d, y) : waterAt(w, x, y + d); };
+    var a = at(-lo), b = at(hi);
+    if (a && (!b || lo <= hi)) return -1.6;
+    if (b) return 1.6;
+    return 0;
   }
   function bump() {
     var t = performance.now();
