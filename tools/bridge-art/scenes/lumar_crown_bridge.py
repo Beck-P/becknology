@@ -101,12 +101,15 @@ for cx_ in (LOGGIA[0] + 0.2, LOGGIA[0] + 2.7, LOGGIA[1] - 2.7, LOGGIA[1] - 0.2):
     k.box(cx_ - 0.2, SOUTH - 0.3, 2.3, cx_ + 0.2, SOUTH + 0.1, 2.42, ('#e8e0d0', 0.08), 'column_capital')
     k.solid_post(cx_, SOUTH - 0.1)
 k.box(LOGGIA[0], SOUTH - 0.4, 2.42, LOGGIA[1], SOUTH + 0.15, 2.6, ('#e8e0d0', 0.08), 'entablature')
-k.quads([((LOGGIA[0] - 0.2, SOUTH - 1.6, 3.2), (LOGGIA[1] + 0.2, SOUTH - 1.6, 3.2), (LOGGIA[1] + 0.2, SOUTH + 0.35, 2.6), (LOGGIA[0] - 0.2, SOUTH + 0.35, 2.6))],
-        ('#8a3a28', 0.1), 'roof_loggia')
+# its roof: a low ridge of pantiles over the arcade only (the old one was a flat slab reaching back over half the
+# street, so you vanished under it crossing the bridge and the bronze poked up through it)
+_dice = rng.getstate()                 # (on the scene's dice, then put back: nothing placed after it moves)
+HK.pantile_roof(k, LOGGIA[0], LOGGIA[1], SOUTH - 0.6, SOUTH + 0.2, 2.55, 0.26, '#b0603e', '#e8e0d0', over=0.15)
+rng.setstate(_dice)
 W.bench(k, 28.4, 31.6, SOUTH - 1.1)
 k.solid(28.4, SOUTH - 1.3, 31.6, SOUTH - 0.85)
-W.statue(k, 30.0, 11.4)
-k.solid(29.4, 10.8, 30.6, 12.0)
+W.statue(k, 30.0, 10.45)             # across the street from the loggia, in front of the shops, clear of its roof
+k.solid(29.4, 9.85, 30.6, 11.05)
 
 # booths on the south side: little lean-tos against the parapet (a flower seller, a newsvendor, a fishing-tackle man)
 for (bx0, bx1, col, goods) in ((9.5, 11.5, ('#3a6a3a', '#e8dcc0'), 'flowers'), (20.0, 22.0, ('#2e5a8a', '#e8e0d0'), 'papers'),
@@ -227,7 +230,7 @@ inters = [
     {'x': 2, 'y': 11, 'type': 'enter_world', 'target': 'lumar-crown-oldtown', 'spawn': [53, 33], 'label': 'WEST GATE', 'prompt': 'PRESS E TO GO THROUGH'},
     {'x': COLS - 3, 'y': 11, 'type': 'dialog', 'label': 'EAST GATE', 'prompt': 'PRESS E TO GO THROUGH',
      'dialog': 'THE EAST GATE, AND THE HEADLAND ROAD TO THE ARSENAL. THE WATCH IS CHANGING; THEY WAVE YOU BACK FOR NOW.'},
-    look('THE BUILDER', 30, 12, 'MASTER AURELIO FENN, WHO BUILT THE OLD BRIDGE IN THE YEAR THE HARBOUR FROZE. HE IS HOLDING A PLUMB LINE AND LOOKING VERY PLEASED WITH HIMSELF. SOMEONE HAS PUT A FLOWER IN HIS BUTTONHOLE.'),
+    look('THE BUILDER', 30, 11, 'MASTER AURELIO FENN, WHO BUILT THE OLD BRIDGE IN THE YEAR THE HARBOUR FROZE. HE IS HOLDING A PLUMB LINE AND LOOKING VERY PLEASED WITH HIMSELF. SOMEONE HAS PUT A FLOWER IN HIS BUTTONHOLE.'),
     look('THE LOGGIA', 30, 13, 'THE LOGGIA OVER THE HARBOUR MOUTH. THE OPEN SEA ON ONE SIDE, THE WHOLE HARBOUR ON THE OTHER, AND THE BOATS GOING OUT UNDER YOUR FEET.'),
     look('FLOWER BOOTH', 10, 13, 'SEA PINKS, THRIFT AND A BUCKET OF SOMETHING BLUE FROM THE SAPPHIRE ISLES.'),
     look('NEWSVENDOR', 21, 13, '"THE CROWN GAZETTE! PIRATES OFF THE CRIMSON SEAM! THE REGATTA ON FRIDAY! A COW ON THE ROOF OF THE EXCHANGE!" THE LAST ONE IS APPARENTLY TRUE.'),
