@@ -5,7 +5,8 @@
 Each layer is a band of mountains rendered from a heightfield seen at a low angle (painted far to near), tileable left
 to right so js/worlds/hoarfell.js can scroll it in whole pixels. The images hold data, not colours — the game colours
 them for the hour (day's alpenglow, dusk, the moonlit night) in the toy finish's flat bands:
-  R  light: the sun's N·L on the slope (a low sun from the west), 0..255
+  R  light, two suns in one byte: the high nibble the N·L of a low sun from the west (the evening), the low nibble of
+     one from the east (the morning), each 0..15 — the game blends the two by the hour
   G  material: 0 rock, 128 snow, 255 a line (where a nearer ridge stands in front of a farther one, or the sky)
   B  height: how high the point stands in its layer (the peaks catch the alpenglow), 0..255
   A  255 where there's mountain
@@ -70,6 +71,9 @@ def layer(name, W, H, D, base_cells, peak_px, dy_px, seed, snowline, light=(-0.7
     nrm /= np.linalg.norm(nrm, axis=-1, keepdims=True)
     L = np.array(light) / np.linalg.norm(light)
     shade = np.clip((nrm * L).sum(-1), 0, 1)
+    Le = np.array([-light[0], light[1], light[2]]); Le /= np.linalg.norm(Le)
+    shade_e = np.clip((nrm * Le).sum(-1), 0, 1)
+    packed = (np.minimum(15, (shade * 16).astype(int)) << 4) | np.minimum(15, (shade_e * 16).astype(int))
     up = nrm[..., 2]
     tex = pnoise(W, D, base_cells * 6, 12, seed + 7)
     snow = (up > 0.62 + 0.15 * (tex - 0.5)) | (hpx > snowline * peak_px * (0.8 + 0.4 * tex))
@@ -80,7 +84,7 @@ def layer(name, W, H, D, base_cells, peak_px, dy_px, seed, snowline, light=(-0.7
     for di in range(D):                                     # far to near: nearer slices paint over farther
         ytop = np.round(H - 1 - (D - 1 - di) * dy_px / D - hpx[di]).astype(int)
         m = ys >= ytop[None, :]
-        img[..., 0] = np.where(m, (shade[di] * 255).astype(np.uint8)[None, :], img[..., 0])
+        img[..., 0] = np.where(m, packed[di].astype(np.uint8)[None, :], img[..., 0])
         img[..., 1] = np.where(m, np.where(snow[di], 128, 0).astype(np.uint8)[None, :], img[..., 1])
         img[..., 2] = np.where(m, (rel[di] * 255).astype(np.uint8)[None, :], img[..., 2])
         img[..., 3] = np.where(m, 255, img[..., 3])
