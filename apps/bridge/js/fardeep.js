@@ -11,6 +11,9 @@
  *       assets/fishing.json; Tamsin buys the catch (people.json), Fennick and Tamsin ask for it (js/boards.js). Here: the
  *       Map's Come back for on the Silverrun.
  *
+ *   S1  Echoes that grow: the Brink's RING GATE (type `brink_ring` once you've finished anything) reads back what you've
+ *       done out there — quests (not the main story's), festival placings, sea legends, Collection sets — and hangs a
+ *       thread of light in the ring for each (the `singularity` items hook), the new ones brighter.
  * State: localStorage `bridge_fardeep` (cloud-saved like every bridge_* key).
  */
 var BridgeFarDeep = (function () {
@@ -71,9 +74,97 @@ var BridgeFarDeep = (function () {
     });
   }
 
+  // ---- S1 · Echoes that grow (the Brink) ------------------------------------------------------------------------------
+  // What you've finished out there, read back at the ring gate like a scrapbook — about you, nothing of the main story.
+  // Worked out from what the game already keeps (quests done, a festival placing, a sea legend landed, a Collection set
+  // filled), so an existing save's deeds are all there on its first visit; `seen` remembers when each was first read
+  // into the ring (its date where the deed has none) and which are new since you last looked.
+  var STORY = { 'ship-mark': 1, signal: 1, brink: 1, wren: 1, listeners: 1, keepsakes: 1, 'keepers-log': 1 };
+  var PLACE = ['First place', 'Second place', 'Third place'], ROSE = ['blue_rosette', 'red_rosette', 'yellow_rosette'];
+  function deeds() {
+    var out = [];
+    try {
+      if (typeof BridgeQuests !== 'undefined' && BridgeQuests.finished) BridgeQuests.finished().forEach(function (f) {
+        var q = BridgeQuests.def(f.id);
+        if (q && !STORY[f.id]) out.push({ id: 'q:' + f.id, title: q.title, sub: q.where || '', at: f.at });
+      });
+      var fm = {}; try { fm = JSON.parse(localStorage.getItem('bridge_festivals') || '{}') || {}; } catch (e) { fm = {}; }
+      var FS = typeof BridgeFestivals !== 'undefined' && BridgeFestivals.all ? BridgeFestivals.all() : {};
+      Object.keys(fm).forEach(function (k) {
+        var m = k.match(/^([a-z0-9_-]+)@(\d+)(?:#(\d+))?$/), R = fm[k], f = m && FS[m[1]];
+        if (!m || !R || !(R.paid >= 1 && R.paid <= 3)) return;
+        var c = f && f.contests && f.contests[+(m[3] || 0)];
+        out.push({ id: 'f:' + k, title: (f ? f.name : m[1].replace(/-/g, ' ')) + (c && c.title && f.contests.length > 1 ? ': ' + c.title : ''), sub: PLACE[R.paid - 1] + (R.what ? ', with ' + R.what : ''), at: +m[2] * 86400000 + 43200000, icon: ROSE[R.paid - 1] });
+      });
+      if (typeof BridgeFishing !== 'undefined' && BridgeFishing.journal) (BridgeFishing.journal().fish || []).forEach(function (f) {
+        if (f.tier >= 3 && f.n > 0) out.push({ id: 'l:' + f.id, title: 'Landed ' + f.name, sub: 'a sea legend' + (f.best ? ', ' + f.best + ' cm' : ''), icon: f.id });
+      });
+      var cs = typeof BridgeCodex !== 'undefined' && BridgeCodex._st ? BridgeCodex._st() : null;
+      if (cs && cs.paid) (BridgeCodex.SETS || []).forEach(function (set) {
+        if (cs.paid[set.id]) out.push({ id: 'c:' + set.id, title: set.name + ', all of them', sub: 'the Collection', at: typeof cs.paid[set.id] === 'number' ? cs.paid[set.id] : 0 });
+      });
+    } catch (e) { /* a module missing: what's here */ }
+    var now = Date.now(), changed = false;
+    out.forEach(function (d) {
+      if (!s.seen[d.id]) { s.seen[d.id] = { t: d.at || now, read: 0 }; changed = true; }
+      d.at = d.at || s.seen[d.id].t; d.fresh = !s.seen[d.id].read;
+    });
+    if (changed) store();
+    return out.sort(function (a, b) { return b.at - a.at; });
+  }
+  function fresh() { return deeds().filter(function (d) { return d.fresh; }).length; }
+  function when(t) {
+    var d = new Date(t), M = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return t ? M[d.getMonth()] + ' ' + d.getDate() : '';
+  }
+  var RING = 'A RING OF STONE, HALF SUNK. THROUGH IT THE STARS ARE IN THE WRONG PLACES.\n\nYOU SEE YOUR OWN BACK, A LONG WAY OFF.';
+  function ring(inter) {
+    var said = (inter && inter.__clues || []).filter(function (c) { return c.say; }).map(function (c) { return c.say; }).join('\n\n');
+    if (said) return say(inter.label, said);
+    var all = deeds(), nw = all.filter(function (d) { return d.fresh; }).length;
+    if (!all.length) return say('RING GATE', RING);
+    all.forEach(function (d) { s.seen[d.id].read = Date.now(); });
+    store();
+    choose({
+      title: 'The ring gate',
+      text: RING + '\n\nAND HANGING IN THE RING LIKE THREADS OF LIGHT, ONE FOR EVERYTHING YOU\'VE FINISHED OUT THERE, ' + (all.length === 1 ? 'ONE' : all.length) + ' OF THEM' +
+        (nw ? (nw === all.length ? '.' : ', ' + (nw === 1 ? 'ONE' : nw) + ' NEW SINCE YOU WERE LAST HERE, STILL BRIGHT.') : '. THE HOLE ISN\'T REMEMBERING THE UNIVERSE. IT\'S KEEPING YOUR SCRAPBOOK.'),
+      rows: all.map(function (d) { return { label: d.title, sub: d.sub, note: (d.fresh ? 'new · ' : '') + when(d.at), icon: d.icon, info: true }; }),
+      closeLabel: 'Step back'
+    });
+  }
+  register('brink_ring', ring, 'Look');
+  function decorateBrink(worldId, data) {
+    if (worldId !== 'singularity') return;
+    (data.interactions || []).forEach(function (it) { if (it.label === 'RING GATE' && it.type === 'dialog') { it.type = 'brink_ring'; it.verb = 'Look'; } });
+    var nw = fresh();
+    if (nw) setTimeout(function () { toast('The Brink', nw === 1 ? 'A new echo in the ring gate' : nw + ' new echoes in the ring gate', 'Things you\'ve done, out there'); }, 1600);
+  }
+  // the threads of light in the ring, drawn live: one a deed (up to 30), the new ones brighter, swaying in a slow circle
+  var GATE = [23.5, 14.7], cache = { t: 0, n: 0, f: 0 };
+  function threads(world, offX, offY, ts, now) {
+    if (typeof BridgeWorld === 'undefined' || BridgeWorld.getWorldId() !== 'singularity') return [];
+    if (now - cache.t > 4000) { var all = deeds(); cache = { t: now, n: Math.min(30, all.length), f: all.filter(function (d) { return d.fresh; }).length }; }
+    if (!cache.n) return [];
+    return [{ footRow: GATE[1] + 0.6, draw: function (c) {
+      var u = Math.max(1, Math.round(ts / 16));
+      c.save(); c.globalCompositeOperation = 'lighter';
+      for (var i = 0; i < cache.n; i++) {
+        var a = i / cache.n * Math.PI * 2 + now / 9000, r = 0.55 + 0.12 * Math.sin(i * 2.3);
+        var x = Math.round(offX + (GATE[0] + Math.cos(a) * r) * ts), y = Math.round(offY + (GATE[1] - 0.9 + Math.sin(a) * r * 0.75) * ts);
+        var h = (5 + (i * 7) % 5) * u, br = i < cache.f ? 1 : 0.55, tw = 0.6 + 0.4 * Math.sin(now / 600 + i * 1.7);
+        c.globalAlpha = 0.35 * br * tw; c.fillStyle = '#a080e0'; c.fillRect(x - u, y - h - u, u * 3, h + u * 2);
+        c.globalAlpha = 0.9 * br * tw; c.fillStyle = i < cache.f ? '#ffffff' : '#d0c0ff'; c.fillRect(x, y - h, u, h);
+      }
+      c.restore();
+    } }];
+  }
+  if (typeof BridgeWorld !== 'undefined' && BridgeWorld.registerSceneHooks) BridgeWorld.registerSceneHooks('singularity', { items: threads });
+
   function decorate(worldId, data) {
     if (!data) return;
     decorateVerse(worldId, data);
+    decorateBrink(worldId, data);
   }
 
   function nextUp(wid) {
@@ -81,11 +172,15 @@ var BridgeFarDeep = (function () {
     if (/^sylvara/.test(wid || '') && typeof BridgeQuests !== 'undefined' && BridgeQuests.has('queens-favour') && !BridgeQuests.has(VQ + '/ask') &&
         !(BridgeQuests.rumours && BridgeQuests.rumours().indexOf(VQ) >= 0))
       out.push({ tag: 'Here', title: 'Thaelin\'s old song', text: 'Fennick at the Hollow Bough, up in the Boughs, says the bard has lost the words to his best song.', world: 'sylvara-tavern' });
+    var nw = fresh();
+    if (nw && typeof BridgeQuests !== 'undefined' && BridgeQuests.visited && BridgeQuests.visited().singularity)
+      out.push({ tag: 'Brink', title: nw === 1 ? 'A new echo at the Brink' : nw + ' new echoes at the Brink', text: 'Things you\'ve finished, hanging in the ring gate at the Singularity like threads of light.', world: 'singularity' });
     return out;
   }
   function comeBack(wid) {
     var out = [];
     if (wid === 'sylvara-river') out.push('trout off the dock; a moon carp after dark');   // Y7 (js/fishing.js `river`)
+    if (wid === 'singularity') out.push('a new echo in the ring gate for each thing you finish out there');   // S1
     return out;
   }
   window.BRIDGE_NEXTUP = (window.BRIDGE_NEXTUP || []).concat([nextUp]);
@@ -93,6 +188,6 @@ var BridgeFarDeep = (function () {
 
   var USES = [];
 
-  return { USES: USES, decorate: decorate, nextUp: nextUp, comeBack: comeBack, verses: verses, verseOf: verseOf,
+  return { USES: USES, decorate: decorate, nextUp: nextUp, comeBack: comeBack, verses: verses, verseOf: verseOf, deeds: deeds, ring: ring,
            _s: function () { return s; }, reload: function () { s = load(); } };
 })();

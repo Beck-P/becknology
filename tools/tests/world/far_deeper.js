@@ -220,6 +220,54 @@ const ONLY = process.argv[3] || '';
     console.log('y7 done');
   }
 
+  // ---- S1 · Echoes that grow ----
+  if (part('s1')) {
+    // a save that's done things: a quest (and the main story's, which mustn't show), a festival placing, a sea legend
+    const fresh0 = async () => {
+      await p.reload(); await p.waitForTimeout(2500);
+      await p.evaluate(() => { BridgeState.setPilot({ id: 't', name: 'BECK', suit_color: 'gold' }); if (typeof BridgeIntro !== 'undefined') BridgeIntro.hide(); });
+    };
+    await p.evaluate(() => {
+      localStorage.setItem('bridge_quests', JSON.stringify({ 'eddas-book': { clues: {}, started: 1, done: Date.now() - 5 * 86400000 }, signal: { clues: {}, started: 1, done: Date.now() - 86400000 } }));
+      localStorage.setItem('bridge_festivals', JSON.stringify({ 'harvest_fair@20400': { best: 12, what: "Edda's Apple Pie", paid: 1, n: 1 } }));
+      localStorage.setItem('bridge_fish', JSON.stringify({ caught: { old_mossback: { n: 1, best: 288 } }, bottles: [], casts: 3 }));
+      localStorage.removeItem('bridge_fardeep');
+    });
+    await fresh0();
+    const d0 = await p.evaluate(() => BridgeFarDeep.deeds().map(d => d.title + ' | ' + d.sub + (d.fresh ? ' *' : '')));
+    console.log('deeds:', JSON.stringify(d0));
+    if (d0.length !== 3) fail('expected three deeds: ' + d0.length);
+    if (d0.some(t => /Forty-Seven|signal/i.test(t))) fail('the main story in the scrapbook');
+    await go('singularity', 'RING GATE');
+    await p.waitForTimeout(1500);
+    const nu = await p.evaluate(() => BridgeQuests.log().slice(0, 4).map(l => l.t).join(' / '));
+    console.log('arrival:', nu);
+    if (!/new echo/i.test(nu)) fail('no word of new echoes at the Brink');
+    await use('RING GATE'); await p.waitForTimeout(800);
+    let r = await rows(); console.log('ring:', JSON.stringify(r));
+    if (!r.some(t => /Edda's Book/.test(t)) || !r.some(t => /Harvest Fair/.test(t)) || !r.some(t => /Old Mossback/i.test(t))) fail('the ring gate\'s scrapbook: ' + r.join(' | '));
+    if (!r.some(t => /new/.test(t))) fail('nothing marked new');
+    await shot('s1_ring');
+    await shut();
+    // something new finished elsewhere: it shows next time, and the old ones aren't new now
+    await p.evaluate(() => { const q = JSON.parse(localStorage.getItem('bridge_quests')); q['ithils-star'] = { clues: {}, started: 1, done: Date.now() }; localStorage.setItem('bridge_quests', JSON.stringify(q)); });
+    await fresh0();
+    const nx = await p.evaluate(() => JSON.stringify(BridgeFarDeep.nextUp('lumar')));
+    console.log('next up:', nx);
+    if (!/A new echo/.test(nx)) fail('Next up: ' + nx);
+    await go('singularity', 'RING GATE');
+    await p.waitForTimeout(1500);
+    await shot('s1_threads');
+    await use('RING GATE'); await p.waitForTimeout(800);
+    r = await rows();
+    const fr = r.filter(t => /new ·/.test(t));
+    console.log('fresh now:', JSON.stringify(fr));
+    if (fr.length !== 1 || !/A Star of Your Own/.test(fr[0])) fail('the second visit: ' + JSON.stringify(fr));
+    await shut();
+    console.log('come back:', JSON.stringify(await p.evaluate(() => BridgeFarDeep.comeBack('singularity'))));
+    console.log('s1 done');
+  }
+
   console.log(errors ? errors + ' FAILED' : 'far_deeper OK');
   await b.close();
   process.exit(errors ? 1 : 0);
