@@ -440,14 +440,15 @@ w['interactions'] = [
     {'x': 31, 'y': 18, 'type': 'dialog', 'label': 'HOBB', 'prompt': 'PRESS E TO TALK', 'dialog': 'HOBB LEANS ON THE HALF DOOR.'},
     {'x': 10, 'y': 11, 'type': 'dialog', 'label': 'JUNIPER', 'prompt': 'PRESS E TO TALK', 'dialog': 'JUNIPER WIPES HER HANDS ON HER APRON.'},
     {'x': 25, 'y': 11, 'type': 'dialog', 'label': 'HESTER', 'prompt': 'PRESS E TO TALK', 'dialog': 'HESTER WOLD NODS OVER A ROUND OF CHEESE.'},
-    {'x': 37, 'y': 9, 'type': 'dialog', 'label': 'MR PIKE', 'prompt': 'PRESS E TO TALK', 'dialog': 'THE STATIONMASTER CHECKS HIS WATCH.'},
+    {'x': 37, 'y': 10, 'type': 'dialog', 'label': 'MR PIKE', 'prompt': 'PRESS E TO TALK', 'dialog': 'THE STATIONMASTER CHECKS HIS WATCH.'},
 ]
 open(WORLD, 'w').write(json.dumps(w, indent=2) + '\n')
 ACTORS = [{'sheet': 'npc-hobb', 'x': 31, 'y': 18, 'facing': 'down'}, {'sheet': 'npc-juniper', 'x': 10, 'y': 11, 'facing': 'down', 'when': 'cafe'},
           {'sheet': 'npc-hester', 'x': 25, 'y': 11, 'facing': 'down', 'when': 'dairy'},
-          {'sheet': 'npc-pike', 'x': 37, 'y': 9, 'facing': 'down', 'when': 'station'}]
+          {'sheet': 'npc-pike', 'x': 37, 'y': 10, 'facing': 'down', 'when': 'station'}]   # out from under the canopy's edge
 for a in ACTORS:
     k.solid(a['x'], a['y'], a['x'] + 1, a['y'] + 1)
+k.solid(37, 9, 38, 10)                # under the platform canopy, where he used to stand: you'd vanish under it
 apply_world(WORLD, k, (0, 0, COLS - 1, ROWS - 1), scene_id=WID, actors=ACTORS,
             scene_extra={'layers': {'cafe': 'shut', 'homes': 'plots', 'dairy': 'empty', 'station': 'closed', 'bridge': 'broken'},
                          'smoke': SMOKE, 'smokeWhen': {'cafe': [CAFE_SMOKE], 'homes': HOMES_SMOKE}})
