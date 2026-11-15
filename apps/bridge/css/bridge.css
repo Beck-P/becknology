@@ -1235,7 +1235,7 @@ html.touch #sound-pill .ip-key { display: none; }
 .qt-hint .ip-key { font-size: 9px; min-width: 16px; height: 15px; }
 
 #quest-journal {
-  position: fixed; inset: 0; z-index: 40; display: none; align-items: center; justify-content: center;
+  position: fixed; inset: 0; z-index: 55; display: none; align-items: center; justify-content: center;
   background: rgba(4, 4, 10, 0.55); font-family: 'Pixelify Sans', 'Courier New', monospace;
   font-variant-ligatures: none;
 }
@@ -1321,7 +1321,7 @@ html.touch #fishing { bottom: calc(12px + env(safe-area-inset-bottom)); }   /* t
 
 /* Splice — NULL's jobs at the rig (js/splice.js) */
 #splice {
-  position: fixed; inset: 0; z-index: 40; display: none; align-items: center; justify-content: center;
+  position: fixed; inset: 0; z-index: 55; display: none; align-items: center; justify-content: center;
   background: rgba(4, 2, 10, 0.7); font-family: 'Pixelify Sans', 'Courier New', monospace; font-variant-ligatures: none;
 }
 #splice.visible { display: flex; }
@@ -1382,6 +1382,7 @@ html.touch .sp-keys { display: none; }
 html.touch .cm-bar { padding: 6px 10px; gap: 8px; }
 html.touch .cm-kicker, html.touch .cm-sep, html.touch .cm-hint { display: none; }
 html.touch #cabinet-leave-btn .ip-key { display: none; }
+html.touch #cabinet-leave-btn { min-height: 36px; padding-left: 14px; padding-right: 14px; }   /* the way out of a cabinet, a finger's worth */
 
 /* the shuttle between pads (js/ship.js) */
 #ship-fade { position: fixed; inset: 0; z-index: 46; background: #02030a; opacity: 0; pointer-events: none; transition: opacity 450ms; }
@@ -1517,7 +1518,7 @@ html.touch #tank-view .tv-back .ip-key { display: none; }
 
 /* Pachinko — Lucky 7's machines and prize counter (js/pachinko.js) */
 #pachinko {
-  position: fixed; inset: 0; z-index: 40; display: none; align-items: center; justify-content: center;
+  position: fixed; inset: 0; z-index: 55; display: none; align-items: center; justify-content: center;
   background: rgba(6, 2, 8, 0.72); font-family: 'Pixelify Sans', 'Courier New', monospace; font-variant-ligatures: none;
 }
 #pachinko.visible { display: flex; }
@@ -1570,7 +1571,7 @@ html.touch .pk-keys { display: none; }
 
 /* The letter rack on the bridge (js/worlds/bridge.js): letters on parchment */
 #letter-rack {
-  position: fixed; inset: 0; z-index: 40; display: none; align-items: center; justify-content: center;
+  position: fixed; inset: 0; z-index: 55; display: none; align-items: center; justify-content: center;
   background: rgba(4, 4, 10, 0.55); font-family: 'Pixelify Sans', 'Courier New', monospace; font-variant-ligatures: none;
 }
 #letter-rack.visible { display: flex; }
@@ -1728,6 +1729,10 @@ html.touch .world-back .ip-key, html.touch #journal-pill .ip-key { display: none
 html.touch .world-back { padding: 7px 14px 7px 12px; top: calc(12px + env(safe-area-inset-top)); left: calc(12px + env(safe-area-inset-left)); }
 html.touch .world-back::before { content: '\2039'; font-size: 22px; line-height: 14px; margin-top: -3px; }
 html.touch #journal-pill { padding: 7px 14px; left: calc(12px + env(safe-area-inset-left)); top: calc(54px + env(safe-area-inset-top)); }
+/* the HUD's pills down the left — the way back, Menu, the sound, the chart, Furnish, the players — each a finger's worth (the way
+   back was 27 px tall, the rest 32-33; they sit 44 px apart, so 36 still leaves a gap between them) */
+html.touch .world-back, html.touch #journal-pill, html.touch #sound-pill, html.touch #chart-pill, html.touch #home-pill, html.touch #mp-pill { min-height: 36px; box-sizing: border-box; }
+html.touch .world-back { min-width: 44px; justify-content: center; }
 html.touch .world-location-badge { top: calc(12px + env(safe-area-inset-top)); }
 @media (max-width: 560px) {
   html.touch .world-back > span:not(.ip-key) { display: none; }       /* just the chevron on a phone */
@@ -1790,14 +1795,35 @@ html.touch.controls-off #inventory-panel { opacity: 0 !important; pointer-events
 html.touch.dialog-up .dpad { visibility: hidden !important; }                            /* any world dialog, a plain line too (js/interactions.js) */
 html.touch.dialog-up #inventory-panel { opacity: 0 !important; pointer-events: none; }
 html.dialog-up #world-overlay { z-index: 61; }   /* a dialog over the HUD — its pills (25), the coins (50), the hotbar (60) — never under it; the menu (65) and the item card stay over */
+html.at-sea.dialog-up #world-overlay { z-index: 74; }   /* at sea: over the sloop's canvas (60), stick (70), Chart and ⋯ (71) and her menu (72) — at 61 a line said at sea went under them */
+html.at-sea #world-overlay .world-hud { display: none; }   /* (and the island's way back, name and prompt, under the sloop's canvas till then, don't come up with it over her HUD) */
+html.touch:has(#sloop-menu) .dpad { visibility: hidden !important; }   /* the sloop's own menu, how to sail, a hail: the stick and A go while it's up, as for a dialog */
 .wd-sell-row.pick .sp-have:empty, .wd-sell-row.pick .sp-price:empty { display: none; }   /* (a row with no detail: no blank lines under it on a phone) */
 /* the game menu's small buttons on a phone: a finger's worth (the Map buttons, Here / All places, Sort, the pack's acts) */
 html.touch #game-menu .gm-btn, html.touch .mp-seg button { min-height: 36px; }
 html.touch #game-menu .gm-btn-sm { padding: 6px 12px; }
 html.touch .mp-pins .mp-pin::after { content: ''; position: absolute; inset: -9px; border-radius: 50%; }   /* a 20-px pin, a 38-px tap */
 html.touch .mp-key { min-height: 36px; }
+html.touch #game-menu .cx-tab, html.touch .qj-tab { min-height: 36px; padding: 4px 11px; }                  /* the Collection's sets */
+/* The ship's old terminals — the catalogs (the quarters' and ArcadiaMart's), the decor locker, the stats console
+   (js/catalog.js, locker.js, stats-panel.js, inline styles of their own): Close is a button (a tap on a phone, where
+   "ESC TO CLOSE" was all it said), and on a narrow screen the cards go one to a row and the panel takes the screen. */
+.term-close { font: inherit; font-size: 10px; letter-spacing: 3px; color: #8a9aa8; background: transparent; border: 1px solid rgba(64, 200, 216, 0.25);
+  border-radius: 4px; padding: 4px 10px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+.term-close:hover { color: #80e0e8; border-color: rgba(64, 200, 216, 0.6); }
+.term-close .ip-key { font-size: 9px; min-width: 22px; height: 16px; }
+html.touch .term-close { min-height: 38px; padding: 6px 14px; font-size: 12px; color: #c0dce4; }
+html.touch .term-close .ip-key { display: none; }
+html.touch .term-close::before { content: '\2715'; }
+@media (max-width: 560px) {
+  .term-panel { width: calc(100vw - 16px) !important; max-height: calc(var(--vvh, 100vh) - 24px) !important; }
+  .term-panel > div { padding-left: 14px !important; padding-right: 14px !important; }
+  #catalog-overlay .term-2col, #locker-overlay .term-2col { grid-template-columns: minmax(0, 1fr) !important; }
+}
 html.touch .uses-more summary, html.touch #game-menu .uses-more > summary { padding: 10px 0; margin-top: 0; }   /* "and N more" under an item's Uses */
 html.touch .nav-head .ip-key { display: none; }
+html.touch .nav-head { min-height: 38px; box-sizing: border-box; }   /* the star map's way back, a finger's worth */
+html.touch .nav-node { min-height: 36px; }   /* a world on the chart (its name and status), a finger's worth */
 html.touch .nav-head::before { content: '\2039'; font-size: 22px; line-height: 14px; margin: -3px 2px 0 6px; }
 html.touch .nav-hint { display: none; }
 @media (orientation: landscape) and (max-height: 520px) {   /* phone on its side: a slimmer chart panel that scrolls, jump button pinned */
@@ -1818,7 +1844,7 @@ html.touch .qj-close .ip-key { font-size: 0; min-width: 26px; height: 22px; }   
 html.touch .qj-close .ip-key::after { content: '\2715'; font-size: 13px; }
 /* a finger's worth (36 px at least) round every close and every button of the shared panels on a phone (phone_pass.js) */
 html.touch .qj-close { min-width: 40px; min-height: 40px; display: inline-flex; align-items: center; justify-content: center; margin: -8px -6px -8px 0; }
-html.touch .e8-controls button, html.touch .dt-controls button, html.touch .wd-btn, html.touch .sp-b { min-height: 38px; }
+html.touch .e8-controls button, html.touch .dt-controls button, html.touch .wd-btn, html.touch .sp-b, html.touch .pk-btn, html.touch #down-banner .db-out { min-height: 38px; }
 html.touch .sp-b { min-width: 38px; }
 
 /* ---- Homes: the Furnish pill and the furnishing tray (js/home.js) ----
@@ -1967,16 +1993,24 @@ html.dancing #inventory-panel, html.dancing .dpad { display: none !important; }
   background: rgba(24, 10, 40, 0.86); touch-action: manipulation;
 }
 #dance-hud .dn-help { font-size: 10px; letter-spacing: 1px; color: rgba(244, 236, 255, 0.7); white-space: nowrap; }
+#dance-hud .dn-stop { display: inline-block; pointer-events: auto; font: inherit; font-size: 14px; color: #f4ecff; min-width: 38px; min-height: 36px; margin: -4px -8px -4px 0;
+  background: transparent; border: 0; border-left: 1px solid rgba(160, 128, 255, 0.45); cursor: pointer; }   /* stop dancing: the ✕ (a tap or a click; Esc too) */
 @media (hover: none), (pointer: coarse) {
   #dance-hud { top: auto; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); transform: none; right: 50%; margin-right: -120px; }
   #dance-hud canvas { width: 180px; height: 315px; }
   #dance-hud .dn-pads { display: flex; }
   #dance-hud .dn-help { display: none; }
+  #dance-hud .dn-top { align-items: center; }
+}
+@media (pointer: coarse) and (orientation: landscape) and (max-height: 520px) {   /* a phone on its side: the lanes fit the height, the pads bottom right */
+  #dance-hud { bottom: calc(6px + env(safe-area-inset-bottom, 0px)); gap: 3px; }
+  #dance-hud canvas { height: calc(var(--vvh, 100vh) - 150px); width: auto; aspect-ratio: 120 / 210; }
+  #dance-hud .dn-pads { position: fixed; right: calc(16px + env(safe-area-inset-right, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
 }
 
 /* ---- Fell Dice at the Snowcap Lodge (js/lodge.js) ------------------------------------------------------------------- */
 #fell-dice {
-  position: fixed; inset: 0; z-index: 40; display: none; align-items: center; justify-content: center;
+  position: fixed; inset: 0; z-index: 55; display: none; align-items: center; justify-content: center;
   background: rgba(8, 10, 24, 0.55); font-family: 'Pixelify Sans', 'Courier New', monospace; font-variant-ligatures: none;
 }
 #fell-dice.visible { display: flex; }
@@ -2017,6 +2051,11 @@ html.dancing #inventory-panel, html.dancing .dpad { display: none !important; }
 .fd-controls .fd-next { background: #f0b0a0; color: #1e2240; border-color: #ffd8c8; }
 .fd-help { font-size: 10px; line-height: 1.4; color: rgba(238, 244, 252, 0.6); text-align: center; }
 html.touch .fd-keys { display: none; }
+/* a finger's worth on a phone: − and + and the five faces (they wrap under the count when the row's too narrow), the bid and Liar */
+html.touch .fd-controls button { min-height: 38px; min-width: 38px; }
+html.touch .fd-faces { gap: 5px; }
+html.touch .fd-faces button { padding: 4px; display: inline-flex; align-items: center; justify-content: center; }
+html.touch .fd-faces button .fd-die { width: 28px; height: 28px; }
 .fd-panel.fd-anchor {                                   /* Bones at the Crown & Anchor: dark oak, brass, lamplight */
   background: linear-gradient(#2e1c10, #20140a); border: 2px solid #a08040; border-radius: 8px;
   box-shadow: 0 0 0 2px #120a04, 0 18px 50px rgba(0, 0, 0, 0.6); color: #f2e6cc;
@@ -2169,6 +2208,7 @@ html.home-editing #mp-pill, html.home-editing #mp-layer { display: none !importa
 .party-panel.pp-small button { flex: none; padding: 3px 11px; font-size: 12px; }
 .party-panel .pp-dot { width: 8px; height: 8px; border-radius: 50%; background: #ffd060; box-shadow: 0 0 6px #ffc040; animation: tg-blink 1.2s steps(2) infinite; }
 html.touch .party-panel { top: calc(158px + env(safe-area-inset-top)); }
+html.touch .party-panel button, html.touch .party-panel.pp-small button { min-height: 36px; padding-left: 14px; padding-right: 14px; }   /* Join, Not now, Go: a finger's worth */
 /* playing games together (js/together.js): the two of you in the cabinet's bar, what others are playing over their heads */
 .cm-mid { display: flex; align-items: center; justify-content: center; gap: 12px; min-width: 0; }
 .cm-vs { display: flex; align-items: baseline; gap: 7px; padding: 3px 12px; border-radius: 999px; white-space: nowrap; font-size: 13px; color: #f0ecf8;
@@ -2220,6 +2260,8 @@ html.home-editing #tg-layer { display: none !important; }
 .tp-item:hover:not([disabled]) { border-color: rgba(224, 192, 96, 0.7); }
 .tp-item[disabled] { cursor: default; opacity: 1; }
 .tp-item canvas { width: 24px; height: 24px; image-rendering: pixelated; }
+html.touch .tp-item, html.touch .tp-foot button { min-height: 36px; }   /* a trade's things and Ready on a phone */
+html.touch .tp-coins input { font-size: 16px; }   /* no zoom on focus (as the chat's) */
 .tp-none { font-size: 12px; color: #6e6454; padding: 6px; }
 .tp-coins { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 12px; color: #c8b890; }
 .tp-coins input { width: 90px; font: inherit; color: #f0e6d0; background: rgba(0, 0, 0, 0.35); border: 1px solid rgba(224, 192, 96, 0.3); border-radius: 4px; padding: 3px 6px; }
@@ -2296,6 +2338,7 @@ html.touch #chart-pill .ip-key { display: none; }
 #sea-chart .ch-hint { margin-top: 8px; text-align: center; font-size: 11px; color: rgba(224, 192, 96, 0.75); letter-spacing: 0.5px; }
 #sea-chart .ch-hint .ip-key { font-size: 10px; min-width: 20px; height: 16px; }
 html.touch #sea-chart .ch-hint { display: none; }
+html.touch #sea-chart .ch-btns button { min-height: 38px; }                 /* Set course, You are here, Close: a finger's worth */
 
 /* how the pilot looks (js/look.js): the new-pilot screen and the wardrobe's Change look */
 .look-editor { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
@@ -2862,12 +2905,14 @@ html.touch #journal-pill .jp-ico canvas { width: 20px; height: 20px; }
   .gm-tab canvas { width: 28px; height: 28px; }
   .gm-tab-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
   .gm-tab-key { display: none; }
+  .gm-tab { padding: 3px 0 2px; font-size: 10px; letter-spacing: -0.4px; }   /* "Collection" and "Backpack" whole on a 360-px phone, not "Collecti…" */
   .gm-x { flex: none; width: 40px; height: 40px; margin: 0 2px 6px 4px; }
   .gm-page { padding: 12px 12px calc(12px + env(safe-area-inset-bottom)); border-radius: 0; }
   .gm-foot { display: none; }
   .bp, .jn, .fb-body { grid-template-columns: minmax(0, 1fr); }
   .bp-side, .fb-detail { position: static; }
   .bp-grid { gap: 4px; }
+  html.touch .bp-chest .bp-grid { grid-template-columns: repeat(8, minmax(0, 1fr)); }   /* a chest's slots a finger's worth (the pack's stay ten across, under the hotbar's) */
   .bp-detail { min-height: 0; }
   .fb-body { display: flex; flex-direction: column-reverse; }
   .fb-detail { display: grid; grid-template-columns: 120px 1fr; gap: 0 10px; text-align: left; align-items: center; }
@@ -2882,6 +2927,9 @@ html.touch #journal-pill .jp-ico canvas { width: 20px; height: 20px; }
   .mp-side { overflow: visible; }
   .mp-all { columns: 1; }
   .mp-seg button { max-width: 150px; }
+}
+@media (max-width: 380px) {
+  html.touch .bp-chest .bp-grid { grid-template-columns: repeat(7, minmax(0, 1fr)); }   /* (seven on a 360-px phone, where eight came to 35 px) */
 }
 @media (max-width: 700px) and (orientation: landscape), (max-height: 520px) and (orientation: landscape) {
   .gm-tab { flex-direction: row; gap: 6px; height: 40px; }
@@ -3008,6 +3056,9 @@ html.touch #ws-tip { display: none; }
 #tchat .tc-send { font: inherit; font-size: 13px; letter-spacing: 1px; padding: 6px 12px; border-radius: 6px; cursor: pointer; color: #2a1004; background: linear-gradient(180deg, #ffe08a, #e0a040); border: 0; }
 html.touch #tchat .tc-in { font-size: 16px; }                /* no zoom on focus */
 html.touch #tchat .tc-q { font-size: 13px; padding: 5px 11px; }
+html.touch #tchat .tc-q, html.touch #tchat .tc-send { min-height: 36px; }   /* the quick lines and Send: a finger's worth */
+html.touch #tchat .tc-x { min-width: 40px; min-height: 36px; }
+html.touch .tc-pill { min-height: 36px; box-sizing: border-box; }   /* the chat pill, in a cabinet's bar or on its own (27 px tall) */
 html.touch .tc-pill.tc-inbar .tc-lbl { display: none; }
 /* a phone's cabinet bar with the score and the pill: the game's own header names the table, so the bar's title goes */
 @media (max-width: 560px) {

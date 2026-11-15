@@ -47,7 +47,7 @@ var BridgeLocker = (function () {
   }
 
   function renderShellHTML() {
-    var html = '<div style="' +
+    var html = '<div class="term-panel" style="' +
       'width:min(720px,92vw);max-height:88vh;overflow:hidden;display:flex;flex-direction:column;' +
       'background:linear-gradient(180deg,rgba(20,30,46,0.96),rgba(10,18,28,0.96));' +
       'border:1px solid rgba(64,200,216,0.5);border-radius:8px;' +
@@ -60,15 +60,15 @@ var BridgeLocker = (function () {
 
     html += '<div style="padding:18px 24px;overflow-y:auto;flex:1;">' +
       '<div style="font-size:10px;letter-spacing:4px;color:rgba(128,224,136,0.75);margin-bottom:8px;">ON DISPLAY</div>' +
-      '<div id="locker-displayed-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px;"></div>' +
+      '<div id="locker-displayed-grid" class="term-2col" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px;"></div>' +
       '<div style="font-size:10px;letter-spacing:4px;color:rgba(64,200,216,0.75);margin-bottom:8px;">IN STORAGE</div>' +
-      '<div id="locker-stored-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"></div>' +
+      '<div id="locker-stored-grid" class="term-2col" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"></div>' +
     '</div>';
 
     html += '<div style="padding:12px 24px;border-top:1px solid rgba(64,200,216,0.25);' +
             'display:flex;justify-content:space-between;align-items:center;font-size:10px;' +
             'letter-spacing:3px;color:#777;">' +
-      '<span>ESC TO CLOSE</span>' +
+      '<button type="button" class="term-close"><span class="ip-key">Esc</span> CLOSE</button>' +
       '<span id="locker-feedback" style="color:#80e0e8;"></span>' +
     '</div>';
 
@@ -88,7 +88,7 @@ var BridgeLocker = (function () {
           'style="display:block;width:48px;height:48px;background:rgba(60,40,90,0.18);border-radius:4px;image-rendering:pixelated;"></canvas>' +
         '<div>' +
           '<div style="font-size:12px;letter-spacing:2px;color:#e0e0e0;">' + escapeHtml(item.name.toUpperCase()) + '</div>' +
-          '<div style="font-size:9px;letter-spacing:2px;color:#888;margin-top:2px;">SLOT: ' + escapeHtml(item.slot.toUpperCase()) + '</div>' +
+          '<div style="font-size:9px;letter-spacing:2px;color:#888;margin-top:2px;">SLOT: ' + escapeHtml(item.slot.replace(/_/g, ' ').toUpperCase()) + '</div>' +
         '</div>' +
         '<button class="locker-action" data-key="' + item.key + '" data-mode="' + mode + '" data-slot="' + item.slot + '" style="' +
           'padding:8px 14px;background:transparent;border:1px solid ' + actionColor + ';' +
@@ -249,7 +249,7 @@ var BridgeLocker = (function () {
 
   function bindHandlers() {
     overlayEl.addEventListener('click', function (e) {
-      if (e.target === overlayEl) hide();
+      if (e.target === overlayEl || (e.target.closest && e.target.closest('.term-close'))) hide();   // the backdrop, or Close (a tap on a phone)
     });
     document.addEventListener('keydown', escHandler);
   }

@@ -66,6 +66,7 @@ const SUITES = {
     ['world/events.js', SHOTS],
     ['world/boards.js', SHOTS],
     ['world/phone_pass.js', SHOTS],
+    ['world/phone_pass_old.js', SHOTS],
     ['world/hoarfell_e.js', SHOTS],
     ['world/hoarfell_quest.js', SHOTS],
     ['world/railway.js', SHOTS + '/railway'],
