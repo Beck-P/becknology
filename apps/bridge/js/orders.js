@@ -76,6 +76,7 @@ var BridgeOrders = (function () {
   function H() { return typeof BridgeHolm !== 'undefined' ? BridgeHolm : null; }
   function B() { return typeof BridgeBusiness !== 'undefined' ? BridgeBusiness : null; }
   function D() { return typeof BridgeDispatch !== 'undefined' ? BridgeDispatch : null; }
+  function closeMenu() { if (typeof BridgeMenu !== 'undefined' && BridgeMenu.close) BridgeMenu.close(); }
   function choose(spec) { if (typeof BridgeInteractions !== 'undefined' && BridgeInteractions.choose) BridgeInteractions.choose(spec); }
   function toast(a, b, c) { if (typeof BridgeQuests !== 'undefined' && BridgeQuests.toast) BridgeQuests.toast(a, b, c); }
   function sfx(n) { if (typeof BridgeAudio !== 'undefined' && BridgeAudio.sfx) BridgeAudio.sfx(n); }
@@ -371,7 +372,11 @@ var BridgeOrders = (function () {
     if (why) { wait(o, why); lie(s, at); return false; }
     var p = plan(s, o, at, to, t, pos);
     if (o.kind === 'supply' && !pos && at === HOLM && !p.deliver && !p.jobs.length && !(o.bring)) {   // nothing to take out, nothing to bring home
-      wait(o, { why: 'nothing in your store for ' + bizName(o.to) + ' (or it has two days\' stock)', code: 'empty' });
+      // two different things: the business is stocked for two days (all's well: she sails when it runs lower), or your
+      // store has nothing it sells (that needs you)
+      var so = B() && B().stockOf ? B().stockOf(o.to) : null;
+      if (so && so.units >= STOCK_DAYS * so.per) wait(o, { why: bizName(o.to) + ' has two days\' stock: she sails again when it runs lower', code: 'stocked' });
+      else wait(o, { why: 'nothing in your store on ' + (H() ? H().name() : 'your holm') + ' that ' + bizName(o.to) + ' sells', code: 'empty' });
       lie(s, at); return false;
     }
     var G = gradeOf(captainOf(s.id)), mins = legMins(s, at, to, p.crates, t);
@@ -521,12 +526,18 @@ var BridgeOrders = (function () {
   function estimate(shipId, spec) {
     var s = ship(shipId), o = spec || st.ord[shipId];
     if (!s || !o || !T()) return null;
-    var G = gradeOf(captainOf(shipId)), L = loopOf(o), sp = room(s), now = Date.now(), profit = 0, mins = 0, safe = 1, g0 = { glut: {} };
-    for (var i = 0; i < L.length; i++) {
-      var a = L[i], b = L[(i + 1) % L.length], r = o.kind === 'trade' ? legRun(a, b, sp, g0, now, boostOf(a, b, now)) : null;
-      profit += r ? r.profit : 0;
-      mins += legMins(s, a, b, r ? r.crates : o.kind === 'supply' ? sp / 2 : 0, now);
-      safe *= 1 - risk(s, a, b, now, G);
+    // round the loop four times and report the last: by then the markets she sells into remember her own cargoes (the
+    // glut halving every two hours) as they settle, which is what her runs after the first really make
+    var G = gradeOf(captainOf(shipId)), L = loopOf(o), sp = room(s), now = Date.now(), profit = 0, mins = 0, safe = 1, g0 = { glut: {} }, t = now;
+    for (var lap = 0; lap < 4; lap++) {
+      profit = 0; mins = 0; safe = 1;
+      for (var i = 0; i < L.length; i++) {
+        var a = L[i], b = L[(i + 1) % L.length], r = o.kind === 'trade' ? legRun(a, b, sp, g0, t, boostOf(a, b, now)) : null;
+        var m = legMins(s, a, b, r ? r.crates : o.kind === 'supply' ? sp / 2 : 0, now);
+        profit += r ? r.profit : 0; mins += m; t += m * MIN;
+        if (r) r.goods.forEach(function (x) { noteGlut(g0, b, x.good, x.n, t); });
+        safe *= 1 - risk(s, a, b, now, G);
+      }
     }
     return { profit: Math.round(profit * G.share), mins: mins, risk: 1 - safe };
   }
@@ -567,7 +578,7 @@ var BridgeOrders = (function () {
   }
   function summary() {
     advance();
-    var ids = Object.keys(st.ord), waiting = ids.filter(function (id) { return st.ord[id].wait && ['storm', 'repair'].indexOf(st.ord[id].wait.code) < 0; });
+    var ids = Object.keys(st.ord), waiting = ids.filter(function (id) { return st.ord[id].wait && ['storm', 'repair', 'stocked'].indexOf(st.ord[id].wait.code) < 0; });
     var today = 0, d0 = Date.now() - 86400000;
     ids.forEach(function (id) { st.ord[id].last.forEach(function (r) { if (r.at > d0) today += r.made; }); });
     return { orders: ids.length, waiting: waiting.length, captains: staff().length, ashore: staff().filter(ashore).length, runs: st.runs, made: st.made, day: today, debt: st.debt };
@@ -585,13 +596,21 @@ var BridgeOrders = (function () {
     var out = [];
     Object.keys(st.ord).forEach(function (id) {
       var o = st.ord[id], s = ship(id);
-      if (s && o.wait && ['nocap', 'unpaid', 'gone', 'nodock', 'off', 'away', 'yours'].indexOf(o.wait.code) >= 0)
-        out.push({ name: 'The ' + s.name + ' is waiting', sub: o.wait.why + ' — her standing orders are on hold', world: 'office', alert: o.wait.code === 'unpaid' });
+      var go = function () { closeMenu(); shipView(id); };
+      var FIX = { nocap: 'tap to put a captain aboard', unpaid: 'tap to pay what\'s owed', gone: 'tap to give her new orders', nodock: 'rebuild the dock on your holm',
+                  off: 'tap to start her again', away: 'she starts again once she\'s in', yours: 'tap to hand her back to her captain' };
+      if (s && o.wait && FIX[o.wait.code])
+        out.push({ name: 'The ' + s.name + ' is waiting', sub: o.wait.why + ' — her standing orders are on hold; ' + FIX[o.wait.code], alert: o.wait.code === 'unpaid',
+                   act: o.wait.code === 'unpaid' && typeof BridgeLedger !== 'undefined' && BridgeLedger.payNow ? function () { BridgeLedger.payNow(); } : go });
       else if (s && o.wait && o.wait.code === 'empty')
-        out.push({ name: 'The ' + s.name + ' has nothing to carry', sub: 'Put stock away in the warehouse on ' + (H() ? H().name() : 'your holm') + ' and her supply run to ' + bizName(o.to) + ' sails again', world: 'lumar-holm' });
+        out.push({ name: 'The ' + s.name + ' has nothing to carry', sub: 'Nothing in the warehouse on ' + (H() ? H().name() : 'your holm') + ' that ' + bizName(o.to) + ' sells. Put some away there (fish, eggs, crops) and her supply run sails again', world: 'lumar-holm', act: go });
+    });
+    ships().forEach(function (s) {                             // a captain aboard and nothing to do
+      if (st.ord[s.id] || s.away || !captainOf(s.id)) return;
+      out.push({ name: 'The ' + s.name + ' has no orders', sub: captainOf(s.id).name + ' is aboard and drawing a wage, lying at ' + pname(s.at) + ' — tap to give her today\'s best loop or a supply run', act: function () { closeMenu(); shipView(s.id); } });
     });
     var idle = staff().filter(ashore);
-    if (idle.length) out.push({ name: idle.length === 1 ? idle[0].name + ' has no ship' : idle.length + ' captains have no ship', sub: 'Put them aboard one at the chart table in your office, or let them go', world: 'office' });
+    if (idle.length) out.push({ name: idle.length === 1 ? idle[0].name + ' has no ship' : idle.length + ' captains have no ship', sub: 'Drawing a wage ashore — tap to put them aboard one, or let them go', act: function () { closeMenu(); open(); } });
     if (st.debt) out.push({ name: 'Your captains are owed', sub: 'Materials and repairs they paid for: they\'ll buy no more till you have the coins', alert: true });
     return out;
   }
@@ -658,7 +677,10 @@ var BridgeOrders = (function () {
       rows.push(o.stop ? { label: 'Keep her on her orders', sub: 'she was to stop at ' + pname(o.leg ? o.leg.to : s.at), pick: function () { o.stop = false; save(); shipView(id, 'SHE STAYS ON HER ORDERS.'); } }
                        : { label: 'Stop her orders', sub: o.leg ? 'she finishes this leg and lies at ' + pname(o.leg.to) : 'she lies where she is', pick: function () { stop(id); shipView(id, o.leg ? 'SHE\'LL LIE AT ' + pname(o.leg.to).toUpperCase() + ' ONCE THIS LEG\'S DONE.' : 'SHE\'S OFF HER ORDERS.'); } });
     } else {
-      rows.push({ label: 'Give her a standing order', sub: p ? 'a trade loop, or a supply run between your holdings' : 'she needs a captain first', disabled: !p || !!s.away, pick: function () { setView(id); } });
+      var best = p && !s.away ? loops(id)[0] : null;              // the sensible default, one tap
+      if (best) rows.push({ label: 'Sail today\'s best loop', draw: pinIcon(s), sub: best.ports.map(pname).join(' → ') + ' → back · ~' + coins(best.est.profit) + ' a run · a run every ' + hm(best.est.mins) + ' · ' + Math.round(best.est.risk * 100) + '% chance of trouble',
+                          note: 'sail it', pick: function () { give(id, { kind: 'trade', ports: best.ports }); } });
+      rows.push({ label: best ? 'Other orders' : 'Give her a standing order', sub: p ? 'other loops, ports of your choosing, or a supply run between your holdings' : 'she needs a captain first', disabled: !p || !!s.away, pick: function () { setView(id); } });
       if (F().canOrder && !F().canOrder(s) && typeof BridgeHarbour !== 'undefined' && BridgeHarbour.send)
         rows.push({ label: 'Send her somewhere, once', sub: 'her hands sail her there, and she lies there after', pick: function () { BridgeHarbour.send(s, function (msg) { shipView(id, msg); }); } });
     }

@@ -44,7 +44,7 @@ var BridgeLedger = (function () {
     var face = o.face ? '<canvas class="lg-face" width="24" height="24" data-seed="' + esc(o.face.seed) + '" data-style="' + esc(o.face.style) + '" data-colour="' + esc(o.face.colour) + '"' + (o.face.wild ? ' data-wild="1"' : '') + '></canvas>'
       : o.sheet ? '<canvas class="lg-face" width="24" height="24" data-sheet="' + esc(o.sheet) + '"></canvas>' : '';
     var act = o.act ? ' data-act="' + (acts.push(o.act) - 1) + '"' : '';
-    return '<li class="lg-row' + (o.dim ? ' lg-dim' : '') + (o.alert ? ' lg-alert' : '') + (o.act ? ' lg-act' : '') + '"' + act + '>' + face + '<div class="lg-main"><b>' + esc(o.name) + '</b>' +
+    return '<li class="lg-row' + (o.dim ? ' lg-dim' : '') + (o.alert ? ' lg-alert' : '') + (o.step ? ' lg-step' : '') + (o.act ? ' lg-act' : '') + '"' + act + '>' + face + '<div class="lg-main"><b>' + esc(o.name) + '</b>' +
       (o.sub ? '<span>' + esc(o.sub) + '</span>' : '') + '</div>' + (o.fig ? '<div class="lg-fig">' + o.fig + '</div>' : '') + mapBtn(o.world) + '</li>';
   }
   function list(rows) { return '<ul class="lg-list">' + rows.map(row).join('') + '</ul>'; }
@@ -52,49 +52,59 @@ var BridgeLedger = (function () {
   function ago(ms) { var m = Math.round(ms / 60000); return m < 60 ? m + ' min' : Math.round(m / 60) + ' h'; }
 
   // ---- what needs you -----------------------------------------------------------------------------------------------
+  // Every row says in plain words what's wrong and, where it can be put right from here, a tap does it (`act`): a
+  // business's own card (hire, collect, stock), paying what's owed, a ship's orders, the workshop or the slipway.
+  function bizCard(id) { return function () { closeMenu(); BridgeInteractions.business(id); }; }
   function needs() {
     var out = [];
     if (has('BridgeBusiness') && BridgeBusiness.all) BridgeBusiness.all().forEach(function (d) {
       if (!BridgeBusiness.owned(d.id)) return;
-      var p = BridgeBusiness.pending(d.id), full = p >= BridgeBusiness.perHour(d.id) * BridgeBusiness.cap(d.id) * 0.98;
+      var p = BridgeBusiness.pending(d.id), full = BridgeBusiness.full ? BridgeBusiness.full(d.id) : p >= BridgeBusiness.perHour(d.id) * BridgeBusiness.cap(d.id) * 0.98;
       var st = BridgeBusiness.status ? BridgeBusiness.status(d.id) : null;
-      if (st && !st.running && !st.staff.length) out.push({ name: d.name, sub: st.needsManager ? 'Shut: it won\'t open without a manager' : 'Shut: nobody working it — hire a hand there', world: d.world, alert: true });
+      var coming = st && st.staff.some(function (x) { return x.arrives && x.arrives > Date.now(); });
+      if (st && !st.running && !coming && (!st.staff.length || st.needsManager))
+        out.push({ name: d.name, sub: st.needsManager ? 'Shut: it won\'t open without a manager — tap to hire one' : 'Shut: nobody working it — tap to hire a hand', world: d.world, alert: true, act: bizCard(d.id) });
       else if (p >= Math.max(20, BridgeBusiness.perHour(d.id) * 2) || full)
-        out.push({ name: d.name, sub: full ? 'Full — it\'s stopped earning until you collect' : 'Takings waiting to collect', fig: coins(p), world: d.world, alert: full });
+        out.push({ name: d.name, sub: full ? 'Full — it\'s stopped earning until you collect (tap to collect)' : 'Takings waiting — tap to collect', fig: coins(p), world: d.world, alert: full, act: bizCard(d.id) });
     });
     if (has('BridgeBusiness') && BridgeBusiness.owing) {
       var ow = BridgeBusiness.owing();
-      if (ow.total > 0) out.push({ name: 'Wages owed', sub: ow.people.map(function (x) { return x.name + (x.missed ? ' (missed a payday)' : ''); }).join(', ') + ' — paid from takings, then your coins, as soon as there\'s enough', fig: coins(ow.total), alert: ow.people.some(function (x) { return x.missed; }) });
+      if (ow.total > 0) out.push({ name: 'Wages owed', sub: ow.people.map(function (x) { return x.name + (x.missed ? ' (missed a payday)' : ''); }).join(', ') + ' — paid from takings, then your coins, as soon as there\'s enough. Tap to pay now', fig: coins(ow.total), alert: ow.people.some(function (x) { return x.missed; }), act: function () { payNow(); } });
     }
     if (has('BridgeHolm') && BridgeHolm.owned && BridgeHolm.owned()) {
       if (BridgeHolm.returns) BridgeHolm.returns();
       var chest = BridgeHolm._state().chest || 0;
-      if (chest > 0) out.push({ name: 'The strongbox on ' + BridgeHolm.name(), sub: 'What your ships brought home', fig: coins(chest), world: 'lumar-holm-home' });
+      if (chest > 0) out.push({ name: 'The strongbox on ' + BridgeHolm.name(), sub: 'What your ships brought home — collected at the cottage', fig: coins(chest), world: 'lumar-holm-home' });
     }
     if (has('BridgeWorkshop') && BridgeWorkshop.built()) {
-      var ws = BridgeWorkshop.summary();
-      if (ws.since) out.push({ name: 'Made at the workshop', sub: ws.since + ' thing' + (ws.since === 1 ? '' : 's') + ' since you last looked — on the racks on ' + BridgeHolm.name(), world: 'lumar-holm' });
-      if (ws.idle) out.push({ name: 'Idle at the forge', sub: ws.idle + ' smith' + (ws.idle === 1 ? '' : 's') + ' with nothing to make — queue something at the workshop', world: 'lumar-holm', alert: true });
+      var ws = BridgeWorkshop.summary(), book = function () { closeMenu(); if (has('BridgeOffice') && BridgeOffice.workshop) BridgeOffice.workshop(); else BridgeWorkshop.open(); };
+      if (ws.since) out.push({ name: 'Made at the workshop', sub: ws.since + ' thing' + (ws.since === 1 ? '' : 's') + ' since you last looked — on the racks on ' + BridgeHolm.name(), world: 'lumar-holm', act: book });
+      if (ws.idle) out.push({ name: 'Idle at the forge', sub: ws.idle + ' smith' + (ws.idle === 1 ? '' : 's') + ' with nothing to make — tap to queue something', world: 'lumar-holm', alert: true, act: book });
     }
     if (has('BridgeShipyard') && BridgeShipyard.built()) {
-      var sy = BridgeShipyard.summary();
-      if (sy.job && sy.job.ready) out.push({ name: 'The ' + sy.job.name + ' is finished', sub: 'On the slipway on ' + BridgeHolm.name() + ' — launch her', world: 'lumar-holm', alert: true });
-      else if (sy.job && sy.job.waiting) out.push({ name: 'The ' + sy.job.name + ' on the slip', sub: sy.job.waiting === 'materials' ? 'Waiting on materials — put them in at the slipway' : 'Nobody working her — hire a shipwright', world: 'lumar-holm' });
+      var sy = BridgeShipyard.summary(), slip = function () { closeMenu(); BridgeShipyard.open(); };
+      if (sy.job && sy.job.ready) out.push({ name: 'The ' + sy.job.name + ' is finished', sub: 'On the slipway on ' + BridgeHolm.name() + ' — tap to launch her', world: 'lumar-holm', alert: true, act: slip });
+      else if (sy.job && sy.job.waiting) out.push({ name: 'The ' + sy.job.name + ' on the slip', sub: sy.job.waiting === 'materials' ? 'Waiting on materials — tap to put in what you have' : 'Nobody working her — tap to hire a shipwright', world: 'lumar-holm', act: slip });
     }
     if (has('BridgeFleet')) BridgeFleet.all().forEach(function (s) {
       if (s.away) return;
       if (s.hull < 0.5) out.push({ name: s.name, sub: 'Hull at ' + Math.round(s.hull * 100) + '% — any harbourmaster mends her', world: worldOfShip(s), alert: s.hull < 0.25 });
       var fish = BridgeFleet.catchCount ? BridgeFleet.catchCount(s) : 0;
-      if (fish > 0) out.push({ name: s.name + '\'s fish hold', sub: fish + ' fish to land or sell', world: worldOfShip(s) });
+      if (fish > 0) out.push({ name: s.name + '\'s fish hold', sub: fish + ' fish to land or sell at a harbourmaster', world: worldOfShip(s) });
     });
-    var farm = has('BridgeFarm') ? BridgeFarm.journal() : { rows: [] }, ripe = 0, dry = 0;
+    var farm = has('BridgeFarm') ? BridgeFarm.journal() : { rows: [] }, ripe = 0, dry = 0, odile = has('BridgeHomestead') && BridgeHomestead.active && BridgeHomestead.active('odile');
     farm.rows.forEach(function (r) { ripe += r.ripe; dry += r.dry; });
-    if (ripe) out.push({ name: 'Ripe on the farm', sub: ripe + ' ready to pick', world: 'verdance' });
+    if (ripe && !odile) out.push({ name: 'Ripe on the farm', sub: ripe + ' ready to pick — or hire Odile to bring it in', world: 'verdance' });
     if (dry && !(has('BridgeHomestead') && BridgeHomestead.active && BridgeHomestead.active('tam'))) out.push({ name: 'Thirsty rows', sub: dry + ' planted tiles have dried out — water them, or hire Tam', world: 'verdance' });
+    if (farm.bare && odile) out.push({ name: 'Bare rows on the farm', sub: farm.bare + ' row' + (farm.bare === 1 ? '' : 's') + ' Odile brought in and couldn\'t sow again: the seed box in the barn has no ' + farm.bareOf.join(' or ') + ' seed', world: 'verdance', alert: true });
     var herd = has('BridgeAnimals') ? BridgeAnimals.journal() : [], ready = herd.filter(function (a) { return a.ready; }).length;
-    if (ready) out.push({ name: 'In the barnyard', sub: ready + (ready === 1 ? ' animal has' : ' animals have') + ' eggs or milk for you', world: 'verdance' });
+    if (ready && !odile) out.push({ name: 'In the barnyard', sub: ready + (ready === 1 ? ' animal has' : ' animals have') + ' eggs or milk for you', world: 'verdance' });
+    if (has('BridgeHomestead') && BridgeHomestead.HANDS && BridgeHomestead.until) Object.keys(BridgeHomestead.HANDS).forEach(function (id) {
+      var end = BridgeHomestead.until(id), left = end - Date.now();
+      if (left > 0 && left < 6 * 3600000) out.push({ name: BridgeHomestead.HANDS[id].name + '\'s last hours', sub: 'Hired till ' + clock(end) + ' — sign them on again at the notice board on the farm', world: 'verdance' });
+    });
     if (has('BridgeOrders')) out = out.concat(BridgeOrders.needs());
-    if (has('BridgeDispatch') && BridgeDispatch.undecided()) {
+    if (has('BridgeDispatch') && BridgeDispatch.undecided() && ownsAnything()) {
       var und = BridgeDispatch.undecided();
       out.push({ name: 'The morning dispatch', sub: und + ' thing' + (und === 1 ? '' : 's') + ' to decide — on your desk in the office, or under Today here (none of it has to be)', act: function () { closeMenu(); BridgeDispatch.open(); } });
     }
@@ -106,6 +116,54 @@ var BridgeLedger = (function () {
     }
     return out;
   }
+  function clock(ms) { return new Date(ms).toLocaleString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit' }); }
+  function ownsAnything() {
+    return (has('BridgeBusiness') && BridgeBusiness.all().some(function (d) { return BridgeBusiness.owned(d.id); })) ||
+           (has('BridgeFleet') && BridgeFleet.all().some(function (s) { return s.type !== 'sloop'; })) || (has('BridgeHolm') && BridgeHolm.owned && BridgeHolm.owned());
+  }
+  // wages owed, paid now: what was paid and what's still owed, said plainly (asked first when it's a lot)
+  function payNow(after) {
+    var B = has('BridgeBusiness') ? BridgeBusiness : null, ow = B ? B.owing() : { total: 0, people: [] };
+    if (!B || !ow.total) return;
+    function go() {
+      Promise.resolve(B.payAll()).then(function (r) {
+        var left = r && r.left != null ? r.left : B.owing().total, off = r && r.why === 'offline';
+        if (has('BridgeQuests') && BridgeQuests.toast) BridgeQuests.toast('Wages', off ? 'No way to move coins right now' : left ? (r && r.paid ? 'Paid ' + r.paid.toLocaleString() + ' coins' : 'Not enough coins') : 'Everyone paid',
+          off ? 'Try again in a moment' : left ? left.toLocaleString() + ' still owed: paid as soon as there\'s enough' : 'From the takings first, then your purse');
+        if (after) after(); else render();
+      });
+    }
+    if (ow.people.length > 1 || ow.total >= 1000) {
+      BridgeInteractions.choose({ title: 'Pay what\'s owed?', text: ('Up to ' + ow.total.toLocaleString() + ' coins, to ' + ow.people.map(function (x) { return x.name + ' (' + x.owe.toLocaleString() + ')'; }).join(', ') +
+        '. Their own business\'s takings pay first; your purse pays the rest.').toUpperCase(),
+        buttons: [{ label: 'Pay it', act: go }], closeLabel: 'Not now' });
+    } else go();
+  }
+  // the way in for someone who owns nothing yet, and the step after each first one: the top of the ledger and the
+  // journal's Next up. Null once there's a staffed business, a ship and a captain for her.
+  function theName(n) { return /^(The|A|An) /.test(n) ? n.replace(/^A /, 'A ') : 'The ' + n; }
+  function firstStep() {
+    var B = has('BridgeBusiness') ? BridgeBusiness : null, F = has('BridgeFleet') ? BridgeFleet : null, O = has('BridgeOrders') ? BridgeOrders : null;
+    if (!B || !B.all().length) return null;
+    var mine = B.all().filter(function (d) { return B.owned(d.id); });
+    var ships = F ? F.all().filter(function (s) { return s.type !== 'sloop'; }) : [];
+    if (!mine.length && !ships.length) {
+      var buyable = B.all().filter(function (d) { return !d.built && d.kind !== 'legacy'; }).sort(function (a, b) { return a.price - b.price; });
+      // the cheapest you've found, unless it's far dearer than a stall round Lumar (a share in the Royal Yard is no first step)
+      var cheap = buyable.filter(function (x) { return /^lumar/.test(x.world); })[0] || buyable[0];
+      var found = buyable.filter(function (d) { return been(d.world) && d.price <= Math.max(3000, cheap.price * 4); })[0], d = found || cheap;
+      if (!d) return null;
+      return { name: 'Start with a business of your own', sub: (found ? theName(d.name) + ' in ' + placeOf(d.world) + ' is for sale: ' + d.price.toLocaleString() + ' coins.'
+                                                                     : 'The cheapest are stalls round Lumar: ' + theName(d.name).replace(/^The /, 'the ') + (regionOf(d.world) && d.name.indexOf(regionOf(d.world)) < 0 ? ' on ' + regionOf(d.world) : '') + ', ' + d.price.toLocaleString() + ' coins.') +
+               ' Buy it there, hire a hand to keep it open, and come back for the takings. Then a ship, and a captain to trade with her while you\'re away.', world: found ? d.world : null, step: true };
+    }
+    var shut = mine.filter(function (d) { var st = B.status(d.id); return !st.staff.length && !st.running; })[0];
+    if (shut) return { name: 'Hire someone at ' + theName(shut.name).replace(/^The /, 'the '), sub: 'It only earns while it\'s open and someone\'s working it. Tap to see who\'s looking for work today.', world: shut.world, act: bizCard(shut.id), step: true };
+    if (!ships.length && F) return { name: 'Next: a ship that trades while you\'re away', sub: 'A cutter from Bess Tolliver\'s yard on Diggen\'s Point (' + (F.spec('cutter').price || 1500).toLocaleString() + ' coins). Sign on a hand there, then hire her a captain here or at the chart table in your office, and give her a trade loop.', world: been('lumar') ? 'lumar' : null, step: true };
+    var bare = O ? ships.filter(function (s) { return !O.captainOf(s.id); })[0] : null;
+    if (bare && !O.captains().length) return { name: 'Hire a captain for the ' + bare.name, sub: 'A captain sails her on standing orders (a trade loop, or a supply run) while you\'re elsewhere, and what every run makes comes to you. Tap to see who\'s looking for a ship today.', act: function () { closeMenu(); O.hireView(bare.id); }, step: true };
+    return null;
+  }
   function portName(id) { var I = has('BridgeVoyage') && BridgeVoyage._isles; return I && I[id] ? I[id].name : placeOf(id); }
   function worldOfShip(s) { return s.at || null; }
 
@@ -115,7 +173,7 @@ var BridgeLedger = (function () {
     var all = BridgeBusiness.all(), mine = 0, today = 0, wages = 0;
     var rows = all.map(function (d) {
       if (BridgeBusiness.owned(d.id)) {
-        var s = BridgeBusiness.state(d.id) || {}, p = BridgeBusiness.pending(d.id), ph = BridgeBusiness.perHour(d.id), full = p >= ph * BridgeBusiness.cap(d.id) * 0.98;
+        var s = BridgeBusiness.state(d.id) || {}, p = BridgeBusiness.pending(d.id), ph = BridgeBusiness.perHour(d.id), full = BridgeBusiness.full ? BridgeBusiness.full(d.id) : p >= ph * BridgeBusiness.cap(d.id) * 0.98;
         var st = BridgeBusiness.status(d.id), mgr = s.manager && has('BridgePeople') ? (BridgePeople.all()[s.manager] || {}).name : null;
         var who = st.staff.map(function (x) { return x.name + ' (' + x.title.toLowerCase() + ')'; });
         if (mgr) who.unshift(mgr + ' (crew)');
@@ -125,7 +183,7 @@ var BridgeLedger = (function () {
                  ' · ' + (who.length ? who.join(', ') : 'no staff') + ' · ' + st.today + ' today' +
                  (BridgeBusiness.stockOf && BridgeBusiness.stockOf(d.id) ? ' · ' + (BridgeBusiness.stockOf(d.id).units ? 'stock for ' + BridgeBusiness.stockOf(d.id).hours + ' open hours' : 'out of stock, buying in') : '') +
                  (st.banks ? ' · banked to you' : full ? ' · FULL' : p ? ' · ' + p + ' waiting' : ''),
-                 fig: st.banks ? coins(st.banked) : coins(p), world: d.world, alert: full || !st.running };
+                 fig: st.banks ? coins(st.banked) : coins(p), world: d.world, alert: full || !st.running, act: bizCard(d.id) };
       }
       if (d.built === 'holm' && been('lumar-holm')) return { name: d.name, sub: 'Build it from your island\'s ledger · ~' + d.rate + ' an open hour', fig: coins(d.price), world: 'lumar-holm' };   // (it stands on the holm)
       if (been(d.world)) return { name: d.name, sub: 'For sale · ' + placeOf(d.world) + ' · ' + BridgeBusiness.hoursText(d.id) + ' · ~' + d.rate + ' an open hour' +
@@ -241,7 +299,7 @@ var BridgeLedger = (function () {
     if (has('BridgeHomestead') && BridgeHomestead.HANDS) Object.keys(BridgeHomestead.HANDS).forEach(function (id) {
       var H = BridgeHomestead.HANDS[id];
       if (!BridgeHomestead.active(id)) return;
-      rows.push({ name: H.name + ' · farm hand', face: { seed: H.name, style: 'ranger', colour: 'green' }, sub: H.does + ' · paid up for the days you hired', fig: '<span class="lg-ok">paid</span>', world: 'verdance' });
+      rows.push({ name: H.name + ' · farm hand', face: { seed: H.name, style: 'ranger', colour: 'green' }, sub: H.does + ' · paid up' + (BridgeHomestead.until ? ' till ' + clock(BridgeHomestead.until(id)) : ' for the days you hired'), fig: '<span class="lg-ok">paid</span>', world: 'verdance' });
     });
     var head = '<div class="lg-total">Wages ' + pr.wages.toLocaleString() + ' a day · your businesses made ' + pr.made.toLocaleString() + ' today' +
       (pr.owed.total ? ' · <b>owed ' + pr.owed.total.toLocaleString() + '</b> <button type="button" class="gm-btn gm-btn-sm lg-pay">Pay it</button>' : '') + '</div>';
@@ -377,7 +435,8 @@ var BridgeLedger = (function () {
       if (has('BridgeShipyard') && BridgeShipyard.built()) {
         var syd = BridgeShipyard.summary();
         rows.push({ name: 'The slipway on ' + BridgeHolm.name(), sub: syd.wrights.length + ' shipwright' + (syd.wrights.length === 1 ? '' : 's') + ' · ' + syd.launched + ' launched · ' + syd.line,
-                    fig: syd.job ? (syd.job.ready ? '<span class="lg-ok">ready</span>' : Math.floor(syd.job.whole * 100) + '%') : 'empty', world: 'lumar-holm' });
+                    fig: syd.job ? (syd.job.ready ? '<span class="lg-ok">ready</span>' : Math.floor(syd.job.whole * 100) + '%') : 'empty', world: 'lumar-holm',
+                    act: function () { closeMenu(); BridgeShipyard.open(); } });
       }
       // the hall of finds: how much of it is filled (js/trophies.js)
       if (has('BridgeTrophies') && BridgeHolm.built('hall')) {
@@ -389,7 +448,8 @@ var BridgeLedger = (function () {
       if (has('BridgeWorkshop') && BridgeWorkshop.built()) {
         var ws = BridgeWorkshop.summary();
         rows.push({ name: 'The workshop on ' + BridgeHolm.name(), sub: ws.smiths.length + ' smith' + (ws.smiths.length === 1 ? '' : 's') + ' · ' + ws.made + ' made in all · ' + ws.line,
-                    fig: ws.working ? '<span class="lg-ok">at work</span>' : 'idle', world: 'lumar-holm' });
+                    fig: ws.working ? '<span class="lg-ok">at work</span>' : 'idle', world: 'lumar-holm',
+                    act: function () { closeMenu(); if (has('BridgeOffice') && BridgeOffice.workshop) BridgeOffice.workshop(); else BridgeWorkshop.open(); } });
         ws.jobs.forEach(function (j) {
           rows.push({ name: '· ' + j.name, sub: j.working ? (j.by === 'you' ? 'At your bench' : j.by) + ' · ' + Math.floor(j.done * 100) + '% done' : 'Waiting for a free smith',
                       fig: j.working ? 'in ' + ago(Math.max(60000, j.left)) : '' });
@@ -415,7 +475,8 @@ var BridgeLedger = (function () {
     if (!page) return;
     acts = [];
     var nd = needs(), bz = businesses(), sf = staff(), pp = people(), fl = fleet(), pl = places(), ct = contracts(), lg = legacy(), td = today(), od = orders(), tr = treasury();
-    var left = section('Needs you', nd.length || '', nd.length ? list(nd) : '<div class="jn-empty">Nothing needs you right now.</div>', 'jn-first') +
+    var fs = firstStep();
+    var left = section('Needs you', nd.length || '', (fs ? '<ul class="lg-list lg-first">' + row(fs) + '</ul>' : '') + (nd.length ? list(nd) : fs ? '' : '<div class="jn-empty">Nothing needs you right now.</div>'), 'jn-first') +
                (td.html ? section('Today', td.n, td.html, 'lg-today') : '') +
                (tr.html ? section('Treasury', tr.n, tr.html, 'lg-treasury') : '') +
                section('Businesses', bz.n, bz.html || '<div class="jn-empty">No businesses known yet.</div>') +
@@ -433,7 +494,7 @@ var BridgeLedger = (function () {
       li.addEventListener('click', function () { var f = acts[+li.getAttribute('data-act')]; if (f) f(); });
     });
     var pay = page.querySelector('.lg-pay');
-    if (pay) pay.addEventListener('click', function (e) { e.stopPropagation(); if (has('BridgeBusiness') && BridgeBusiness.payAll) BridgeBusiness.payAll(); setTimeout(function () { render(); }, 600); });
+    if (pay) pay.addEventListener('click', function (e) { e.stopPropagation(); payNow(); });
     if (has('BridgeLook') && BridgeLook.face) page.querySelectorAll('canvas.lg-face').forEach(function (cv) {
       if (cv.getAttribute('data-sheet')) { if (BridgeLook.npcFace) BridgeLook.npcFace(cv, cv.getAttribute('data-sheet')); return; }
       BridgeLook.face(cv, cv.getAttribute('data-seed'), cv.getAttribute('data-style'), cv.getAttribute('data-colour'), !!cv.getAttribute('data-wild'));
@@ -446,5 +507,5 @@ var BridgeLedger = (function () {
   }
 
   if (has('BridgeMenu') && BridgeMenu.page) BridgeMenu.page('ledger', { render: function (el, opts) { render(el); if (opts && opts.focus) focus(opts.focus); }, leave: function () { page = null; } });
-  return { render: render, needs: needs, roster: roster, payroll: payroll };
+  return { render: render, needs: needs, roster: roster, payroll: payroll, firstStep: firstStep, payNow: payNow };
 })();

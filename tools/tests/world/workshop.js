@@ -207,6 +207,22 @@ const SHOTS = process.argv[2] || __dirname + '/shots';
   await go('verdance'); await wait(1500);
   console.log('seed stall sells:', JSON.stringify(await ev(() => (BridgeWorld.getWorld().interactions.find(i => i.label === 'SEED STALL') || {}).items.map(x => x.id))));
   expect('flax seed at the seed stall', await ev(() => (BridgeWorld.getWorld().interactions.find(i => i.label === 'SEED STALL') || { items: [] }).items.some(x => x.id === 'seed_flax')));
+  // ---- a smith who downs tools (unpaid) doesn't keep a job from one who's working -------------------------------------
+  const handover = await ev(() => {
+    const W = BridgeWorkshop._state(), S = BridgeBusiness._state(), now = Date.now();
+    W.queue = []; W.bench = null; W.last = now;
+    S.staff = S.staff.filter(x => x.at !== 'workshop');
+    S.staff.push({ id: 'sA', key: 'tA', name: 'Ada Unpaid', tier: 'apprentice', grade: 'apprentice', title: 'Apprentice smith', wage: 80, skill: 1, at: 'workshop', hired: now - 86400000, missed: 1, owe: 80 });
+    S.staff.push({ id: 'sB', key: 'tB', name: 'Bo Paid', tier: 'apprentice', grade: 'apprentice', title: 'Apprentice smith', wage: 80, skill: 1, at: 'workshop', hired: now - 86400000, missed: 0, owe: 0 });
+    W.queue.push({ id: 'jx1', r: 'planks', need: 30 * 60000, done: 0, by: 'sA', at: now, took: {} });   // taken up by Ada before her payday was missed
+    window._off += 2 * 3600000;
+    BridgeWorkshop._advance();
+    const j = W.queue.find(q => q.id === 'jx1'), sum = BridgeWorkshop.summary();
+    S.staff = S.staff.filter(x => x.id !== 'sA' && x.id !== 'sB');
+    return { left: !!j, by: j ? j.by : null, idle: sum.idle, made: W.log[0] && W.log[0].t };
+  });
+  console.log('a job held by a smith who downed tools:', JSON.stringify(handover));
+  expect('the job goes to the smith who\'s working, and is made', !handover.left && /Bo Paid/.test(handover.made || ''));
   console.log('errors:', errors);
   await b.close();
 })();

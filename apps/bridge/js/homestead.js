@@ -132,6 +132,7 @@ var BridgeHomestead = (function () {
 
   // ---- the hands -------------------------------------------------------------------------------------------------
   function active(id) { return (s.hands[id] || 0) > Date.now(); }
+  function until(id) { return s.hands[id] || 0; }                              // when their hire runs out (ms)
   function activeAt(id, at) { return (s.hands[id] || 0) > at; }                // was on at that moment (catching up)
   function hire(id) {
     var H = HANDS[id];
@@ -506,6 +507,6 @@ var BridgeHomestead = (function () {
 
   return { ORDERS: ORDERS, reload: function () { s = load(); }, decorate: decorate, use: use, items: items, over: over, canWork: canWork, starterEdge: starterEdge, keptWet: keptWet,
            sprinklerAt: sprinklerAt, placeSprinkler: placeSprinkler, liftSprinkler: liftSprinkler, active: active, activeAt: activeAt, hire: hire,
-           toBin: toBin, takeSeed: takeSeed, owned: owned, name: farmName, journal: journal, HANDS: HANDS,
+           toBin: toBin, takeSeed: takeSeed, until: until, owned: owned, name: farmName, journal: journal, HANDS: HANDS,
            _s: function () { return s; }, _round: function () { s.round = 1; round(); } };
 })();

@@ -45,6 +45,7 @@ const SHOTS = process.argv[2] || __dirname + '/shots';
     const v = BridgeWorld.getScreenView();
     return { x: v.offX + (r[0] - pad) * v.ts, y: v.offY + (r[1] - pad) * v.ts, width: (r[2] - r[0] + 2 * pad) * v.ts, height: (r[3] - r[1] + 2 * pad) * v.ts };
   }, [r, pad]);
+  const check = (what, ok, got) => { if (!ok) { errors++; console.log('FAIL', what, got !== undefined ? JSON.stringify(got).slice(0, 400) : ''); } else console.log('ok', what); };
   const noToasts = () => ev(() => document.querySelectorAll('.quest-toast, #quest-toast').forEach(x => x.remove()));
 
   // ---- an empire to run: two ships with hands, the holm with its dock, warehouse and workshop, the Tern's Rest -----------
@@ -81,6 +82,7 @@ const SHOTS = process.argv[2] || __dirname + '/shots';
     const c = BridgeOrders.set(ids.brig, { kind: 'supply', to: 'terns-rest' });
     return [a, c, BridgeFleet.where(BridgeFleet.get(ids.cutter)), BridgeFleet.where(BridgeFleet.get(ids.brig))];
   }, ids)));
+  const est0 = await ev((id) => BridgeOrders.estimate(id), ids.cutter);
   const before = await ev(() => ({ coins: window._coins, stock: BridgeBusiness.stockOf('terns-rest').units, store: BridgeHolm.stored(), runs: BridgeOrders.summary().runs }));
   console.log('before the time away:', JSON.stringify(before));
 
@@ -96,6 +98,13 @@ const SHOTS = process.argv[2] || __dirname + '/shots';
   console.log('after eight hours away:', JSON.stringify(after).slice(0, 900));
   await wait(600);
   console.log('orders away: runs ' + after.sum.runs + ', made ' + after.sum.made + ', coins ' + (await ev(() => window._coins) - before.coins) + ' more (stock at the Tern\'s Rest ' + before.stock + ' → ' + after.stock + ')');
+
+  // what she said a run would make is what her runs make once she's sailing them (it used to ignore her own glut, and
+  // promised two or three times what every run after the first brought in)
+  const runsMade = await ev((id) => (BridgeOrders.get(id) || { last: [] }).last.filter(r => !/pirates/.test(r.story)).map(r => r.made), ids.cutter);
+  const settled = runsMade.slice(0, -1).sort((a, b) => a - b), med = settled.length ? settled[Math.floor(settled.length / 2)] : null;
+  console.log('estimate', est0 && est0.profit, 'a run; runs made', JSON.stringify(runsMade));
+  check('the estimate a run is near what her runs really make', med == null || (est0.profit <= med * 1.5 && est0.profit >= med * 0.6), { est: est0, runs: runsMade });
 
   // ---- the treasury: where the money came from ---------------------------------------------------------------------------
   console.log('treasury:', JSON.stringify(await ev(() => { const w = BridgeTreasury.week(); return Object.keys(w.tot).map(k => k + ' in ' + w.tot[k].in + ' out ' + w.tot[k].out).concat(['net ' + w.net]); })));
@@ -236,6 +245,58 @@ const SHOTS = process.argv[2] || __dirname + '/shots';
   console.log('after it:', JSON.stringify(await ev((id) => ({ order: !!BridgeOrders.get(id), where: BridgeFleet.where(BridgeFleet.get(id)) }), ids.cutter)));
   console.log('treasury at the end:', JSON.stringify(await ev(() => { const w = BridgeTreasury.week(); return Object.keys(w.tot).map(k => k + ' ' + w.tot[k].in + '/' + w.tot[k].out); })));
 
+  // ---- running it, made easier -------------------------------------------------------------------------------------------
+  // a supply run whose business is already stocked for two days is fine, not "nothing to carry"; an empty store is
+  const supply = await ev(async (id) => {
+    const s = BridgeFleet.get(id), out = {};
+    BridgeOrders.stop(id); delete BridgeOrders._state().ord[id]; delete s.away; s.at = 'lumar-holm'; BridgeFleet.save();
+    const b = BridgeBusiness._state().biz['terns-rest']; b.stock = 48 * BridgeBusiness.stockOf('terns-rest').per + 10; b.last = Date.now();
+    BridgeOrders.set(id, { kind: 'supply', to: 'terns-rest' });
+    const o = BridgeOrders.get(id);
+    out.stocked = o.wait && o.wait.code; out.stockedNeeds = BridgeOrders.needs().filter(n => /nothing to carry/.test(n.name)).length;
+    b.stock = 0; b.last = Date.now();
+    const H = BridgeHolm._state(); H.store = { pine_log: 12 }; BridgeHolm.reload && localStorage.setItem('bridge_holm', JSON.stringify(H)); if (BridgeHolm.reload) BridgeHolm.reload();
+    BridgeOrders.resume(id);
+    const o2 = BridgeOrders.get(id), row = BridgeOrders.needs().find(n => /nothing to carry/.test(n.name));
+    out.empty = o2.wait && o2.wait.code; out.emptyNeeds = row ? row.sub : null; out.emptyAct = !!(row && row.act);
+    return out;
+  }, ids.brig);
+  console.log('supply run waits:', JSON.stringify(supply));
+  check('a business with two days\' stock: she waits, and nothing needs you', supply.stocked === 'stocked' && supply.stockedNeeds === 0, supply);
+  check('an empty store: she waits, Needs you says what to do and taps through', supply.empty === 'empty' && !!supply.emptyNeeds && supply.emptyAct, supply);
+  // every waiting reason under Needs you has a tap to where it's fixed
+  const na = await ev(() => { const S = BridgeBusiness._state(); S.owed['test-crew'] = { owe: 40, missed: 1 }; const n = BridgeLedger.needs().map(x => ({ n: x.name, act: !!x.act, world: !!x.world })); delete S.owed['test-crew']; return n; });
+  console.log('needs you:', JSON.stringify(na).slice(0, 600));
+  check('every row under Needs you can be acted on (a tap, or the map)', na.every(x => x.act || x.world), na.filter(x => !x.act && !x.world));
+  check('wages owed has a tap to pay', na.some(x => x.n === 'Wages owed' && x.act));
+  // a captain aboard and no orders: Needs you says so, and her screen offers today's best loop in one tap
+  const def = await ev(async (id) => {
+    const o = BridgeOrders.get(id); if (o) { BridgeOrders.stop(id); delete BridgeOrders._state().ord[id]; }
+    const s = BridgeFleet.get(id); delete s.away; s.at = 'lumar-crown'; BridgeFleet.save();
+    const row = BridgeOrders.needs().find(n => /has no orders/.test(n.name));
+    BridgeOrders.ship(id);
+    return { need: row && row.sub, rows: [...document.querySelectorAll('.world-dialog .wd-sell-row')].map(r => r.textContent.slice(0, 80)) };
+  }, ids.cutter);
+  await wait(500);
+  console.log('no orders:', JSON.stringify(def));
+  check('a captain with no orders shows under Needs you', !!def.need, def);
+  check('her screen offers today\'s best loop', def.rows.some(t => /today's best loop/.test(t)), def.rows);
+  await row(/today's best loop/); await wait(800);
+  const gave = await ev((id) => { const o = BridgeOrders.get(id); return o && o.kind + ' ' + o.ports.join('>'); }, ids.cutter);
+  console.log('one tap:', gave, '|', flat(await text()).slice(0, 200));
+  check('one tap gives her the loop', /^trade /.test(gave || ''), gave);
+  await done();
+  // her captain and orders from a harbourmaster's book too
+  await go('lumar-crown'); await wait(1200);
+  await ev((id) => { const s = BridgeFleet.get(id); BridgeHarbour.card('lumar-crown', s); }, ids.brig); await wait(500);
+  const hrow = await ev(() => [...document.querySelectorAll('.world-dialog .wd-sell-row')].map(r => r.textContent).filter(t => /Captain & orders/.test(t)));
+  console.log('harbour card:', JSON.stringify(hrow));
+  check('a ship\'s card at the harbourmaster has her captain and orders', hrow.length === 1);
+  await row(/Captain & orders/); await wait(600);
+  check('…and it opens her orders', /SUPPLY|STANDING|ORDERS|Her standing order/i.test(await text()));
+  await done();
+  console.log('first step with an empire like this:', JSON.stringify(await ev(() => BridgeLedger.firstStep())));
+
   // ---- a phone: the desk, the dispatch and the treasury fit ------------------------------------------------------------------
   const ph = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
   await ph.route(/supabase-js|supabase\.co|@supabase/, r => r.abort());
@@ -247,7 +308,11 @@ const SHOTS = process.argv[2] || __dirname + '/shots';
   q.on('pageerror', e => { errors++; console.log('PAGEERR(phone)', e.message.slice(0, 200)); });
   // the same save: copy it across
   const save = await ev(() => { const o = {}; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (/^bridge_/.test(k)) o[k] = localStorage.getItem(k); } return { o, off: window._off }; });
-  await q.goto(URL); await q.waitForTimeout(1500);
+  await q.goto(URL); await q.waitForTimeout(2500);
+  // a pilot who owns nothing yet: where to start, on the ledger and in the journal
+  const fresh = await q.evaluate(() => { BridgeIntro.hide(); const f = BridgeLedger.firstStep(); return { f: f && f.name + ': ' + f.sub }; });
+  console.log('a new pilot\'s first step:', JSON.stringify(fresh));
+  check('someone who owns nothing is told what to get first', !!fresh.f && /business/.test(fresh.f), fresh);
   await q.evaluate((s) => { Object.keys(s.o).forEach(k => localStorage.setItem(k, s.o[k])); sessionStorage.setItem('_off', String(s.off)); sessionStorage.setItem('_coins', '500000'); }, save);
   await q.goto(URL); await q.waitForTimeout(2500);
   await q.evaluate(() => {

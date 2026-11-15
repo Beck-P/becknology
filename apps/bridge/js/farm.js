@@ -190,7 +190,7 @@ var BridgeFarm = (function () {
     var kind = t.crop.k;
     if (C.again) { t.crop.g = 0; t.crop.need = growMs(C.again); t.crop.again = true; t.crop.t = when; t.crop.ripeAt = 0; }
     else if (BridgeHomestead.takeSeed(kind)) t.crop = { k: kind, g: 0, need: growMs(C.days), t: when };
-    else delete t.crop;
+    else { delete t.crop; save.bare = save.bare || {}; save.bare[k] = kind; }   // no seed for it in the box: left bare (the ledger says)
     store();
     var xy = xyOf(k);
     if (here(k) && Date.now() - when < 60000) burst(+xy[0], +xy[1], '#90d060', 5, 1);
@@ -741,7 +741,14 @@ var BridgeFarm = (function () {
       if (grow[k] || save.picked[k]) rows.push({ name: CROPS[k].name, n: grow[k] ? grow[k].n : 0, ripe: grow[k] ? grow[k].ripe : 0,
                                                  dry: grow[k] ? grow[k].dry : 0, picked: save.picked[k] || 0 });
     });
-    return { rows: rows, tilled: Object.keys(save.tiles).length, can: save.can };
+    // rows a hand brought in and couldn't sow again (no seed in the box), still bare
+    var bare = 0, bareOf = [];
+    Object.keys(save.bare || {}).forEach(function (k) {
+      var t = save.tiles[k];
+      if (!t || t.crop) { delete save.bare[k]; return; }
+      bare++; var nm = (CROPS[save.bare[k]] || {}).name || save.bare[k]; nm = String(nm).toLowerCase(); if (bareOf.indexOf(nm) < 0) bareOf.push(nm);
+    });
+    return { rows: rows, tilled: Object.keys(save.tiles).length, can: save.can, bare: bare, bareOf: bareOf };
   }
 
   return { nightAt: nightAt, moonLight: moonLight, twoMoons: twoMoons, MOONS: MOONS, reload: function () { save = load(); }, decorate: decorate, use: use, useItem: useItem, journal: journal, CROPS: CROPS, pickFor: pickFor,
