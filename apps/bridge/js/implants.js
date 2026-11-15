@@ -189,9 +189,12 @@ var BridgeImplants = (function () {
     if (has(id)) return Promise.resolve({ ok: false, reason: 'have' });
     var inv = typeof BridgeInventory !== 'undefined' ? BridgeInventory : null;
     if (c.item && !(opts && opts.free) && !(inv && inv.getCount(c.item))) return Promise.resolve({ ok: false, reason: 'item' });
-    return pay(opts && opts.free ? 0 : c.price, 'implant:' + id).then(function (r) {
+    var price = opts && opts.free ? 0 : opts && opts.price != null ? opts.price : c.price;
+    return pay(price, 'implant:' + id).then(function (r) {
       if (!r.ok) return { ok: false, reason: r.reason || 'coins' };
       if (c.item && !(opts && opts.free) && inv) inv.removeItem(c.item, 1);
+      if (opts && opts.favour) { state.favours = state.favours || {}; state.favours[opts.favour] = Date.now(); }   // a favour's used once
+      if (opts && opts.deposit && inv) inv.removeItem(opts.deposit, 1);
       state.slots[c.slot] = { id: id, tuned: false, at: Date.now() };
       delete off[c.slot];
       changed();
@@ -242,6 +245,21 @@ var BridgeImplants = (function () {
     return r.reason === 'have' ? 'YOU ALREADY HAVE THAT ONE IN.' : r.reason === 'item' ? 'YOU NEED THE PART ITSELF FOR THAT ONE.' :
       r.reason === 'offline' || r.reason === 'error' || r.reason === 'no_pilot' || r.reason === 'no_client' ? 'THE PAYMENT WON\'T GO THROUGH RIGHT NOW.' : 'NOT ENOUGH COINS.';
   }
+  // a shop's favour (`favour: { key, open(), name }`: Iris Kade's, once Chrome All the Way Up is done): one piece at what
+  // the clinic charges for that slot, once (kept in bridge_implants `favours`)
+  function favourOpen(S) {
+    var F = S && S.favour;
+    try { return !!(F && !(state.favours && state.favours[F.key]) && F.open()); } catch (e) { return false; }
+  }
+  function clinicPrice(slot) {
+    var best = null;
+    Object.keys(CATALOG).forEach(function (k) { var c = CATALOG[k]; if (c.slot === slot && c.tier === 'clinic' && (best == null || c.price < best)) best = c.price; });
+    return best;
+  }
+  function priceIn(S, c) {                   // what this shop asks for it now: { price, favour }
+    if (c.tier === 'designer' && favourOpen(S) && clinicPrice(c.slot) != null && clinicPrice(c.slot) < c.price) return { price: clinicPrice(c.slot), favour: S.favour.key };
+    return { price: c.price };
+  }
   function open(opts) {
     var S = SHOPS[(opts && opts.shop) || 'street'] || SHOPS.street, tiers = S.tiers || ['street'];
     var rows = [];
@@ -251,9 +269,10 @@ var BridgeImplants = (function () {
         var c = CATALOG[id];
         if (c.slot !== slot || tiers.indexOf(c.tier) < 0) return;
         if (c.item && !has(id) && !(typeof BridgeInventory !== 'undefined' && BridgeInventory.getCount(c.item))) return;   // a trophy: only once you carry it
-        var mine = has(id);
-        rows.push({ label: c.name, sub: SLOT_NAME[slot] + ' · ' + perkLine(c.perk) + (inNow && !mine ? ' (replaces ' + inNow.name + ')' : ''),
-          note: mine ? 'Fitted' : c.price + ' coins', disabled: mine, draw: icon(slot, TIER_COL[c.tier]),
+        var mine = has(id), pr = priceIn(S, c);
+        rows.push({ label: c.name, sub: SLOT_NAME[slot] + ' · ' + perkLine(c.perk) + (inNow && !mine ? ' (replaces ' + inNow.name + ')' : '') +
+            (pr.favour && !mine ? ' · ' + S.favour.name + ': clinic price, once' : ''),
+          note: mine ? 'Fitted' : pr.price + ' coins', disabled: mine, draw: icon(slot, TIER_COL[c.tier]),
           pick: function () { confirm(S, opts, id); } });
       });
       if (S.tune && glitchy(slot)) {
@@ -275,12 +294,13 @@ var BridgeImplants = (function () {
     });
   }
   function confirm(S, opts, id) {
-    var c = CATALOG[id];
+    var c = CATALOG[id], pr = priceIn(S, c);
     BridgeInteractions.choose({
       title: c.name, text: c.blurb.toUpperCase() + '\n\n' + perkLine(c.perk).toUpperCase() + (c.tier === 'street' ? '\n\nSTREET CHROME: IT WILL GLITCH NOW AND THEN.' : '') +
-        (itemIn(c.slot) ? '\n\nIT TAKES THE PLACE OF YOUR ' + itemIn(c.slot).name.toUpperCase() + '.' : ''),
-      rows: [{ label: 'Put it in', sub: TIER_NAME[c.tier], note: c.price + ' coins', draw: icon(c.slot, TIER_COL[c.tier]), pick: function () {
-        install(id).then(function (r) {
+        (itemIn(c.slot) ? '\n\nIT TAKES THE PLACE OF YOUR ' + itemIn(c.slot).name.toUpperCase() + '.' : '') +
+        (pr.favour ? '\n\n' + (S.favour.line || 'AT CLINIC PRICE, AS A FAVOUR. ONCE.') : ''),
+      rows: [{ label: 'Put it in', sub: TIER_NAME[c.tier] + (pr.favour ? ' · ' + S.favour.name : ''), note: pr.price + ' coins', draw: icon(c.slot, TIER_COL[c.tier]), pick: function () {
+        install(id, { price: pr.price, favour: pr.favour }).then(function (r) {
           if (!r.ok) return say(S.who, fail(r));
           if (typeof BridgeAudio !== 'undefined') BridgeAudio.sfx('success');
           say(S.who, c.tier === 'street' ? 'A NEEDLE, A BURN, A LONG MINUTE YOU WON\'T REMEMBER. THEN YOU\'RE UP, AND THE ' + c.name.toUpperCase() + ' IS PART OF YOU. MOSTLY.'
@@ -295,5 +315,5 @@ var BridgeImplants = (function () {
   return { SLOTS: SLOTS, CATALOG: CATALOG, SHOPS: SHOPS, TIERS: TIER_NAME,
            open: open, shop: shop, register: register, install: install, remove: remove, tune: tune,
            installed: installed, has: has, tier: tier, bonus: bonus, damage: damage, crit: crit, absorb: absorb, speed: speed,
-           perkLine: perkLine, _glitch: glitch, _reset: function () { state = { slots: {} }; off = {}; whiff = false; changed(); } };
+           perkLine: perkLine, favourOpen: function (shopId) { return favourOpen(SHOPS[shopId]); }, priceIn: function (shopId, id) { return priceIn(SHOPS[shopId], CATALOG[id]); }, _glitch: glitch, _reset: function () { state = { slots: {} }; off = {}; whiff = false; changed(); } };
 })();

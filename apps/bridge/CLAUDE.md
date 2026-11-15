@@ -1348,6 +1348,28 @@ numbers, a finish). And **trophies** fitted at Sallow's from what the bosses lea
   `installed()`, `has(id)`, `tier(slot)`, `bonus()`, `perkLine(perk)`. An interaction `{ type: 'implants', shop: '…' }`
   opens a shop.
 
+### Arcadia, deeper (A3, A5–A8)
+Beck: "wide but not very deep… not super clear on what to actually do with everything." The rest of
+`_claude_docs/spec-deeper-worlds.md`'s Arcadia items (A1, A2, A4 were built before): things that send you between the
+city's levels and give the people already there something to do with you. No new people, no new art but what's drawn in
+code. `js/arcadia-deep.js` (BridgeArcadiaDeep) holds the glue; each item's data lives where its system keeps it. Test:
+`world/arcadia_deeper.js` (`node world/arcadia_deeper.js <shots> quest|…` for one part; shots `ad_*.png`).
+- **A7 · Chrome All the Way Up** (quests.json `iris-arm`, Arcadia's second quest and the first up the levels; 400
+  coins). Iris Kade (LUMEN, the Spires) built her first arm at Doc Sallow's chair and lost it on her way up. Rumour: Dr.
+  Nakuri's *Iris Kade* (the Chrome Clinic) or Iris's own *Your first arm*. Begins at **Doc Sallow** (the gold !; his
+  *Iris Kade's arm*: he sent it up to the clinic for papers) → **Dr. Nakuri** (*The old file*: sold for cash and scrap
+  to someone signing with a crown of three strokes — the Rust Saints' saint) → **THRONE** in the scrapyards (a `say`:
+  the hand, key item `hand`), shut until Saint Ruin's been beaten → **Tally in the Pit** (*Ruin's bet*: the arm, put up
+  on a bout and never settled, key item `arm`) → **Iris Kade** (both handed over, two `give` clues as the Admiral does;
+  her letter). The reward beyond the coins: **her favour** — one designer piece at what the clinic charges for that
+  slot, once (her *Fit me something* opens the collection; the rows say so). Icons `chromehand`, `chromearm`
+  (js/keyitems.js). Two small engine additions any quest can use: a clue's **`gate`** — a name a module registers with
+  `BridgeQuests.gate(name, fn)`; while it returns false the clue isn't found and a toast says why (`lack`, `gateText`);
+  a gate nobody registered stands open, and a partner's find (`inter.shared`) skips it (here `ruin-beaten`: js/undercity.js's
+  save, his trophy dropped or beaten today) — and a shop's **`favour`** in js/implants.js (`{ key, name, open(), line }`
+  on the shop: designer pieces at the slot's cheapest clinic price while `open()` and not yet used; used favours kept in
+  `bridge_implants.favours`; `BridgeImplants.favourOpen(shop)`, `priceIn(shop, id)`, `install(id, { price, favour })`).
+
 ### Homes and furniture
 `js/home.js` (BridgeHome). Places of your own: **the White House** on Sapphire Port's square (`lumar-home`, `scenes/lumar_home.py`: hearth, two windows on the sea, bare boards; 1500 coins) and a **capsule apartment** over the District's Capsule Hotel (`arcadia-home`, `scenes/arcadia_home.py`: a strip window onto the live skyline and rain — the `'*'` behind hook draws them in `scene.sky` — the sleeping capsule, a kitchenette; 600 coins). **The farmhouse** on Verdance (`verdance-home`, `scenes/verdance_home.py`: Edda's kitchen in daylight — whitewash over green wainscot, the black range, a dresser of blue-and-white plates, two windows on the field, her kitchen table with the ledger) comes with the farm's deed (`HOMES[id].farm`: `owns` asks `BridgeHomestead.owned()`; the FARMHOUSE door goes in once it's yours, and Edda's rocking chair and bed are waiting the first time). Their doors are `home_door` interactions set on the street as worlds load (`HOMES[id].door`: the WHITE HOUSE door at 38,13 on Sapphire; the CAPSULE HOTEL on the street): the first time they offer the place for sale (`wagerCoins`, a menu option `home_buy`), then let you in. Each comes with two pieces to start. Aboard, **your quarters and the bridge** are yours already. The rooms are rendered empty; everything else is what you put in them. The legacy homes (*Legacy* below) are rendered furnished with their architecture and fixed pieces — the Penthouse's inside and roof deck, Ashcombe House's five rooms, the Starling — with open floor left round them for yours: a home can be several worlds (`part: '<home id>'` in HOMES: owned with that home, furnished on its own, no toast of its own), and a world can be a hotel you own (`resort`: owned once the holm's Starling is built).
 - **Furniture**: 36 pieces, each built with the scene kits' own builders by `tools/bridge-art/furniture_sprites.py` into one floorless sheet (`assets/scenes/furniture`, a 3 × 4-tile cell each, footprint at the bottom of its cell) plus `assets/furniture.json` (id, name, price, footprint `w` × `d`, `walk` for rugs, the footprint's corner on the sheet). The engine cuts each sprite at its cell's opaque bounds and draws it depth-tested against the room (`drawOccluded` at its front row, tinted by the room's light but softened, since the sheet is lit already); rugs sort under everyone, and a seat you're sitting on draws before you. Non-rug pieces block their tiles. A module can add pieces it draws itself, live (`BridgeHome.add({id, name, price, w, d, spr: {img, sx, sy, sw, sh, ax, ay}, live(entry, now, theme), glow?, use?, after?})`: `live` hands back this frame's picture, drawn through the same `drawOccluded`; `glow` a light laid over it with `lighter`, untinted; `use` its interaction; `after` the piece it's listed beside) — the fish tanks are.

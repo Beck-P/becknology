@@ -552,6 +552,18 @@
         "q": "Business",
         "a": "SLOW AT DAY, LOUD AT NIGHT. THE NULL KIDS COME IN WITH BURNS FROM SOMETHING BEHIND THE GATE - ELECTRICAL, OLD, POWERFUL. I PATCH THEM UP AND DON'T ASK. THEY PAY IN TOKENS.",
         "rumour": "null"
+      },
+      {
+        "q": "Iris Kade",
+        "until": "iris-arm/sallow",
+        "a": "MY BEST. SHE CAME TO ME FROM SALLOW'S, OF ALL PLACES, WITH HANDS STEADIER THAN MINE. NOW SHE'S UP IN THE SPIRES CHARGING A YEAR'S RENT FOR AN EYE. SHE STILL ASKS AFTER AN ARM SHE LEFT DOWNSTAIRS. SALLOW WOULD KNOW.",
+        "rumour": "iris-arm"
+      },
+      {
+        "q": "The old file",
+        "when": "iris-arm/file",
+        "until": "iris-arm",
+        "a": "KADE'S ARM. HERE: PASSED, PAPERED, SOLD IN A WEEK. CASH AND A CRATE OF SCRAP. THE BUYER SIGNED WITH THIS - A CROWN, THREE STROKES. YOU'LL HAVE SEEN IT SPRAYED ON EVERY WALL DOWNSTAIRS. THE RUST SAINTS, AND A CROWN MEANS THEIR SAINT. I DON'T GO DOWNSTAIRS."
       }
     ]
   },
@@ -4118,6 +4130,12 @@
       {
         "q": "Tips?",
         "a": "WATCH THE GROUND. EVERYONE TELEGRAPHS. ROLL OUT OF IT. AND IRON MAE NEVER GOES DOWN IN THE FIRST, SO DON'T BET THAT SHE WILL."
+      },
+      {
+        "q": "Ruin's bet",
+        "when": "iris-arm/arm",
+        "until": "iris-arm",
+        "a": "THAT ARM. RUIN PUT IT UP ON A BOUT YEARS BACK, WHEN HE WAS STILL JUST A SAINT. HE LOST. HE NEVER CAME TO SETTLE AND I NEVER WENT TO ASK. IT'S HUNG ON THE NAIL BEHIND ME EVER SINCE.\n\nYOU PUT HIM DOWN. I CALL THAT PAID. TAKE IT, IT'S BEEN WATCHING ME."
       }
     ]
   },
@@ -4149,6 +4167,17 @@
       {
         "q": "Parts",
         "a": "MED-KITS AND STIMS ON THE BENCH. THEY'RE THE REAL THING. MOSTLY."
+      },
+      {
+        "q": "Iris Kade's arm",
+        "when": "iris-arm/sallow",
+        "until": "iris-arm",
+        "a": "KADE? SHE SWEPT THIS FLOOR A YEAR BEFORE I LET HER NEAR A PATIENT. FIRST THING SHE BUILT WAS AN ARM FOR HERSELF, ON THAT BENCH, OUT OF THE BIN. PINK TRIM. KNUCKLE PINS SHE FILED BY HAND.\n\nWHEN NAKURI TOOK HER ON, SHE LEFT IT WITH ME TO SELL. I SENT IT UP TO THE CLINIC FOR ITS PAPERS - PAPERED CHROME FETCHES THREE TIMES. THEN IT WAS GONE. ASK NAKURI. SHE KEEPS A FILE ON EVERYTHING. IT'S A SICKNESS."
+      },
+      {
+        "q": "Kade",
+        "when": "iris-arm",
+        "a": "SHE SENT ME A NOTE. ONE LINE: 'THE PINS HELD.' I'VE HAD IT FRAMED. DON'T TELL HER."
       }
     ]
   },
@@ -5411,6 +5440,33 @@
       {
         "q": "Heard anything?",
         "a": "A MEMBER OF HALCYON'S BOARD HAS MY STARLIGHT OPTICS. HE CAN SEE IN THE DARK NOW. HE SAYS IT'S MADE THE BOARD MEETINGS UNBEARABLE."
+      },
+      {
+        "q": "Your first arm",
+        "until": "iris-arm/sallow",
+        "a": "THE FIRST ARM I EVER MADE, I MADE FOR MYSELF, ON A BENCH UNDER THE STREET. IT WAS UGLY AND IT WORKED. I LEFT IT BEHIND WHEN I CAME UP, AND I'VE BEEN SORRY ABOUT IT EVERY DAY SINCE. SALLOW WOULD REMEMBER. HE REMEMBERS EVERYTHING HE COULDN'T SELL.",
+        "rumour": "iris-arm"
+      },
+      {
+        "q": "My first arm?",
+        "when": "iris-arm/sallow",
+        "until": "iris-arm",
+        "a": "YOU'RE LOOKING FOR IT? THEN YOU KNOW MORE THAN I DO. IF YOU FIND IT, BRING IT UP. ALL OF IT, IF YOU CAN. I DON'T CARE WHAT STATE IT'S IN."
+      },
+      {
+        "q": "The arm",
+        "when": "iris-arm",
+        "a": "IT'S IN THE CASE BY THE DOOR NOW, THE ONLY THING IN HERE NOT FOR SALE. THE PINS HELD. OF COURSE THEY HELD.\n\nAND I OWE YOU. CHOOSE A PIECE FROM THE COLLECTION AND I'LL FIT IT AT WHAT THE CLINIC WOULD CHARGE. ONCE."
+      },
+      {
+        "q": "Fit me something",
+        "when": "iris-arm",
+        "a": "",
+        "use": {
+          "type": "implants",
+          "label": "THE COLLECTION",
+          "shop": "lumen"
+        }
       }
     ]
   },
