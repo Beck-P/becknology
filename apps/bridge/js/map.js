@@ -28,7 +28,8 @@ var BridgeMap = (function () {
   var PLANET = { lumar: 'lumar', arcadia: 'arcadia', enigma: 'enigma', singularity: 'singularity', verdance: 'verdance', hoarfell: 'hoarfell', sylvara: 'sylvara' };
   var SYS_RX = { ship: /^(bridge|quarters|hangar|gameroom|office|ship-[a-z]+)$/, lumar: /^lumar/, arcadia: /^(arcadia|cyber-noodle|chrome-clinic|junk-pawn|tech-repair|null-den)/,
                  enigma: /^enigma/, singularity: /^singularity/, verdance: /^verdance/, hoarfell: /^hoarfell/, sylvara: /^sylvara/ };
-  var MERGE = { 'lumar-rose-mine-b': 'lumar-rose-mine-a', 'lumar-rose-mine-c': 'lumar-rose-mine-a' };
+  var MERGE = { 'lumar-rose-mine-b': 'lumar-rose-mine-a', 'lumar-rose-mine-c': 'lumar-rose-mine-a',
+                'lumar-undercroft-b': 'lumar-undercroft-a', 'lumar-undercroft-c': 'lumar-undercroft-a' };   // atlas.py MERGE
 
   fetch('/bridge/assets/atlas.json?v=' + Date.now()).then(function (r) { return r.json(); })
     .then(function (d) { atlas = d; }).catch(function () { atlas = { systems: [], isles: [], worlds: {} }; })

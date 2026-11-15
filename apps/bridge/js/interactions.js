@@ -109,7 +109,20 @@ var BridgeInteractions = (function () {
     var vw = verb.split(' ');
     if (vw.length > 2 || (vw.length > 1 && label.toLowerCase().indexOf(vw.slice(1).join(' ').toLowerCase()) >= 0)) verb = vw[0];
     label = label.replace(/^Board /, '');
-    return { verb: verb, label: label };
+    return { verb: verb, label: label, to: leadsTo(inter, label) };
+  }
+  // Where a way out leads, when its own name doesn't say (the Old Town's NORTH GATE goes to the Canal Quarter, Crownhaven's
+  // QUAY STAIRS down to the Stilts): the pill shows it as a signpost would. Beck (Nov 2026): "where to go to reach the
+  // next destination is clear". Only for ways between places, and never twice (the label or the verb already naming it).
+  function leadsTo(inter, label) {
+    var to = inter.type === 'enter_world' ? inter.target : inter.type === 'password_gate' ? inter.targetWorld : null;
+    if (!to || /^\//.test(to) || typeof BridgeMap === 'undefined' || !BridgeMap.placeName) return null;
+    var name = BridgeMap.placeName(to);
+    if (!name) return null;
+    var norm = function (t) { return String(t || '').toLowerCase().replace(/[^a-z0-9 ]/g, '').replace(/\b(the|to|back|down|up|into)\b/g, ' ').replace(/\s+/g, ' ').trim(); };
+    var n = norm(name), l = norm(label), v = norm(inter.prompt);
+    if (!n || (l && (l.indexOf(n) >= 0 || n.indexOf(l) >= 0)) || v.indexOf(n) >= 0) return null;
+    return name;
   }
 
   // Talking heads sit higher than counters and doors.
@@ -148,7 +161,8 @@ var BridgeInteractions = (function () {
     if (promptState.shown !== t) {
       var parts = promptParts(t);
       var html = '<span class="ip-key">' + (TOUCH ? 'Tap' : 'E') + '</span><span class="ip-verb">' + esc(parts.verb) + '</span>' +
-                 (parts.label && parts.label.toLowerCase() !== parts.verb.toLowerCase() ? '<span class="ip-label">' + esc(parts.label) + '</span>' : '');
+                 (parts.label && parts.label.toLowerCase() !== parts.verb.toLowerCase() ? '<span class="ip-label">' + esc(parts.label) + '</span>' : '') +
+                 (parts.to ? '<span class="ip-to">\u2192 ' + esc(parts.to) + '</span>' : '');
       if (html !== promptState.html) { el.innerHTML = html; promptState.html = html; }
       promptState.shown = t;
       el.classList.add('visible');
