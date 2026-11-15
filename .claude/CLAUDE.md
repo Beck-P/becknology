@@ -38,7 +38,7 @@ Caching: a Bridge scene image (`/bridge/assets/scenes/**.png|webp`) asked for wi
 ## Constraints
 - All apps share one Vercel project and one deploy
 - Apps should be self-contained static files (HTML/CSS/JS, CDN imports are fine)
-- No server-side rendering or build step — one approved exception: `api/talk.mjs`, the Bridge's AI conversations (a Vercel function; needs `ANTHROPIC_API_KEY` in the Vercel project's environment variables, and is off without it)
+- No server-side rendering or build step — two approved exceptions, both Vercel functions that need `ANTHROPIC_API_KEY` in the Vercel project's environment variables and are off without it: `api/talk.mjs`, the Bridge's AI conversations, and `api/chess-coach.mjs`, the chess review board's coach (`apps/chess/review`; its Stockfish runs in the browser, from `apps/chess/engine`)
 - Hub card links use relative paths (`/my-app`, not full URLs)
 - Each app folder is independent — different apps can use different libraries
 
@@ -62,7 +62,7 @@ look at it (`--look FILE`). Anywhere the game shows someone's face, use js/look.
 `.claude/hooks/portraits.py` (in `.claude/settings.json`) stops a commit or push while any portrait is out of date.
 
 ## Testing
-`node tools/tests/run.js [world|multi|together|royale|combat]` — headless-Chromium tests for the Bridge and Royale Link (every world loading, two pilots playing together over a stand-in Supabase, every game together, the casino, combat). It starts its own local servers. See `tools/tests/README.md`. Run the suites a change touches before shipping it; add a test there when you build something new.
+`node tools/tests/run.js [world|multi|together|royale|combat|chess]` — headless-Chromium tests for the Bridge and Royale Link (every world loading, two pilots playing together over a stand-in Supabase, every game together, the casino, combat) and for the chess review board and its coach. It starts its own local servers. See `tools/tests/README.md`. Run the suites a change touches before shipping it; add a test there when you build something new.
 
 ## Cowork → Claude Code Handoff
 Same pattern as the Realzono repo: Cowork writes specs to `_claude_docs/`, Claude Code implements them.
