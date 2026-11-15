@@ -746,6 +746,12 @@ var BridgeAudio = (function () {
       voice(sfxBus, t, 4.0, { type: 'sawtooth', freq: 48, glide: 1.3, glideT: 4, gain: 0.03, a: 1.4, d: 1.5, s: 0.5, r: 1.0, cutoff: 300 });
       for (var i = 0; i < 12; i++) noiseHit(sfxBus, t + 0.8 + i * 0.24 + (i % 2) * 0.06, 0.04, { freq: 1800, ftype: 'bandpass', q: 3, gain: 0.03 });
     },
+    // aboard the Loop (js/transit.js): the other train flashing past the glass; into a tower's bore and out again
+    passby:  function (t) {
+      whoosh(t, 1.3, 300, 1600, 0.16, 0.6); noiseHit(sfxBus, t + 0.1, 1.1, { freq: 220, ftype: 'lowpass', gain: 0.12 });
+      for (var i = 0; i < 6; i++) noiseHit(sfxBus, t + 0.15 + i * 0.13, 0.03, { freq: 2200, ftype: 'bandpass', q: 3, gain: 0.025 });
+    },
+    bore:    function (t) { whoosh(t, 0.9, 900, 250, 0.12, 0.7); noiseHit(sfxBus, t + 0.05, 2.2, { freq: 140, ftype: 'lowpass', gain: 0.1, rev: 0.6 }); },
     coin:    function (t) { voice(sfxBus, t, 0.05, { type: 'square', freq: hz(88), gain: 0.05, a: 0.001, d: 0.06, s: 0.3, r: 0.05, cutoff: 5000 }); voice(sfxBus, t + 0.07, 0.18, { type: 'square', freq: hz(95), gain: 0.05, a: 0.001, d: 0.2, s: 0.3, r: 0.2, cutoff: 5000, rev: 0.2 }); },
     clue:    function (t) { [72, 76, 79, 84].forEach(function (m, i) { INST.bell(sfxBus, t + i * 0.09, m, 0.3, 1.3); }); },
     // a quest's thing held up (js/keyitems.js): a bright rising run, then a held chord with bells over it

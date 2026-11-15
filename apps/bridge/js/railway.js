@@ -174,17 +174,68 @@ var BridgeRailway = (function () {
   }
   function aurora(b, W, horizon, now, k) {
     b.save(); b.globalCompositeOperation = 'lighter';
+    var BANDS = [[0, 0.3, [70, 250, 160], 1], [0.3, 0.55, [70, 250, 160], 0.75], [0.55, 0.75, [110, 200, 190], 0.5], [0.75, 1, [170, 90, 230], 0.3]];
     for (var x = 0; x < W; x += 2) {
       var y0 = horizon * 0.12 + Math.sin(x / 70 + now / 3800) * horizon * 0.08 + Math.sin(x / 23 + now / 1900) * 3;
       var L = horizon * 0.22 * (0.45 + 0.55 * (0.5 + 0.5 * Math.sin(x / 41 + now / 2600)));
       var a = k * 0.32 * (0.55 + 0.45 * Math.sin(x / 13 + now / 900));
-      for (var j = 0; j < L; j += 2) {
-        var f = j / L;
-        var c = f < 0.65 ? [70, 250, 160] : mixc([70, 250, 160], [170, 90, 230], (f - 0.65) / 0.35);
-        rect(b, x, Math.round(y0 + L - j), 2, 2, css(c, a * (1 - f * 0.7) * (j < 4 ? 0.5 : 1)));
+      a = Math.round(a * 20) / 20;                                           // (a few alphas, so a few colours)
+      for (var j = 0; j < BANDS.length; j++) {
+        var B = BANDS[j], ya = Math.round(y0 + L * (1 - B[1])), yb = Math.round(y0 + L * (1 - B[0]));
+        if (yb > ya) rect(b, x, ya, 2, yb - ya, css(B[2], a * B[3]));
       }
     }
     b.restore();
+  }
+
+  // cumulus by day: heaped puffs in three flat tones, lit from the sun's side, drifting; at dusk they take the rose
+  function puffs(b, W, H, E, o) {
+    var sk = E.wday + E.wd * 0.8;
+    if (sk < 0.15) return;
+    var C = skyCols(E), lt = lit(E, [252, 252, 255]), md = lit(E, [226, 232, 246]), sh = lit(E, [186, 196, 224]);
+    if (E.wd > 0.1) { lt = mixc(lt, [255, 206, 170], E.wd * 0.7); md = mixc(md, [240, 170, 160], E.wd * 0.55); sh = mixc(sh, [150, 120, 170], E.wd * 0.5); }
+    var hz = o.haze || 0; lt = mixc(lt, C.hor, hz); md = mixc(md, C.hor, hz); sh = mixc(sh, C.hor, hz);
+    var gap = o.gap || 150, i0 = Math.floor(o.scroll / gap) - 1, i1 = Math.ceil((o.scroll + W) / gap) + 1;
+    for (var i = i0; i < i1; i++) {
+      if (hash(i * 4.7 + o.seed) < (o.sparse || 0.35)) continue;
+      var cx = i * gap - o.scroll + hash(i * 2.3 + o.seed) * gap * 0.6, cy = o.base + Math.round((hash(i * 6.1 + o.seed) - 0.5) * (o.spread || 16));
+      var s = (o.size || 1) * (0.7 + hash(i * 9.7 + o.seed) * 0.6), n = 3 + Math.floor(hash(i * 3.9) * 3);
+      ellipse(b, cx, cy + Math.round(5 * s), Math.round(26 * s), Math.round(4 * s), css(sh));        // its flat, shadowed base
+      for (var k = 0; k < n; k++) {
+        var kx = cx + Math.round((k - (n - 1) / 2) * 11 * s), r = Math.round((7 + hash(i * 13 + k) * 6) * s), ky = cy - Math.round(hash(i * 17 + k) * 4 * s);
+        ellipse(b, kx, ky, r, Math.round(r * 0.8), css(md));
+        ellipse(b, kx - Math.round(r * 0.25), ky - Math.round(r * 0.25), Math.round(r * 0.6), Math.round(r * 0.5), css(lt));
+      }
+    }
+  }
+  // a few birds by day: a loose V of two-pixel wings, flapping, crossing slowly
+  function birds(b, W, H, E, now, y0, seed) {
+    if (E.wday + E.wd < 0.3) return;
+    var c = css(lit(E, [40, 40, 56])), t = (now / 26000 + hash(seed)) % 1.4;
+    if (t > 1) return;
+    var x0 = Math.round(W * (1.1 - t * 1.2));
+    for (var i = 0; i < 7; i++) {
+      var side = i % 2 ? 1 : -1, row = Math.ceil(i / 2), x = x0 + row * 7, y = y0 + side * row * 3 + Math.round(Math.sin(now / 900 + i) * 1);
+      var up = Math.floor(now / 160 + i) % 2;
+      rect(b, x - 2, y - up, 2, 1, c); rect(b, x, y, 1, 1, c); rect(b, x + 1, y - up, 2, 1, c);
+    }
+  }
+  // frost on the glass in the cold months: crystals feathering in from each pane's lower corners
+  function frost(b, x0, x1, top, sill, E) {
+    var k = E.season === 'winter' ? 1 : E.season === 'autumn' || E.season === 'spring' ? 0.35 : 0;
+    if (!k) return;
+    var c1 = 'rgba(214,230,255,' + (0.75 * k).toFixed(2) + ')', c2 = 'rgba(176,200,240,' + (0.5 * k).toFixed(2) + ')';
+    [[x0, 1, 1], [x1, -1, 1], [x0, 1, -1], [x1, -1, -1]].forEach(function (cn) {    // the lower corners heavy, the upper light
+      var n = cn[2] > 0 ? 30 : 14;
+      for (var j = 0; j < n; j++) {
+        var len = Math.round((n - j) * (0.5 + hash(j * 3.3 + cn[0] + cn[2]) * 0.9) * k);
+        var y = cn[2] > 0 ? sill - 1 - j : top + 2 + j;
+        if (len < 1 || y < top || y >= sill) continue;
+        var x = cn[1] > 0 ? cn[0] : cn[0] - len;
+        rect(b, x, y, len, 1, j % 3 ? c2 : c1);
+        if (j % 4 === 1) rect(b, cn[1] > 0 ? x + len : x - 1, y - 1, 1, 1, c1);    // a crystal's tip
+      }
+    });
   }
 
   // A range of mountains: peaks with straight flanks (the highest of the peaks near each point), the flank turned to
@@ -229,11 +280,13 @@ var BridgeRailway = (function () {
     var cell = 70 * (o.freq || 1), c0 = Math.floor(u / cell), h = 0;
     for (var c = c0 - 2; c <= c0 + 2; c++) {
       var px = (c + hash(c * 3.1 + o.seed)) * cell, a = o.amp * (0.35 + 0.65 * Math.pow(hash(c * 7.7 + o.seed * 2), o.sharp || 1.3));
+      a *= 0.62 + 0.5 * vs(px / (cell * 4.3), o.seed + 9);          // massifs and cols: a slow swell, so no run of peaks repeats
       var sl = (0.55 + hash(c * 5.3 + o.seed) * 0.6) * (u < px ? 1 : 0.8 + hash(c * 2.9) * 0.5);
       var v = a - Math.abs(u - px) * sl * (o.amp / 60);
       if (v > h) h = v;
     }
     h += (vn(u / 9, o.seed + 5) - 0.5) * o.amp * 0.06;          // a ragged ridge line
+    h += (vn(u / 27, o.seed + 6) - 0.5) * o.amp * 0.08;         // and shoulders on the flanks
     return Math.max(0, h);
   }
 
@@ -522,6 +575,8 @@ var BridgeRailway = (function () {
     return function (b, W, H, t, now, ms) {
       var horizon = Math.round(H * 0.5);
       sky(b, W, H, E, now, horizon);
+      puffs(b, W, H, E, { base: Math.round(H * 0.2), seed: town === 'aurelle' ? 44 : 14, scroll: ms * 0.004 + 20, haze: 0.25, size: 1 });
+      birds(b, W, H, E, now, Math.round(H * 0.28), town === 'aurelle' ? 5 : 3);
       range(b, W, H, E, { base: horizon + 14, amp: H * 0.4, seed: town === 'aurelle' ? 41 : 11, scroll: 0, haze: 0.5 });
       range(b, W, H, E, { base: horizon + 34, amp: H * 0.28, seed: town === 'aurelle' ? 43 : 13, scroll: 30, haze: 0.2, strata: true, freq: 0.8 });
       var gy = Math.round(H * 0.68);
@@ -563,6 +618,8 @@ var BridgeRailway = (function () {
       } else {
         sky(b, W, H, E, now, horizon);
         clouds(b, W, H, E, { base: Math.round(H * 0.2), amp: 6, seed: 3, scroll: v * 0.005 + 300, haze: 0.25 });
+        puffs(b, W, H, E, { base: Math.round(H * 0.16), seed: 5, scroll: v * 0.003 + 80, haze: 0.2, size: 0.9 });
+        birds(b, W, H, E, now, Math.round(H * 0.24), 2);
         range(b, W, H, E, { base: horizon + 4, amp: H * 0.34, seed: 21, scroll: v * 0.004, haze: 0.45 });
         range(b, W, H, E, { base: horizon + 22, amp: H * 0.26, seed: 23, scroll: v * 0.011 + 200, haze: 0.15, strata: true, freq: 0.8 });
         var tops = slope(b, W, H, E, { base: horizon + 40, amp: 16, seed: 7, scroll: v * 0.03, trees: true, size: 1.2, gap: 7, sparse: 0.25 });
@@ -583,6 +640,14 @@ var BridgeRailway = (function () {
         for (var p = -((v * 0.5) % 34); p < W; p += 34) rect(b, Math.round(p), Math.round(H * 0.6), 3, Math.round(H * 0.2), post);
         rect(b, 0, Math.round(H * 0.63), W, 1, post);
         for (var m = -((v * 0.5) % 260); m < W; m += 260) rect(b, Math.round(m) + 100, 0, 5, H, css(lit(E, [52, 56, 68])));    // a mast whips by
+        var pass = (t - 0.52) / 0.14;                                         // the down train flashing past the other way
+        if (pass > 0 && pass < 1) {
+          var tw2 = trainWidth(false) * 2, xo = Math.round(W + 20 - (W + tw2 + 40) * pass);
+          b.save(); b.translate(xo + tw2, Math.round(H * 0.63)); b.scale(-2, 2);
+          drawTrain(b, E, 0, 0, false, now);
+          b.restore();
+          for (var z = 0; z < 8; z++) rect(b, Math.round(hash(z) * W), Math.round(H * 0.3 + hash(z + 4) * H * 0.3), 40, 1, 'rgba(255,255,255,0.18)');
+        }
         if (E.S.snowfall) snowfall(b, W, H, now, 60, 0.16);
         void tops;
       }
@@ -602,6 +667,7 @@ var BridgeRailway = (function () {
     // the mullions between the panes
     var pane = Math.round(W / 3);
     for (var x = pane; x < W; x += pane) { rect(b, x - 4, 0, 8, sill, css(L([46, 52, 62]))); rect(b, x - 4, 0, 2, sill, css(L([80, 88, 100]))); }
+    if (!dark) for (var fp = 0; fp < W; fp += pane) frost(b, fp + (fp ? 4 : 0), Math.min(W, fp + pane) - 4, top, sill, E);
     // a faint reflection across the glass
     b.save(); b.globalCompositeOperation = 'lighter';
     for (var r = 0; r < 3; r++) for (var y = top; y < sill; y += 2) {
@@ -727,6 +793,8 @@ var BridgeRailway = (function () {
       var horizon = Math.round(H * 0.46);
       sky(b, W, H, E, now, horizon);
       clouds(b, W, H, E, { base: Math.round(H * 0.18), amp: 7, seed: 13, scroll: ms * 0.004 + 100, haze: 0.1 });
+      puffs(b, W, H, E, { base: Math.round(H * 0.24), seed: 15, scroll: ms * 0.006 + 40, haze: 0.3, size: 1.1, spread: 20 });
+      birds(b, W, H, E, now, Math.round(H * 0.3), 7);
       range(b, W, H, E, { base: horizon + 6, amp: H * 0.38, seed: 81, scroll: 0, haze: 0.5 });
       range(b, W, H, E, { base: horizon + 30, amp: H * 0.26, seed: 83, scroll: 0, haze: 0.22, strata: true });
       // the ravine: forested slopes falling in from either side to a stream far below, mist lying in it
@@ -779,6 +847,7 @@ var BridgeRailway = (function () {
     return function (b, W, H, t, now, ms) {
       var horizon = Math.round(H * 0.32), sc = ms * 0.01;
       sky(b, W, H, E, now, horizon);
+      puffs(b, W, H, E, { base: Math.round(H * 0.14), seed: 104, scroll: sc * 0.2 + 60, haze: 0.3, size: 0.8, spread: 10 });
       range(b, W, H, E, { base: horizon + 26, amp: H * 0.34, seed: 101, scroll: sc * 0.3, haze: 0.4, snowline: 0.18 });
       range(b, W, H, E, { base: Math.round(H * 0.5), amp: H * 0.14, seed: 103, scroll: sc * 0.6, haze: 0.1, snowline: 0.5, strata: true });
       // the glacier: white névé coming in from the left, the ice going blue and breaking up as it falls to the right,
@@ -841,6 +910,8 @@ var BridgeRailway = (function () {
     return function (b, W, H, t, now, ms) {
       var horizon = Math.round(H * 0.6);
       sky(b, W, H, E, now, horizon);
+      puffs(b, W, H, E, { base: Math.round(H * 0.22), seed: 124, scroll: ms * 0.003 + 200, haze: 0.2, size: 1.2, spread: 24 });
+      birds(b, W, H, E, now, Math.round(H * 0.3), 11);
       range(b, W, H, E, { base: horizon + 6, amp: H * 0.48, seed: 121, scroll: ms * 0.002, haze: 0.35, snowline: 0.3, sharp: 1.6 });
       cloudSea(b, W, H, E, { base: horizon - 4, seed: 123, scroll: ms * 0.006, haze: 0.2, size: 0.8 });
       range(b, W, H, E, { base: horizon + 18, amp: H * 0.32, seed: 125, scroll: ms * 0.004 + 90, haze: 0.06, snowline: 0.2, strata: true });

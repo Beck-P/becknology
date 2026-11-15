@@ -67,45 +67,51 @@ var BridgeSkyline = (function () {
   function setMotion(name, fn) { MOTION[name] = fn; }
 
   // ---- the sky ------------------------------------------------------------------------
-  function sky(ctx, w, h, now, horizon) {
-    var g = ctx.createLinearGradient(0, 0, 0, h);
-    var hz = Math.max(0.2, Math.min(0.95, horizon / h));
-    g.addColorStop(0, '#07041a');
-    g.addColorStop(hz * 0.55, '#1a0a34');
-    g.addColorStop(hz * 0.9, '#4a1450');
-    g.addColorStop(Math.min(1, hz + 0.05), '#6a2058');
-    g.addColorStop(1, '#12061e');
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, w, h);
-    // stars, few and faint through the smog
-    for (var i = 0; i < 60; i++) {
-      var sx = Math.floor(hash(i) * w), sy = Math.floor(hash(i + 99) * horizon * 0.6);
-      var tw = 0.3 + 0.3 * Math.sin(now / 900 + i);
+  // the night in flat bands (the house style: no smooth gradients), darker and clearer up top; smog lifts the horizon
+  var SKY = [[0, '#07041a'], [0.22, '#0e0626'], [0.4, '#160a30'], [0.55, '#200c3a'], [0.68, '#2e1044'], [0.8, '#3e124c'], [0.9, '#4e1652'], [1, '#6a2058']];
+  var SKY_SMOG = [[0, '#0e0a1a'], [0.22, '#170f22'], [0.4, '#22142a'], [0.55, '#2e1a30'], [0.68, '#3c2034'], [0.8, '#4a2836'], [0.9, '#583038'], [1, '#6a3a3a']];
+  function sky(ctx, w, h, now, horizon, wx) {
+    var hz = Math.max(0.2 * h, Math.min(0.95 * h, horizon)), B = wx.smog > 0.5 ? SKY_SMOG : SKY;
+    for (var i = 0; i < B.length; i++) {
+      var y0 = Math.round(B[i][0] * hz), y1 = i + 1 < B.length ? Math.round(B[i + 1][0] * hz) : Math.round(hz + 0.05 * h);
+      ctx.fillStyle = B[i][1]; ctx.fillRect(0, y0, w, y1 - y0);
+    }
+    ctx.fillStyle = '#12061e'; ctx.fillRect(0, Math.round(hz + 0.05 * h), w, h);
+    // stars, few and faint through the smog (none in a thick one)
+    var n = wx.smog > 0.5 ? 0 : wx.blackout > 0.5 ? 120 : 60;            // with the city dark, more come out
+    for (var i2 = 0; i2 < n; i2++) {
+      var sx = Math.floor(hash(i2) * w), sy = Math.floor(hash(i2 + 99) * horizon * 0.6);
+      var tw = 0.3 + 0.3 * Math.sin(now / 900 + i2);
       ctx.fillStyle = 'rgba(220,210,255,' + tw.toFixed(2) + ')';
       ctx.fillRect(sx, sy, 1, 1);
     }
   }
 
-  function moon(ctx, x, y, r, now) {
-    var halo = ctx.createRadialGradient(x, y, r * 0.8, x, y, r * 4);
-    halo.addColorStop(0, 'rgba(255,190,230,0.35)');
-    halo.addColorStop(1, 'rgba(255,120,200,0)');
-    ctx.fillStyle = halo;
-    ctx.fillRect(x - r * 4, y - r * 4, r * 8, r * 8);
-    // a dithered disc: pale pink, a darker limb, a few maria
-    for (var dy = -r; dy <= r; dy++) {
-      for (var dx = -r; dx <= r; dx++) {
-        var d = Math.sqrt(dx * dx + dy * dy) / r;
-        if (d > 1) continue;
-        var shade = 1 - d * d * 0.35 - (dx + dy > r * 0.6 ? 0.15 : 0);
-        var mare = hash(Math.floor((dx + r) / 3) * 31 + Math.floor((dy + r) / 3) * 7) > 0.78 ? 0.85 : 1;
-        var c = shade * mare;
-        var bay = ((dx & 1) + (dy & 1) * 2) / 4;
-        c = Math.floor(c * 6 + bay) / 6;
-        ctx.fillStyle = 'rgb(' + Math.round(255 * c) + ',' + Math.round(214 * c) + ',' + Math.round(232 * c) + ')';
-        ctx.fillRect(x + dx, y + dy, 1, 1);
+  var moonImg = {};
+  function moon(ctx, x, y, r, now, dim) {
+    var key = r, M = moonImg[key];
+    if (!M) {                                     // drawn once: a halo in two flat rings, the dithered disc, its maria
+      M = moonImg[key] = document.createElement('canvas'); M.width = M.height = r * 8;
+      var g = M.getContext('2d'), c0 = r * 4;
+      g.fillStyle = 'rgba(255,150,215,0.08)'; g.beginPath(); g.arc(c0, c0, r * 3.6, 0, Math.PI * 2); g.fill();
+      g.fillStyle = 'rgba(255,170,225,0.12)'; g.beginPath(); g.arc(c0, c0, r * 2.2, 0, Math.PI * 2); g.fill();
+      for (var dy = -r; dy <= r; dy++) {
+        for (var dx = -r; dx <= r; dx++) {
+          var d = Math.sqrt(dx * dx + dy * dy) / r;
+          if (d > 1) continue;
+          var shade = 1 - d * d * 0.35 - (dx + dy > r * 0.6 ? 0.15 : 0);
+          var mare = hash(Math.floor((dx + r) / 3) * 31 + Math.floor((dy + r) / 3) * 7) > 0.78 ? 0.85 : 1;
+          var c = shade * mare;
+          var bay = ((dx & 1) + (dy & 1) * 2) / 4;
+          c = Math.floor(c * 6 + bay) / 6;
+          g.fillStyle = 'rgb(' + Math.round(255 * c) + ',' + Math.round(214 * c) + ',' + Math.round(232 * c) + ')';
+          g.fillRect(c0 + dx, c0 + dy, 1, 1);
+        }
       }
     }
+    if (dim) { ctx.save(); ctx.globalAlpha = 1 - dim; }
+    ctx.drawImage(M, x - r * 4, y - r * 4);
+    if (dim) ctx.restore();
   }
 
   function smog(ctx, w, y, hgt, now, speed, col, alpha) {
@@ -308,7 +314,7 @@ var BridgeSkyline = (function () {
   }
 
   function hijacked() { return typeof BridgeEvents !== 'undefined' && BridgeEvents.screens && BridgeEvents.screens() === 'null'; }
-  function ads(ctx, P, now) {
+  function ads(ctx, P, now, dark) {
     var a = P.m.anchors, i = 0;
     while (a['ad' + i + '_a']) {
       var A = a['ad' + i + '_a'], B = a['ad' + i + '_b'];
@@ -317,6 +323,7 @@ var BridgeSkyline = (function () {
         // every third tower screen takes the Neon Royale's ad now and then (the casino on the District street)
         var kind = i % 3 === 1 && Math.floor(now / 9000 + i) % 2 ? 'royale' : (i * 5 + 1) % 6;
         if (hijacked()) kind = 'null';                 // NULL has every screen in the city (js/events.js)
+        if (dark && kind !== 'royale') { px(ctx, x, y, w, h, '#06050c'); i++; continue; }   // a blackout: dead screens (the Royale's on generators)
         ad(ctx, kind, Math.round(x), Math.round(y), Math.round(w), Math.round(h), now + i * 777, i * 13);
         // its light spilling round the screen
         ctx.save();
@@ -501,6 +508,98 @@ var BridgeSkyline = (function () {
   }
 
 
+  // ---- the weather over the city (js/weather.js: Arcadia has clear nights, rain, smog and blackouts) -----------------
+  var wxAt = 0, wxNow = null, wxForce = null;
+  function weather(now) {
+    if (wxForce) return wxForce;
+    if (wxNow && Math.abs(now - wxAt) < 1000) return wxNow;
+    wxAt = now;
+    var W = typeof BridgeWeather !== 'undefined' ? BridgeWeather : null;
+    var w = W && W.here ? W.here() : null;
+    if ((!w || w.region !== 'arcadia') && W && W.at) w = W.at('arcadia');
+    var o = { rain: w ? 0 : 1, smog: 0, blackout: 0 };              // (no weather to ask: the rain it always had)
+    if (w) {
+      if (w.kind === 'rain' || w.kind === 'storm') o.rain = Math.max(0.35, w.k);
+      if (w.kind === 'smog') o.smog = w.k;
+      if (w.kind === 'blackout') o.blackout = w.k;
+    }
+    return (wxNow = o);
+  }
+  // a layer under a wash (the blackout's dark, the smog's brown), made once: only the towers take it, never the sky between
+  var TINT = {}, DARK = 'rgba(4,3,12,0.86)', BROWN = 'rgba(112,86,72,0.42)';
+  function tinted(name, col) {
+    var key = name + col, T = TINT[key], im = imgs[name];
+    if (T || !im) return T || im;
+    T = TINT[key] = document.createElement('canvas'); T.width = im.width; T.height = im.height;
+    var g = T.getContext('2d'); g.drawImage(im, 0, 0);
+    g.globalCompositeOperation = 'source-atop'; g.fillStyle = col; g.fillRect(0, 0, im.width, im.height);
+    if (col === DARK) {                                    // a few windows on generators still lit
+      for (var i = 0; i < im.width * im.height / 1400; i++) {
+        var x = Math.floor(hash(i * 3.1) * im.width), y = Math.floor(hash(i * 7.7) * im.height);
+        g.fillStyle = hash(i) > 0.6 ? '#ffb860' : '#e8d8a0'; g.fillRect(x, y, 2, 1);
+      }
+    }
+    return T;
+  }
+  function layerImg(name, wx) { return wx.blackout > 0.5 ? tinted(name, DARK) : wx.smog > 0.4 ? tinted(name, BROWN) : imgs[name]; }
+
+  // ---- things in the sky: an airship with its ad, aircraft blinking their way over ---------------------------------
+  var shipImg = null;
+  function airship() {
+    if (shipImg) return shipImg;
+    shipImg = document.createElement('canvas'); shipImg.width = 50; shipImg.height = 20;
+    var g = shipImg.getContext('2d'), rx = 23, ry = 7;
+    for (var y = -ry; y <= ry; y++) {                      // the envelope in three flat bands, lit from above
+      var half = Math.round(rx * Math.sqrt(1 - (y * y) / (ry * ry)));
+      g.fillStyle = y < -3 ? '#5a4a78' : y < 2 ? '#3a3056' : '#241c3a';
+      g.fillRect(25 - half, 8 + y, half * 2, 1);
+    }
+    g.fillStyle = '#241c3a'; g.fillRect(2, 4, 3, 9); g.fillRect(1, 7, 6, 3);                 // its fins
+    g.fillStyle = '#16122a'; g.fillRect(20, 15, 10, 3);                                   // the gondola, lit
+    g.fillStyle = '#ffd890'; g.fillRect(21, 16, 1, 1); g.fillRect(24, 16, 1, 1); g.fillRect(27, 16, 1, 1);
+    return shipImg;
+  }
+  function skyTraffic(ctx, w, skyY, now, wx, px) {
+    // the airship: once every two minutes and a half, a slow minute and a half across, its flank screen running
+    var P = 150000, t = (now % P) / 90000, cyc = Math.floor(now / P);
+    if (t < 1) {
+      var dir = cyc % 2 ? -1 : 1, u = dir > 0 ? t : 1 - t;
+      var x = Math.round(-60 + (w + 120) * u - px * 0.1), y = Math.round(skyY - 30 + 40 * hash(cyc));
+      ctx.drawImage(airship(), x, y);
+      if (!wx.blackout) {
+        var cols = ['#f078a8', '#5cc8d0', '#e8c040', '#a070f0'];
+        for (var k = 0; k < 6; k++) { ctx.fillStyle = cols[(k + Math.floor(now / 400)) % 4]; ctx.fillRect(x + 12 + k * 4, y + 7, 3, 2); }
+        ctx.fillStyle = 'rgba(240,120,168,0.18)'; ctx.fillRect(x + 8, y + 5, 30, 6);
+      }
+      var blink = Math.floor(now / 500) % 2;
+      ctx.fillStyle = blink ? '#ff4050' : '#e0f0ff'; ctx.fillRect(blink ? x + 1 : x + 48, y + (blink ? 6 : 8), 1, 1);
+    }
+    // aircraft high over: a red light and a strobe each, their own heights and speeds
+    for (var i = 0; i < 3; i++) {
+      var per = 34000 + i * 9000, tt = ((now + i * 11000) % per) / per, d = i % 2 ? -1 : 1;
+      var ax = Math.round((d > 0 ? tt : 1 - tt) * (w + 40) - 20), ay = Math.round(skyY - 60 - i * 22 + tt * 6 * d);
+      ctx.fillStyle = 'rgba(255,80,96,0.9)'; ctx.fillRect(ax, ay, 1, 1);
+      if ((Math.floor(now / 140) + i * 3) % 9 === 0) { ctx.fillStyle = 'rgba(255,255,255,0.35)'; ctx.fillRect(ax - d - 1, ay - 1, 3, 3); ctx.fillStyle = '#ffffff'; ctx.fillRect(ax - d, ay, 1, 1); }
+    }
+  }
+  // the Loop out across the city: her guideway among the far towers and, now and then, her lit carriages gliding along
+  // it behind the nearer towers (worlds that see her close — the street's viaduct, the carriage itself — don't draw it)
+  function farLoop(ctx, w, F, now, wx) {
+    var y = Math.round(F.y + F.m.h * 0.66), off = ((F.x % 64) + 64) % 64;
+    ctx.fillStyle = 'rgba(12,8,24,0.9)';
+    for (var px = off - 64; px < w; px += 64) ctx.fillRect(px, y + 2, 3, 40);          // piers
+    ctx.fillStyle = '#1c1430'; ctx.fillRect(0, y, w, 3);                              // the deck
+    ctx.fillStyle = wx.blackout ? 'rgba(92,200,208,0.15)' : 'rgba(92,200,208,0.6)'; ctx.fillRect(0, y + 3, w, 1);
+    var P = 45000, t = (now % P) / 16000, cyc = Math.floor(now / P);
+    if (t >= 1) return;
+    var dir = cyc % 2 ? -1 : 1, u = dir > 0 ? t : 1 - t, L = 46, x = Math.round(-L - 10 + (w + L + 20) * u);
+    ctx.fillStyle = '#7a76b0'; ctx.fillRect(x, y - 5, L, 5);
+    ctx.fillStyle = '#5a5690'; ctx.fillRect(x, y - 1, L, 1);
+    ctx.fillStyle = '#ffd890'; for (var q = 2; q < L - 2; q += 3) if (q % 15 > 1) ctx.fillRect(x + q, y - 4, 2, 1);
+    ctx.fillStyle = '#ffffff'; ctx.fillRect(dir > 0 ? x + L : x - 1, y - 3, 1, 1);    // her headlamp
+    ctx.fillStyle = 'rgba(92,200,208,0.35)'; ctx.fillRect(x, y + 1, L, 2);             // her underglow on the deck
+  }
+
   // ---- the backdrop ---------------------------------------------------------------------------
   function draw(ctx, w, h, now, opts) {
     load();
@@ -512,56 +611,66 @@ var BridgeSkyline = (function () {
     var railRow = opts.railRow != null ? opts.railRow : 13.2;
     opts.centerCol = opts.centerCol != null ? opts.centerCol : 16;
     if (opts.mode === 'spires') { drawSpires(ctx, w, h, now, opts, v); return; }
+    var wx = weather(now);
     var horizon = h / 2 + (v.offY + baseRow * ts - h / 2) * 0.35;
-    sky(ctx, w, h, now, horizon);
+    sky(ctx, w, h, now, horizon, wx);
     var mx = Math.round(w * 0.72 + (v.offX + opts.centerCol * ts - w / 2) * 0.06);
-    moon(ctx, mx, Math.round(horizon * 0.28), 14, now);
+    moon(ctx, mx, Math.round(horizon * 0.28), 14, now, wx.smog * 0.6);
     smog(ctx, w, horizon * 0.15, horizon * 0.25, now, 0.004, '120,50,140', 0.22);
     if (!manifest) return;
+    var M = imgs.mid ? place('mid', w, h, v, opts, 0.45, 0.55, baseRow) : null;
+    var skyY = M ? M.y + 24 : horizon * 0.4;              // the sky's traffic flies among the mid towers' tops (they pass behind them)
     if (imgs.far) {
       var F = place('far', w, h, v, opts, 0.22, 0.35, baseRow - 1);
-      searchlights(ctx, w, F.y + F.m.h * 0.9, now);
-      ctx.globalAlpha = 0.82;                          // the far towers sink into the smog
-      blit(ctx, imgs.far, F, w);
+      if (!wx.blackout) searchlights(ctx, w, F.y + F.m.h * 0.9, now);
+      ctx.globalAlpha = wx.smog > 0.4 ? 0.6 : 0.82;     // the far towers sink into the smog
+      blit(ctx, layerImg('far', wx), F, w);
       ctx.globalAlpha = 1;
-      traffic(ctx, w, F.y + F.m.h * 0.45, now, 3, 0.8);
-      smog(ctx, w, F.y + F.m.h * 0.55, F.m.h * 0.4, now, 0.006, '170,60,150', 0.18);
+      if (!opts.motion && !opts.loop) farLoop(ctx, w, F, now, wx);
+      traffic(ctx, w, F.y + F.m.h * 0.45, now, wx.blackout ? 1 : 3, 0.8);
+      smog(ctx, w, F.y + F.m.h * 0.55, F.m.h * 0.4, now, 0.006, wx.smog ? '150,110,90' : '170,60,150', 0.18 + 0.25 * wx.smog);
     }
-    if (imgs.mid) {
-      var M = place('mid', w, h, v, opts, 0.45, 0.55, baseRow);
-      blit(ctx, imgs.mid, M, w, function (at) { ads(ctx, at, now); });
-      traffic(ctx, w, M.y + M.m.h * 0.62, now + 5000, 2, 1.3);
+    skyTraffic(ctx, w, skyY, now, wx, v.offX + opts.centerCol * ts + (opts._mx || 0));
+    if (M) {
+      blit(ctx, layerImg('mid', wx), M, w, function (at) { ads(ctx, at, now, wx.blackout > 0.5); });
+      traffic(ctx, w, M.y + M.m.h * 0.62, now + 5000, wx.blackout ? 1 : 2, 1.3);
+      if (wx.smog) { ctx.fillStyle = 'rgba(112,86,72,' + (0.16 * wx.smog).toFixed(3) + ')'; ctx.fillRect(0, 0, w, Math.round(M.y + M.m.h)); }
     }
     if (imgs.low) {
-      var Lo = place('low', w, h, v, opts, 0.7, 1, railRow, true);
+      var Lo = place('low', w, h, v, opts, 0.7, 1, railRow, true), low = layerImg('low', wx);
       // further down and further off, between the towers' feet and the drop: the same roofs again, half the size, sinking
       // into the haze (only where there's a gap to fill)
-      var gapTop = imgs.mid ? M.y + M.m.h : Lo.y;
+      var gapTop = M ? M.y + M.m.h : Lo.y;
       if (Lo.y - gapTop > 16) {
         var dh = Math.round(Lo.m.h / 2), dw = Math.round(Lo.m.w / 2);
         var dy = Math.max(gapTop - 4, Lo.y - dh), dx = (((Math.round(Lo.x * 0.6)) % dw) + dw) % dw - dw;
         ctx.save();
         ctx.imageSmoothingEnabled = false;
         ctx.globalAlpha = 0.5;
-        for (; dx < w; dx += dw) ctx.drawImage(imgs.low, dx, dy, dw, dh);
+        for (; dx < w; dx += dw) ctx.drawImage(low, dx, dy, dw, dh);
         ctx.restore();
-        var dz = ctx.createLinearGradient(0, dy, 0, Lo.y);
-        dz.addColorStop(0, 'rgba(90,26,90,0.75)');
-        dz.addColorStop(1, 'rgba(40,10,50,0.35)');
-        ctx.fillStyle = dz;
-        ctx.fillRect(0, dy, w, Lo.y - dy);
+        var bands = 3, bh = (Lo.y - dy) / bands;                   // the haze over them, in flat bands
+        for (var bi = 0; bi < bands; bi++) {
+          var y0 = Math.round(dy + bi * bh), y1 = Math.round(dy + (bi + 1) * bh);
+          ctx.fillStyle = 'rgba(' + (90 - bi * 22) + ',' + (26 - bi * 7) + ',' + (90 - bi * 18) + ',' + (0.72 - bi * 0.16).toFixed(2) + ')';
+          ctx.fillRect(0, y0, w, y1 - y0);
+        }
         traffic(ctx, w, dy + dh * 0.4, now + 3000, 2, 0.7);
       }
-      // the drop: dark first, then the roofs far below, haze over them
+      // the drop: dark first, then the roofs far below (and more below them, deeper in the dark), haze nearest the rail
       ctx.fillStyle = '#0a0414';
       ctx.fillRect(0, Lo.y, w, h - Lo.y);
-      blit(ctx, imgs.low, { x: Lo.x, y: Lo.y + 6, m: Lo.m, wrap: Lo.wrap }, w);
-      var hz = ctx.createLinearGradient(0, Lo.y, 0, Lo.y + 90);
-      hz.addColorStop(0, 'rgba(60,16,70,0.6)');
-      hz.addColorStop(1, 'rgba(60,16,70,0.08)');
-      ctx.fillStyle = hz;
-      ctx.fillRect(0, Lo.y, w, h - Lo.y);
-      traffic(ctx, w, Lo.y + 30, now + 9000, 2, 1.0);
+      blit(ctx, low, { x: Lo.x, y: Lo.y + 6, m: Lo.m, wrap: Lo.wrap }, w);
+      if (Lo.y + Lo.m.h - 24 < h) {
+        var y2 = Lo.y + Lo.m.h - 24;
+        blit(ctx, low, { x: Math.round(Lo.x * 1.15 - Lo.m.w * 0.37), y: y2, m: Lo.m, wrap: true }, w);
+        ctx.fillStyle = 'rgba(14,6,26,0.4)'; ctx.fillRect(0, y2, w, h - y2);
+      }
+      ctx.fillStyle = 'rgba(60,16,70,0.5)'; ctx.fillRect(0, Lo.y, w, 30);
+      ctx.fillStyle = 'rgba(60,16,70,0.3)'; ctx.fillRect(0, Lo.y + 30, w, 30);
+      ctx.fillStyle = 'rgba(60,16,70,0.14)'; ctx.fillRect(0, Lo.y + 60, w, 30);
+      if (wx.smog) { ctx.fillStyle = 'rgba(112,86,72,' + (0.22 * wx.smog).toFixed(3) + ')'; ctx.fillRect(0, Lo.y, w, h - Lo.y); }
+      traffic(ctx, w, Lo.y + 30, now + 9000, wx.blackout ? 1 : 2, 1.0);
     }
   }
 
@@ -608,7 +717,9 @@ var BridgeSkyline = (function () {
   // ---- rain ---------------------------------------------------------------------------------------
   function rain(ctx, w, h, now, opts) {
     if (opts && opts.none) return;                          // indoors with a skyline (the Loop's carriage)
-    var n = (opts && opts.drops) || 140;
+    var wr = weather(now).rain;                             // only when it's raining in Arcadia (js/weather.js)
+    if (!wr) return;
+    var n = Math.round(((opts && opts.drops) || 140) * wr);
     ctx.save();
     if (opts && opts.dry) {                                 // under a roof (world tiles, screen rows): no rain falls there
       var vd = BridgeWorld.getView();
@@ -651,5 +762,7 @@ var BridgeSkyline = (function () {
   // the Spires' own layer rides along as layers().peaks, from its own loader
   function layersWithPeaks() { var L = layers(); spLoad(); if (L) L.peaks = spImgs.peaks || null; return L; }
 
-  return { draw: draw, rain: rain, load: load, ad: ad, streetAds: streetAds, steam: steam, setMotion: setMotion, layers: layersWithPeaks };
+  return { draw: draw, rain: rain, load: load, ad: ad, streetAds: streetAds, steam: steam, setMotion: setMotion, layers: layersWithPeaks,
+           weather: function () { return weather(Date.now()); },
+           _forceWeather: function (o) { wxForce = o ? Object.assign({ rain: 0, smog: 0, blackout: 0 }, o) : null; } };   // tests: { rain | smog | blackout: 0..1 }
 })();
