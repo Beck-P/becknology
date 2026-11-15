@@ -2588,6 +2588,18 @@
       "label": "THE STAR DIAL",
       "prompt": "PRESS E TO READ IT",
       "verb": "Read"
+    },
+    {
+      "x": 7,
+      "y": 23,
+      "type": "enter_world",
+      "label": "THE QUEEN'S STAIR",
+      "prompt": "PRESS E TO CLIMB DOWN TO THE BOUGHS",
+      "target": "sylvara-boughs",
+      "spawn": [
+        13,
+        31
+      ]
     }
   ],
   "designTiles": [

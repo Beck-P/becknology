@@ -119,6 +119,28 @@ const OUT = process.argv[2] || '/tmp';
   const at = await p.evaluate(() => [BridgeCharacter.getX(), BridgeCharacter.getY()]);
   if (at[0] !== Z.to[0] || at[1] !== Z.to[1]) fail('the zip line left you at ' + at + ', not ' + Z.to);
   console.log('boughs: lantern lit, ladder down, box opened, zip rigged and ridden to', at.join(','));
+  // every elven home can be knocked on, the lookout read, the owl's nest looked into — each one reachable from a walkway
+  const bw = await p.evaluate(() => { const w = BridgeWorld.getWorld(); return w.interactions.filter(i => /ELVEN HOME|LOOKOUT|OWL'S NEST|THE HOLLOW BOUGH|THE STAIR|BASKET LIFT|QUEEN'S STAIR/.test(i.label)).map(i => {
+    let ok = false; for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) { const r = w.collisions[i.y + dy]; if (r && r[i.x + dx] === 0) ok = true; } return [i.label, ok]; }); });
+  bw.filter(b => !b[1]).forEach(b => fail('the Boughs\' ' + b[0] + ' has no walkway beside it'));
+  console.log('boughs: things to use', bw.length);
+  }
+
+  if (await live(['sylvara-boughs', 'sylvara-tavern'])) {
+  // ---- the Hollow Bough: in at its door, Fennick's cider, out again --------------------------------------------------------
+  await go('sylvara-boughs', [31, 11]);
+  const door = (await inter('THE HOLLOW BOUGH'))[0];
+  await stand(door[0], door[1], 'up'); await press(); await p.waitForTimeout(2200);
+  if (await p.evaluate(() => BridgeWorld.getWorld().name) !== 'The Hollow Bough') fail('the Hollow Bough\'s door didn\'t lead in');
+  const fen = (await inter('TAVERN KEEPER'))[0];
+  await stand(fen[0], fen[1], 'up'); await press();
+  if (!await pick(/something to drink/)) fail('no "Something to drink" on Fennick');
+  if (!/CIDER|Cider/i.test(await text())) fail('Fennick\'s shop has no cider');
+  await shut();
+  const out = (await inter('THE DOOR'))[0];
+  await stand(out[0], out[1] - 1, 'down'); await press(); await p.waitForTimeout(2200);
+  if (await p.evaluate(() => BridgeWorld.getWorld().name) !== 'the Boughs') fail('the tavern door didn\'t lead back out to the Boughs');
+  console.log('tavern: in, Fennick\'s shop, out');
   }
 
   // ---- brewing with Mirelle, and what the potions do ------------------------------------------------------------------
