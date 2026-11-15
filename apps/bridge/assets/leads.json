@@ -144,6 +144,10 @@
     "title": "The station's old traffic", "where": "Enigma \u00b7 the relay deck", "kind": "place", "world": "enigma", "label": "CIPHER TERMINAL",
     "text": "Okafor says every code you crack at the cipher terminal on Enigma's relay deck decodes one of the station's old dispatches: shift swaps, supply orders, notices. They go in your journal's log."
   },
+  "warden-cloak": {
+    "title": "A warden's cloak", "where": "Sylvara \u00b7 the Rootmarket", "kind": "maker", "world": "sylvara-roots", "label": "WEAVER",
+    "text": "Aerin says Ysane at the Rootmarket's looms weaves the wardens' cloaks: four silk cocoons from Rosewell's groves and three owlmoss for the dye. In one, creatures notice you later."
+  },
   "peddler": {
     "title": "Wendel the Peddler", "where": "somewhere new each day", "kind": "person", "label": "PEDDLER",
     "text": "Wendel Crane sets up somewhere different every day: the Market Square, Arcadia's street, Brambleford's square, Fellhaven, Sapphire Port's quay, Enigma's dock. He sells things that do things."

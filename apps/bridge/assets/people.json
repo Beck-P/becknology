@@ -3078,6 +3078,11 @@
       {
         "q": "Where should I go?",
         "a": "UP THE PATH TO THE GREAT TREE. THE QUEEN HOLDS COURT INSIDE. KNEEL, BE HONEST, AND DON'T MAKE ANY SUDDEN MOVES NEAR BECKOLAS."
+      },
+      {
+        "q": "Your cloak",
+        "a": "WARDENS' GREY. YSANE WEAVES THEM AT THE LOOMS IN THE ROOTMARKET - SPORE SILK FROM ROSEWELL, DYED WITH OWLMOSS. IT DOESN'T RUSTLE. A BOAR WILL WALK RIGHT PAST YOU. A WOLF, ALMOST. SHE'LL MAKE YOU ONE IF YOU BRING THE SILK. I DIDN'T TELL YOU THAT.",
+        "lead": "warden-cloak"
       }
     ]
   },
@@ -3656,6 +3661,11 @@
       {
         "q": "The city",
         "a": "THREE CITIES, REALLY. DOWN HERE IS FOR WORK - THE MARKET, THE MAKERS. THE BOUGHS ARE FOR LIVING; THE CROWN IS FOR THE QUEEN AND THE STARS. THE LIFT TAKES YOU UP IF YOUR KNEES ARE OLD. MINE ARE."
+      },
+      {
+        "q": "A warden's cloak?",
+        "a": "LET'S SEE.",
+        "use": { "type": "loomer_cloak" }
       }
     ]
   },

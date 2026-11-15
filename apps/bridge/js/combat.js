@@ -113,6 +113,11 @@ var BridgeCombat = (function () {
               moveCooldown: C.move, aggroRange: C.aggro, windupMs: C.windup, strikeMs: C.strike || 180, recoverMs: C.recover || 650,
               range: C.range || 0, reach: C.reach || 1, blink: C.blink || 0, boss: !!C.boss,
               reward: C.reward, drops: C.drops, _rx: x, _ry: y, seed: Math.random() * 100 };
+    // how far it notices you from: the Warden's Cloak (js/fardeep.js `hush`) makes it a fifth less while you carry it,
+    // until it's already after you; a pack howling sets it (js/valley.js), which still works through the setter
+    var aggro0 = C.aggro;
+    Object.defineProperty(h, 'aggroRange', { enumerable: true, configurable: true, set: function (v) { aggro0 = v; },
+      get: function () { return h._engaged || typeof BridgeFarDeep === 'undefined' ? aggro0 : aggro0 * BridgeFarDeep.hush(); } });
     if (C.slam) h.slams = true;
     // its name on the wire (js/fight.js): kind and where it first stood, the same in everyone's copy of the place
     h.fid = kind + '@' + x + ',' + y;

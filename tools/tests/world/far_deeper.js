@@ -414,6 +414,43 @@ const ONLY = process.argv[3] || '';
     console.log('e2 done');
   }
 
+  // ---- Y5 · The loomer's cloak ----
+  if (part('y5')) {
+    await p.evaluate(() => { BridgeFarDeep._s().cloak = 0; ['warden_cloak', 'silk_cocoon', 'owlmoss'].forEach(id => BridgeInventory.removeItem(id, BridgeInventory.getCount(id))); });
+    // Aerin, wherever she is today: her lead
+    await go('sylvara-roots', 'WEAVER');
+    const aerinHere = await p.evaluate(() => !!BridgeWorld.getWorld().interactions.find(i => i.label === 'WARDEN' && i.type === 'dialog'));
+    if (!aerinHere) await go('sylvara', 'WARDEN');
+    await use('WARDEN'); await pick(/Your cloak/); await said(); await shut();
+    if (!(await p.evaluate(() => BridgeQuests.leadsOpen())).includes('warden-cloak')) fail('Aerin\'s lead not in the journal');
+    if (!aerinHere) await go('sylvara-roots', 'WEAVER');
+    await use('WEAVER'); await pick(/warden's cloak/); let t = await said(); await shut();
+    if (!/SHORT 4 SILK COCOON/.test(t)) fail('Ysane short: ' + t.slice(-120));
+    await give('silk_cocoon', 4); await give('owlmoss', 3);
+    console.log('next up:', JSON.stringify(await p.evaluate(() => BridgeFarDeep.nextUp('sylvara-roots').map(n => n.title))));
+    const c0 = await p.evaluate(() => window._coins);
+    await use('WEAVER'); await pick(/warden's cloak/); await p.waitForTimeout(600);
+    await shot('y5_ysane');
+    await pick(/Weave me/); t = await said(); await shut(); await p.waitForTimeout(600); await shut();
+    console.log('woven:', t.slice(0, 100).replace(/\n/g, ' '));
+    if (await count('warden_cloak') !== 1 || await count('silk_cocoon') || await count('owlmoss')) fail('the weaving: cloak ' + await count('warden_cloak'));
+    if (c0 - await p.evaluate(() => window._coins) !== 150) fail('Ysane\'s fee');
+    // creatures notice you later while it's carried; not once one's after you; the valley's howl still sets it
+    const r = await p.evaluate(() => {
+      const w = { interactions: [], collisions: [[0]] }, h = BridgeCombat.spawn(w, 'wolf' in BridgeCombat.CREATURES ? 'wolf' : 'hound', 0, 0), out = { with: h.aggroRange };
+      const base = BridgeCombat.CREATURES[h.creature].aggro; out.base = base;
+      h.aggroRange = 16; out.howl = h.aggroRange;
+      h._engaged = true; out.engaged = h.aggroRange; h._engaged = false;
+      BridgeInventory.removeItem('warden_cloak', 1); out.without = h.aggroRange; BridgeInventory.addItem('warden_cloak', 1);
+      return out; });
+    console.log('noticed from:', JSON.stringify(r));
+    if (Math.abs(r.with - 16 * 0.8) > 0.01 && Math.abs(r.with - r.base * 0.8) > 0.01) fail('the cloak didn\'t hush it');
+    if (r.howl !== 12.8 || r.engaged !== 16 || r.without !== 16) fail('aggro: ' + JSON.stringify(r));
+    for (const id of ['warden_cloak', 'silk_cocoon']) console.log(id, 'uses:', JSON.stringify(await p.evaluate((id) => BridgeUses.lines(id).map(l => l.t.replace(/<[^>]+>/g, '')), id)));
+    if (!(await p.evaluate(() => BridgeUses.lines('warden_cloak').map(l => l.t).join(' '))).includes('notice you later')) fail('the cloak\'s card');
+    console.log('y5 done');
+  }
+
   console.log(errors ? errors + ' FAILED' : 'far_deeper OK');
   await b.close();
   process.exit(errors ? 1 : 0);
