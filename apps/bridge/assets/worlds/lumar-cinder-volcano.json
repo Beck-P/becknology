@@ -5,7 +5,7 @@
   "height": 38,
   "tileSize": 16,
   "tileset": "lumar",
-  "fixedCamera": true,
+  "fixedCamera": false,
   "spawns": {
     "player": [
       22,
