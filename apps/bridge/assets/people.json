@@ -1053,7 +1053,8 @@
       },
       {
         "q": "Heard anything?",
-        "a": "SOMEBODY'S GOAT IS LOOSE AGAIN. AND THE CROWS HAVE TAKEN AGAINST THE SCARECROW'S SHIRT. CAN'T SAY I BLAME THEM."
+        "a": "SOMEBODY'S GOAT IS LOOSE AGAIN - NOT MINE, WHATEVER THEY TELL YOU. WALKERS SAY THEY SEE IT IN THE SUNKEN LANE ON THE DOWNS OF AN EVENING, EATING THE NOTES OFF THE HONESTY BOX. AND THE CROWS HAVE TAKEN AGAINST THE SCARECROW'S SHIRT. CAN'T SAY I BLAME THEM.",
+        "lead": "lost-goat"
       },
       {
         "q": "Edda's page",
@@ -6576,6 +6577,12 @@
         "a": "LIFT A HOOF NOW AND THEN. WHEN THE SHOES GO DULL, TAKE HER TO WAT AT THE ANVIL & HOOF. TWENTY COINS AND SHE GOES LIKE SHE'S LATE FOR SOMETHING. FOR A DAY, ANYWAY.",
         "when": "gate:has-horse",
         "lead": "wat-shoes"
+      },
+      {
+        "q": "This goat?",
+        "a": "",
+        "when": "gate:goat-following",
+        "use": { "type": "goat_home" }
       }
     ]
   },
@@ -6647,6 +6654,12 @@
             "price": 34
           }
         ]
+      },
+      {
+        "q": "Hobb's recipe",
+        "a": "HIS MOTHER'S. I'VE ASKED HIM FOR IT EVERY WEEK SINCE I CAME, AND IT TAKES A GOAT GOING MISSING. ASH ON THE RIND, THYME FROM THE DOWNS. THERE'S SOME ON THE SHELF ALREADY - THE GOAT'S GENEROUS WHEN SHE'S HOME.",
+        "when": "gate:goat-home",
+        "stores": [{ "id": "goat_cheese", "price": 32 }]
       }
     ]
   },

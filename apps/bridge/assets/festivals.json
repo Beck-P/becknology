@@ -75,7 +75,7 @@
       "kind": "show", "at": [14, 18], "label": "TASTING TABLE", "judge": "Rosalind Vane",
       "title": "the tasting", "judging": "ROSALIND SWIRLS IT, HOLDS IT UP TO THE WINTER LIGHT, AND WRITES SOMETHING VERY SMALL IN HER BOOK.",
       "bring": "Bring what you've put by: wine from your own cask (the longer it's lain, the better it scores), your farmhouse cheese, your cider, a crock of honey.",
-      "entries": { "wine_grand": 14, "wine_fine": 11, "farm_cheese": 9, "wine": 8, "farm_cider": 7, "honey_crock": 6, "beeswax_candles": 5, "wine_young": 4, "jam": 4 },
+      "entries": { "wine_grand": 14, "wine_fine": 11, "farm_cheese": 9, "goat_cheese": 8, "wine": 8, "farm_cider": 7, "honey_crock": 6, "beeswax_candles": 5, "wine_young": 4, "jam": 4 },
       "rivals": [["Ezra Cobb", "farm_cider"], ["Silas Wick", "honey_crock"], ["Hobb Tanner", "wine_young"], ["Wren Potts", "jam"]],
       "prizes": [[600, "blue_rosette"], [250, "red_rosette"], [100, "yellow_rosette"]]
     },

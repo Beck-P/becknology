@@ -390,6 +390,68 @@ const ONLY = process.argv[3] || '';
     console.log('h5 done');
   }
 
+  // ---- V7 · the goat that answers to nothing ----
+  if (part('v7')) {
+    await p.evaluate(() => { ['bridge_deeper', 'bridge_quest_meta', 'bridge_village'].forEach(k => localStorage.removeItem(k)); });
+    await p.reload(); await p.waitForTimeout(2500);
+    await p.evaluate(() => { BridgeState.setPilot({ id: 't', name: 'BECK', suit_color: 'gold' }); BridgeIntro.hide(); BridgeWeather._pin && BridgeWeather._pin('verdance', 'clear'); });
+    await coins(200);
+    // by day: no goat in the lane
+    await pinAt(['hobb', 'hester', 'hollin'], 'Hobb, Hester and Hollin');
+    await p.evaluate(() => { for (let m = 0; m < 600 && BridgeDeeper.evening(); m += 5) BridgeClock._at(BridgeClock.now() + 5 * 60000); });
+    await go('verdance', [30, 12]);
+    await use('HOLLIN');
+    if (!(await rows()).some(r => /Heard anything\?/.test(r))) fail('Hollin has no gossip');
+    else { await pick(/^Heard anything\?/); if (!(await p.evaluate(() => (JSON.parse(localStorage.getItem('bridge_quest_meta') || '{}').leads || {})['lost-goat']))) fail('no lead from Hollin'); }
+    await shut();
+    await go('verdance-downs', [22, 12]);
+    await p.waitForTimeout(800);
+    if (await p.evaluate(() => BridgeWorld.getWorld().interactions.some(i => i.label === 'A GOAT'))) fail('a goat in the lane by day');
+    const cb = await p.evaluate(() => BridgeDeeper.comeBack('verdance-downs').join(' / '));
+    if (!/sunken lane/.test(cb)) fail('Come back for: ' + cb);
+    // dusk
+    const dusk = await p.evaluate(() => { for (let m = 0; m < 24 * 60; m += 2) { if (BridgeDeeper.evening()) return true; BridgeClock._at(BridgeClock.now() + 2 * 60000); } return false; });
+    if (!dusk) fail('no evening found');
+    await go('verdance-downs', [22, 12]);
+    await p.evaluate(() => BridgeCharacter.setFacing('down'));
+    await p.waitForTimeout(1500);
+    await p.screenshot({ path: OUT + '/hd_v7_lane.png' });
+    if (!(await use('A GOAT'))) fail('no goat at dusk');
+    if (!/ANSWERS TO NOTHING/.test(await said())) fail('the goat\'s moment');
+    await shut();
+    if (await p.evaluate(() => BridgeDeeper._s().goat) !== 1) fail('the goat isn\'t following');
+    // it follows: walk off down the lane and look
+    for (const y of [13, 14, 15, 16, 17, 18]) { await p.evaluate((y) => BridgeCharacter.init(21, y), y); await p.waitForTimeout(250); }
+    await p.waitForTimeout(1500);
+    await p.screenshot({ path: OUT + '/hd_v7_following.png' });
+    const nu = await p.evaluate(() => window.BRIDGE_NEXTUP.map(f => f('verdance-downs')).flat().map(x => x.title).join(' / '));
+    if (!/A goat, following you/.test(nu)) fail('Next up: ' + nu);
+    // Hobb
+    await p.evaluate(() => ['bridge', 'cafe', 'dairy'].forEach(id => BridgeVillage._finish(id)));   // (Hester comes with the dairy)
+    await pinAt(['hobb', 'hester'], 'Hobb and Hester');
+    await go('verdance-east', [31, 20]);
+    await use('HOBB');
+    await pick(/^This goat\?/);
+    if (!/MISS WHISKERS/.test(await said())) fail('Hobb\'s moment');
+    await shut();
+    if (await p.evaluate(() => BridgeDeeper._s().goat) !== 2) fail('the goat isn\'t home');
+    await p.waitForTimeout(1200);
+    await p.screenshot({ path: OUT + '/hd_v7_home.png' });
+    await use('HESTER');
+    if (!(await rows()).some(r => /Hobb's recipe/.test(r))) fail('Hester has no recipe topic');
+    else {
+      await pick(/^Hobb's recipe/);
+      await p.waitForTimeout(800);
+      const bought = await p.evaluate(() => { const r = [...document.querySelectorAll('#world-overlay button')].find(e => /Buy/.test(e.textContent) && !e.disabled); if (r) r.click(); return !!r; });
+      await p.waitForTimeout(1500);
+      if (!bought || await count('goat_cheese') < 1) fail('no goat\'s cheese bought (row ' + bought + ')');
+    }
+    await shut();
+    const card = await p.evaluate(() => BridgeUses.html('goat_cheese'));
+    if (!/Cellar Fair/.test(card)) fail('the goat\'s cheese card: ' + card.replace(/<[^>]+>/g, '').slice(0, 200));
+    console.log('v7 done');
+  }
+
   console.log(errors ? 'FAILED with ' + errors + ' problem(s)' : 'OK');
   await b.close();
   process.exit(errors ? 1 : 0);
