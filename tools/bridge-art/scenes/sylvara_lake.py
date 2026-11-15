@@ -48,7 +48,8 @@ def lake_d(x, r):
     a = math.atan2(dr, dx)
     d = lake_r(a) - math.hypot(dx, dr)
     d = max(d, 2.2 - A.line_dist(x, r, RIVER))                     # the river mouth
-    d = max(d, 1.6 - math.hypot(x - SOURCE[0] - 1.0, (r - SOURCE[1]) / 0.8))   # the source's cove opening into the lake
+    ca = math.atan2((r - SOURCE[1]) / 0.8, x - SOURCE[0] - 1.0)  # the source's cove opening into the lake (its edge wanders)
+    d = max(d, 1.6 + 0.22 * math.sin(3 * ca + 0.9) + 0.12 * math.sin(5 * ca + 2.4) - math.hypot(x - SOURCE[0] - 1.0, (r - SOURCE[1]) / 0.8))
     return d
 
 
@@ -87,10 +88,11 @@ def mat(x, r):
     jit = 0.15 * (A.noise(x, r, 3.0, 5) - 0.5)
     if d > 0.5:
         return 'bed'
-    if d > -0.7 + jit:
+    beach = A.smooth(16.5, 19.5, x) * A.smooth(36.0, 33.0, x) * A.smooth(25.5, 27.5, r)
+    if d > -0.7 - 2.4 * beach + jit:                             # the shingle beach on the south shore runs well up from the water
         n = A.noise(x, r, 4.0, 6)
-        if 18.0 < x < 34.0 and r > 28.0:
-            return 'pebble' if n > 0.35 else 'sand'               # the shingle beach on the south shore
+        if beach > 0.3:
+            return 'pebble' if d > -0.25 + jit else 'sand'          # sand, shingle only at the water (stones laid on it below)
         return 'pebble' if n > 0.62 else 'mud' if n < 0.34 else 'bank'
     if path_d(x, r) < 0.55 + jit:
         return 'path'
@@ -100,6 +102,7 @@ def mat(x, r):
     return 'litter' if n > 0.76 else 'moss_dark' if n < 0.32 else 'moss'
 
 
+L_mat = mat
 L = A.Land(k, zfn, mat, alb={'meadow': ('#6a9644', 0.3), 'sand': ('#a8987a', 0.34)})
 L.field(-1.5, -3.5, COLS + 1.5, ROWS + 1.5, 0.125)
 A.water(k, -1.5, -3.5, COLS + 1.5, ROWS + 1.5, lambda x, r: lake_d(x, r) > -0.55, WZ, part='pond_water', tone='#2e6a80')
@@ -111,8 +114,8 @@ for i in range(11):
     x, r = sx + math.cos(a) * 1.1, sr + math.sin(a) * 0.85
     s = rng.uniform(0.16, 0.26)
     k.rock(x, r, WZ + 0.05, s, s * 0.8, s * 0.6, (shade('#d8d4c4', rng.uniform(0.92, 1.06)), 0.25), part='source_stone', segs=8)
-k.cyl(sx, sr, WZ - 0.1, WZ + 0.015, 0.85, '#2a6a64', 'source_glow', emit=('#a8e0d8', 0.9), verts=24, ry=0.7)
-k.cyl(sx, sr, WZ + 0.015, WZ + 0.02, 0.4, '#4a9a90', 'source_glow', emit=('#c8f8f0', 1.6), verts=18, ry=0.32)
+k.cyl(sx, sr, WZ - 0.1, WZ + 0.015, 0.85, '#1a4a46', 'source_glow', emit=('#6ad0c0', 0.55), verts=24, ry=0.7)
+k.cyl(sx, sr, WZ + 0.015, WZ + 0.02, 0.4, '#2a6a64', 'source_glow', emit=('#a8f0e0', 0.8), verts=18, ry=0.32)
 for _ in range(10):                                              # the welling: rings of bubbles
     a, d = rng.uniform(0, math.tau), rng.uniform(0.1, 0.6)
     k.sphere(sx + math.cos(a) * d, sr + math.sin(a) * d * 0.8, WZ + 0.03, 0.03, 0.015, '#e8fff8', 'source_bubble', emit=('#e8fff8', 1.2), segs=6)
@@ -120,8 +123,9 @@ k.point_light(sx, sr + 0.3, WZ + 0.6, '#a8e0d8', 30, radius=0.4)
 for (dx, dr, h) in ((-1.8, -1.2, 1.4), (1.6, -1.4, 1.2), (-2.0, 0.9, 1.0)):     # three standing stones round the cove, runes lit
     x, r = sx + dx, sr + dr
     z0 = L.z(x, r)
-    k.rock(x, r, z0 + h * 0.45, 0.2, 0.15, h * 0.55, (shade('#bcb8a8', 0.95), 0.3), part='standing_stone', segs=8)
-    k.blob(x, r + 0.13, z0 + h * 0.6, 0.08, 0.02, 0.12, ('#a8e0d8', 0.2), 'stone_rune', emit=('#a8e0d8', 1.3), segs=6)
+    k.rock(x, r, z0 + h * 0.45, 0.32, 0.24, h * 0.58, (shade('#bcb8a8', 0.95), 0.3), part='standing_stone', segs=9)
+    k.blob(x, r + 0.22, z0 + h * 0.6, 0.09, 0.02, 0.14, ('#2a6a64', 0.2), 'stone_rune', emit=('#a8e0d8', 0.9), segs=6)
+    k.blob(x, r + 0.05, z0 + h * 0.98, 0.22, 0.17, 0.05, (A.MOSS_L, 0.4), 'rock_moss', segs=8)
     k.solid_post(x, r)
 A.flowers(k, L, sx - 3.0, sr - 2.6, sx + 2.0, sr + 2.6, 70, ok=lambda x, r: lake_d(x, r) < -0.6, cols=('#f0f0f0', '#e8f8f0', '#c8a8f0', '#a8e0d8'))
 
@@ -136,8 +140,9 @@ rx, rr_ = RACK
 for i in range(2):
     for x in (rx - 0.6, rx + 0.6):
         k.cyl(x, rr_, L.z(rx, rr_), L.z(rx, rr_) + 0.5 + i * 0.36, 0.04, (A.ELFWOOD_D, 0.25), 'rack', verts=5)
-    k.blob(rx, rr_ - 0.1, L.z(rx, rr_) + 0.62 + i * 0.36, 1.05, 0.22, 0.09, ('#e4dcc4', 0.3), 'canoe_stowed', segs=12)
-    k.blob(rx, rr_ - 0.1, L.z(rx, rr_) + 0.58 + i * 0.36, 1.06, 0.23, 0.04, ('#5a3e26', 0.3), 'canoe_gunwale', segs=12)
+    k.box(rx - 0.68, rr_ - 0.05, L.z(rx, rr_) + 0.46 + i * 0.36, rx + 0.68, rr_ + 0.05, L.z(rx, rr_) + 0.52 + i * 0.36, (A.ELFWOOD_D, 0.25), 'rack_bar')
+    k.blob(rx, rr_ - 0.1, L.z(rx, rr_) + 0.62 + i * 0.36, 1.05, 0.22, 0.09, (('#a8743e', '#8a5a30')[i], 0.3), 'canoe_stowed', segs=12)
+    k.blob(rx, rr_ - 0.1, L.z(rx, rr_) + 0.66 + i * 0.36, 1.0, 0.16, 0.05, ('#3a2416', 0.3), 'canoe_inside', segs=12)
 k.solid(rx - 0.8, rr_ - 0.4, rx + 0.8, rr_ + 0.2)
 A.lantern_post(k, L, LAND[0] - 0.6, LAND[3] + 0.6)
 A.bench(k, L, 20.6, 22.0, 34.6)
@@ -161,21 +166,24 @@ for i in range(140):
         continue
     if math.hypot(x - SOURCE[0], r - SOURCE[1]) < 2.4 or abs(x - 24.0) < 2.6 and r < 9:
         continue
-    if rng.random() < 0.5:
-        A.reeds(k, L, x, r, n=rng.randint(5, 10), spread=0.2, h=(0.4, 0.75))
+    if rng.random() < 0.75:
+        A.reeds(k, L, x, r, n=rng.randint(6, 12), spread=0.25, h=(0.4, 0.8))
 with k.foliage('leaf'):
-    for _ in range(46):                                          # lily pads in the shallows, a flower here and there
-        a = rng.uniform(0, math.tau)
-        d = lake_r(a) - rng.uniform(0.7, 2.6)
+    for _ in range(110):                                         # lily pads in the shallows, in rafts, a flower here and there
+        a = rng.choice((0.4, 1.3, 2.2, 3.6, 4.4, 5.6)) + rng.uniform(-0.18, 0.18)
+        if 1.2 < a < 1.95:                                       # not across the beach in front of the landing
+            continue
+        d = lake_r(a) - rng.uniform(0.6, 2.2)
         x, r = LC[0] + math.cos(a) * d, LC[1] + math.sin(a) * d * 0.72
         s = rng.uniform(0.12, 0.2)
         k.cyl(x, r, WZ + 0.005, WZ + 0.015, s, (shade('#4a8a3a', rng.uniform(0.85, 1.15)), 0.3), 'lily_pad', verts=12)
-        if rng.random() < 0.3:
-            k.sphere(x + 0.03, r, WZ + 0.05, 0.05, 0.035, rng.choice(('#f0f0f0', '#f0c8d8')), 'lily_flower', segs=7)
+        if rng.random() < 0.3:                                   # a flat flower on the pad (a ball took a dark ring at this size)
+            k.cyl(x + 0.03, r, WZ + 0.016, WZ + 0.03, 0.05, rng.choice(('#f0f0f0', '#f0c8d8')), 'pond_lilyflower', verts=8)
 for (x, r, s) in ((30.0, 15.0, 0.4), (19.4, 22.6, 0.3), (33.4, 22.4, 0.35), (26.0, 25.6, 0.25)):
     k.rock(x, r, WZ + 0.05, s, s * 0.8, s * 0.6, (shade('#8a887a', rng.uniform(0.9, 1.08)), 0.3), part='rock', segs=9)
     k.blob(x, r - 0.04, WZ + s * 0.6, s * 0.6, s * 0.45, s * 0.12, (A.MOSS_L, 0.4), 'rock_moss', segs=8)
 A.pebbles(k, L, -0.5, -1.0, COLS + 0.5, ROWS + 0.5, 160, ok=lambda x, r: -1.1 < lake_d(x, r) < -0.3)
+A.pebbles(k, L, 17.0, 26.0, 35.5, 33.5, 220, ok=lambda x, r: L_mat(x, r) == 'sand' and not (LAND[0] - 0.2 < x < LAND[2] + 0.2 and r < LAND[3] + 0.2))
 
 # ---- the wood round it, the meadow ---------------------------------------------------------------------------------------
 crowns = []
@@ -190,7 +198,7 @@ def clear(x, r, pad=0.8):
         return False
     if math.hypot(x - SOURCE[0], r - SOURCE[1]) < 3.0:
         return False
-    if 18.0 < x < 36.0 and r > 28.5:                              # the beach
+    if 16.5 < x < 36.0 and r > 26.5:                              # the beach
         return False
     return True
 
