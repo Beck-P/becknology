@@ -176,6 +176,29 @@ const OUT = process.argv[2] || '/tmp';
   await stand(post.x, post.y + 1, 'up'); await press();
   if (!/RED LEAF/.test(await text())) fail('the warning post says nothing');
   await shut();
+  if (await isOpen('sylvara-fallcave')) {
+    // ---- behind the falls: along the ledge into the cave, the carving, the oiled box, back out onto the ledge ----------
+    await stand(ledge.x, ledge.y, 'up'); await press(); await p.waitForTimeout(2200);
+    if (await p.evaluate(() => BridgeWorld.getWorld().name) !== 'Behind the Falls') fail('the ledge didn\'t lead in behind the falls');
+    const cave = await reach(await p.evaluate(() => [Math.round(BridgeCharacter.getX()), Math.round(BridgeCharacter.getY())]));
+    const cw = await p.evaluate(() => BridgeWorld.getWorld());
+    for (const l of ['THE CARVING', 'OILED BOX', 'THE SEEP POOL']) {
+      const it = cw.interactions.find(i => i.label === l);
+      if (!it || !near(cave, it.x, it.y)) fail('behind the falls: ' + l + ' can\'t be reached');
+    }
+    const carving = (await inter('THE CARVING'))[0];
+    await stand(carving[0], carving[1], 'up'); await press();
+    const ct = await text(); if (!/CARVED ALONG THE BACK WALL/.test(ct)) fail('the carving says nothing: ' + ct.slice(0, 160));
+    await shut();
+    const obox = (await inter('OILED BOX'))[0];
+    await stand(obox[0], obox[1], 'up'); await press();
+    if (!/COINS/.test(await text())) fail('the oiled box behind the falls gave nothing');
+    await shut();
+    const back = (await inter('THE LEDGE'))[0];
+    await stand(back[0], back[1], 'down'); await press(); await p.waitForTimeout(2200);
+    if (await p.evaluate(() => BridgeWorld.getWorld().name) !== 'the Falls') fail('the cave\'s way out didn\'t lead back to the falls');
+    console.log('cave: in along the ledge, the carving, the box, out');
+  }
   const up = (await inter('THE SILVERRUN'))[0];
   await stand(up[0], up[1] + 1, 'up'); await press(); await p.waitForTimeout(2200);
   if (await p.evaluate(() => BridgeWorld.getWorld().name) === 'the Falls') fail('the way up didn\'t lead back to the Silverrun');

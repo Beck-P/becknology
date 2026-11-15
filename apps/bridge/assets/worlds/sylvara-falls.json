@@ -4459,6 +4459,18 @@
       "label": "WARNING POST",
       "prompt": "PRESS E TO READ",
       "dialog": "A POST WITH A RED LEAF NAILED TO IT, AND CARVED UNDER IT IN THE ELVES' HAND: LAND HERE. THE FALLS ARE NOT A SHORTCUT. (UNDER THAT, SMALLER, IN A CHILD'S: PIP DID IT ONCE.) (UNDER THAT, IN ANOTHER: NO SHE DIDN'T.)"
+    },
+    {
+      "x": 23,
+      "y": 21,
+      "type": "enter_world",
+      "label": "BEHIND THE FALLS",
+      "prompt": "PRESS E TO GO IN",
+      "target": "sylvara-fallcave",
+      "spawn": [
+        9,
+        13
+      ]
     }
   ],
   "designTiles": [
