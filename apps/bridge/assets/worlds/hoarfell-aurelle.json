@@ -7,7 +7,7 @@
  "spawns": {
   "player": [
    28,
-   34
+   35
   ]
  },
  "tiles": [
@@ -2066,7 +2066,7 @@
    2,
    2,
    2,
-   2,
+   4,
    2,
    2,
    2,
@@ -4388,7 +4388,7 @@
    0,
    0,
    0,
-   0,
+   1,
    0,
    0,
    0,
@@ -4707,8 +4707,8 @@
    "dialog": "ANOUK PATS THE GREY'S NECK."
   },
   {
-   "x": 26,
-   "y": 33,
+   "x": 24,
+   "y": 35,
    "type": "dialog",
    "label": "STATIONMASTER",
    "prompt": "PRESS E TO TALK",
@@ -7221,8 +7221,8 @@
    },
    {
     "sheet": "npc-stationmaster",
-    "x": 26,
-    "y": 33,
+    "x": 24,
+    "y": 35,
     "facing": "down"
    }
   ],

@@ -539,6 +539,15 @@ var BridgeFestivals = (function () {
       P('#4a3a2a', [[5, 22, 6, 2]]);
     }
     art[kind] = c;
+    // what gives off light (a lantern's glass, a brazier's fire) again on a canvas of its own, drawn untinted over the
+    // prop: the scene's tint at its foot darkens everything at night, and a lit lantern drawn dark reads as unlit
+    var LIT = { leaf_lantern: [['#ffd890', [[11, 7, 3, 3]]], ['#fff0c8', [[12, 8, 1, 1]]]],
+                brazier: [['#c03010', [[4, 7, 8, 4]]], ['#f08020', [[5, 5, 6, 5]]], ['#ffd060', [[6, 6, 4, 3]]], ['#fff4c0', [[7, 7, 2, 1]]]] }[kind];
+    if (LIT) {
+      var lc = document.createElement('canvas'); lc.width = w; lc.height = h;
+      LIT.forEach(function (l) { px(lc.getContext('2d'), 0, 0, u, l[0], l[1]); });
+      art[kind + ':lit'] = lc;
+    }
     return c;
   }
   function props(world, offX, offY, ts, nowMs, sc) {
@@ -549,6 +558,8 @@ var BridgeFestivals = (function () {
       return { footRow: footRow, draw: function (ctx) {
         var dx = Math.round(offX + p[1] * ts), dy = Math.round(offY + (p[2] + 1) * ts) - c.height;
         BridgeScene.drawOccluded(ctx, sc, c, 0, 0, c.width, c.height, dx, dy, footRow, offX, offY, BridgeScene.tintAt(sc, world, p[1], p[2], nowMs), null);
+        var lit = art[p[0] + ':lit'];
+        if (lit) BridgeScene.drawOccluded(ctx, sc, lit, 0, 0, lit.width, lit.height, dx, dy, footRow, offX, offY, null, null);
       } };
     });
   }

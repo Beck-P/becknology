@@ -33,6 +33,7 @@ const SUITES = {
     ['world/sea.js', SHOTS],
     ['world/harbours.js', SHOTS],
     ['world/bloom.js', SHOTS],
+    ['world/sea_edge.js', SHOTS],
     ['world/sleep.js', SHOTS],
     ['world/workshop.js', SHOTS],
     ['world/shipyard.js', SHOTS],

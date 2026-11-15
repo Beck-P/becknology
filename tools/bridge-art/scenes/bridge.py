@@ -23,6 +23,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from scenekit import Kit, THETA, apply_world  # noqa: E402
 import assets_deck as D                        # noqa: E402
 import assets_lumar as A                       # noqa: E402
+import assets_signs as S                       # noqa: E402
 
 OUT = sys.argv[1]
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
@@ -42,6 +43,43 @@ D.side_wall(k, 20.0, 20.6, 3.5, 13.0, H, door=(7.0, 9.0), face=-1)   # to the ga
 D.front_wall(k, 0.4, 8.0, 13.0, door=(5.0, 7.0))               # to the captain's office
 D.front_wall(k, 8.0, 12.6, 13.0, door=(9.0, 12.0))             # to the quarters
 D.front_wall(k, 12.6, 20.6, 13.0, door=(13.0, 15.0))           # aft, to the passage
+
+
+def side_door(k, xf, ra, rb, face, sign=None):
+    """A doorway in a side wall made to read as one from the camera (a first-time player couldn't find the hangar's:
+    the wall is seen end-on, so a plain gap in it vanishes). A framed doorway standing proud of the wall face, a ship's
+    lantern on its near post, a runner leading in, the next room's light spilling through, and a board with its name
+    on the near post, facing the camera. xf: the wall's room-side face; face: +1, the room is east of the wall."""
+    d = 0.38 * face                                                    # how far the frame stands out into the room
+    xa, xb = sorted((xf - 0.04 * face, xf + d))
+    for r0, r1 in ((ra - 0.22, ra), (rb, rb + 0.22)):
+        k.box(xa, r0, 0, xb, r1, 2.45, (D.WOOD_D, 0.06), 'door_frame', bevel=0.02)
+        k.box(xa - 0.01, r1 - 0.03, 0.02, xb + 0.01, r1 + 0.005, 2.4, (D.BRASS_D, 0.08), 'door_trim')
+    k.box(xa, ra - 0.22, 2.3, xb, rb + 0.22, 2.62, (D.WOOD_D, 0.06), 'door_header', bevel=0.02)
+    k.box(xa - 0.01, ra - 0.24, 2.6, xb + 0.01, rb + 0.24, 2.66, D.BRASS, 'door_header_cap')
+    lx = xf + 0.3 * face                                               # the lantern on the near post
+    k.box(lx - 0.05, rb + 0.22, 1.86, lx + 0.05, rb + 0.3, 1.92, D.BRASS_D, 'lantern_bracket')
+    k.cyl(lx, rb + 0.33, 1.62, 1.86, 0.075, '#ffe2a0', 'lantern_glass', emit=('#ffc070', 2.2), verts=10)
+    k.cyl(lx, rb + 0.33, 1.86, 1.93, 0.09, D.BRASS, 'lantern_cap', verts=10)
+    k.cyl(lx, rb + 0.33, 1.57, 1.62, 0.09, D.BRASS, 'lantern_base', verts=10)
+    k.point_light(lx + 0.15 * face, rb + 0.5, 1.75, '#ffc890', 14, radius=0.08, group='flicker')
+    k.point_light(xf + 0.35 * face, (ra + rb) / 2, 1.1, '#bcd0ff', 30, radius=0.25)   # the next room's light, spilling in at the door
+    ra_, rb_ = ra + 0.28, rb - 0.28                                    # a runner from the threshold into the room
+    x0, x1 = sorted((xf, xf + 1.7 * face))
+    k.box(x0, ra_, 0.0, x1, rb_, 0.012, ('#6a2a22', 0.1), 'rug')
+    for rr in (ra_, rb_ - 0.05):
+        k.box(x0, rr, 0.012, x1, rr + 0.05, 0.016, D.BRASS_D, 'rug_edge')
+    if sign:                                                           # its name on a board off the near post, to the camera
+        size, font = 0.34, 'AlegreyaSC-Bold'                           # big enough to read at 32 px a tile, seen at 45 degrees
+        wd = S.width(sign, font, size) + 0.28
+        sx0, sx1 = sorted((xf + 0.02 * face, xf + (0.02 + wd) * face))
+        k.box(sx0, rb + 0.22, 1.98, sx1, rb + 0.26, 2.52, (D.BRASS, 0.1), 'sign_trim')
+        k.box(sx0 + 0.04, rb + 0.26, 2.01, sx1 - 0.04, rb + 0.28, 2.49, ('#2a1a10', 0.1), 'sign_board')
+        S.letters(k, sign, font, (sx0 + sx1) / 2, rb + 0.28, 2.08, size=size, col='#ffe6a0', depth=0.02, lit=False)
+
+
+side_door(k, 1.0, 9.0, 11.0, 1, sign='HANGAR')
+side_door(k, 20.0, 7.0, 9.0, -1)
 D.helm_dais(k, 7.95, RF, 13.05, 6.95)
 D.compass_rose(k, 10.5, 6.4, 0.42, z=0.012)
 for mx in MULL:

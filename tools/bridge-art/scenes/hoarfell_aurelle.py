@@ -377,7 +377,7 @@ k.render(OUT, cycle='day', light_states={'full': {}}, light_samples=24 if QUICK 
 # ---- the world -------------------------------------------------------------------------------------------------------------
 w = json.load(open(WORLD)) if os.path.exists(WORLD) else {}
 w.update({'name': 'Aurelle', 'width': COLS, 'height': ROWS, 'tileSize': 16, 'tileset': 'hoarfell',
-          'spawns': {'player': [28, 34]}, 'tiles': [[1] * COLS for _ in range(ROWS)], 'collisions': [[1] * COLS for _ in range(ROWS)],
+          'spawns': {'player': [28, 35]}, 'tiles': [[1] * COLS for _ in range(ROWS)], 'collisions': [[1] * COLS for _ in range(ROWS)],
           'shipExit': False, 'view': [0.0, -4.5, COLS, ROWS], 'cold': True})
 w['interactions'] = [
     {'x': 28, 'y': 35, 'type': 'railway', 'label': 'THE TRAIN', 'prompt': 'PRESS E TO BOARD', 'to': 'hoarfell-promenade'},
@@ -385,7 +385,7 @@ w['interactions'] = [
     {'x': 28, 'y': 7, 'type': 'enter_world', 'label': 'CHATEAU AURELLE', 'prompt': 'PRESS E TO GO IN', 'target': 'hoarfell-chateau', 'spawn': [15, 18]},
     {'x': 26, 'y': 9, 'type': 'dialog', 'label': 'MONSIEUR AUBERT', 'prompt': 'PRESS E TO TALK', 'dialog': 'THE CONCIERGE INCLINES HIS HEAD.'},
     {'x': 15, 'y': 12, 'type': 'dialog', 'label': 'ANOUK', 'prompt': 'PRESS E TO TALK', 'dialog': 'ANOUK PATS THE GREY\'S NECK.'},
-    {'x': 26, 'y': 33, 'type': 'dialog', 'label': 'STATIONMASTER', 'prompt': 'PRESS E TO TALK', 'dialog': 'THE STATIONMASTER CHECKS HER WATCH.'},
+    {'x': 24, 'y': 35, 'type': 'dialog', 'label': 'STATIONMASTER', 'prompt': 'PRESS E TO TALK', 'dialog': 'THE STATIONMASTER CHECKS HER WATCH.'},
     {'x': 21, 'y': 9, 'type': 'aurelle', 'label': 'LA TERRASSE', 'prompt': 'PRESS E TO SIT'},
     {'x': 35, 'y': 9, 'type': 'aurelle', 'label': 'FIRE PIT', 'prompt': 'PRESS E TO WARM UP'},
     {'x': 20, 'y': 12, 'type': 'aurelle', 'label': 'SLEIGHS', 'prompt': 'PRESS E TO RIDE'},
@@ -404,7 +404,7 @@ w['interactions'] = [
 w['lift'] = {'lines': LINES}
 open(WORLD, 'w').write(json.dumps(w, indent=2) + '\n')
 ACTORS = [{'sheet': 'npc-aubert', 'x': 26, 'y': 9, 'facing': 'down'}, {'sheet': 'npc-anouk', 'x': 15, 'y': 12, 'facing': 'right'},
-          {'sheet': 'npc-stationmaster', 'x': 26, 'y': 33, 'facing': 'down'}]
+          {'sheet': 'npc-stationmaster', 'x': 24, 'y': 35, 'facing': 'down'}]   # (in front of the canopy: under it she was hidden)
 for a in ACTORS:
     k.solid(a['x'], a['y'], a['x'] + 1, a['y'] + 1)
 apply_world(WORLD, k, (0, 0, COLS - 1, ROWS - 1), scene_id=WID, actors=ACTORS,

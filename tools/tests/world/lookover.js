@@ -14,6 +14,8 @@
 //   --at      the game's clock (the crowd and the events go by it; default 2026-10-14T03:20, daytime on Hoarfell)
 //   --rect    shoot just these tiles (default: the whole place the camera can show)
 //   --pos     where you stand (default: the world's spawn)
+// Environment: BRIDGE_PORT (the server's port, default 8766); LOOK_LS, a JSON object of localStorage keys to set before
+// the game loads (a save with the holm built, the village fund paid, the ship's modules fitted: '{"bridge_x":"…"}').
 // Writes to <out>/<world>/ (default tools/tests/shots/lookover/<world>/):
 //   <light>_r<row>c<col>.png  each section with a ruler of tile numbers round it (its tile rect in report.txt)
 //   overlay_r<row>c<col>.png  the same sections at noon with the overlay
@@ -59,8 +61,8 @@ function arrivals(id) {
     const p = await (await b.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: 1 })).newPage();
     p.on('pageerror', (e) => { errs++; console.log('PAGEERR', e.message.slice(0, 200)); });
     await p.route(/supabase-js|supabase\.co|@supabase/, (r) => r.abort());
-    await p.addInitScript(() => { localStorage.setItem('bridge_railway', JSON.stringify({ seen: 1 })); });
-    await p.goto('http://127.0.0.1:8766/bridge/?gpu=1&at=' + AT); await p.waitForTimeout(2500);
+    await p.addInitScript((ls) => { localStorage.setItem('bridge_railway', JSON.stringify({ seen: 1 })); if (ls) for (const k in ls) localStorage.setItem(k, ls[k]); }, process.env.LOOK_LS ? JSON.parse(process.env.LOOK_LS) : null);
+    await p.goto('http://127.0.0.1:' + (process.env.BRIDGE_PORT || 8766) + '/bridge/?gpu=1&at=' + AT); await p.waitForTimeout(2500);
     await p.evaluate(() => {
       BridgeState.setPilot({ id: 't', name: 'BECK', suit_color: 'gold' }); BridgeIntro.hide();
       ['verdance', 'lumar', 'hoarfell', 'sylvara', 'arcadia'].forEach((r) => BridgeWeather._pin && BridgeWeather._pin(r, 'clear'));
@@ -111,7 +113,7 @@ function arrivals(id) {
       if (L.hour != null) {
         const before = (await p.evaluate((s) => BridgeLit._stats(s), sid)).comps;
         await p.evaluate((o) => BridgeLit._force(o), { hour: L.hour, season: opt.season });
-        for (let i = 0; i < 80; i++) { const s = await p.evaluate((s) => BridgeLit._stats(s), sid); if (s.comps > before) break; await p.waitForTimeout(100); }
+        for (let i = 0; i < 600; i++) { const s = await p.evaluate((s) => BridgeLit._stats(s), sid); if (s.comps > before) break; await p.waitForTimeout(100); }
         await p.waitForTimeout(2200);
       } else if (L.cycle) {
         await p.evaluate((k) => { window.__lkW = window.__lkW || BridgeClock.weights; BridgeClock.weights = () => ({ day: k === 'day' ? 1 : 0, dusk: k === 'dusk' ? 1 : 0, night: k === 'night' ? 1 : 0 }); }, L.cycle);

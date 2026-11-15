@@ -1691,7 +1691,13 @@
       },
       {
         "q": "The backs of the pages",
-        "when": ["eddas-book/nell", "eddas-book/hollin", "eddas-book/wat", "eddas-book/ludd", "eddas-book/mags"],
+        "when": [
+          "eddas-book/nell",
+          "eddas-book/hollin",
+          "eddas-book/wat",
+          "eddas-book/ludd",
+          "eddas-book/mags"
+        ],
         "until": "eddas-book/bake",
         "a": "HONEY IN WITH THE APPLES. PASTRY RUBBED COLD. LATTICE IT LIKE THE GARDEN GATE. BRUSH WITH A BROWN EGG. OVEN AS HOT AS WAT'S FORGE. OH, EDDA. HER APPLE PIE. SHE NEVER GAVE THAT ONE TO ANYBODY - SHE GAVE IT TO ALL OF US.\n\nFOUR GOOD APPLES OFF HER OWN TREES, DOWN MEADOW LANE. NOBODY MINDS IF YOU PICK THEM. BRING ME THOSE AND THE BOOK."
       },
@@ -3700,6 +3706,34 @@
       }
     ]
   },
+  "elf_tavernkeeper": {
+    "name": "Fennick",
+    "role": "Keeper of the Hollow Bough",
+    "sheet": "npc-elf-tavernkeeper",
+    "at": [
+      {
+        "world": "sylvara-tavern",
+        "label": "TAVERN KEEPER"
+      }
+    ],
+    "greet": "WELCOME TO THE HOLLOW BOUGH! THE ONLY TAVERN IN ANY WORLD INSIDE A BRANCH. SIT ANYWHERE. NOT THERE, THAT'S THALION. HE'S ASLEEP. HE'S ALWAYS ASLEEP.",
+    "again": "THE USUAL? WE DON'T HAVE A USUAL. I JUST LIKE SAYING IT.",
+    "topics": [
+      {
+        "q": "Something to drink",
+        "a": "STARPEAR CIDER, ELDERFLOWER WINE, A HONEY-CAKE IF YOU'RE PEAKISH. ALL FROM THE CANOPY, EXCEPT THE HONEY, WHICH IS FROM VERDANCE AND COSTS ME A FORTUNE.",
+        "sylvan": "shop:tavern"
+      },
+      {
+        "q": "Heard anything?",
+        "a": "THEY SAY THE HIGH LANTERNS IN THE BOUGHS WENT OUT IN THE BIG WIND AND NOBODY CAN REACH THEM. THEY SAY AERIN COULD. AERIN SAYS SHE'S BUSY. AERIN IS NOT BUSY."
+      },
+      {
+        "q": "About you",
+        "a": "MY GREAT-GRANDMOTHER HOLLOWED THIS BOUGH OUT WITH A SPOON. THAT'S THE STORY. IT WAS PROBABLY A LOT OF SPOONS."
+      }
+    ]
+  },
   "idris": {
     "name": "Idris Thorne",
     "role": "Morwen's old master. Drowned with Saltmere; she didn't let him go",
@@ -4006,7 +4040,11 @@
       {
         "q": "The bell",
         "a": "THEN RING IT. NOT FOR THE GATE, THIS TIME. FOR ME. I WILL HEAR IT FROM HERE, AND I WILL COME.",
-        "when": ["last-monk/fears", "last-monk/lamps", "last-monk/spring"],
+        "when": [
+          "last-monk/fears",
+          "last-monk/lamps",
+          "last-monk/spring"
+        ],
         "until": "last-monk"
       },
       {
@@ -4877,23 +4915,56 @@
         "q": "What's the Mercy buying?",
         "a": "FISH OFF LUMAR AND ANYTHING THAT GREW ON VERDANCE. THE SPACEPORT KITCHENS PAY OVER THE ODDS FOR REAL FOOD, AND I PAY YOU A BIT OVER WHAT YOU'D GET AT HOME. WHAT HAVE YOU GOT?",
         "sell": [
-          { "id": "silverfin", "price": 16 },
-          { "id": "harbour_crab", "price": 21 },
-          { "id": "bluefin", "price": 32 },
-          { "id": "spore_minnow", "price": 7 },
-          { "id": "turnip", "price": 15 },
-          { "id": "carrot", "price": 24 },
-          { "id": "strawberry", "price": 17 },
-          { "id": "apple", "price": 7 },
-          { "id": "honey", "price": 32 }
+          {
+            "id": "silverfin",
+            "price": 16
+          },
+          {
+            "id": "harbour_crab",
+            "price": 21
+          },
+          {
+            "id": "bluefin",
+            "price": 32
+          },
+          {
+            "id": "spore_minnow",
+            "price": 7
+          },
+          {
+            "id": "turnip",
+            "price": 15
+          },
+          {
+            "id": "carrot",
+            "price": 24
+          },
+          {
+            "id": "strawberry",
+            "price": 17
+          },
+          {
+            "id": "apple",
+            "price": 7
+          },
+          {
+            "id": "honey",
+            "price": 32
+          }
         ]
       },
       {
         "q": "Chrome and circuit",
         "a": "WHAT ARCADIA THROWS AWAY, LUMAR CAN'T GET. I'VE A CRATE OF IT FOR THE NEXT RUN. TAKE WHAT YOU LIKE BEFORE IT GOES.",
         "stores": [
-          { "id": "circuit", "price": 20 },
-          { "id": "chrome_part", "price": 40 }
+          {
+            "id": "circuit",
+            "price": 20
+          },
+          {
+            "id": "chrome_part",
+            "price": 40
+          }
         ]
       }
     ],
@@ -4902,7 +4973,11 @@
       "wage": 180,
       "perk": "hauler",
       "ashore": true,
-      "board": { "label": "DEPARTURES BOARD", "was": "\"CREW WANTED. ASK FOR DESH.\"", "now": "\"CREW: {pilot}. STILL ABOARD.\"" },
+      "board": {
+        "label": "DEPARTURES BOARD",
+        "was": "\"CREW WANTED. ASK FOR DESH.\"",
+        "now": "\"CREW: {pilot}. STILL ABOARD.\""
+      },
       "pitch": "ME? ON YOUR CREW? HA. ALL RIGHT - BUT THE MERCY DOESN'T FLY WITHOUT ME, SO I STAY WITH HER. WHAT YOU GET IS THIS: I PACK YOUR HOLDS THE WAY I PACK HERS. A TENTH MORE IN EVERY ONE, AND NOTHING RATTLES. AND YOUR NAME GOES ON MY BOARD.",
       "perkText": "Desh packs your holds: every ship of yours carries a tenth more cargo. She stays with the Old Mercy at Arcadia's spaceport."
     }

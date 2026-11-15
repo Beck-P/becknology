@@ -352,7 +352,21 @@ var BridgeHomestead = (function () {
     }
     round();
   }
-  // the hands: in the village waiting for work, or out in the field doing it
+  // the hands: in the village waiting for work, or out in the field doing it. Waiting, a hand's tile is solid (you
+  // walked through them); hired, it's given back as it was. Movement only checks the tile you step onto, so a pilot
+  // standing there when it closes just steps off.
+  var held = {};                                                   // id -> { data, x, y, was }: the tile a waiting hand holds
+  function hold(id, data, at) {
+    var hd = held[id];
+    if (hd && (!at || hd.data !== data || hd.x !== at[0] || hd.y !== at[1])) {
+      if (hd.data === data && data.collisions && data.collisions[hd.y]) data.collisions[hd.y][hd.x] = hd.was;
+      delete held[id]; hd = null;
+    }
+    if (at && !hd && data.collisions && data.collisions[at[1]]) {
+      held[id] = { data: data, x: at[0], y: at[1], was: data.collisions[at[1]][at[0]] };
+      data.collisions[at[1]][at[0]] = 1;
+    }
+  }
   function placeHands(data) {
     data.scene = data.scene || {};
     data.scene.actors = (data.scene.actors || []).filter(function (a) { return a.sheet !== 'npc-tam' && a.sheet !== 'npc-odile'; });
@@ -360,6 +374,7 @@ var BridgeHomestead = (function () {
     Object.keys(HANDS).forEach(function (id) {
       var H = HANDS[id], on = active(id), p = on && hands[id] ? hands[id] : null;
       if (!on) data.scene.actors.push({ sheet: H.sheet, x: H.idle[0], y: H.idle[1], facing: 'down' });
+      hold(id, data, on ? null : H.idle);
       var it = { x: p ? Math.round(p.x) : H.idle[0], y: p ? Math.round(p.y) : H.idle[1], type: 'dialog', label: H.label, hand: id, text: '...' };
       data.interactions.push(it);
       var gate = data.farm && data.farm.plot ? [Math.round((data.farm.plot[0] + data.farm.plot[2]) / 2) + (id === 'tam' ? -2 : 2), data.farm.plot[3] + 1] : H.idle;

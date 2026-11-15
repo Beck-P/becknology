@@ -330,7 +330,8 @@ V.flower_bed(k, 14.6, 32.6, 16.0, 33.2)
 V.flower_bed(k, 17.0, 32.6, 18.4, 33.2)
 for (x, r) in ((20.6, 29.6), (21.9, 32.2), (40.6, 30.4), (42.8, 32.0)):
     F.apple_tree(k, x, r, h=k.rng.uniform(2.2, 2.6))
-    k.solid(x - 0.35, r - 0.35, x + 0.35, r + 0.35)
+    # the one by Nan Ashby's hedge stands only on its own tile: the strip under the allotment fences goes past it to the shed
+    k.solid(x - 0.35, r - 0.35, x + (0.05 if x == 21.9 else 0.35), r + 0.35)
 
 # ---- the terrace along the top: its stone face, a hedge and trees on it; the edges; the bottom's wall and hedge -----------
 VR.terrace_face(k, -1.0, COLS + 1.0, TERR_R, TERR_Z, green=GREEN, ivy=(5.5, 14.2, 22.4, 34.5, 42.6), flowers=40)
@@ -450,8 +451,8 @@ w['interactions'] = [
     {'x': 7, 'y': 24, 'type': 'dialog', 'label': 'OLD LUDD', 'prompt': 'PRESS E TO TALK', 'dialog': 'OLD LUDD TOUCHES HIS CAP.'},
     {'x': 23, 'y': 18, 'type': 'dialog', 'label': 'NELL', 'prompt': 'PRESS E TO TALK', 'dialog': 'NELL WAVES A SUNFLOWER AT YOU.'},
     {'x': 12, 'y': 11, 'type': 'dialog', 'label': 'MAGS', 'prompt': 'PRESS E TO TALK', 'dialog': 'MAGS LEANS IN THE DOORWAY OF THE HAYLOFT.'},
-    {'x': 10, 'y': 33, 'type': 'enter_world', 'label': 'MEADOW LANE', 'prompt': 'PRESS E TO FOLLOW THE LANE', 'target': 'verdance', 'spawn': [42, 21]},
-    {'x': 11, 'y': 33, 'type': 'enter_world', 'label': 'MEADOW LANE', 'prompt': 'PRESS E TO FOLLOW THE LANE', 'target': 'verdance', 'spawn': [42, 21]},
+    {'x': 10, 'y': 33, 'type': 'enter_world', 'label': 'MEADOW LANE', 'prompt': 'PRESS E TO FOLLOW THE LANE', 'target': 'verdance', 'spawn': [42, 20]},
+    {'x': 11, 'y': 33, 'type': 'enter_world', 'label': 'MEADOW LANE', 'prompt': 'PRESS E TO FOLLOW THE LANE', 'target': 'verdance', 'spawn': [42, 20]},
 ]
 open(WORLD, 'w').write(json.dumps(w, indent=2) + '\n')
 ACTORS = [{'sheet': 'npc-vbaker', 'x': 6, 'y': 11, 'facing': 'down'}, {'sheet': 'npc-vshop', 'x': 24, 'y': 11, 'facing': 'down'},

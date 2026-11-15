@@ -80,6 +80,12 @@ var BridgeSea = (function () {
   function rgb(c, a) { return a == null ? 'rgb(' + Math.round(c[0]) + ',' + Math.round(c[1]) + ',' + Math.round(c[2]) + ')' : 'rgba(' + Math.round(c[0]) + ',' + Math.round(c[1]) + ',' + Math.round(c[2]) + ',' + a + ')'; }
   function nums(s) { return s.split(',').map(Number); }
   function worldId() { return typeof BridgeWorld !== 'undefined' && BridgeWorld.getWorldId ? BridgeWorld.getWorldId() : null; }
+  // the scene of the place you're in, when it's lit live (null otherwise: the sea then follows the sky as before)
+  function hereScene() {
+    var w = typeof BridgeWorld !== 'undefined' && BridgeWorld.getWorld ? BridgeWorld.getWorld() : null;
+    var sc = w && w.scene && w.scene.id && typeof BridgeScene !== 'undefined' ? BridgeScene.get(w.scene.id) : null;
+    return sc && sc.lit && typeof BridgeLit !== 'undefined' && BridgeLit.light && BridgeLit.light(sc.id) ? sc : null;
+  }
 
   // ---- the light on the water now: the sky's blend (day, dusk, night), golden hour, which side the sun is on, the moon,
   // the weather. The scene's own when it has one (its live light when that's composed: BridgeLit's hour, so a preview
@@ -460,8 +466,11 @@ var BridgeSea = (function () {
 
   /** The open sea, filling the frame (native px), scrolling with the world. */
   function drawSea(ctx, w, h, now, palette) {
-    var name = PALETTES[palette] ? palette : 'emerald', P = PALETTES[name], W = skyFor(name), k = bloomK();
-    var L = lightOn(name, null), C = colours(name, L);
+    // behind a scene with live light, the open sea takes the scene's own light (its hour, as the island's water does),
+    // or past the render's edge it could be noon while the harbour is at dusk (and a preview's _force left it behind)
+    var sc = camOverride ? null : hereScene();
+    var name = PALETTES[palette] ? palette : 'emerald', P = PALETTES[name], W = skyFor(name, sc), k = bloomK();
+    var L = lightOn(name, sc), C = colours(name, L);
     waves(ctx, w, h, now, name, L, C);
     if (k > 0.01) bloomWater(ctx, 0, 0, w, h, 0, 0, now, name, k);
     skyLight(ctx, w, h, now, L, C, null);
@@ -593,10 +602,15 @@ var BridgeSea = (function () {
 
   // ---- sheltered water: harbours, coves and the water along a quay lie still (Look Book 2's harbour: calm and darker,
   // the swell's bands gone, only a few wavelets; the mirror reads on it). How sheltered each patch is comes from rays
-  // cast toward the land in eight directions on a coarse grid (8 px), at load: land close by on most sides is a harbour,
-  // land close on one side is a quay's edge. Spread to full size with a wandering edge in two flat steps (half, still).
+  // cast toward the land in eight directions on a coarse grid (8 px), at load: land close by on most sides is a harbour
+  // (a ray that finds land far off counts for less), a straight open shore — land on three sides at most — isn't, and
+  // land right beside it is a quay's edge or a bank (a strip of the lightest step, for the mirror). It fades to nothing
+  // over the last few tiles before the render's edge (`EDGE`), so the still water never ends on the picture's
+  // rectangle, and wanders (a slow noise on the grid, a 4-px grain at the pixel). Spread to full size in three flat
+  // steps (`CALM_A`: a third, two thirds, still), so it eases out into the open sea instead of ending on a line.
   // Returns an alpha mask the size of the render, or null when the island has no sheltered water.
   var CG = 8, RAYS = [[1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1], [0, -1], [1, -1]];
+  var EDGE = 192, CALM_STEP = [0.24, 0.44, 0.66], CALM_A = [82, 164, 255];
   function shelter(water, px, W, H) {
     var gw = Math.ceil(W / CG), gh = Math.ceil(H / CG), land = new Uint8Array(gw * gh), g = new Float32Array(gw * gh), any = false, x, y;
     for (y = 0; y < gh; y++) for (x = 0; x < gw; x++) {
@@ -605,18 +619,21 @@ var BridgeSea = (function () {
     }
     for (y = 0; y < gh; y++) for (x = 0; x < gw; x++) {
       if (land[y * gw + x]) continue;
-      var hits = 0, near = 99;
+      var score = 0, near = 99;
       for (var r = 0; r < 8; r++) {
         for (var k = 1; k <= 22; k++) {
           var xx = x + RAYS[r][0] * k, yy = y + RAYS[r][1] * k;
           if (xx < 0 || yy < 0 || xx >= gw || yy >= gh) break;
-          if (land[yy * gw + xx]) { hits++; near = Math.min(near, k); break; }
+          if (land[yy * gw + xx]) { score += k <= 10 ? 1 : (23 - k) / 13; near = Math.min(near, k); break; }
         }
       }
-      var v = hits >= 5 ? 1 : hits >= 4 ? 0.75 : hits >= 3 ? 0.45 : 0;
-      v = Math.max(v, near <= 2 ? 0.7 : near <= 4 ? 0.4 : 0);
+      var v = clamp((score - 2.8) / 2.2, 0, 1);               // three rays (an open shore) ~0; five close by, still
+      if (near <= 2) v = Math.max(v, 0.36);                     // along a quay or a bank
+      var e = Math.min(x, y, gw - 1 - x, gh - 1 - y) * CG;      // px from the render's edge
+      v *= clamp((e - 24) / EDGE, 0, 1);
+      v += (periodicNoise(x / 7, y / 5, 4096, 4096, 23) - 0.5) * 0.28;
       g[y * gw + x] = v;
-      if (v > 0) any = true;
+      if (v > CALM_STEP[0]) any = true;
     }
     if (!any) return null;
     var c = document.createElement('canvas'); c.width = W; c.height = H;
@@ -628,16 +645,27 @@ var BridgeSea = (function () {
         if (!water[i] || !px[i * 4 + 1]) continue;
         var fx = x / CG - 0.5, x0 = Math.max(0, Math.floor(fx)), x1 = Math.min(gw - 1, x0 + 1), tx = Math.max(0, Math.min(1, fx - x0));
         var vv = (g[y0 * gw + x0] * (1 - tx) + g[y0 * gw + x1] * tx) * (1 - ty) + (g[y1 * gw + x0] * (1 - tx) + g[y1 * gw + x1] * tx) * ty;
-        vv += (hash((x >> 2) * 131 + (y >> 2) * 977) - 0.5) * 0.18;
-        var a = vv > 0.32 ? 1 : 0;
-        if (a) d[i * 4 + 3] = Math.round(a * 255);
+        vv += (hash((x >> 2) * 131 + (y >> 2) * 977) - 0.5) * 0.1;
+        d[i * 4 + 3] = vv >= CALM_STEP[2] ? CALM_A[2] : vv >= CALM_STEP[1] ? CALM_A[1] : vv >= CALM_STEP[0] ? CALM_A[0] : 0;
       }
     }
     cx.putImageData(img, 0, 0);
     return c;
   }
-  // the still water's flat body over the swell, where it's sheltered: deep's colour with a little of the body's, darker
-  // by night, in step with the light (the colours come from the live light's hour when there is one)
+  // the still water's flat body over the swell, where it's sheltered: its own sea's water — its deep, body and swells
+  // run together and a shade darker (`STILL_DARK`), so it lies a little darker than the open water round it — with a
+  // little of Look Book 2's still water in it (`LB_K`; more and a Crimson harbour turns grey-blue again),
+  // in step with the light (the colours come from the live light's hour when there is one). It used to be Look Book 2's
+  // teal-grey with a fifth of the sea kept: one grey-blue slab in every sea, worst in the Crimson.
+  var LB_K = 0.08, STILL_DARK = 0.94;
+  function stillColour(C, Lw) {
+    // Look Book 2's still water (js/litscene.js's bands as its harbour shows them): teal-grey by day, a warm grey at
+    // golden hour, a deep blue at night
+    var lb = mixc(mixc([24, 32, 56], [92, 98, 104], Lw.aD), [70, 106, 128], Lw.day * (1 - Lw.golden));
+    lb = mixc(lb, [104, 100, 104], Lw.golden * (1 - Lw.night));
+    var own = [0, 1, 2].map(function (i) { return (C.deep[i] * 0.35 + C.base[i] * 0.45 + C.light[i] * 0.2) * STILL_DARK; });
+    return mixc(own, lb, LB_K);
+  }
   var calmC = null, calmX = null;
   function calmOver(L, S, v, C, Lw) {
     if (!calmC) { calmC = document.createElement('canvas'); calmX = calmC.getContext('2d'); }
@@ -646,11 +674,7 @@ var BridgeSea = (function () {
     calmX.clearRect(0, 0, v[2], v[3]);
     calmX.drawImage(S.calm, v[0], v[1], v[2], v[3], 0, 0, v[2], v[3]);
     calmX.globalCompositeOperation = 'source-in';
-    // Look Book 2's still water (js/litscene.js's bands as its harbour shows them): teal-grey by day, a warm grey at
-    // golden hour, a deep blue at night; a fifth of the sea's own body kept so each sea's harbours are still its own
-    var lb = mixc(mixc([24, 32, 56], [92, 98, 104], Lw.aD), [70, 106, 128], Lw.day * (1 - Lw.golden));
-    lb = mixc(lb, [104, 100, 104], Lw.golden * (1 - Lw.night));
-    calmX.fillStyle = rgb(mixc(lb, C.base, 0.2));
+    calmX.fillStyle = rgb(stillColour(C, Lw));
     calmX.fillRect(0, 0, v[2], v[3]);
     L.globalAlpha = 1 - 0.6 * Math.max(Lw.storm, 0.7 * Lw.gale);      // a storm reaches in even here
     L.drawImage(calmC, 0, 0, v[2], v[3], v[0], v[1], v[2], v[3]);
@@ -867,6 +891,7 @@ var BridgeSea = (function () {
     // only the part on screen is rebuilt and drawn (an island's water is the size of its render)
     var v = BridgeScene.visible(S.W, S.H, bx, by, ctx.canvas.width, ctx.canvas.height);
     if (!v) return;
+    S.v = v;                                                   // what was drawn last (world/sea_edge.js reads it)
     // the moving sea, cut to the water's opacity
     var L = S.lctx;
     L.save();
@@ -1012,6 +1037,7 @@ var BridgeSea = (function () {
   // after the canvas was lost: every texture and mask is made again as it's next needed
   function reset() { tex = {}; shores = {}; bands = {}; gtex = {}; }
 
-  return { _light: function (name, id) { var sc = id && typeof BridgeScene !== 'undefined' ? BridgeScene.get(id) : null; var L = lightOn(name || 'emerald', sc); return { L: L, C: colours(name || 'emerald', L) }; },
+  return { _shore: function (id) { return shores[id] || null; },
+           _light: function (name, id) { var sc = id && typeof BridgeScene !== 'undefined' ? BridgeScene.get(id) : null; var L = lightOn(name || 'emerald', sc); return { L: L, C: colours(name || 'emerald', L) }; },
            drawSea: drawSea, drawSeaAt: drawSeaAt, drawWater: drawWater, waterAt: waterAt, drawWaterAt: drawWaterAt, palettes: PALETTES, forget: forget, reset: reset, setSeaCycles: setSeaCycles };
 })();
