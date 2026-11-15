@@ -112,6 +112,26 @@
     "title": "The Harvest Fair", "where": "Verdance · Brambleford", "kind": "festival", "festival": "harvest_fair", "world": "verdance-village", "when": "festival",
     "text": "The last weekend of Verdance's autumn, Brambleford puts on its Harvest Fair: Old Ludd judges the produce, and the best pumpkin takes the rosette."
   },
+  "ysolde-crew": {
+    "title": "Ysolde would sign on", "where": "Hoarfell · Fellhaven", "kind": "crew", "world": "hoarfell", "label": "YSOLDE", "unless": "crew:ysolde",
+    "text": "You've been out on the Last Ridge, further than Ysolde got. Ask her at the guide's hut whether she'd join your crew: she'd kit you against the cold and probe the snow ahead of you."
+  },
+  "wat-shoes": {
+    "title": "New shoes", "where": "Verdance · Brambleford", "kind": "maker", "world": "verdance-village", "label": "WAT",
+    "text": "Wat the farrier at the Anvil & Hoof shoes your horse for 20 coins: she goes a little quicker under you for a Verdance day."
+  },
+  "ludd-mill": {
+    "title": "Old Ludd's mill", "where": "Verdance · Brambleford", "kind": "maker", "world": "verdance-village", "label": "OLD LUDD",
+    "text": "Old Ludd grinds your wheat at Brambleford's watermill for nothing, three sheaves a sack, and buys that flour back for the fair's bread."
+  },
+  "lost-goat": {
+    "title": "A goat that answers to nothing", "where": "Verdance · the Downs", "kind": "secret", "world": "verdance-downs", "label": "THE FARM STAND",
+    "text": "Somebody's goat is loose. Walkers see it in the sunken lane on the Downs of an evening, by the honesty box, eating the notes. Go at dusk."
+  },
+  "village-wants": {
+    "title": "The fund's little wants", "where": "Verdance · Station Road", "kind": "board", "world": "verdance-east", "label": "THE VILLAGE FUND",
+    "text": "With the five projects done, Brambleford's fund board asks for one small thing a week: coins and something from your farm. Every Friday the county judges Best Kept Village and reads what's been done."
+  },
   "farm-orders": {
     "title": "The farm's order board", "where": "Verdance · the farm", "kind": "board", "board": "farm", "world": "verdance", "label": "NOTICE BOARD",
     "text": "The board by the farm on Verdance posts orders every day from people across the worlds (Tove wants pumpkins for the lift crew). They pay well over a sale."

@@ -43,12 +43,34 @@ var BridgeVillage = (function () {
   var PEOPLE = { cafe: 'JUNIPER', dairy: 'HESTER', station: 'MR PIKE' };
   var CHEESE_DAYS = 1, CHEESE_MILK = 4;                       // four pails of your milk → a farmhouse cheese, a day on the shelf
 
+  // the second ring (spec-deeper-worlds V4): once the five are done, a small want a week — coins and something of yours,
+  // done the day it's paid for, stood on Station Road as a prop drawn in code (`ring` below), a line on the green
+  var WANTS = [
+    { id: 'bench', name: 'A bench by the duck pond', cost: 300, needs: { sunflower: 4 }, at: [9, 20], kind: 'bench',
+      what: 'THE VICAR WANTS A BENCH ON THE POND\'S BANK, FOR WATCHING THE DUCKS. WAT WILL MAKE IT FOR 300 COINS - AND FOUR OF YOUR SUNFLOWERS TO PLANT ROUND IT.',
+      line: 'A NEW BENCH ON THE POND\'S BANK, SUNFLOWERS ROUND IT. SOMEBODY HAS ALREADY CARVED THEIR INITIALS IN IT.' },
+    { id: 'ducks', name: 'A house for the ducks', cost: 250, needs: { wheat: 6 }, at: [6, 18], kind: 'duck_house',
+      what: 'THE DUCKS NEST IN THE REEDS AND THE FOX KNOWS IT. A LITTLE HOUSE ON A POST IN THE POND, 250 COINS - AND SIX SHEAVES OF YOUR WHEAT, FOR THE STRAW.',
+      line: 'A DUCK HOUSE ON A POST IN THE POND, A RAMP DOWN TO THE WATER. THE DUCKS PRETEND THEY DON\'T CARE FOR IT.' },
+    { id: 'tubs', name: 'Tubs of flowers by the fund board', cost: 300, needs: { moonflower: 4 }, at: [[14, 14], [16, 14]], kind: 'tub',
+      what: 'TWO HALF-BARRELS EITHER SIDE OF THIS BOARD, FULL OF FLOWERS. 300 COINS - AND FOUR OF YOUR MOONFLOWERS, SO THE GREEN GLOWS AFTER DARK.',
+      line: 'TUBS OF FLOWERS EITHER SIDE OF THE FUND BOARD, YOUR MOONFLOWERS IN THEM. THEY OPEN AT DUSK.' },
+    { id: 'lamp', name: 'A lamp by the pond bench', cost: 450, needs: { beeswax_candles: 1 }, at: [8, 20], kind: 'lamp', after: 'bench',
+      what: 'A LAMP BESIDE THE NEW BENCH, SO FOLK CAN SIT OUT OF AN EVENING. 450 COINS - AND A BUNDLE OF BEESWAX CANDLES. NO PARAFFIN ON THE GREEN, THE VICAR SAYS.',
+      line: 'A LAMP BY THE POND BENCH, LIT WITH YOUR CANDLES. IT SMELLS OF HONEY WHEN IT\'S BURNING.' },
+    { id: 'birds', name: 'A bird table under the oak', cost: 200, needs: { seed_sunflower: 6 }, at: [12, 18], kind: 'bird_table',
+      what: 'THE SCHOOL WANTS A BIRD TABLE ON THE GREEN, BY THE OLD OAK, TO COUNT WHAT COMES. 200 COINS - AND SIX OF YOUR SUNFLOWER SEEDS TO START IT OFF.',
+      line: 'A BIRD TABLE UNDER THE OLD OAK, SUNFLOWER SEED ON IT. THE CHILDREN HAVE COUNTED FOURTEEN KINDS. THEY ARGUE ABOUT TWO.' }
+  ];
+  var JUDGE_DAY = 5;                                           // Friday of a Verdance season (its week): the county's judge comes round
+
   var s = load();
   function load() {
     var d = null;
     try { d = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) { d = null; }
     d = d || {};
-    return { fund: d.fund || {}, paid: d.paid || {}, larder: d.larder || {}, shelf: d.shelf || [], given: d.given || 0, seen: d.seen || {} };
+    return { fund: d.fund || {}, paid: d.paid || {}, larder: d.larder || {}, shelf: d.shelf || [], given: d.given || 0, seen: d.seen || {},
+             wants: d.wants || {}, judged: d.judged || {} };
   }
   function store() { try { localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) { /* private mode */ } }
   function say(t, x) { if (typeof BridgeInteractions !== 'undefined') BridgeInteractions.say(t, x); }
@@ -83,6 +105,74 @@ var BridgeVillage = (function () {
   // the Downs: the bridge mended opens the road south (until the Downs are built it's a pleasant dead end)
   function roadSouth() { return done('bridge'); }
 
+  // ---- the second ring: a small want a week once the five are done -------------------------------------------------
+  function etNow() { return typeof BridgeClock !== 'undefined' && BridgeClock.etNow ? BridgeClock.etNow() : Date.now(); }
+  function weekOf(et) { return Math.floor((Math.floor(et / 86400000) + 3) / 7); }      // weeks start on a Monday (js/seasons.js)
+  function ringOpen() { return stage() >= PROJECTS.length; }
+  function wantDone(id) { return !!s.wants[id]; }
+  function wantsDone() { return WANTS.filter(function (w) { return wantDone(w.id); }); }
+  function want(id) { return WANTS.filter(function (w) { return w.id === id; })[0]; }
+  /** This week's want: the first not done — once the five are done, and a week (a Verdance season) after the last. */
+  function wantNow() {
+    if (!ringOpen()) return null;
+    var last = 0;
+    WANTS.forEach(function (w) { if (s.wants[w.id]) last = Math.max(last, s.wants[w.id]); });
+    if (last && weekOf(etNow()) <= weekOf(last)) return null;   // one a week (when each was done: Eastern time, as the seasons go)
+    return WANTS.filter(function (w) { return !wantDone(w.id); })[0] || null;
+  }
+  function needsText(w) { return Object.keys(w.needs).map(function (k) { return w.needs[k] + ' ' + nameOf(k).toLowerCase(); }).join(', '); }
+  function short(w) { return Object.keys(w.needs).filter(function (k) { return count(k) < w.needs[k]; }); }
+  function wantDetail(w) {
+    var lack = short(w);
+    choose({
+      title: w.name,
+      text: w.what + '\n\n' + (lack.length ? 'YOU\'RE SHORT: ' + lack.map(function (k) { return (w.needs[k] - count(k)) + ' ' + nameOf(k).toUpperCase(); }).join(', ') + '.' : 'YOU HAVE WHAT IT NEEDS.'),
+      rows: [{ label: 'Pay for it', sub: fmt(w.cost) + ' coins and ' + needsText(w), note: lack.length ? 'not yet' : '', disabled: !!lack.length, pick: function () { payWant(w); } }],
+      closeLabel: 'Back'
+    });
+  }
+  function payWant(w) {
+    if (short(w).length || wantDone(w.id)) return;
+    charge(w.cost, 'village:want:' + w.id).then(function (r) {
+      if (!r.ok) { say('THE VILLAGE FUND', why(r)); return; }
+      if (short(w).length) { pay(w.cost, 'village:want:refund'); return say('THE VILLAGE FUND', 'SOMETHING\'S GONE FROM YOUR PACK.'); }
+      Object.keys(w.needs).forEach(function (k) { BridgeInventory.removeItem(k, w.needs[k]); });
+      s.wants[w.id] = etNow(); s.given += w.cost; store();
+      sfx('coin');
+      toast('Brambleford', w.name + ' - done', 'the village thanks ' + farmName());
+      say(w.name.toUpperCase(), 'DONE BY THE AFTERNOON. ' + w.line + '\n\nTHE NEXT LITTLE WANT GOES ON THE BOARD NEXT WEEK.');
+      later();
+    });
+  }
+
+  // Best Kept Village: once a season (a Verdance week), from its Friday, the county's judge reads what you've done
+  function judgeWeek() { return weekOf(etNow()); }
+  function judging() {
+    if (!ringOpen() || !wantsDone().length) return false;
+    var d = (Math.floor(etNow() / 86400000) + 3) % 7 + 1;                // 1 Monday … 7 Sunday
+    return d >= JUDGE_DAY && !s.judged[judgeWeek()];
+  }
+  var PLACES = [[5, 'FIRST', 400, 'blue_rosette'], [3, 'SECOND', 200, 'red_rosette'], [1, 'HIGHLY COMMENDED', 100, 'yellow_rosette']];
+  function verdict() {
+    var n = wantsDone().length, P = PLACES.filter(function (p) { return n >= p[0]; })[0];
+    return { n: n, place: P[1], coins: P[2], rosette: P[3] };
+  }
+  function bestKept() {
+    var v = verdict(), done = wantsDone();
+    var season = typeof BridgeSeasons !== 'undefined' && BridgeSeasons.now ? BridgeSeasons.now().name.toUpperCase() : 'THIS SEASON\'S';
+    var read = 'BEST KEPT VILLAGE - THE ' + season + ' JUDGING. MRS PRIDDY FROM THE COUNTY, IN A HAT, WITH A CLIPBOARD:\n\n' +
+      '"A MENDED BRIDGE, A CAFE, A DAIRY, TWO NEW COTTAGES AND A HALT THAT RUNS. ' +
+      done.map(function (w) { return w.name.replace(/^A /, 'A ').toUpperCase(); }).join('. ') + '. ' +
+      (v.n >= 5 ? 'I HAVE NOTHING TO ADD. I HAVE NEVER HAD NOTHING TO ADD."' : v.n >= 3 ? 'VERY NEARLY THERE."' : 'A START. A GOOD START."') +
+      '\n\nBRAMBLEFORD: ' + v.place + '. THE VICAR SAYS IT\'S YOURS AS MUCH AS ANYONE\'S.';
+    s.judged[judgeWeek()] = Date.now(); store();
+    pay(v.coins, 'village:bestkept').then(function () {
+      if (typeof BridgeInventory !== 'undefined') (BridgeInventory.give || BridgeInventory.addItem)(v.rosette, 1);
+      toast('Best Kept Village', 'Brambleford: ' + v.place.toLowerCase(), '+' + v.coins + ' coins and a rosette');
+    });
+    say('BEST KEPT VILLAGE', read);
+  }
+
   // ---- the fund board -----------------------------------------------------------------------------------------------
   function fund() {
     tick();
@@ -92,13 +182,23 @@ var BridgeVillage = (function () {
       text: 'A BOARD ON THE GREEN, A TIN WITH A SLOT, AND A LIST IN THE VICAR\'S HAND: WHAT THE VILLAGE COULD DO WITH A LITTLE HELP. ' +
             (n ? n + ' OF ' + PROJECTS.length + ' DONE SO FAR' + (s.given ? ' - YOU\'VE PUT IN ' + fmt(s.given) + ' COINS.' : '.') : 'NOTHING DONE YET.'),
       art: drawTally,
-      rows: PROJECTS.map(function (p) {
+      rows: ringRows().concat(PROJECTS.map(function (p) {
         var st = state(p.id);
         return { label: p.name, sub: st === 'done' ? 'done' : st === 'building' ? 'being built: ' + mins(s.paid[p.id] + BUILD - Date.now()) :
                  fmt(s.fund[p.id] || 0) + ' / ' + fmt(p.cost), note: st === 'open' ? fmt(left(p.id)) + ' to go' : '', draw: tallyIcon(p.id),
                  disabled: st === 'done', pick: function () { detail(p.id); } };
-      })
+      }))
     });
+  }
+  // the second ring on the board, above the five: the judge's report when it's in, this week's want, what's been done
+  function ringRows() {
+    if (!ringOpen()) return [];
+    var rows = [], w = wantNow();
+    if (judging()) rows.push({ label: 'Best Kept Village: the judge\'s report', sub: 'pinned on top, this week', note: 'read it', icon: verdict().rosette, pick: bestKept });
+    if (w) rows.push({ label: 'This week: ' + w.name.replace(/^A /, 'a ').replace(/^Tubs/, 'tubs'), sub: fmt(w.cost) + ' coins and ' + needsText(w), note: short(w).length ? 'need things' : 'can do', draw: ringIcon(w.kind), pick: function () { wantDetail(w); } });
+    else if (wantsDone().length < WANTS.length) rows.push({ label: 'Next week\'s little want', sub: 'goes up on Monday', disabled: true });
+    wantsDone().forEach(function (d) { rows.push({ label: d.name, sub: 'done', draw: ringIcon(d.kind), disabled: true }); });
+    return rows;
   }
   function mins(ms) { var m = Math.max(1, Math.ceil(ms / 60000)); return m >= 60 ? 'an hour' : m + (m === 1 ? ' minute' : ' minutes'); }
   function detail(id) {
@@ -156,6 +256,84 @@ var BridgeVillage = (function () {
       else { r('#2e4a3a', 1, 5, 14, 7); r('#f0d050', 3, 7, 3, 2); r('#2a2a2a', 3, 12, 3, 3); r('#2a2a2a', 10, 12, 3, 3); }
     };
   }
+
+  // ---- the second ring's things, drawn in code on the 16-grid (as the fairs' props are, js/festivals.js) and stood in
+  //      the scene like anyone else: depth-tested against the render and lit by its light
+  var art = {};
+  function ringArt(kind, lit) {
+    var key = kind + (lit ? ':lit' : '');
+    if (art[key]) return art[key];
+    var c = document.createElement('canvas'); c.width = 32; c.height = 48;
+    var x = c.getContext('2d'), P = function (col, rs) { col && rs.forEach(function (r) { x.fillStyle = col; x.fillRect(r[0] * 2, r[1] * 2, r[2] * 2, r[3] * 2); }); };
+    var o = '#2a1808';
+    if (kind === 'bench') {                                        // seen from behind, looking at the pond: back rail, seat, legs
+      P(o, [[0, 13, 16, 6], [1, 19, 2, 5], [13, 19, 2, 5]]);
+      P('#8a5a2e', [[1, 14, 14, 2], [1, 17, 14, 1]]); P('#b07a3e', [[1, 14, 14, 1]]); P('#6a4422', [[2, 16, 1, 1], [13, 16, 1, 1], [2, 20, 1, 3], [13, 20, 1, 3]]);
+      P('#f8c820', [[0, 21, 2, 2], [14, 21, 2, 2]]); P('#7a4e10', [[0, 21, 1, 1], [15, 21, 1, 1]]); P('#4a8a2a', [[1, 23, 1, 1], [14, 23, 1, 1]]);
+    } else if (kind === 'duck_house') {                            // a little house on a post, a ramp to the water
+      P(o, [[3, 6, 10, 9], [7, 15, 2, 8], [10, 14, 5, 2]]);
+      P('#a04a30', [[3, 6, 10, 2], [4, 5, 8, 1]]); P('#c06040', [[4, 6, 8, 1]]);
+      P('#efe2c6', [[4, 8, 8, 6]]); P('#2a1808', [[7, 10, 2, 3]]); P('#d8c8a8', [[4, 13, 8, 1]]);
+      P('#6a4a2a', [[7, 15, 2, 7], [11, 15, 3, 1]]); P('#f0f0e8', [[12, 18, 2, 1]]); P('#e0a020', [[14, 18, 1, 1]]);
+      P('#9ab8c8', [[5, 22, 6, 1]]);
+    } else if (kind === 'tub') {                                   // a half-barrel of moonflowers (open and glowing after dark)
+      P(o, [[2, 12, 12, 12]]);
+      P('#3a7a2a', [[3, 13, 10, 5]]); P('#5a9a3a', [[4, 13, 8, 1]]);
+      if (lit) { P('#e8f0ff', [[4, 13, 2, 2], [8, 12, 2, 2], [10, 15, 2, 2], [5, 16, 2, 1]]); P('#ffffff', [[4, 13, 1, 1], [8, 12, 1, 1], [10, 15, 1, 1]]); }
+      else P('#c8d8b0', [[5, 14, 1, 2], [9, 13, 1, 2], [11, 15, 1, 2]]);
+      P('#8a5a2a', [[3, 18, 10, 5]]); P('#b07a3a', [[3, 18, 10, 1]]); P('#3a3a40', [[3, 20, 10, 1]]);
+    } else if (kind === 'lamp') {                                  // an iron post, a lantern with your candles in it
+      P(o, [[7, 3, 2, 21], [5, 2, 6, 6], [5, 22, 6, 2]]);
+      P('#3a3a44', [[7, 8, 1, 14], [5, 2, 6, 1], [5, 7, 6, 1]]); P('#5a5a66', [[8, 8, 1, 14]]);
+      P(lit ? '#ffd870' : '#c8b890', [[6, 3, 4, 4]]); P(lit ? '#fff4c0' : '#f0e8d0', [[7, 4, 2, 2]]);
+    } else if (kind === 'bird_table') {                            // a post, a tray with a little roof, seed on it, a robin
+      P(o, [[2, 7, 12, 3], [3, 10, 10, 4], [7, 14, 2, 10], [5, 22, 6, 2]]);
+      P('#a04a30', [[2, 7, 12, 2]]); P('#c06040', [[3, 7, 10, 1]]);
+      P('#6a4a2a', [[3, 10, 1, 3], [12, 10, 1, 3], [7, 14, 1, 9]]); P('#8a5a2e', [[3, 13, 10, 1]]);
+      P('#d8c070', [[5, 12, 5, 1]]); P('#6a3a1a', [[9, 11, 2, 2]]); P('#d84a20', [[10, 12, 1, 1]]);
+    }
+    art[key] = c;
+    return c;
+  }
+  function ringIcon(kind) {
+    return function (g, size, ox, oy) {
+      var c = ringArt(kind, false);
+      g.imageSmoothingEnabled = false;
+      g.drawImage(c, 0, 8, 32, 40, ox || 0, (oy || 0), size * 0.8, size);
+    };
+  }
+  function spots(w) { return typeof w.at[0] === 'number' ? [w.at] : w.at; }
+  function dark(sc) {                                            // the hour the place is lit for (the live light's, so _force moves it), else the clock
+    var Lt = typeof BridgeLit !== 'undefined' && BridgeLit.light ? BridgeLit.light((sc && sc.id) || WID) : null;
+    var n = Lt ? (Lt.night != null ? Lt.night : Lt.P && Lt.P.night) : null;
+    if (n != null) return n > 0.45;
+    var k = typeof BridgeClock !== 'undefined' && BridgeClock.sky ? BridgeClock.sky(WID) : null; return !!k && k.sun < 0.35;
+  }
+  function ring(world, offX, offY, ts, nowMs, sc) {
+    if (!sc || typeof BridgeScene === 'undefined' || here() !== WID || !ringOpen()) return [];
+    var out = [], lit = dark(sc);
+    wantsDone().forEach(function (w) {
+      spots(w).forEach(function (p) {
+        var c = ringArt(w.kind, lit && (w.kind === 'lamp' || w.kind === 'tub')), footRow = p[1] + 0.95;
+        out.push({ footRow: footRow, draw: function (ctx) {
+          var dx = Math.round(offX + p[0] * ts), dy = Math.round(offY + (p[1] + 1) * ts) - c.height;
+          BridgeScene.drawOccluded(ctx, sc, c, 0, 0, c.width, c.height, dx, dy, footRow, offX, offY, BridgeScene.tintAt(sc, world, p[0], p[1], nowMs), null);
+          if (lit && w.kind === 'lamp') {                          // the candle's light on the ground round it
+            ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = '#c86a28';
+            var cx = dx + 16, cy = dy + 46;
+            [36, 26, 16].forEach(function (rx) {                     // three flat rings, as the lamp posts' pools are
+              ctx.globalAlpha = 0.16 + 0.02 * Math.sin(nowMs / 170);
+              for (var yy = -rx / 2; yy < rx / 2; yy += 2) { var hw = Math.round(rx * Math.sqrt(1 - Math.pow(yy / (rx / 2), 2)) / 2) * 2; ctx.fillRect(cx - hw, cy + yy, hw * 2, 2); }
+            });
+            ctx.globalAlpha = 0.25; ctx.fillStyle = '#ffb860'; ctx.fillRect(dx + 8, dy + 2, 16, 14);
+            ctx.restore();
+          }
+        } });
+      });
+    });
+    return out;
+  }
+  if (typeof BridgeWorld !== 'undefined' && BridgeWorld.registerSceneHooks) BridgeWorld.registerSceneHooks('*', { items: ring });
 
   // ---- the places along Station Road -------------------------------------------------------------------------------
   function site(inter) {
@@ -295,6 +473,18 @@ var BridgeVillage = (function () {
       if (it.site === 'homes') { it.label = 'THE NEW COTTAGES'; }
       if (it.site === 'bridge') { it.label = 'THE BRIDGE'; }
     });
+    // the second ring: each want done stands where it was asked for (solid while it's there), with a line of its own
+    wantsDone().forEach(function (w) {
+      spots(w).forEach(function (p) {
+        if (data.collisions[p[1]]) data.collisions[p[1]][p[0]] = 1;
+        if (w.kind === 'bench' || w.kind === 'lamp' || w.kind === 'bird_table')
+          data.interactions.push({ x: p[0], y: p[1], type: 'dialog', label: w.name.replace(/^A /, '').replace(/ (by|under) .*$/, '').toUpperCase(), prompt: 'PRESS E TO LOOK', dialog: w.line });
+      });
+      data.interactions.forEach(function (it) {                  // and a line on the green where it is
+        if (w.id === 'ducks' && it.label === 'DUCK POND' && typeof it.dialog === 'string') it.dialog += ' ' + w.line;
+        if (w.id === 'birds' && it.label === 'THE OLD OAK' && typeof it.dialog === 'string') it.dialog += ' UNDER IT, A BIRD TABLE: THE SCHOOL\'S.';
+      });
+    });
     if (gate) data.interactions.forEach(function (it) { if (it.target === TOWN) it.spawn = gate.slice(); });
     // the bridge: across it once it's mended, the river in the way till then
     BRIDGE_TILES.forEach(function (t) { if (data.collisions[t[1]]) data.collisions[t[1]][t[0]] = done('bridge') ? 0 : 1; });
@@ -339,6 +529,14 @@ var BridgeVillage = (function () {
     });
   }
   setInterval(tick, 20000);
+  // once the dialog that said so is closed: Station Road again with it there
+  function later() {
+    var t = setInterval(function () {
+      if (document.querySelector('#world-overlay .world-dialog')) return;
+      clearInterval(t);
+      if (here() === WID) reload();
+    }, 400);
+  }
   // reload Station Road so what's finished shows (and its walls stand), keeping you where you are
   function reload() {
     var x = BridgeCharacter.getX(), y = BridgeCharacter.getY();
@@ -363,7 +561,32 @@ var BridgeVillage = (function () {
   var WHO = { juniper: 'cafe', hester: 'dairy', pike: 'station' };
   function absent(id) { return !!WHO[id] && !done(WHO[id]); }
 
+  // leading players to it: the Journal's Next up and the Map's Come back for (js/quests.js, js/map.js read these lists),
+  // and Juniper's topic on the fund (people.json `when: 'gate:village-wants'`, js/quests.js `has`)
+  function nextUp() {
+    if (!ringOpen()) return [];
+    var w = wantNow(), out = [];
+    if (judging()) out.push({ tag: 'Village', title: 'Best Kept Village', text: 'The judge\'s report is pinned on the fund board on Station Road.', world: WID });
+    if (w) out.push({ tag: 'Village', title: w.name, text: 'This week\'s want on Brambleford\'s fund board: ' + fmt(w.cost) + ' coins and ' + needsText(w) + '.', world: WID });
+    return out;
+  }
+  function comeBack(wid) {
+    if (wid !== WID || !ringOpen()) return [];
+    return (judging() ? ['Best Kept Village: the judge\'s report'] : []).concat(wantsDone().length < WANTS.length ? ['the fund\'s little want, a new one each week'] : ['Best Kept Village, judged every Friday']);
+  }
+  (function reg() { if (typeof BridgeQuests !== 'undefined' && BridgeQuests.gate) BridgeQuests.gate('village-wants', ringOpen); else setTimeout(reg, 100); })();   // (quests.js loads after this)
+  window.BRIDGE_NEXTUP = (window.BRIDGE_NEXTUP || []).concat([function () { return nextUp(); }]);
+  window.BRIDGE_COMEBACK = (window.BRIDGE_COMEBACK || []).concat([comeBack]);
+  // what the wants take, on each thing's card (js/uses.js `own`)
+  var USES = [];
+  WANTS.forEach(function (w) { Object.keys(w.needs).forEach(function (id) {
+    USES.push({ id: id, p: 3, t: '<b>Brambleford\'s fund</b> asks ' + w.needs[id] + ' for ' + w.name.replace(/^A /, 'a ').replace(/^Tubs/, 'tubs') + ', once its five projects are done' });
+  }); });
+  USES.push({ id: 'blue_rosette', p: 2, t: '<b>Best Kept Village</b>: Brambleford wins one when every little want on its fund board is done' });
+
   return { decorate: decorate, done: done, state: state, stage: stage, absent: absent, roadSouth: roadSouth, journal: journal, PROJECTS: PROJECTS,
+           WANTS: WANTS, wantNow: wantNow, wantDone: wantDone, judging: judging, verdict: verdict, nextUp: nextUp, comeBack: comeBack, USES: USES,
            MAKES: [{ in: 'milk', n: CHEESE_MILK, out: 'farm_cheese', where: 'Hester\'s Wold Dairy' }],   // what someone here makes of yours (js/uses.js)
-           reload: function () { s = load(); }, _s: function () { return s; }, _finish: function (id) { s.fund[id] = project(id).cost; s.paid[id] = Date.now() - BUILD - 1; store(); } };
+           reload: function () { s = load(); }, _s: function () { return s; }, _finish: function (id) { s.fund[id] = project(id).cost; s.paid[id] = Date.now() - BUILD - 1; store(); },
+           _want: function (id, et) { s.wants[id] = et || etNow(); store(); }, _unjudge: function () { s.judged = {}; store(); } };
 })();

@@ -1206,6 +1206,84 @@
       "text": "Friend,\n\nI am writing this in the hall, on the floor, which is warm. I had forgotten a floor could be warm. I have moved my brazier in and I do not need it.\n\nThe yetis came up the stair the first evening, all the way to the top step, and sat there in a row looking in at the lamps. I gave them berries and salt. Old Tuva ate the salt.\n\nThere is a cushion here with your name on it - not truly, I cannot sew - and tea whenever you come over the col. Bring your own cup. Mine are all chipped.\n\nWith thanks I have no good way to say,\nAnselm"
     }
   },
+  "room-13": {
+    "title": "Room 13",
+    "where": "Hoarfell · Château Aurelle",
+    "reward": 450,
+    "start": "Château Aurelle's key board has a hook for every room, and number 13's has been empty for fifty years. Its last guest went off with the key and left his safe locked.",
+    "rumour": "Monsieur Aubert, the château's concierge, won't let room 13. There's no key for it - look at the board in the salon.",
+    "begin": "board",
+    "done": "Room 13's safe is open and empty. Percy Pennyworth has the gambler's watch in his glass case, and the Neon Royale paid out on a stake fifty years cold.",
+    "items": {
+      "key13": { "name": "The key to room 13", "text": "A heavy brass key on a faded green tassel. The tag says 13 and, smaller, CHATEAU AURELLE. Monsieur Aubert will want to see it.", "to": "Monsieur Aubert", "icon": "key13" },
+      "watch13": { "name": "The gambler's watch", "text": "A gold pocket watch out of room 13's safe, stopped at thirteen minutes past. The engraving inside is a pair of dice. Percy Pennyworth collects watches.", "to": "Percy Pennyworth", "icon": "watch13" },
+      "slip13": { "name": "A Royale stake slip", "text": "A stake slip off the Neon Royale's cage, its gold stamp still bright: a bet on the Crown at ten to one, never collected. The cage pays on its own stamp.", "to": "the Royale's cage", "icon": "slip13" }
+    },
+    "clues": [
+      {
+        "id": "board",
+        "on": { "world": "hoarfell-chateau", "label": "KEY BOARD" },
+        "text": "Number 13's hook on the château's key board is empty. A card under it, in old ink: KEY GONE WITH THE GUEST. SAFE LOCKED. NOT TO BE FORCED - H.A.",
+        "say": "A HUNDRED BRASS KEYS ON GREEN TASSELS. NUMBER 14 HAS TWO. NUMBER 13'S HOOK IS EMPTY, AND UNDER IT A CARD IN FADED INK:\n\nKEY GONE WITH THE GUEST. SAFE LOCKED. NOT TO BE FORCED. - H.A.\n\nMONSIEUR AUBERT IS WATCHING YOU READ IT.",
+        "hint": "The key board in Château Aurelle's salon, up the line from Fellhaven: one hook has no key."
+      },
+      {
+        "id": "key",
+        "after": "board",
+        "on": { "world": "junk-pawn-shop", "label": "JUNK PILE" },
+        "get": "key13",
+        "text": "In the back of Joro's junk pile in Arcadia, under a tangle of cable: a brass key on a green tassel, tagged 13, CHATEAU AURELLE.",
+        "say": "UNDER A TANGLE OF CABLE AND A BOX OF ODD SPOONS: A HEAVY BRASS KEY ON A FADED GREEN TASSEL. THE TAG SAYS 13, AND SMALLER, CHATEAU AURELLE.\n\nJORO DOESN'T LOOK UP. \"CAME IN WITH A CRATE OF HOTEL SILVER, YEARS BACK. TAKE IT. KEYS TO ROOMS YOU CAN'T FIND ARE BAD LUCK.\"",
+        "hint": "Keys from old hotels end up in junk. Joro's pawn shop in Arcadia's District has two piles of it."
+      },
+      {
+        "id": "safe",
+        "after": "key",
+        "on": { "world": "hoarfell-chateau", "label": "MONSIEUR AUBERT" },
+        "give": "key13",
+        "text": "Monsieur Aubert took you up to room 13 himself and opened the safe in the wardrobe: a gold pocket watch and a Neon Royale stake slip, and nothing else.",
+        "hint": "Take the key back to Monsieur Aubert, the concierge in Château Aurelle's salon."
+      },
+      {
+        "id": "watch",
+        "after": "safe",
+        "on": { "world": "hoarfell-chateau", "label": "MONSIEUR AUBERT" },
+        "get": "watch13",
+        "text": "The gambler's watch, stopped at thirteen minutes past. Aubert says a man in Brambleford collects them.",
+        "hint": "Monsieur Aubert has what was in the safe."
+      },
+      {
+        "id": "slip",
+        "after": "safe",
+        "on": { "world": "hoarfell-chateau", "label": "MONSIEUR AUBERT" },
+        "get": "slip13",
+        "text": "A stake slip off the Neon Royale's cage: a bet on the Crown at ten to one, never collected.",
+        "hint": "Monsieur Aubert has what was in the safe."
+      },
+      {
+        "id": "percy",
+        "after": "watch",
+        "on": { "world": "verdance-village", "label": "PERCY" },
+        "give": "watch13",
+        "text": "Percy Pennyworth put the gambler's watch in his glass case, stopped at thirteen minutes past, and wouldn't hear of winding it.",
+        "hint": "Percy Pennyworth, at Pennyworth's in Brambleford on Verdance, collects pocket watches."
+      },
+      {
+        "id": "cage",
+        "after": ["slip", "percy"],
+        "on": { "world": "arcadia-casino", "label": "CAGE WINDOW" },
+        "give": "slip13",
+        "sayOver": true,
+        "text": "The Neon Royale's cage paid out on the slip: the gambler's stake at ten to one, fifty years late.",
+        "say": "THE CASHIER HOLDS THE SLIP UP TO HER LAMP AND TURNS IT OVER. THE GOLD STAMP CATCHES.\n\n\"A STAKE ON THE CROWN AT TEN TO ONE. NEVER COLLECTED.\" SHE LOOKS AT THE DATE AND THEN AT YOU. \"THE ROYALE PAYS ON ITS OWN STAMP. HOWEVER LONG.\"\n\nSHE COUNTS IT OUT IN GOLD CHIPS AND CHANGES THEM FOR COINS WITHOUT BEING ASKED.",
+        "hint": "The slip has the Neon Royale's stamp. Take it to the cage window in the casino in Arcadia."
+      }
+    ],
+    "letter": {
+      "from": "percy",
+      "text": "Dear friend,\n\nThe watch is in the case, between my grandfather's first and the railway one. I have not wound it. A watch stopped at thirteen past is a watch with a story, and a wound one is just a watch.\n\nMonsieur Aubert wrote to say room 13 has been let for the first time in fifty years, to a couple on their honeymoon, who asked for it because of the number. He says he gave them both keys.\n\nYours, with the till behaving for once,\nPercy Pennyworth"
+    }
+  },
   "queens-favour": {
     "title": "The Queen's Favour",
     "where": "Sylvara",

@@ -65,6 +65,24 @@ var BridgeKeyItems = (function () {
     chromehand: function (ctx, x, y, u) { grid(ctx, x, y, u, CHROMEHAND, CHROME_KEY); },
     // and the rest of it, off the wall behind Tally's book: a hand-built forearm, cables at the elbow, pink trim
     chromearm: function (ctx, x, y, u) { grid(ctx, x, y, u, CHROMEARM, CHROME_KEY); },
+    // Room 13 (room-13): the château's brass key on its green tassel
+    key13: function (ctx, x, y, u) {
+      px(ctx, x, y, u, '#2a1a08', [[2, 2, 6, 6], [7, 4, 8, 2], [12, 6, 2, 3], [9, 6, 2, 2], [3, 8, 3, 6]]);
+      px(ctx, x, y, u, '#d0a040', [[3, 3, 4, 4], [7, 4, 7, 1], [12, 5, 1, 3], [9, 5, 1, 2]]); px(ctx, x, y, u, '#2a1a08', [[4, 4, 2, 2]]);
+      px(ctx, x, y, u, '#f0d070', [[3, 3, 2, 1], [8, 4, 3, 1]]);
+      px(ctx, x, y, u, '#2a7a4a', [[4, 8, 1, 5]]); px(ctx, x, y, u, '#4aaa6a', [[3, 12, 3, 2]]);
+    },
+    // and what was in its safe: a gold pocket watch, stopped, and a stake slip off the Royale's cage
+    watch13: function (ctx, x, y, u) {
+      px(ctx, x, y, u, '#2a1a08', [[6, 1, 4, 3], [3, 4, 10, 10]]);
+      px(ctx, x, y, u, '#d0a040', [[7, 2, 2, 1], [4, 5, 8, 8]]); px(ctx, x, y, u, '#f4ecd8', [[5, 6, 6, 6]]);
+      px(ctx, x, y, u, '#2a1a08', [[8, 7, 1, 2], [6, 9, 2, 1]]); px(ctx, x, y, u, '#f0d070', [[4, 5, 3, 1]]);
+    },
+    slip13: function (ctx, x, y, u) {
+      px(ctx, x, y, u, '#1a1008', [[2, 3, 12, 10]]);
+      px(ctx, x, y, u, '#ecdcb0', [[3, 4, 10, 8]]); px(ctx, x, y, u, '#c8a040', [[3, 4, 10, 1]]);
+      px(ctx, x, y, u, '#5a3a20', [[4, 6, 6, 1], [4, 8, 8, 1]]); px(ctx, x, y, u, '#a02030', [[10, 9, 2, 2]]);
+    },
     star: function (ctx, x, y, u) {
       px(ctx, x, y, u, '#3a2a10', [[7, 1, 2, 14], [1, 6, 14, 3], [4, 4, 8, 8]]);
       px(ctx, x, y, u, '#d0a040', [[7, 2, 2, 12], [2, 7, 12, 1], [5, 5, 6, 6]]);

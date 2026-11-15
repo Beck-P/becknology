@@ -438,6 +438,7 @@ var BridgeInteractions = (function () {
     // a clue with its own moment (quests.json `say`): that, in place of the thing's usual words
     var moment = hits.filter(function (c) { return c.say; }).map(function (c) { return c.say; }).join('\n\n');   // (two found at once — the Admiral's cat and parrot home together — both told)
     if (moment && (inter.type === 'dialog' || inter.type === 'random_dialog')) { showDialog(inter.label, moment, inter); return; }
+    if (moment && hits.some(function (c) { return c.say && c.sayOver; })) { showDialog(inter.label, moment, inter); return; }   // a clue whose moment stands in for any thing's own (Room 13's slip at the Royale's cage)
     var biz = typeof BridgeBusiness !== 'undefined' && BridgeBusiness.find(BridgeWorld.getWorldId(), inter.label);
     if (biz) { showBusiness(biz, inter); return; }
     // sit, sleep, look out of the window (js/actions.js) instead of a text box
@@ -1327,6 +1328,7 @@ var BridgeInteractions = (function () {
     topics = fresh.concat(topics.filter(function (t) { return fresh.indexOf(t) < 0; }));
     if (person.crew && typeof BridgeCrew !== 'undefined') {
       var after = person.crew.after && typeof BridgeQuests !== 'undefined' ? BridgeQuests.progress(person.crew.after) : null;
+      if (person.crew.when && typeof BridgeQuests !== 'undefined' && !BridgeQuests.has(person.crew.when)) after = { done: false };   // not till something's true (`when`, as a topic's: Ysolde, once you've reached the Last Ridge)
       topics.push(BridgeCrew.isHired(person.id)
         ? { q: 'About the work', a: person.crew.perkText.toUpperCase() }
         : after && !after.done

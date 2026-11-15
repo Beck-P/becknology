@@ -85,7 +85,8 @@ var BridgeCountryside = (function () {
 
   // ---- riding ------------------------------------------------------------------------------------------------------------
   function mountFor(what) {
-    return { speed: SPEED[what], what: what, item: function (o) {
+    var k = typeof BridgeDeeper !== 'undefined' && BridgeDeeper.shod ? BridgeDeeper.shod() : 1;   // newly shod by Wat (js/deeper.js)
+    return { speed: SPEED[what] * k, what: what, item: function (o) {
       return { footRow: depthRow(o, what), draw: function (ctx) {
         drawMount(ctx, o, what, s.horse.coat, o.facing, frameCol(o.walking, o.stride, o.now), o.rider);
       } };

@@ -274,6 +274,7 @@ var BridgeMap = (function () {
     });
     if (has('board') || has('notice_board')) out.push('the board\'s requests, new each day');
     if (typeof BridgeFestivals !== 'undefined' && BridgeFestivals.soon) BridgeFestivals.soon(wid).forEach(function (s) { out.push(s); });   // on now, or this weekend
+    (window.BRIDGE_COMEBACK || []).forEach(function (fn) { try { (fn(wid) || []).forEach(function (s) { out.push(s); }); } catch (e) { /* one module's trouble */ } });   // a module's own (js/village.js)
     if (typeof BridgeEvents !== 'undefined' && BridgeEvents.live && wid === here()) BridgeEvents.live(wid).forEach(function (e) { if (e.name) out.push(e.name + ', on now'); });
     if (typeof BridgeBusiness !== 'undefined' && BridgeBusiness.all) BridgeBusiness.all().forEach(function (d) {
       if (d.world === wid && BridgeBusiness.owned(d.id)) out.push('takings at your ' + d.name.replace(/^The /, ''));

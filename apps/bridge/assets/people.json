@@ -695,6 +695,12 @@
         "a": "THAT SAFE CAME OUT OF A SHIP THAT FELL OUT OF ORBIT. NOBODY'S OPENED IT. NOBODY'S ASKED ME TO. IF YOU EVER FIND A COMBINATION WRITTEN ON SOMETHING STRANGE, BRING IT HERE FIRST."
       },
       {
+        "q": "A hotel key?",
+        "a": "BRASS, GREEN TASSEL? I HAD A CRATE OF HOTEL SILVER IN, YEARS BACK. WHAT DIDN'T SELL WENT ON THE PILES. GO AND DIG. I'M NOT GETTING UP.",
+        "when": "room-13/board",
+        "until": "room-13/key"
+      },
+      {
         "q": "Sell what you've found",
         "a": "OFF-WORLD CRYSTALS? SALVAGE? I'LL TAKE IT ALL. I WON'T PAY LIKE THE LUMAR TRADERS, BUT I'M HERE AND THEY'RE NOT.",
         "sell": [
@@ -1047,7 +1053,8 @@
       },
       {
         "q": "Heard anything?",
-        "a": "SOMEBODY'S GOAT IS LOOSE AGAIN. AND THE CROWS HAVE TAKEN AGAINST THE SCARECROW'S SHIRT. CAN'T SAY I BLAME THEM."
+        "a": "SOMEBODY'S GOAT IS LOOSE AGAIN - NOT MINE, WHATEVER THEY TELL YOU. WALKERS SAY THEY SEE IT IN THE SUNKEN LANE ON THE DOWNS OF AN EVENING, EATING THE NOTES OFF THE HONESTY BOX. AND THE CROWS HAVE TAKEN AGAINST THE SCARECROW'S SHIRT. CAN'T SAY I BLAME THEM.",
+        "lead": "lost-goat"
       },
       {
         "q": "Edda's page",
@@ -1188,8 +1195,23 @@
         "q": "Heard anything?",
         "a": "THERE ARE CRYSTALS IN THE HOARSPIRE'S ROCK THAT GLOW LIKE FROST. OFF THE LINE, MOSTLY - YOU HAVE TO GO OUT OF YOUR WAY. AND SOMEBODY LEFT A REGISTER AT THE TOP. SIGN IT. I'LL CHECK.",
         "lead": "summit-register"
+      },
+      {
+        "q": "Past the hut",
+        "a": "YOU WENT FURTHER THAN I DID. DON'T LOOK PLEASED, IT MAKES ME WANT TO GO BACK UP. ASK ME THE OTHER THING. YOU KNOW WHAT I MEAN.",
+        "when": "gate:last-ridge"
       }
-    ]
+    ],
+    "crew": {
+      "role": "Mountaineer",
+      "wage": 240,
+      "perk": "mountaineer",
+      "ashore": true,
+      "when": "gate:last-ridge",
+      "notYet": "YOUR CREW? I DON'T CLIMB FOR PEOPLE WHO HAVEN'T BEEN HIGH. GET YOURSELF OUT ONTO THE LAST RIDGE AND ASK ME AGAIN.",
+      "pitch": "ALL RIGHT. I KEEP THE HUT - SOMEONE HAS TO - BUT I'LL KIT YOU OUT PROPERLY. LAYERS THAT WORK, SO THE COLD TAKES ITS TIME WITH YOU WHEREVER YOU ARE. AND MY OLD PROBE LASHED TO YOUR PACK, RIGGED TO GO IN AHEAD OF YOU. YOU WON'T EVEN HAVE TO THINK.",
+      "perkText": "Ysolde kits you out: the cold takes a third longer to wear you down anywhere it bites, and on a crevasse field her probe goes in two paces ahead of you as you walk. She keeps her guide's hut in Fellhaven."
+    }
   },
   "tove": {
     "name": "Tove Lindqvar",
@@ -1542,6 +1564,12 @@
       {
         "q": "Heard anything?",
         "a": "OLD BRYN SAYS THERE'S A LIGHT PAST THE HOARSPIRE. HE'S SAID IT EVERY WINTER FOR FORTY YEARS. THE FUNNY THING IS, THIS YEAR YSOLDE'S STARTED SAYING IT TOO."
+      },
+      {
+        "q": "Ysolde",
+        "a": "SHE CAME IN LAST NIGHT AND ASKED WHO'D BEEN OUT ON THE LAST RIDGE. I SAID YOU. SHE WENT QUIET AND HAD TWO COCOAS. THAT'S YSOLDE DECIDING SOMETHING.",
+        "when": "gate:last-ridge",
+        "lead": "ysolde-crew"
       }
     ]
   },
@@ -1740,6 +1768,11 @@
         "outfit": "pennyworth"
       },
       {
+        "q": "The gambler's watch",
+        "a": "OH. OH, LOOK AT IT. STOPPED AT THIRTEEN PAST, DICE INSIDE THE LID. I SHAN'T WIND IT - A STOPPED WATCH IS A WATCH WITH A STORY. IT GOES IN THE CASE, BETWEEN GRANDFATHER'S FIRST AND THE RAILWAY ONE.",
+        "when": "room-13/percy"
+      },
+      {
         "q": "Seeds",
         "a": "TURNIPS IF YOU'RE IMPATIENT, PUMPKINS IF YOU'RE NOT, STARFRUIT IF YOU'RE RICH. EVERYTHING GROWS QUICKER IN ITS SEASON - THE CHAPEL CALENDAR SAYS WHICH."
       },
@@ -1776,6 +1809,13 @@
         "a": "BRING ME ORE FROM THAT MINE ON LUMAR AND I'LL TELL YOU IF IT'S ANY GOOD. MOSTLY IT ISN'T. NOW AND THEN IT SINGS."
       },
       {
+        "q": "Shoe my horse",
+        "a": "",
+        "when": "gate:has-horse",
+        "use": { "type": "wat_shoe" },
+        "offer": "new shoes for your horse"
+      },
+      {
         "q": "Edda's page",
         "when": "eddas-book/wat",
         "a": "KEEP IT IN THE FORGE. THAT'S WHY IT'S SCORCHED. A HOT BRAN MASH FOR PARSNIP, HER OLD PLOUGH HORSE, ON A COLD NIGHT. I SHOD HIM TO THE END. GOOD HORSE.\n\nON THE BACK IT SAYS 'OVEN AS HOT AS WAT'S FORGE.' CHEEK."
@@ -1806,6 +1846,12 @@
       {
         "q": "The stream",
         "a": "COMES DOWN FROM THE HILLS COLD AS A COIN. THERE'S PERCH IN THE FARM POND THAT CAME DOWN IT AS EGGS. DON'T TELL NELL I SAID SO, SHE THINKS THEY'RE HERS."
+      },
+      {
+        "q": "Grind my wheat",
+        "a": "",
+        "use": { "type": "ludd_grind" },
+        "offer": "grinds your wheat"
       },
       {
         "q": "Edda's page",
@@ -3798,6 +3844,23 @@
       {
         "q": "Aurelle",
         "a": "MADAME HELOISE AURELLE BUILT A SANATORIUM HERE FOR THE AIR. THE AIR WAS EXCELLENT; THE PATIENTS PREFERRED CARDS. NOW THERE IS THE SALON, THE THERMES, LA TABLE, AND A TRAIN THAT BRINGS PEOPLE UP FROM FELLHAVEN TO SPEND MONEY IN ALL OF THEM."
+      },
+      {
+        "q": "Number 13",
+        "a": "WE DO NOT LET NUMBER THIRTEEN, MONSIEUR. NOT FROM SUPERSTITION. THERE IS SIMPLY NO KEY. YOU MAY LOOK AT THE BOARD IF YOU DOUBT ME. EVERYONE DOES.",
+        "until": "room-13/board",
+        "rumour": "room-13"
+      },
+      {
+        "q": "The guest in 13",
+        "a": "A GENTLEMAN WHO PLAYED. FIFTY YEARS AGO HE WON VERY LATE ONE NIGHT, WENT UP, AND WAS ON THE FIRST TRAIN DOWN WITH THE KEY IN HIS POCKET. MADAME WOULD NOT HAVE THE SAFE FORCED. KEYS COME BACK, SHE SAID. THEY DO, MONSIEUR. USUALLY THROUGH A JUNK SHOP IN ARCADIA.",
+        "when": "room-13/board",
+        "until": "room-13/safe"
+      },
+      {
+        "q": "Room 13",
+        "a": "I TOOK YOU UP MYSELF. THE WARDROBE, THE SAFE, YOUR KEY - IT TURNED AS IF IT HAD BEEN OILED YESTERDAY. A WATCH STOPPED AT THIRTEEN PAST, AND A SLIP FROM THE ROYALE'S CAGE. NOTHING ELSE. A GAMBLER'S WHOLE ESTATE. THE WATCH SHOULD GO TO MR PENNYWORTH IN BRAMBLEFORD - HE COLLECTS THEM. THE SLIP, MONSIEUR, IS BETWEEN YOU AND THE CAGE.",
+        "when": "room-13/safe"
       },
       {
         "q": "Heard anything?",
@@ -6583,6 +6646,18 @@
       {
         "q": "Station Road",
         "a": "QUIET END OF THE VILLAGE THESE DAYS. TEA ROOMS SHUT, DAIRY EMPTY, THE HALT CLOSED. THE VILLAGE FUND ON THE GREEN COULD CHANGE ALL THAT, IF ANYONE PUT ANYTHING IN IT."
+      },
+      {
+        "q": "Her shoes",
+        "a": "LIFT A HOOF NOW AND THEN. WHEN THE SHOES GO DULL, TAKE HER TO WAT AT THE ANVIL & HOOF. TWENTY COINS AND SHE GOES LIKE SHE'S LATE FOR SOMETHING. FOR A DAY, ANYWAY.",
+        "when": "gate:has-horse",
+        "lead": "wat-shoes"
+      },
+      {
+        "q": "This goat?",
+        "a": "",
+        "when": "gate:goat-following",
+        "use": { "type": "goat_home" }
       }
     ]
   },
@@ -6615,6 +6690,12 @@
         "q": "Village gossip",
         "a": "MR PIKE HAS POLISHED THE SAME BRASS LAMP FOUR TIMES THIS WEEK. HE SAYS IT'S FOR THE HARVEST FAIR. THE FAIR JUDGES PUMPKINS, NOT LAMPS. NOBODY HAS TOLD HIM.",
         "lead": "harvest-fair"
+      },
+      {
+        "q": "The fund",
+        "a": "FIVE DONE AND THE VICAR'S STARTED A NEW LIST. LITTLE THINGS - A BENCH, A DUCK HOUSE. ONE A WEEK, ON THE BOARD. AND THE COUNTY'S JUDGE COMES ROUND ON FRIDAYS NOW. BEST KEPT VILLAGE. MRS PRIDDY. SHE HAS A HAT.",
+        "when": "gate:village-wants",
+        "lead": "village-wants"
       }
     ]
   },
@@ -6648,6 +6729,12 @@
             "price": 34
           }
         ]
+      },
+      {
+        "q": "Hobb's recipe",
+        "a": "HIS MOTHER'S. I'VE ASKED HIM FOR IT EVERY WEEK SINCE I CAME, AND IT TAKES A GOAT GOING MISSING. ASH ON THE RIND, THYME FROM THE DOWNS. THERE'S SOME ON THE SHELF ALREADY - THE GOAT'S GENEROUS WHEN SHE'S HOME.",
+        "when": "gate:goat-home",
+        "stores": [{ "id": "goat_cheese", "price": 32 }]
       }
     ]
   },
@@ -6914,6 +7001,11 @@
       {
         "q": "The trout",
         "a": "BEST TROUT ON VERDANCE IN THE POOL UNDER THE WEIR. OLD RUDD THINKS IT'S A SECRET. EVERYONE KNOWS. NOBODY TELLS HIM."
+      },
+      {
+        "q": "Your dad",
+        "a": "STILL TURNING THE OLD WHEEL IN BRAMBLEFORD. HE'LL GRIND YOUR WHEAT TOO, FOR NOTHING, AND THEN BUY THE FLOUR BACK OFF YOU FOR THE FAIR. SAYS MINE'S TOO FINE. IT ISN'T.",
+        "lead": "ludd-mill"
       }
     ]
   }

@@ -205,7 +205,7 @@ var BridgeGifts = (function () {
     hollin: { love: ['starfruit', 'sun_carp', 'eddas_pie'], like: ['honey', 'apple', 'pumpkin'], hate: ['old_boot'] },
     marlo: { love: ['starfruit', 'pumpkin'], like: ['honey', 'strawberry', 'sunflower'], hate: ['old_boot'] },
     // Station Road (js/village.js)
-    hobb: { love: ['apple', 'carrot', 'mug_of_ale'], like: ['ploughmans', 'lucky_horseshoe', 'turnip'], hate: ['posy'],
+    hobb: { love: ['apple', 'carrot', 'mug_of_ale'], like: ['ploughmans', 'lucky_horseshoe', 'turnip', 'goat_cheese'], hate: ['posy'],
             loveLine: 'CARROTS! THE HORSES WILL LOVE YOU. SO WILL I, IF I\'M HONEST, BUT DON\'T EXPECT ME TO SAY IT TWICE.' },
     juniper: { love: ['strawberry', 'honey', 'farm_cheese'], like: ['apple', 'pumpkin', 'milk', 'egg', 'posy'], hate: ['old_boot', 'stone'],
                loveLine: 'THESE ARE GORGEOUS. THEY\'RE GOING ON THE BOARD WITH YOUR NAME NEXT TO THEM, IN THE BIG LETTERS.' },
