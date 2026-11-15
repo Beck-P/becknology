@@ -3058,6 +3058,7 @@ html.touch #tchat .tc-in { font-size: 16px; }                /* no zoom on focus
 html.touch #tchat .tc-q { font-size: 13px; padding: 5px 11px; }
 html.touch #tchat .tc-q, html.touch #tchat .tc-send { min-height: 36px; }   /* the quick lines and Send: a finger's worth */
 html.touch #tchat .tc-x { min-width: 40px; min-height: 36px; }
+html.touch .tc-pill { min-height: 36px; box-sizing: border-box; }   /* the chat pill, in a cabinet's bar or on its own (27 px tall) */
 html.touch .tc-pill.tc-inbar .tc-lbl { display: none; }
 /* a phone's cabinet bar with the score and the pill: the game's own header names the table, so the bar's title goes */
 @media (max-width: 560px) {
