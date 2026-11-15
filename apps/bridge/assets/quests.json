@@ -548,10 +548,10 @@
         "id": "bake",
         "after": "*",
         "give": "book",
-        "have": {
+        "takes": {
           "apple": 4
         },
-        "take": true,
+        "lack": "The pie wants apples",
         "on": {
           "world": "verdance-village",
           "label": "BRIDGET"
@@ -713,10 +713,10 @@
       {
         "id": "star",
         "after": "ask",
-        "have": {
+        "takes": {
           "fallen_star": 1
         },
-        "take": true,
+        "lack": "Ithil would love to see one",
         "on": {
           "world": "sylvara-crown",
           "label": "STAR-READER"
@@ -1047,6 +1047,67 @@
     "letter": {
       "from": "Hob Dunmore",
       "text": "IT'S QUIET DOWN THERE NOW, BUT NOT SILENT - MORE LIKE IT'S LISTENING. I WENT DOWN TO FIFTEEN YESTERDAY FOR THE FIRST TIME IN TWENTY YEARS. BRING ME SOME STAR IRON SOMETIME AND I'LL MAKE YOU SOMETHING WORTH CARRYING. - HOB"
+    }
+  },
+  "last-monk": {
+    "title": "The Last Monk",
+    "where": "Hoarfell · the hidden valley",
+    "reward": 450,
+    "start": "Brother Anselm stayed when his brothers left the cliff monastery, but he hasn't set foot in his own hall since the cold came. Four things would give it back to him.",
+    "rumour": "An old monk keeps one brazier lit in the cliff monastery over Hoarfell's hidden valley, and won't go into his own hall.",
+    "begin": "anselm",
+    "done": "Brother Anselm has moved back into his hall. The lamps are lit, the spring runs warm under the floor, and of an evening the yetis come up the stair to sit at the top of it.",
+    "clues": [
+      {
+        "id": "anselm",
+        "on": { "world": "hoarfell-monastery", "label": "BROTHER ANSELM" },
+        "text": "Anselm keeps one cell and one brazier, and hasn't crossed the courtyard to his own hall in eleven winters. Four things would give it back: lay his brothers' fears, light the lamps, let the spring run, ring the bell.",
+        "hint": "An old monk keeps a brazier lit up the cliff stair in Hoarfell's hidden valley. The guides in Aurelle take you over the High Route to it."
+      },
+      {
+        "id": "fears",
+        "after": "anselm",
+        "on": { "world": "hoarfell-valley", "label": "CHORTEN" },
+        "takes": { "wraith_essence": 3 },
+        "lack": "Three phials for the chorten",
+        "text": "You left three phials of wraith essence at a chorten's foot, where the brothers used to leave what they couldn't carry. The mist went out of them and round the white stone, and was gone.",
+        "say": "YOU KNEEL AT THE CHORTEN'S FOOT, BESIDE THE JUNIPER SPRIG AND THE COIN, AND UNSTOP THE THREE PHIALS ONE BY ONE.\n\nTHE MIST GOES OUT OF THEM SLOWLY, LIKE BREATH ON A COLD MORNING. IT CURLS ROUND THE WHITE STONE, ONCE, AND IS GONE. THE PAINTED EYES ON THE SPIRE LOOK, FOR A MOMENT, A LITTLE LESS WORRIED.",
+        "hint": "Three phials of wraith essence for a chorten down in the valley. The frost wraiths in the monastery's courtyard leave it when they fade; a holy edge helps."
+      },
+      {
+        "id": "lamps",
+        "after": "anselm",
+        "on": { "world": "hoarfell-monastery", "label": "THE HALL" },
+        "takes": { "fire_arrow": 3 },
+        "holds": ["elven_bow", "heartwood_bow"],
+        "holdsName": "a bow",
+        "lack": "The lamps are out of reach",
+        "text": "From the hall's doorway you loosed three fire arrows into the dark under the roof, and the lamps caught one by one. The ice in the gilt figure's lap has started to drip.",
+        "say": "YOU STAND IN THE GREAT DOORWAY, NOCK A FIRE ARROW AND LOOSE IT INTO THE DARK UNDER THE ROOF. THE FIRST LAMP CATCHES. TWO. THREE.\n\nTHEY SWING ON THEIR CHAINS AND THE LIGHT RUNS DOWN THE GILT FIGURE, ALL THE WAY TO THE ICE IN ITS LAP - WHICH STARTS, VERY QUIETLY, TO DRIP.",
+        "hint": "Three fire arrows and a bow, loosed from the hall's doorway into its dark roof. Wren the lantern maker sells fire arrows, and Corin the bowyer bows, in Sylvara's Rootmarket."
+      },
+      {
+        "id": "spring",
+        "after": "anselm",
+        "on": { "world": "hoarfell-valley", "label": "HOT SPRING" },
+        "takes": { "golem_core": 2 },
+        "lack": "The spring's mouth is choked",
+        "text": "You set two golem cores in the ice that choked the warm spring's mouth. Their glow went back into the water, the ice went, and the spring runs hot again, up the cliff to the monastery.",
+        "say": "AT THE TOP OF THE TERRACES, WHERE THE WATER SHOULD COME OUT OF THE ROCK, A PLUG OF BLUE ICE. YOU SET THE TWO GOLEM CORES IN IT.\n\nTHEIR GLOW GOES OUT OF THEM INTO THE ICE, AND THE ICE GOES CLEAR, THEN SOFT, THEN GONE. THE SPRING COUGHS ONCE AND RUNS - HOTTER THAN BEFORE, STEAMING UP THE CLIFF TOWARD THE MONASTERY. THE CORES ARE JUST GREY STONES NOW.\n\nYOU GET IN ANYWAY. IT WOULD BE RUDE NOT TO.",
+        "hint": "Two golem cores, from the rime golems in the monastery's courtyard, set back in the warm spring's mouth down in the valley."
+      },
+      {
+        "id": "bell",
+        "after": ["fears", "lamps", "spring"],
+        "on": { "world": "hoarfell-monastery", "label": "THE BELL" },
+        "text": "You rang the bell for Anselm. He came out of his cell with his brazier in both hands, walked straight across the courtyard and in through the great doors, and started to sing.",
+        "say": "YOU HAUL ON THE ROPE AND THE BELL SWINGS FREE. ITS NOTE GOES OUT OVER THE VALLEY, ROUND THE CLIFFS AND BACK, AND AGAIN, AND AGAIN.\n\nACROSS THE COURTYARD A DOOR OPENS. BROTHER ANSELM COMES OUT OF HIS CELL WITH HIS BRAZIER IN BOTH HANDS, WALKS STRAIGHT ACROSS THE SNOW WITHOUT LOOKING DOWN, AND GOES IN THROUGH THE GREAT DOORS.\n\nAFTER A WHILE YOU HEAR HIM START TO SING. HE IS NOT VERY GOOD. HE DOES NOT CARE.",
+        "hint": "The fears laid, the lamps lit and the spring running: ring the monastery's bell, for Anselm."
+      }
+    ],
+    "letter": {
+      "from": "anselm",
+      "text": "Friend,\n\nI am writing this in the hall, on the floor, which is warm. I had forgotten a floor could be warm. I have moved my brazier in and I do not need it.\n\nThe yetis came up the stair the first evening, all the way to the top step, and sat there in a row looking in at the lamps. I gave them berries and salt. Old Tuva ate the salt.\n\nThere is a cushion here with your name on it - not truly, I cannot sew - and tea whenever you come over the col. Bring your own cup. Mine are all chipped.\n\nWith thanks I have no good way to say,\nAnselm"
     }
   },
   "queens-favour": {

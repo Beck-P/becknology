@@ -445,7 +445,11 @@ var BridgeInteractions = (function () {
     if (inter.action && typeof BridgeActions !== 'undefined' && (/^(sit|sleep|view)$/.test(inter.action) || inter.type === 'deck')) {
       BridgeActions.run(inter); return;
     }
-    if (OWN[inter.type]) { OWN[inter.type](inter); return; }        // a type some module handles itself (register)
+    if (OWN[inter.type]) {                                           // a type some module handles itself (register); the clues
+      inter.__clues = hits;                                          // found just now ride along, so it can show a clue's `say`
+      try { OWN[inter.type](inter); } finally { delete inter.__clues; }
+      return;
+    }
     switch (inter.type) {
       case 'app':
         // the Bridge's own games open over the world, like the arcade cabinets (no reload)
@@ -1231,7 +1235,7 @@ var BridgeInteractions = (function () {
       (rows.length ? '<div class="wd-sell wd-sell-pick wd-chooser">' + rows.map(function (r, i) {
         return '<div class="wd-sell-row pick' + (r.disabled ? ' none' : '') + (r.info ? ' info' : '') + '" data-r="' + i + '">' +
           '<canvas class="sp-icon" width="24" height="24"></canvas><span class="sp-name">' + esc(r.label) + '</span>' +
-          '<span class="sp-have">' + esc(r.sub || '') + '</span><span class="sp-qty"></span>' +
+          '<span class="sp-have">' + esc(r.sub || '') + (r.muted ? ' <span class="sp-mute">' + esc(r.muted) + '</span>' : '') + '</span><span class="sp-qty"></span>' +
           '<span class="sp-price">' + esc(r.note || '') + '</span>' +
           (r.stats && typeof BridgeItems !== 'undefined' ? weaponCard(BridgeItems.get(r.stats), { compare: true, compact: true }) : '') + '</div>';
       }).join('') + '</div>' : '') +

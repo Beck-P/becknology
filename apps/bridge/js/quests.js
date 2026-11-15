@@ -56,9 +56,22 @@ var BridgeQuests = (function () {
   }
 
   // ---- finding clues ----------------------------------------------------------------------
+  // things a clue takes from your pack as it's found (`takes: { id: n }`) and something it wants you to have with you
+  // (`holds: [ids]`, any one of them; `holdsName` says it in words): what's still missing, [] when you're ready
+  function inv() { return typeof BridgeInventory !== 'undefined' ? BridgeInventory : null; }
+  function iname(id) { var it = typeof BridgeItems !== 'undefined' && BridgeItems.get(id); return it ? it.name : String(id).replace(/_/g, ' '); }
+  function missing(c) {
+    var I = inv(), out = [];
+    if (!I) return out;
+    Object.keys(c.takes || {}).forEach(function (id) { var have = I.getCount(id); if (have < c.takes[id]) out.push(c.takes[id] + ' ' + iname(id) + (have ? ' (you have ' + have + ')' : '')); });
+    if (c.holds && ![].concat(c.holds).some(function (id) { return I.getCount(id) > 0; })) out.push(c.holdsName || iname([].concat(c.holds)[0]));
+    return out;
+  }
+  function take(c) { var I = inv(); if (I) Object.keys(c.takes || {}).forEach(function (id) { I.removeItem(id, c.takes[id]); }); }
   function onInteract(worldId, inter) {
     var hits = [];                                 // the clues found just now (js/interactions.js shows a clue's `say`)
     if (!defs || !inter) return hits;
+    var lacking = null;                            // a clue that's ready but for what it takes: said in a toast
     var was = {};                                  // done before this — so a sequel can't start on the same word that ended the quest before it
     Object.keys(defs).forEach(function (id) { was[id] = !!(state[id] && state[id].done); });
     Object.keys(defs).forEach(function (id) {
@@ -69,12 +82,17 @@ var BridgeQuests = (function () {
         if (!c.on) return;                         // (a deed: done, not found - did() below)
         var wm = c.on.world, wid = inter.home ? inter.home.world : worldId;   // someone visiting counts as at home (js/routines.js)
         if (!(wm === wid || (wm.slice(-1) === '*' && wid.indexOf(wm.slice(0, -1)) === 0)) || c.on.label !== inter.label) return;   // 'lumar-rose-mine-*': any floor
-        if (!ready(id, q, c) || !holds(c)) return;
+        if (!ready(id, q, c)) return;
+        if (state[id] && state[id].clues[c.id]) return;
+        var short = inter.shared ? [] : missing(c);   // found beside a partner (js/multi.js): they gave what it takes, you give nothing
+        if (short.length) { lacking = lacking || { q: q, c: c, short: short }; return; }
         if (meta.aside[id] && state[id]) delete meta.aside[id], saveMeta();   // went back to it: it's picked up again
+        if (!inter.shared) take(c);
         findClue(id, c, hits);
       });
     });
     if (hits.length) { trSig = null; refreshTracker(); }
+    else if (lacking) toast(lacking.q.title, lacking.c.lack || 'Not yet', 'You need ' + lacking.short.join(' and '), false);
     return hits;
   }
   // a clue found: its toast, the quest begun or finished (its reward, a keepsake, the rumour it hands on to)
@@ -83,7 +101,6 @@ var BridgeQuests = (function () {
     if (s.clues[c.id]) return false;
     var fresh = !Object.keys(s.clues).length;
     s.clues[c.id] = Date.now();
-    if (c.have && c.take && typeof BridgeInventory !== 'undefined') Object.keys(c.have).forEach(function (it) { BridgeInventory.removeItem(it, c.have[it]); });   // handed over
     if (hits) hits.push(Object.assign({ quest: id }, c));   // (with its quest: js/keyitems.js finds the thing it gets or gives)
     var p = progress(id), au = typeof BridgeAudio !== 'undefined' ? BridgeAudio : null;
     if (p.found === p.total && !s.done) {
@@ -205,15 +222,6 @@ var BridgeQuests = (function () {
     if (!c.after) return true;
     var need = c.after === '*' ? q.clues.filter(function (o) { return o.id !== c.id; }).map(function (o) { return o.id; }) : [].concat(c.after);
     return need.every(function (a) { return got[a]; });
-  }
-
-  // a clue that wants something from your pack (`have: { item: n }`, Ithil's fallen star, Edda's apples): found only
-  // while you're carrying it, and with `take` it's handed over as it's found. It stays a lead meanwhile (the hint says
-  // what to bring and where it's found), so the tracker never goes quiet waiting on it.
-  function holds(c) {
-    if (!c.have) return true;
-    var I = typeof BridgeInventory !== 'undefined' ? BridgeInventory : null;
-    return !!I && Object.keys(c.have).every(function (it) { return I.getCount(it) >= c.have[it]; });
   }
 
   // 'quest' — is it done; 'quest/clue' — has that clue been found (people's topics use this: `when`, `until`)
@@ -464,6 +472,7 @@ var BridgeQuests = (function () {
         if (nd.length) out.push({ tag: 'Ledger', title: nd.length === 1 ? nd[0].name : nd.length + ' things need you', text: (nd.length === 1 ? nd[0].sub.replace(/ — tap.*$| \(tap.*$|\. Tap.*$/, '') + '. ' : '') + 'See Needs you in the Ledger' + (document.documentElement.classList.contains('touch') ? '.' : ' (L).') });
       }
     }
+    if (wid && typeof BridgeBoards !== 'undefined') BridgeBoards.nextUp(wid).forEach(function (b) { out.push(b); });   // a request here you can fill now
     if (typeof BridgeInventory !== 'undefined' && BridgeInventory.freeSlots && BridgeInventory.freeSlots() === 0) {
       out.push({ tag: 'Pack', title: 'Your pack is full', text: 'Sell to a trader, or leave things in a chest: the sea chest on the bridge, the locker in your quarters.' });
     }

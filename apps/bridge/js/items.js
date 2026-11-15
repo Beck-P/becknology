@@ -621,6 +621,20 @@ var BridgeItems = (function () {
     px(ctx, x, y, u, '#3a6a9a', [[4, 4, 8, 7], [5, 3, 6, 9]]); px(ctx, x, y, u, '#8ac8ec', [[6, 3, 4, 6]]); px(ctx, x, y, u, '#e8f8ff', [[7, 4, 1, 3]]);
     px(ctx, x, y, u, '#a080e0', [[11, 6, 1, 3]]);
   }
+  function hearthstoneIcon(ctx, x, y, s) {        // a golem core in a copper cage, its glow gone warm
+    var u = s / 16;
+    px(ctx, x, y, u, '#1a0e08', [[4, 3, 8, 11], [3, 5, 10, 7]]);
+    px(ctx, x, y, u, '#d08040', [[7, 2, 2, 2]]);
+    px(ctx, x, y, u, '#c86a2a', [[4, 5, 8, 6], [5, 4, 6, 8]]); px(ctx, x, y, u, '#ffc070', [[6, 6, 4, 4]]); px(ctx, x, y, u, '#fff0c8', [[7, 7, 2, 1]]);
+    px(ctx, x, y, u, '#7a3e1a', [[4, 7, 8, 1], [7, 4, 1, 8]]);
+  }
+  function teaIcon(ctx, x, y, s) {                // a flask of butter tea under a string of little flags
+    var u = s / 16;
+    px(ctx, x, y, u, '#1a1008', [[5, 5, 6, 10], [6, 3, 4, 2]]);
+    px(ctx, x, y, u, '#a87a4a', [[6, 6, 4, 8]]); px(ctx, x, y, u, '#e0c8a0', [[6, 6, 4, 2]]); px(ctx, x, y, u, '#5a3a1a', [[6, 3, 4, 1]]);
+    px(ctx, x, y, u, '#3a6ae0', [[1, 1, 2, 2]]); px(ctx, x, y, u, '#f0f0f0', [[4, 1, 2, 2]]); px(ctx, x, y, u, '#d83a2e', [[7, 0, 2, 2]]);
+    px(ctx, x, y, u, '#3aa05a', [[10, 1, 2, 2]]); px(ctx, x, y, u, '#f0c020', [[13, 1, 2, 2]]);
+  }
   function shellKeyIcon(ctx, x, y, s) {
     var u = s / 16;
     px(ctx, x, y, u, '#0a1210', [[3, 3, 6, 6], [8, 5, 6, 2], [11, 7, 1, 3], [13, 7, 1, 2]]);
@@ -1664,6 +1678,19 @@ var BridgeItems = (function () {
                      type: 'material', stackable: true, draw: scaleIcon, value: 180 },
     wyrmfang:      { id: 'wyrmfang', name: 'Wyrmfang', desc: 'A sabre ground from the glacier wyrm\'s own tooth, bound in its hide. Its sweep cuts either side, and what it cuts is rimed and slowed.',
                      type: 'weapon', stackable: false, draw: bladeIcon('#d8f0ff', '#2a4a6a', true, '#ffffff'), damage: 72, arc: true, frost: true, cls: 'sword', value: 400, onUse: weaponUse },
+    // the valley's loot put to use (spec-deeper-worlds H1, H2): a golem core made into a hand-warmer at your Workshop
+    // (js/workshop.js), and Brother Anselm's tea once he's home (The Last Monk)
+    hearthstone:   { id: 'hearthstone', name: 'Hearthstone', desc: 'A golem core in a copper cage. With the rime knocked off, the glow in it turns out to be warm - it was the valley\'s spring all along. Hold it and you\'re warm for forty-five minutes, blizzard or no. It never goes out.',
+                     type: 'tool', stackable: false, draw: hearthstoneIcon, value: 140,
+                     onUse: function () {
+                       if (typeof BridgeHoarfell !== 'undefined') BridgeHoarfell.warm(45);
+                       if (typeof BridgeFX !== 'undefined' && BridgeFX.spawnFloatingText && typeof BridgeCharacter !== 'undefined') BridgeFX.spawnFloatingText(BridgeCharacter.getX(), BridgeCharacter.getY() - 0.3, 'WARM', '#ffb070');
+                       if (typeof BridgeAudio !== 'undefined') BridgeAudio.sfx('sit');
+                       return false;
+                     } },
+    prayer_flag_tea: { id: 'prayer_flag_tea', name: 'Prayer-Flag Tea', desc: 'Brother Anselm\'s butter tea in a flask, salted, the brick it was cut from stamped with the monastery\'s flags. Strange the first time. It keeps the cold off for an hour.',
+                     type: 'drink', stackable: true, draw: teaIcon, effects: { energy: 25 }, value: 6, works: 'the cold can\'t touch you for an hour, and +25 energy',
+                     onUse: function (inv) { if (typeof BridgeHoarfell !== 'undefined') BridgeHoarfell.warm(60); return consumableUse.call(this, inv); } },
     wisp_ember:    { id: 'wisp_ember', name: 'Wisp Ember', desc: 'What\'s left of a will-o\'-wisp: a cold violet coal that won\'t go out. Morwen buys them.',
                      type: 'material', stackable: true, draw: emberIcon, value: 15 },
     tomb_key:      { id: 'tomb_key', name: 'Shell Key', desc: 'A key shaped like a cockle shell, green with the sea. A drowned thing in the graveyard on Midnight Isle was carrying it.',

@@ -113,7 +113,8 @@ var BridgeMap = (function () {
                  derby: 'the race book', crash: 'crash', lobby: 'Royale Link: your casino account', runouts: 'Runouts' };
   var USE = { farm_well: 'fills a watering can', farm_tools: 'tools', farm_bin: 'the shipping bin', farm_barn: 'the barn', farm_board: 'orders', farm_ledger: 'the farm\'s books',
               mine_rack: 'pickaxes', mine_slate: 'your deepest floor', lodge_fire: 'warm up', lodge_board: 'the board', climb_board: 'the routes', climb_register: 'the summit register',
-              park_board: 'scores', ski_wax: 'wax your skis', stats_panel: 'the ship\'s logs', locker: 'your decor', catalog: 'decor' };
+              park_board: 'scores', ski_wax: 'wax your skis', stats_panel: 'the ship\'s logs', locker: 'your decor', catalog: 'decor',
+              notice_board: 'three requests a day, paid over a sale' };
 
   function cluesHere(wid) {                                        // the quest clues you've found in this world: label → quest
     var out = {};
@@ -270,7 +271,7 @@ var BridgeMap = (function () {
         });
       });
     });
-    if (has('board')) out.push('the board\'s requests');
+    if (has('board') || has('notice_board')) out.push('the board\'s requests, new each day');
     if (typeof BridgeFestivals !== 'undefined' && BridgeFestivals.on) BridgeFestivals.on().forEach(function (f) { if (f.world === wid) out.push(f.name + ', on now'); });
     if (typeof BridgeEvents !== 'undefined' && BridgeEvents.live && wid === here()) BridgeEvents.live(wid).forEach(function (e) { if (e.name) out.push(e.name + ', on now'); });
     if (typeof BridgeBusiness !== 'undefined' && BridgeBusiness.all) BridgeBusiness.all().forEach(function (d) {
@@ -349,6 +350,7 @@ var BridgeMap = (function () {
         if (typeof BridgeForage !== 'undefined') BridgeForage.decorate(wid, d);
         if (typeof BridgeGear !== 'undefined') BridgeGear.decorate(wid, d);
         if (typeof BridgeStorage !== 'undefined') BridgeStorage.decorate(wid, d);
+        if (typeof BridgeBoards !== 'undefined') BridgeBoards.decorate(wid, d);          // the notice boards' requests (js/boards.js)
         if (typeof BridgeScene !== 'undefined' && BridgeScene.walkerInteractions) d.interactions = d.interactions.concat(BridgeScene.walkerInteractions(wid));   // people out walking
         if (typeof BridgeRoutines !== 'undefined') BridgeRoutines.adjust(wid, d);       // who's here at this hour
       } catch (e) { /* the map does without */ }

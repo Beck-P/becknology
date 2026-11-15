@@ -1683,6 +1683,7 @@ html.touch .pk-keys { display: none; }
 .wd-chooser .wd-sell-row.pick.info { cursor: default; }                              /* a figure to read (the treasury) */
 .wd-chooser .wd-sell-row.pick.info .sp-price { opacity: 0.95; font-weight: 700; }
 .wd-chooser .sp-have { white-space: normal; text-align: right; line-height: 1.3; }
+.wd-chooser .sp-have .sp-mute { opacity: 0.55; }                                             /* a quiet aside in a row (a board's "you have 0") */
 @media (max-width: 520px) {
   .wd-chooser .wd-sell-row.pick { grid-template-columns: 24px 1fr auto; }
   .wd-chooser .sp-have { grid-column: 2 / 4; text-align: left; }

@@ -342,7 +342,18 @@ var BridgeGear = (function () {
     BridgeLook.drawPreview(c, t, looking ? state.style : previewStyle || state.style, previewColour, BridgeLook.get());
   }
 
-  return { open: open, close: close, decorate: decorate, isOpen: function () { return !!el; },
+  // given, not bought (Maison Vautrin's furs made from your own pelts, js/alpine.js): it's yours and, a suit, you wear it
+  function grant(kind, key) {
+    if (kind === 'suit' && SUITS[key]) { state.suits[key] = 1; state.style = key; }
+    else if (kind === 'time' && TIMES[key]) state.times[key] = 1;
+    else if (kind === 'pack' && PACKS[key]) state.packs[key] = 1;
+    else return false;
+    save(); changed();
+    return true;
+  }
+  function owns(kind, key) { return owned({ kind: kind, key: key }); }
+
+  return { open: open, close: close, decorate: decorate, isOpen: function () { return !!el; }, grant: grant, owns: owns,
            style: style, colour: colour, speed: speed, bonus: bonus, has: has, packSlots: packSlots, packName: function () { return PACKS[bestPack()].name; },
            keepsTime: keepsTime, timeReads: timeReads, SUITS: SUITS, PACKS: PACKS, TIMES: TIMES, SHOPS: SHOPS };
 })();

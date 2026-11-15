@@ -1,7 +1,8 @@
 // Getting round Arcadia (js/transit.js): the express lifts (the street's lift up to the Skywalk, across and up to Skyport 7,
 // back down), a ride's frames on the way up through the smog to the Spires and down below the street, an air cab, the Loop
 // (board at a station, the carriage running round the ring, step off at your stop), the Loop's train crossing over the
-// District street, and the Map's side-on cutaway of the city. Shots in OUT (`transit_*.png`).
+// District street, the ride as a set piece (a bore, the other train), the skyline in each weather, and the Map's side-on
+// cutaway of the city. Shots in OUT (`transit_*.png`).
 const { chromium } = require('playwright');
 const OUT = process.argv[2] || __dirname + '/../shots';
 const BASE = 'http://127.0.0.1:8766/';
@@ -101,6 +102,29 @@ const BASE = 'http://127.0.0.1:8766/';
   const run = await p.evaluate(() => BridgeTransit._trip());
   console.log('aboard, running:', run.phase, Math.round(run.dist) > 0);
   await p.screenshot({ path: OUT + '/transit_loop_carriage.png' });
+  // the ride as a set piece: through a tower's bore, the other train flashing past, the city above and below the car
+  const L = await p.evaluate(() => ({ leg: BridgeTransit.LEG, bore: BridgeTransit.BORE, meet: BridgeTransit.MEET, at: BridgeTransit._trip().dist }));
+  const k = Math.floor(L.at / L.leg);
+  if (k % 3 !== 2) {
+    await p.evaluate((d) => BridgeTransit._runTo(d), L.bore * L.leg); await p.waitForTimeout(300);
+    const pb = await p.evaluate(() => BridgeTransit._passing());
+    console.log('in a bore:', !!pb.bore, 'dark', pb.dark.toFixed(2));
+    if (!pb.bore || pb.dark < 0.9) { errors++; console.log('the Loop: ERROR not inside the tower at its bore'); }
+    await p.screenshot({ path: OUT + '/transit_loop_bore.png' });
+  }
+  await p.evaluate((d) => BridgeTransit._runTo(d), L.meet * L.leg - 120); await p.waitForTimeout(200);
+  const pm = await p.evaluate(() => BridgeTransit._passing());
+  console.log('the other train passing at', pm.meet);
+  if (pm.meet == null) { errors++; console.log('the Loop: ERROR the other train never passes'); }
+  await p.screenshot({ path: OUT + '/transit_loop_meet.png' });
+  // the skyline in Arcadia's weather (js/skyline.js): rain only when it rains; smog; a blackout
+  await go('arcadia-skywalk', [15, 1]); await p.waitForTimeout(1500);
+  for (const w of ['clear', 'rain', 'smog', 'blackout']) {
+    await p.evaluate((w) => BridgeSkyline._forceWeather(w === 'clear' ? {} : { [w]: 1 }), w); await p.waitForTimeout(400);
+    await p.screenshot({ path: OUT + '/transit_sky_' + w + '.png' });
+  }
+  await p.evaluate(() => BridgeSkyline._forceWeather(null));
+  console.log('skyline weather now', JSON.stringify(await p.evaluate(() => BridgeSkyline.weather())));
 
   // ---- the Loop's train over the street ----
   await go('arcadia-street'); await p.waitForTimeout(1500);

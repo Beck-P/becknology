@@ -182,6 +182,20 @@
         "q": "The abbey",
         "a": "THE MONKS WERE LISTENERS. EVERY NIGHT THEY SAT BY THE MOON POOL AND WROTE DOWN THE SHIPS THEY HEARD PASSING OVERHEAD - NOT SAILING SHIPS. THE OTHER KIND. WHEN THE LAST OF THEM DIED THEY LEFT ME THE BOOK. I HAVEN'T OPENED IT. I KNOW WHAT'S ON THE LAST PAGE.",
         "rumour": "listeners"
+      },
+      {
+        "q": "Cold things?",
+        "a": "THE WINGS OF ICE BATS, FOR THE TELESCOPE'S CASE - NOTHING KEEPS A LENS FROM FOGGING LIKE THEM. AND WRAITH ESSENCE, FROM HOARFELL'S FROZEN MONASTERY. A FROST WRAITH IS A FEAR THAT FORGOT WHOSE IT WAS. IN A PHIAL IT MAKES A VERY GOOD INK FOR WARDS. I PAY FOR BOTH. THE CAT DISAPPROVES.",
+        "sell": [
+          {
+            "id": "bat_wing",
+            "price": 22
+          },
+          {
+            "id": "wraith_essence",
+            "price": 90
+          }
+        ]
       }
     ]
   },
@@ -2877,6 +2891,20 @@
         ]
       },
       {
+        "q": "Things from the cold?",
+        "a": "ICE-BAT WINGS FOR A COOLING DRAUGHT - THIN AS PAPER, AND THEY KEEP A FEVER DOWN BETTER THAN WILLOW BARK. AND WHAT'S LEFT OF A FROST WRAITH, IF YOU'VE THE STOMACH TO CATCH IT: ONE DROP IN A SLEEPING DRAUGHT AND NOBODY DREAMS OF ANYTHING. BOTH FROM HOARFELL'S HIDDEN VALLEY, I'M TOLD. I DON'T GO. I DON'T LIKE COLD FEET.",
+        "sell": [
+          {
+            "id": "bat_wing",
+            "price": 24
+          },
+          {
+            "id": "wraith_essence",
+            "price": 80
+          }
+        ]
+      },
+      {
         "q": "The Moonwell",
         "a": "IT SHOWS YOU WHAT YOU'D CROSS THE SEAS FOR. MOST PEOPLE LOOK ONCE AND GO HOME A LITTLE DIFFERENT."
       },
@@ -3738,7 +3766,8 @@
       },
       {
         "q": "The hidden valley",
-        "a": "WARM UNDER THE SNOW. HOT SPRINGS, MOSS, AN OLD MONASTERY ON A CLIFF. WOLVES ON THE OUTER SLOPES, WORSE FURTHER IN. AND THE BIG WHITE ONES - YOU'LL SEE THEM IF THEY LET YOU. BE PATIENT WITH THEM."
+        "a": "WARM UNDER THE SNOW. HOT SPRINGS, MOSS, AN OLD MONASTERY ON A CLIFF - ONE OLD MONK STILL IN IT, ON HIS OWN, TOO PROUD TO ASK ANYONE FOR ANYTHING. WOLVES ON THE OUTER SLOPES, WORSE FURTHER IN. AND THE BIG WHITE ONES - YOU'LL SEE THEM IF THEY LET YOU. BE PATIENT WITH THEM.",
+        "rumour": "last-monk"
       }
     ]
   },
@@ -3797,6 +3826,11 @@
       {
         "q": "The valley",
         "a": "DOWN THROUGH THE LARCHES TOMORROW, THEN THE STEAM. THE WOLVES HUNT IN THREES ON THE OUTER SLOPES. THE CAVES ARE FULL OF THINGS THAT CLICK. THE MONKS LEFT THE MONASTERY YEARS AGO AND SOMETHING COLD MOVED IN. AND AT THE HEART OF IT, UNDER THE SNOW - NOBODY'S SEEN IT. EVERYBODY'S HEARD IT."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "ONE OF THE MONKS STAYED. ANSELM. HE KEEPS A BRAZIER IN ONE LITTLE CELL UP THERE AND HASN'T SET FOOT IN HIS OWN HALL SINCE THE COLD CAME. I SEND HIM BREAD WHEN ANYONE'S GOING DOWN. HE SENDS BACK BUTTER TEA AND A NOTE THAT SAYS 'NOT YET.' SOMEBODY OUGHT TO HELP THAT MAN.",
+        "rumour": "last-monk"
       },
       {
         "q": "About you",
@@ -3897,6 +3931,61 @@
       {
         "q": "The big white ones",
         "a": "THE YETIS? OLD FRIENDS OF THIS HOUSE. THEY BRING US WOOD; WE LEAVE THEM BERRIES AND SALT. SHY AS DEER. NEVER RUN AT ONE. SIT STILL, OFFER SOMETHING, COME BACK TOMORROW. AND THE DAY AFTER."
+      },
+      {
+        "q": "The bell",
+        "a": "THEN RING IT. NOT FOR THE GATE, THIS TIME. FOR ME. I WILL HEAR IT FROM HERE, AND I WILL COME.",
+        "when": ["last-monk/fears", "last-monk/lamps", "last-monk/spring"],
+        "until": "last-monk"
+      },
+      {
+        "q": "Why not go in?",
+        "a": "I STAYED. I DID NOT SAY I WAS BRAVE. I HAVE KEPT THIS ONE CELL AND THIS ONE BRAZIER, AND I HAVE NOT CROSSED THE COURTYARD TO MY OWN HALL IN ELEVEN WINTERS. IT IS NOT MINE WHILE IT IS LIKE THIS.\n\nFOUR THINGS WOULD GIVE IT BACK. LAY MY BROTHERS' FEARS. LIGHT THE LAMPS. LET THE SPRING RUN. RING THE BELL. I AM TOO OLD FOR ANY OF THEM. YOU, I THINK, ARE NOT.",
+        "when": "last-monk/anselm",
+        "until": "last-monk"
+      },
+      {
+        "q": "Their fears",
+        "a": "THE WRAITHS IN THE COURTYARD. WHEN ONE FADES IT LEAVES A LITTLE MIST BEHIND - CATCH IT IN A PHIAL. MY BROTHERS LEFT WHAT THEY COULD NOT CARRY AT THE CHORTENS DOWN IN THE VALLEY: A WORRY, A GRUDGE, A BAD DREAM. TAKE THREE PHIALS DOWN AND LEAVE THEM AT ONE. THE CHORTENS KNOW WHAT TO DO WITH THEM. A HOLY EDGE HELPS, IF YOU HAVE ONE.",
+        "when": "last-monk/anselm",
+        "until": "last-monk/fears"
+      },
+      {
+        "q": "The lamps",
+        "a": "THEY HANG UP IN THE DARK UNDER THE HALL'S ROOF. WE LIT THEM WITH A TAPER ON A POLE AS LONG AS A BOAT, AND THE STONES BROKE IT FOR KINDLING. AN ELF CAME OVER THE COL ONCE, ON A WAGER, WITH ARROWS THAT BURNED. SHE SAID A LANTERN MAKER CALLED WREN SELLS THEM IN THE ROOT MARKET ON SYLVARA, AND THE BOWYER NEXT TO HER SELLS THE BOW. THREE ARROWS FROM THE DOORWAY. I AM NOT A GOOD SHOT EITHER.",
+        "when": "last-monk/anselm",
+        "until": "last-monk/lamps"
+      },
+      {
+        "q": "The spring",
+        "a": "YOU HAVE SEEN A GOLEM'S HEART? ICE OUTSIDE, AND IN THE MIDDLE A LITTLE GLOW THAT BEATS. THAT GLOW IS OUR SPRING'S WARMTH. THE COLD STOLE IT TO MAKE THE STONES WALK. THE SPRING'S MOUTH, AT THE TOP OF THE HOT TERRACES DOWN THE STAIR, IS CHOKED WITH ICE. PUT TWO HEARTS BACK IN IT AND THE WATER WILL REMEMBER WHAT IT WAS.",
+        "when": "last-monk/anselm",
+        "until": "last-monk/spring"
+      },
+      {
+        "q": "The hall",
+        "a": "COME AND SLEEP IN IT. THE CUSHIONS ARE WHERE THEY WERE, AND THE SPRING RUNS UNDER THE FLOOR AGAIN AS IT DID FOR A THOUSAND YEARS. LIE DOWN ON IT AND YOU WAKE UP WARM. THE FOUNTAIN IS A BATH NOW, IF YOU DON'T MIND THE SPARROWS.",
+        "when": "last-monk",
+        "use": {
+          "type": "vale",
+          "label": "THE HALL"
+        }
+      },
+      {
+        "q": "Tea for the road?",
+        "a": "PRAYER-FLAG TEA. BUTTER, SALT, AND THE BRICK STAMPED WITH OUR FLAGS. IT KEEPS THE COLD OFF FOR AN HOUR. YOU WILL GET USED TO IT.",
+        "when": "last-monk",
+        "stores": [
+          {
+            "id": "prayer_flag_tea",
+            "price": 8
+          }
+        ]
+      },
+      {
+        "q": "The evenings",
+        "a": "THE YETIS COME UP THE STAIR WHEN THE LIGHT GOES - THEY HEARD THE BELL TOO. I LEAVE BERRIES AND SALT ON THE TOP STEP, LIKE BEFORE. AFTER DARK THE COLD STILL COMES UP FROM THE GLACIER AND THE STONES GET UP AND WALK. BY MORNING THEY ARE STONES AGAIN. I SLEEP THROUGH IT NOW.",
+        "when": "last-monk"
       }
     ]
   },

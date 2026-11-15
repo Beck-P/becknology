@@ -266,13 +266,15 @@ const ONLY = process.argv[3] || '';
     await use('STAR-READER');
     if (!await has('ithils-star/ask')) fail('not begun at Ithil');
     if (await has('ithils-star/star')) fail('a star given with none in the pack');
+    const lackToast = await p.evaluate(() => [...document.querySelectorAll('.quest-toast, #quest-toast, .qt-toast, [class*="toast"]')].map(e => e.innerText).join(' | '));
+    if (!/You need 1 Fallen Star/.test(lackToast)) fail('no toast saying what\'s missing: ' + lackToast.slice(0, 200));
     if ((await topics())[0] !== 'Where do they fall?') fail('Ithil\'s first topic: ' + JSON.stringify(await topics()));
     await shut();
     const lead = await p.evaluate(() => BridgeQuests.leads('ithils-star', 2).join(' / '));
     if (!/starfall/i.test(lead) || !/forecast/.test(lead)) fail('the lead: ' + lead);
     const fsu = await p.evaluate(() => BridgeUses.lines('fallen_star').map(l => l.t.replace(/<[^>]+>/g, '')).join(' / '));
     console.log('fallen star uses:', fsu);
-    if (!/A Star of Your Own wants one/.test(fsu)) fail('the fallen star\'s card doesn\'t say Ithil wants one');
+    if (!/A Star of Your Own wants 1/.test(fsu)) fail('the fallen star\'s card doesn\'t say Ithil wants one');
     await use('THE STAR DIAL');
     if (/SPARK/.test(await said())) fail('a star on the dial already');
     await shut();
@@ -297,6 +299,16 @@ const ONLY = process.argv[3] || '';
     await shut();
     if (await mail('ithils-star') !== 'Ithil') fail('no letter from Ithil: ' + await mail('ithils-star'));
     console.log('ithils-star', await has('ithils-star'));
+    // found beside a partner (js/multi.js passes `shared`): it neither asks for nor takes the receiver's things
+    await p.evaluate(() => { BridgeQuests.reset(); BridgeInventory.removeItem('fallen_star', BridgeInventory.getCount('fallen_star')); });
+    const sr = { world: 'sylvara-crown', label: 'STAR-READER' };
+    await p.evaluate((sr) => { BridgeQuests.onInteract(sr.world, { label: sr.label }); BridgeInventory.addItem('fallen_star', 2); BridgeQuests.onInteract(sr.world, { label: sr.label, shared: true }); }, sr);
+    if (!await has('ithils-star/star')) fail('a shared find didn\'t count');
+    if (await count('fallen_star') !== 2) fail('a shared find took the receiver\'s star: ' + await count('fallen_star'));
+    await p.evaluate(() => { BridgeQuests.reset(); BridgeInventory.removeItem('apple', BridgeInventory.getCount('apple')); });
+    await p.evaluate(() => { const q = BridgeQuests.def('eddas-book'); q.clues.filter(c => c.id !== 'bake').forEach(c => BridgeQuests.onInteract(c.on.world, { label: c.on.label })); BridgeQuests.onInteract('verdance-village', { label: 'BRIDGET', shared: true }); });
+    if (!await has('eddas-book/bake')) fail('a shared bake didn\'t count without apples');
+    console.log('shared finds: star kept', await count('fallen_star'), 'bake without apples', await has('eddas-book/bake'));
   }
 
   // ---- on a phone: a story's words, the tracker and a quest thing's card at a narrow touch size ----

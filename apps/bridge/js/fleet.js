@@ -83,7 +83,9 @@ var BridgeFleet = (function () {
     ironwood:     { name: 'Ironwood Doubling', price: 1600, hull: 1.6, replaces: ['oak'], craft: true,
                     blurb: 'Oak through-bolted with star iron, a skin no yard on the five seas will sell you. Takes over half as much again in punishment.' },
     gloamscale:   { name: 'Gloamscale Sheathing', price: 2400, vmax: 1.07, rocks: 0.45, replaces: ['sheathing', 'roseite'], craft: true,
-                    blurb: 'The Gloamserpent\'s own scales, lapped over her bottom like a fish\'s: she slips through the water, and rocks glance off her.' }
+                    blurb: 'The Gloamserpent\'s own scales, lapped over her bottom like a fish\'s: she slips through the water, and rocks glance off her.' },
+    wyrmscale:    { name: 'Wyrmscale Plating', price: 2000, hull: 1.25, storm: 0.75, craft: true,
+                    blurb: 'The glacier wyrm\'s scales riveted over her bows on iron straps. She takes a quarter more punishment, and squalls do a quarter less harm.' }
   };
   var ROLES = {
     deckhand:  { name: 'Deckhand', fee: 60, blurb: 'Hauls, reefs and coils. Counts toward the hands a ship needs.' },

@@ -17,7 +17,6 @@
  *   the fair         the Harvest Fair's show (assets/festivals.json `entries`)
  *   trade            crated for a port's market, and where it's dearest (js/trade.js GOODS / HAUL / MARKET)
  *   the hall         a find that goes on show in your hall (js/trophies.js T); implants made of a trophy (js/implants.js)
- *   quests           a quest you've begun or heard of that asks for it (assets/quests.json, a clue's `have`)
  *   what it does     eaten or drunk (its `effects`, a potion's `works`), a weapon, a tool, a plan, a part, a map
  * and, when none of that is true and it has a value, plainly: only worth selling (who pays best is the line above it,
  * BridgeStorage.worthLine). `orphans()` lists those — the to-do for whoever builds next.
@@ -92,15 +91,20 @@ var BridgeUses = (function () {
         });
       }
       if (has('BridgeTrophies') && BridgeTrophies.T) Object.keys(BridgeTrophies.T).forEach(function (id) { add(id, { k: 'hall' }); });
+      // someone in particular who buys it (a `sell` topic in people.json), beyond the best price on the worth line
+      Object.keys(P).forEach(function (pid) { (P[pid].topics || []).forEach(function (t) { (t.sell || []).forEach(function (b) { add(b.id, { k: 'buyer', pid: pid, price: b.price }); }); }); });
+      // what a module wants it for (`WANTS`: { id, n, who, world, what } — Maison Vautrin and the pelts, js/alpine.js)
+      [has('BridgeAlpine') && BridgeAlpine.WANTS].forEach(function (list) { (list || []).forEach(function (w) { add(w.id, { k: 'want', who: w.who, world: w.world, what: w.what }); }); });
+      // the yetis of Hoarfell's hidden valley, fed once a day (js/valley.js FOODS; TREATS win their trust faster)
+      if (has('BridgeValley') && BridgeValley.FOODS) BridgeValley.FOODS.forEach(function (id) { add(id, { k: 'yeti', treat: (BridgeValley.TREATS || {})[id] || 0 }); });
+      // a quest step that takes it from your pack (quests.json, a clue's `takes`)
+      if (has('BridgeQuests') && BridgeQuests.defs) {
+        var QD = BridgeQuests.defs();
+        Object.keys(QD).forEach(function (qid) { (QD[qid].clues || []).forEach(function (c) { Object.keys(c.takes || {}).forEach(function (id) { add(id, { k: 'quest', q: qid, title: QD[qid].title, n: c.takes[id], clue: c.id }); }); }); });
+      }
       if (has('BridgeImplants') && BridgeImplants.CATALOG) {
         var C = BridgeImplants.CATALOG;
         Object.keys(C).forEach(function (k2) { if (C[k2].item) add(C[k2].item, { k: 'implant', name: C[k2].name }); });
-      }
-      if (has('BridgeQuests') && BridgeQuests.defs) {                // a quest that asks for it (a clue's `have`: Ithil's star, Edda's apples)
-        var QD = BridgeQuests.defs();
-        Object.keys(QD).forEach(function (qid) {
-          (QD[qid].clues || []).forEach(function (c) { Object.keys(c.have || {}).forEach(function (id) { add(id, { k: 'quest', q: qid, n: c.have[id], clue: c.id }); }); });
-        });
       }
     } catch (e) { /* a module that's changed shape: the rest still count */ }
     return (idx = I);
@@ -152,12 +156,6 @@ var BridgeUses = (function () {
       var rs = by.make.map(function (f) { var x = R[f.r]; return x && x.kind === 'make' && x.out ? nameOf(x.out[0]) : the(rname(f.r)); }).filter(function (n, i, a) { return a.indexOf(n) === i; });
       push('make', 9, '<b>Workshop:</b> goes into ' + esc(list(rs, 3)));
     }
-    (by.quest || []).forEach(function (f) {                             // wanted for a quest you haven't finished (not before you've heard of it)
-      var Q = has('BridgeQuests') ? BridgeQuests : null, d = Q && Q.def(f.q);
-      if (!d || Q.has(f.q) || Q.has(f.q + '/' + f.clue)) return;
-      if (!Q.progress(f.q).found && Q.rumours().indexOf(f.q) < 0) return;
-      push('quest', 10, '<b>A quest:</b> ' + esc(d.title) + ' wants ' + (f.n > 1 ? f.n : 'one'));
-    });
     if (by.brew) push('brew', 9, '<b>Brew it</b> with Mirelle: ' + esc(list(by.brew.map(function (f) { return nameOf(f.out); }), 3)));
     (by.makes || []).forEach(function (f) { push('makes', 9, '<b>Made into</b> ' + esc(nameOf(f.out)) + ' at ' + esc(f.where) + (f.n > 1 ? ' (' + f.n + ' at a time)' : '')); });
     (by.plant || []).forEach(function (f) { push('plant', 9, '<b>Plant it</b> on the farm: ' + esc(nameOf(f.out || f.crop)) + ' in ' + f.days + (f.days === 1 ? ' day' : ' days')); });
@@ -166,6 +164,18 @@ var BridgeUses = (function () {
     if (it.type === 'part') push('part', 9, '<b>A ship\'s part:</b> a harbourmaster fits it to one of yours');
     if (it.type === 'wonder') push('wonder', 9, '<b>A wonder:</b> it goes in the Cabinet of Wonders in your hall');
     if (/^tmap_/.test(id)) push('map', 9, '<b>A treasure map:</b> follow it to where something\'s buried');
+    (by.quest || []).forEach(function (f) {
+      if (has('BridgeQuests') && BridgeQuests.has && (BridgeQuests.has(f.q) || BridgeQuests.has(f.q + '/' + f.clue))) return;   // (done, or that step's given: not wanted any more)
+      push('quest', 9, '<b>A quest:</b> ' + esc(f.title) + ' wants ' + f.n);
+    });
+    (by.want || []).forEach(function (f) { push('want', 8, '<b>Wanted</b> at ' + esc(f.who) + (f.world ? ' (' + esc(place(f.world)) + ')' : '') + ': ' + esc(f.what)); });
+    if (by.buyer) {
+      var bs = by.buyer.map(function (f) { var w = who(f.pid); return w ? (w.met ? w.t : cap(w.t)) : null; }).filter(function (n, i, a) { return n && a.indexOf(n) === i; });
+      if (bs.length) push('buyer', 4, '<b>Bought by</b> ' + esc(list(bs, 3)) + ', for more than a trader pays');
+    }
+    (by.yeti || []).slice(0, 1).forEach(function (f) {
+      push('yeti', f.treat ? 7 : 3, '<b>A yeti</b> in Hoarfell\'s hidden valley takes it, once a day' + (f.treat ? ', and trusts you ' + (f.treat === 2 ? 'twice' : f.treat + ' times') + ' as fast for it' : ''));
+    });
     if (by.order) {
       var boards = [];
       if (by.order.some(function (f) { return f.board === 'farm'; })) boards.push('the farm\'s board');
