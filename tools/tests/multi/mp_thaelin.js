@@ -35,14 +35,24 @@ const { chromium, BECK, ALY, player, enter, reset } = require(process.argv[2] + 
   await use(beck, 'THE CARVING'); await shut(beck); await aly.waitForTimeout(1500); await shut(aly);
   [B, A] = await step('cave');
   if (A.found.indexOf('falls') < 0) bad('the cave\'s verse not found together');
-  // the lake isn't open: nothing for either
-  await beck.evaluate(() => BridgeQuests.onInteract('sylvara-lake', { label: 'FIRE RING' })); await aly.waitForTimeout(1200);
-  [B, A] = await step('shut');
-  if (B.found.indexOf('lake') >= 0 || A.found.indexOf('lake') >= 0) bad('the lake\'s verse found while shut');
-  // the two still closed open (the same game for both), and each verse is found together
-  for (const p of [beck, aly]) await p.evaluate(() => ['sylvara-lake', 'sylvara-deepwood'].forEach(i => BridgeSylvara.OPEN.push(i)));
-  for (const [w, l] of [['sylvara-lake', 'FIRE RING'], ['sylvara-deepwood', 'THE POOL']]) {
-    await beck.evaluate(([w, l]) => BridgeQuests.onInteract(w, { label: l }), [w, l]); await aly.waitForTimeout(1200);
+  // the lake and the Deepwood: found together where each is open; one not open yet is shut for both, then opened
+  // (the same game for both) and found together
+  for (const [w, l, clue, ids] of [['sylvara-lake', 'FIRE RING', 'lake', ['sylvara-lake']], ['sylvara-deepwood', 'THE POOL', 'deep', ['sylvara-deepwood']]]) {
+    const open = await beck.evaluate((w) => BridgeSylvara.isOpen(w), w);
+    if (open) {
+      const at = await beck.evaluate((w) => fetch('/bridge/assets/worlds/' + w + '.json').then(r => r.json()), w).then(d => { const i = d.interactions.find(i => i.label === l); const free = (x, y) => d.collisions[y] && d.collisions[y][x] === 0;
+        const sp = [[0, 1], [1, 0], [-1, 0], [0, -1], [1, 1], [-1, 1]].map(o => [i.x + o[0], i.y + o[1]]).filter(q => free(q[0], q[1])); return sp; });
+      await both(w, at[0], at[1] || at[0]);
+      await use(beck, l); await shut(beck); await aly.waitForTimeout(1500); await shut(aly);
+    } else {
+      await beck.evaluate(([w, l]) => BridgeQuests.onInteract(w, { label: l }), [w, l]); await aly.waitForTimeout(1200);
+      [B, A] = await step(clue + ' shut');
+      if (B.found.indexOf(clue) >= 0 || A.found.indexOf(clue) >= 0) bad('the ' + clue + '\'s verse found while shut');
+      for (const p of [beck, aly]) await p.evaluate((ids) => ids.forEach(i => BridgeSylvara.OPEN.push(i)), ids);
+      await beck.evaluate(([w, l]) => BridgeQuests.onInteract(w, { label: l }), [w, l]); await aly.waitForTimeout(1200);
+    }
+    [B, A] = await step(clue + (open ? ' (open)' : ' (opened)'));
+    if (A.found.indexOf(clue) < 0) bad('the ' + clue + '\'s verse not found together');
   }
   [B, A] = await step('opened');
   if (A.found.split(',').length !== 6) bad('Alyssa\'s verses once open: ' + A.found);

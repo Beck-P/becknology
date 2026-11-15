@@ -157,51 +157,57 @@ const ONLY = process.argv[3] || '';
     await go('sylvara-tavern', 'THE STAGE');
     await use('THE STAGE'); const t2 = await said(); await shut();
     if (!/FENNICK POURED/.test(t2)) fail('the stage showed no verse');
-    // the falls and the cave behind them are open (BridgeSylvara.OPEN): the cave's gate opened by itself, the lake's and
-    // the Deepwood's still shut
-    const gates = await p.evaluate(() => ['verse-falls', 'verse-lake', 'verse-deepwood'].map(g => BridgeQuests.has('gate:' + g)));
-    console.log('gates falls/lake/deepwood:', JSON.stringify(gates));
-    if (!gates[0] || gates[1] || gates[2]) fail('the gates: ' + JSON.stringify(gates));
-    const fallLead = await p.evaluate((Q) => { BridgeQuests.track(Q); return BridgeQuests.leads(Q, 2); }, Q);
-    console.log('lead to the falls:', fallLead[0]);
-    if (/roped off|open yet/i.test(fallLead[0] || '') || !/behind the falls/i.test(fallLead[0] || '')) fail('the tracker\'s lead to the falls: ' + fallLead[0]);
-    const where = await p.evaluate((Q) => JSON.stringify(BridgeQuests.whereNext(Q)), Q);
-    console.log('the map\'s lead:', where);
-    if (!/fallcave/.test(where)) fail('the Map doesn\'t lead to the cave: ' + where);
-    await go('sylvara', 'BARD');
-    await use('BARD'); await pick(/verses so far/); const t3 = await said(); await shut();
-    if (!/BEHIND THE FALLS\. I'M SURE OF IT NOW/.test(t3)) fail('Thaelin\'s read-back: ' + t3.slice(-160));
-    // on foot from Thaelin: down to the Silverrun, down to the falls, down the stair, along the ledge behind the water
-    await through('sylvara-river');
-    await through('sylvara-falls');
-    await shot('y6_falls');
-    await through('sylvara-fallcave');
-    const cv = await p.evaluate(() => { const i = BridgeWorld.getWorld().interactions.find(i => i.label === 'THE CARVING'); return i && [i.x, i.y]; });
-    await walkTo(cv[0], cv[1]);
-    await use('THE CARVING'); const tc = await said();
-    if (!/BEHIND THE FALLING WATER'S ROAR/.test(tc)) fail('the carving showed no verse: ' + tc.slice(0, 80));
-    if (!await has(Q + '/falls')) fail('the cave\'s verse not found');
-    await shot('y6_carving'); await shut();
-    // the lake is still shut: the tracker says so, the clue can't be had, Thaelin says so
-    const shutLead = await p.evaluate((Q) => BridgeQuests.leads(Q, 2), Q);
-    console.log('lead while the lake is shut:', shutLead[0]);
-    if (!/nobody can get down there yet/i.test(shutLead[0] || '')) fail('the tracker didn\'t say the way to the lake is shut');
-    await p.waitForTimeout(1200);
-    await shot('y6_tracker');
-    await p.evaluate(() => BridgeQuests.onInteract('sylvara-lake', { label: 'FIRE RING' }));
-    if (await has(Q + '/lake')) fail('the lake\'s verse found while its place is shut');
-    await go('sylvara', 'BARD');
-    await use('BARD'); await pick(/verses so far/); const t3b = await said(); await shut();
-    if (!/BEHIND THE FALLING/.test(t3b) || !/ROPED OFF/.test(t3b)) fail('Thaelin\'s read-back with the lake shut: ' + t3b.slice(-160));
-    // the two places still closed: each opened (as BridgeSylvara.OPEN will get it) and its verse had, in order
-    for (const [ids, w, label, clue, words] of [[['sylvara-lake'], 'sylvara-lake', 'FIRE RING', 'lake', /AND THEN CAME UP/],
-                                                [['sylvara-deepwood'], 'sylvara-deepwood', 'THE POOL', 'deep', /COUNTING STARS/]]) {
-      const lead = await p.evaluate(([Q, ids]) => { ids.forEach(i => BridgeSylvara.OPEN.push(i)); return BridgeQuests.leads(Q, 1)[0]; }, [Q, ids]);
-      if (/roped off|isn't open|open yet|get down there yet/i.test(lead)) fail(clue + ': still says shut once open: ' + lead);
-      const hit = await p.evaluate(([w, l]) => BridgeQuests.onInteract(w, { label: l }).map(c => c.say || ''), [w, label]);
-      if (!await has(Q + '/' + clue) || !words.test(hit.join(''))) fail(clue + ': not found once its place opened');
+    // the three later verses, in order: each in a place that's open walked to on foot from Thaelin (down to the Silverrun,
+    // down to the falls, then the stair and the ledge behind the water, the path down to the lake, or the Deep Run), the
+    // tracker and the Map leading there; each in a place not open yet plainly shut (the tracker, the clue, Thaelin) and
+    // then opened as BridgeSylvara.OPEN will get it. Which are open is read from the game, so this follows the renders.
+    const STOPS = [
+      { clue: 'falls', gate: 'verse-falls', world: 'sylvara-fallcave', label: 'THE CARVING', route: ['sylvara-river', 'sylvara-falls', 'sylvara-fallcave'], words: /BEHIND THE FALLING WATER'S ROAR/, where: /behind the falls/i, ids: ['sylvara-falls', 'sylvara-fallcave'] },
+      { clue: 'lake', gate: 'verse-lake', world: 'sylvara-lake', label: 'FIRE RING', route: ['sylvara-river', 'sylvara-falls', 'sylvara-lake'], words: /AND THEN CAME UP/, where: /mirror lake/i, ids: ['sylvara-lake'] },
+      { clue: 'deep', gate: 'verse-deepwood', world: 'sylvara-deepwood', label: 'THE POOL', route: ['sylvara-river', 'sylvara-falls', 'sylvara-deepwood'], words: /COUNTING STARS/, where: /deepwood/i, ids: ['sylvara-deepwood'] }
+    ];
+    const SHUT = /roped off|get down there yet|open yet/i, opened = [];
+    let walked = 0, shutSeen = 0;
+    for (const S of STOPS) {
+      const open = await p.evaluate((g) => BridgeQuests.has('gate:' + g), S.gate);
+      const lead = await p.evaluate((Q) => { BridgeQuests.track(Q); return BridgeQuests.leads(Q, 1)[0]; }, Q);
+      console.log(S.clue + (open ? ' (open)' : ' (not open yet)') + ' lead:', lead);
+      if (open) {
+        if (SHUT.test(lead || '') || !S.where.test(lead || '')) fail(S.clue + ': the tracker\'s lead: ' + lead);
+        const where = await p.evaluate((Q) => BridgeQuests.whereNext(Q).map(w => w.world), Q);
+        if (where[0] !== S.world) fail(S.clue + ': the Map leads to ' + where[0]);
+        await go('sylvara', 'BARD');
+        await use('BARD'); await pick(/verses so far/); const tb = await said(); await shut();
+        if (!/I'M SURE OF IT NOW/.test(tb)) fail(S.clue + ': Thaelin\'s read-back: ' + tb.slice(-120));
+        for (const t of S.route) await through(t);
+        if (S.clue === 'falls') await shot('y6_falls');
+        const at = await p.evaluate((l) => { const i = BridgeWorld.getWorld().interactions.find(i => i.label === l); return i && [i.x, i.y]; }, S.label);
+        if (!at) { fail(S.clue + ': no ' + S.label + ' in ' + S.world); continue; }
+        await walkTo(at[0], at[1]);
+        await use(S.label); const tv = await said();
+        if (!S.words.test(tv)) fail(S.clue + ': no verse at ' + S.label + ': ' + tv.slice(0, 80));
+        if (!await has(Q + '/' + S.clue)) fail(S.clue + ': the verse not found');
+        await shot('y6_verse_' + S.clue); await shut();
+        walked++;
+      } else {
+        if (!SHUT.test(lead || '')) fail(S.clue + ': the tracker didn\'t say the way is shut: ' + lead);
+        if (!shutSeen++) {
+          await p.waitForTimeout(1200); await shot('y6_tracker');
+          await go('sylvara', 'BARD');
+          await use('BARD'); await pick(/verses so far/); const tb = await said(); await shut();
+          if (!/ROPED OFF/.test(tb)) fail(S.clue + ': Thaelin\'s read-back with it shut: ' + tb.slice(-120));
+        }
+        await p.evaluate(([w, l]) => BridgeQuests.onInteract(w, { label: l }), [S.world, S.label]);
+        if (await has(Q + '/' + S.clue)) fail(S.clue + ': found while its place is shut');
+        const lead2 = await p.evaluate(([Q, ids]) => { ids.forEach(i => BridgeSylvara.OPEN.push(i)); return BridgeQuests.leads(Q, 1)[0]; }, [Q, S.ids]);
+        S.ids.forEach(i => opened.push(i));
+        if (SHUT.test(lead2 || '')) fail(S.clue + ': still says shut once open: ' + lead2);
+        const hit = await p.evaluate(([w, l]) => BridgeQuests.onInteract(w, { label: l }).map(c => c.say || ''), [S.world, S.label]);
+        if (!await has(Q + '/' + S.clue) || !S.words.test(hit.join(''))) fail(S.clue + ': not found once its place opened');
+      }
     }
-    await p.evaluate(() => { ['sylvara-lake', 'sylvara-deepwood'].forEach(i => { const k = BridgeSylvara.OPEN.indexOf(i); if (k >= 0) BridgeSylvara.OPEN.splice(k, 1); }); });
+    console.log('verses walked to:', walked, '| opened here:', JSON.stringify(opened));
+    await p.evaluate((ids) => ids.forEach(i => { const k = BridgeSylvara.OPEN.lastIndexOf(i); if (k >= 0) BridgeSylvara.OPEN.splice(k, 1); }), opened);
     const c0 = await p.evaluate(() => window._coins);
     await go('sylvara-hall', 'HARP');
     await use('HARP'); const t4 = await said(); await shut();
@@ -216,7 +222,7 @@ const ONLY = process.argv[3] || '';
     await use('BARD'); await pick(/Play The Long Way Home/); const t6 = await said();
     if (!/ONLY GONE ASTRAY/.test(t6) || !/BEHIND THE FALLING/.test(t6)) fail('Thaelin\'s song after');
     await shot('y6_song'); await shut();
-    // on a phone: the verse at the carving, then the tracker while the lake is shut
+    // on a phone: the verse at the carving, then the tracker with the falls' verse found
     const ph = await page(true);
     await ph.evaluate((Q) => { const s = { [Q]: { clues: { ask: 1, lookout: 2, stage: 3 }, started: 1 } }; localStorage.setItem('bridge_quests', JSON.stringify(s)); }, Q);
     await ph.reload(); await ph.waitForTimeout(2500);
@@ -229,7 +235,8 @@ const ONLY = process.argv[3] || '';
     await go('sylvara-river', 'BOATWRIGHT', ph);
     await ph.waitForTimeout(6000);                                                   // (the weather's toast gone)
     const trk = await ph.evaluate(() => (document.getElementById('quest-tracker') || {}).innerText || '');
-    if (!/nobody can get down there yet/i.test(trk)) fail('phone tracker: ' + trk);
+    const lakeOpen = await ph.evaluate(() => BridgeQuests.has('gate:verse-lake'));
+    if (!(lakeOpen ? /Mirror Lake/i.test(trk) && !/roped off|get down there yet|open yet/i.test(trk) : /get down there yet/i.test(trk))) fail('phone tracker: ' + trk);
     await shot('y6_tracker_phone', ph);
     await ph.context().close();
     console.log('y6 done');
