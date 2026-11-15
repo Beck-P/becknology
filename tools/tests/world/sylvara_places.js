@@ -225,6 +225,44 @@ const OUT = process.argv[2] || '/tmp';
       await go('sylvara-falls', [16, 1]);
     }
   }
+  if (await isOpen('sylvara-deepwood')) {
+    // ---- along the Deep Run into the Deepwood: Sorrel, the pool, the Mossback, the heart oak's box; out to the Rootmarket --
+    await go('sylvara-falls', [16, 1]);
+    const fc = await reach([16, 1]);
+    const toDeep = (await inter('THE DEEPWOOD'))[0];
+    if (!toDeep || !near(fc, toDeep[0], toDeep[1])) fail('the way along the Deep Run can\'t be reached');
+    else {
+      await stand(toDeep[0], toDeep[1], 'right'); await press(); await p.waitForTimeout(2200);
+      if (await p.evaluate(() => BridgeWorld.getWorld().name) !== 'the Deepwood') fail('the Deep Run didn\'t lead into the Deepwood');
+      const dc = await reach(await p.evaluate(() => [Math.round(BridgeCharacter.getX()), Math.round(BridgeCharacter.getY())]));
+      const dw = await p.evaluate(() => BridgeWorld.getWorld());
+      for (const l of ['FORAGER', 'THE POOL', 'THE MOSSBACK', 'MOSSY BOX', 'THE ROOTMARKET', 'THE FALLS']) {
+        const it = dw.interactions.find(i => i.label === l);
+        if (!it || !near(dc, it.x, it.y)) fail('the Deepwood: ' + l + ' can\'t be reached');
+      }
+      const sor = (await inter('FORAGER'))[0];
+      await stand(sor[0], sor[1] + 1, 'up'); await press();
+      if (!/VISITOR|BACK/.test(await text())) fail('Sorrel doesn\'t answer');
+      await shut();
+      const pool = (await inter('THE POOL'))[0];
+      await stand(pool[0], pool[1], 'down'); await press();
+      if (!/LANTERN FROGS/.test(await text())) fail('the pool says nothing');
+      await shut();
+      const mb = (await inter('MOSSY BOX'))[0];
+      await stand(mb[0], mb[1], 'up'); await press();
+      if (!/COIN|MOSS/.test(await text())) fail('the heart oak\'s box gave nothing');
+      await shut();
+      const tort = (await inter('THE MOSSBACK'))[0];
+      await stand(tort[0], tort[1], 'right'); await press();
+      if (!/MOSSBACK|TORTOISE|SHELL|ASLEEP|DREAM/i.test(await text())) fail('the Mossback says nothing');
+      await shut();
+      const toRoots = (await inter('THE ROOTMARKET'))[0];
+      await stand(toRoots[0], toRoots[1], 'left'); await press(); await p.waitForTimeout(2200);
+      if (await p.evaluate(() => BridgeWorld.getWorld().name) === 'the Deepwood') fail('the path back to the city didn\'t leave the Deepwood');
+      console.log('deepwood: in along the Deep Run, Sorrel, the pool, the box, the Mossback, out to the Rootmarket');
+      await go('sylvara-falls', [16, 1]);
+    }
+  }
   const up = (await inter('THE SILVERRUN'))[0];
   await stand(up[0], up[1] + 1, 'up'); await press(); await p.waitForTimeout(2200);
   if (await p.evaluate(() => BridgeWorld.getWorld().name) === 'the Falls') fail('the way up didn\'t lead back to the Silverrun');

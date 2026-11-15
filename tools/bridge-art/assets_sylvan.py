@@ -314,19 +314,21 @@ def mushroom_ring(k, L, cx, cr, n=4, glow=False, col=SPORE, cap='#b8402e', size=
         k.point_light(cx, cr + 0.1, L.z(cx, cr) + 0.3, col, light, radius=0.1)
 
 
-def giant_mushroom(k, L, cx, cr, h=1.4, cap=0.7, col='#86f2d6', stem='#e8dccc', light=8.0):
-    """A glowing mushroom taller than you: a fat pale stem, a domed cap glowing from underneath, gills, spots."""
+def giant_mushroom(k, L, cx, cr, h=1.4, cap=0.7, col='#86f2d6', stem='#e8dccc', light=8.0, glow=1.0):
+    """A glowing mushroom taller than you: a fat pale stem, a domed cap glowing from underneath, gills, spots.
+    glow scales how strongly the cap, gills and spots glow (1.0 as ever; lower where daylight already lights the cap and
+    the glow on top of it clipped it to a white ball)."""
     rng = k.rng
     z0 = L.z(cx, cr)
     lean = rng.uniform(-0.12, 0.12)
     k.tube((cx, cr, z0 - 0.05), (cx + lean, cr, z0 + h), cap * 0.22, (stem, 0.3), 'mushroom_stem', rb=cap * 0.16, verts=12)
-    k.blob(cx + lean, cr, z0 + h, cap, cap * 0.9, cap * 0.5, (shade(col, 0.55), 0.3), 'mushroom_cap', emit=(col, 0.5), segs=16)
-    k.blob(cx + lean, cr, z0 + h - cap * 0.12, cap * 0.92, cap * 0.82, cap * 0.16, (shade(col, 0.8), 0.2), 'mushroom_gills', emit=(col, 1.6), segs=14)
+    k.blob(cx + lean, cr, z0 + h, cap, cap * 0.9, cap * 0.5, (shade(col, 0.55), 0.3), 'mushroom_cap', emit=(col, 0.5 * glow), segs=16)
+    k.blob(cx + lean, cr, z0 + h - cap * 0.12, cap * 0.92, cap * 0.82, cap * 0.16, (shade(col, 0.8), 0.2), 'mushroom_gills', emit=(col, 1.6 * glow), segs=14)
     for _ in range(int(6 + cap * 6)):
         a = rng.uniform(0, math.tau)
         d = rng.uniform(0.2, 0.75) * cap
         k.sphere(cx + lean + math.cos(a) * d, cr + math.sin(a) * d * 0.9, z0 + h + cap * 0.38 * (1 - (d / cap) ** 2) + 0.04,
-                 0.05 * cap, 0.03 * cap, col, 'mushroom_spot', emit=(col, 2.0), segs=6)
+                 0.05 * cap, 0.03 * cap, col, 'mushroom_spot', emit=(col, 2.0 * glow), segs=6)
     k.point_light(cx + lean, cr + 0.2, z0 + h - cap * 0.3, col, light, radius=0.2)
     k.solid(cx - 0.3, cr - 0.3, cx + 0.3, cr + 0.3)
 
