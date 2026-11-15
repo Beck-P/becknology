@@ -195,6 +195,7 @@ STALLS = [  # x0, x1, row, awning, stripe, goods
 for (x0, x1, r, a1, a2, g) in STALLS:
     A.leaf_stall(k, L, x0, x1, r, awning=a1, awning2=a2, kind=g)
 MERROW = (16, 16)                                                # behind the fruit stall                                                # behind the fruit stall
+WREN_AT, MERROW_AT = (2, 28), (MERROW[0], MERROW[1] + 2)          # Wren at the workshop's west end (in front, the trees hid her)
 for (x0, x1, r) in ((18.6, 20.2, 25.4), (23.8, 25.4, 25.4)):
     A.bench(k, L, x0, x1, r)
 for (x, r) in ((15.4, 20.0), (28.8, 21.6), (19.6, 24.2), (24.6, 24.2), (25.6, 18.0)):
@@ -387,7 +388,6 @@ for x in range(RANGE['x0'], RANGE['x1'] + 1, 3):
 open(WORLD, 'w').write(json.dumps(w, indent=2) + '\n')
 # Wren and Merrow stand out in front of their counters, at their talk points: behind them the lantern roof and the fruit
 # stall's awning hid them completely (the spots behind stay blocked)
-WREN_AT, MERROW_AT = (2, 28), (MERROW[0], MERROW[1] + 2)          # Wren at the workshop's west end (in front, the trees hid her)
 for (x, y) in (CORIN, WREN, LOOMER, MERROW, (int(LIFT[0]) + 2, int(LIFT[1])), AERIN, WREN_AT, MERROW_AT):
     k.solid(x, y, x + 1, y + 1)
 apply_world(WORLD, k, (0, 0, COLS - 1, ROWS - 1), scene_id=WID,
