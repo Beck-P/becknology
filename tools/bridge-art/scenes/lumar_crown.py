@@ -512,6 +512,11 @@ Q.fish_baskets(k, 45.55, FQ + 0.45)
 smoke(Q.harbour_house(k, 46.8, 50.4, FQ, 26.0, 3.3, 1.5, W.ROOF_SLATE, '#d4dccc', door_x=48.8, win_down=[(47.6, 0.62)],
                       win_up=[(47.6, 1.92), (49.7, 1.92)], win_up2=[(48.65, 2.62)], chimney=50.0, sign=(50.2, 2.15, 'compass')), 50.0)
 Q.net_rack(k, 49.3, 50.7, FQ + 0.65)
+# the strip behind the waterfront's backs is hidden under their roofs: never walkable (you'd walk over the roofs)
+k.solid(12, 23, 21, 25)
+k.solid(22, 23, 28, 25)
+k.solid(37, 23, 51, 25)
+k.solid(47, 25, 51, 26)
 # against the fronts: sacks, barrels, crates, rope and floats, tubs of flowers (each on its own tile; the quay stays open)
 Q.sacks(k, 11.95, FQ + 0.25)
 A.barrel(k, 15.4, FQ + 0.24, h=0.72, radius=0.24)          # (the sailor's beat along the fronts stays open)
@@ -1419,10 +1424,10 @@ w = {'name': 'Crownhaven', 'width': COLS, 'height': ROWS, 'tileSize': 16, 'tiles
          look('ROYAL YARD', 57, 25, 'THE ROYAL YARD. A GALLEON IN FRAME ON THE STOCKS, RIBS LIKE A WHALE\'S. THE SHIPWRIGHTS SAY SHE\'LL TAKE A YEAR.\n\nTHE HARBOURMASTER TAKES ORDERS FOR GALLEONS - "IF YOU\'VE THE COIN."'),
          look('NOTICE BOARD', 53, 25, 'NOTICES: GALLEON HULLS - ROYAL YARD. CARRIERS WANTED FOR SILK TO SAPPHIRE. PIRATES SIGHTED OFF THE CRIMSON SEAM - CONVOY THURSDAY.'),
          look('LIGHTHOUSE', 6, 26, 'THE CROWN LIGHT, ITS LAMP BURNING GREEN FOR THE EMERALD SEA. THE KEEPER WAVES FROM THE GALLERY.'),
-         look('MARKET', 24, 23, 'APPLES FROM THE NORTH GARDENS, BREAD STILL WARM, A CRATE OF PEARS FROM SOMEWHERE THAT ISN\'T HERE.'),
-         look('FISH MARKET', 27, 23, 'THE CATCH ON ICE: SILVERFIN, CRAB, A RAY AS BIG AS A DOOR.'),
-         look('SPICE STALL', 36, 23, 'SPICES FROM ALL FIVE SEAS IN LITTLE JARS. THE TRADER LETS YOU SMELL THE MOON SALT: IT SMELLS OF NOTHING AT ALL.'),
-         look('BOOKSTALL', 39, 23, 'CHARTS, ALMANACS, A BATTERED COPY OF "THE LADY OF THE EMERALD SEA". SOMEBODY HAS ANNOTATED EVERY PAGE.'),
+         look('MARKET', 24, 21, 'APPLES FROM THE NORTH GARDENS, BREAD STILL WARM, A CRATE OF PEARS FROM SOMEWHERE THAT ISN\'T HERE.'),
+         look('FISH MARKET', 27, 21, 'THE CATCH ON ICE: SILVERFIN, CRAB, A RAY AS BIG AS A DOOR.'),
+         look('SPICE STALL', 36, 21, 'SPICES FROM ALL FIVE SEAS IN LITTLE JARS. THE TRADER LETS YOU SMELL THE MOON SALT: IT SMELLS OF NOTHING AT ALL.'),
+         look('BOOKSTALL', 39, 21, 'CHARTS, ALMANACS, A BATTERED COPY OF "THE LADY OF THE EMERALD SEA". SOMEBODY HAS ANNOTATED EVERY PAGE.'),
          look('FISHING JETTY', FX, QUAY + 1, 'THE FISHING JETTY. LANTERNS ALONG IT, AND A CHALKED SIGN: "NO FISHING FROM THE ROYAL PIER."'),
      ]}
 open(WORLD, 'w').write(json.dumps(w, indent=2) + '\n')
