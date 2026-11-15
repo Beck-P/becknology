@@ -274,9 +274,10 @@ for i in range(22):                                                             
     for j in range(3):
         k.tube((x + j * 0.05, r, HZ(x, r) - 0.02), (x + j * 0.05 + rr.uniform(-0.06, 0.06), r - 0.02, HZ(x, r) + rr.uniform(0.25, 0.45)), 0.012,
                ('#b8a070', 0.1), 'reed', verts=4)
-W.bench(k, 3.0, 4.6, 19.6)
-k.blob(3.8, 19.7, 0.5, 0.6, 0.14, 0.05, (N.ROOF_SNOW, 0.05), 'bench_snow', segs=8)
-for (x, c) in ((5.1, '#c83a2e'),):                                                 # somebody's skates on the bench's end
+W.bench(k, 5.2, 6.8, 19.6)                                                         # on the tarn's north shore, facing the ice
+k.blob(5.65, 19.7, 0.5, 0.35, 0.12, 0.05, (N.ROOF_SNOW, 0.05), 'bench_snow', segs=8)  # (its seat swept clear in the middle)
+k.solid(3, 19, 5, 20)                                        # behind the skate hut's roof you'd vanish: nobody goes there
+for (x, c) in ((6.55, '#c83a2e'),):                                                # somebody's skates on the bench's end
     k.box(x - 0.08, 19.5, 0.46, x + 0.08, 19.75, 0.6, (c, 0.1), 'skate_boot')
 
 # ---- the chairlift --------------------------------------------------------------------------------------------------------
@@ -371,8 +372,7 @@ k.solid(19, 19, 20, 20)                                                         
 HR.string_lights(k, (19.8, 19.85, 1.95), (16.4, 19.6, 1.4), sag=0.2)
 k.cyl(16.4, 19.6, 0, 1.5, 0.035, (N.LOG_D, 0.1), 'pole', verts=6)
 k.solid_post(16.4, 19.6)
-HR.brazier(k, 25.4, 18.4)
-HR.barrel_table(k, 24.9, 19.7)
+HR.barrel_table(k, 24.7, 20.7)
 HR.barrel_table(k, 17.0, 18.6, mugs=1)
 N.snowman(k, 17.2, 22.4)
 N.sled(k, 16.6, 25.0, col='#2a6ac0')
@@ -448,7 +448,7 @@ HR.fence(k, [(41.8, 30.2), (42.6, 29.8), (43.5, 29.6), (44.4, 29.6), (45.2, 29.8
 # ---- boot prints and sled tracks ---------------------------------------------------------------------------------------------------
 HR.prints(k, [(13.6, 16.5), (13.7, 18.0), (13.3, 19.8), (12.8, 21.4), (12.5, 22.2)], HZ, rr=rr)        # to the fishing hole
 HR.prints(k, [(18.0, 20.8), (17.6, 21.8), (17.3, 22.0)], HZ, rr=rr)
-HR.prints(k, [(26.6, 15.0), (24.8, 18.0), (21.0, 23.8), (17.0, 24.6)], HZ, rr=rr)
+HR.prints(k, [(26.0, 15.0), (23.9, 17.6), (21.0, 23.8), (17.0, 24.6)], HZ, rr=rr)
 HR.sled_tracks(k, [(9.8, 13.6), (11.0, 17.5), (14.8, 24.0), (16.6, 24.6)], HZ)
 for i in range(14):                                                               # fox tracks across the open snow
     x, r = 18.5 + i * 0.4, 27.0 - i * 0.16 + 0.1 * math.sin(i)
@@ -477,12 +477,14 @@ for (x, r) in ((19.0, 23.4), (23.0, 25.4)):                                     
     W.lantern_post(k, x, r, h=1.9, energy=22)
 
 # ---- the busy places: an après-ski terrace, the ski school, a sleigh waiting, children's things ---------------------------------
-HR.deck(k, 25.8, 17.7, 30.0, 19.9)                                                 # the terrace by the cocoa hut
-HR.parasol_table(k, 26.8, 18.9, col='#c83a2e')
-HR.parasol_table(k, 28.9, 18.6, col='#2a5a8a', chairs=3)
-HR.deckchair(k, 29.55, 19.75, col='#c8a040')
-HR.string_lights(k, (25.9, 17.8, 1.7), (29.9, 17.8, 1.7), sag=0.15)
-for x in (25.95, 29.95):
+HR.deck(k, 24.35, 17.7, 27.7, 19.9)            # the terrace by the cocoa hut (west of the chalet: its roof hid it, east of here)
+HR.parasol_table(k, 25.0, 18.95, col='#c83a2e')
+HR.parasol_table(k, 26.85, 18.45, col='#2a5a8a', chairs=3)
+for (x, r) in ((25.0, 18.95), (26.85, 18.45)):                                   # round a table, not through it
+    k.solid(x - 0.35, r - 0.35, x + 0.35, r + 0.2)
+HR.brazier(k, 26.75, 19.55)
+HR.string_lights(k, (24.45, 17.8, 1.7), (27.6, 17.8, 1.7), sag=0.15)
+for x in (24.4, 27.65):
     k.cyl(x, 17.8, 0.08, 1.75, 0.03, (N.LOG_D, 0.1), 'pole', verts=5)
 HR.chalet(k, 36.6, 38.9, 10.6, 12.7, wall_h=1.55, rise=0.95, gable='front', door_x=37.75, windows=[], canopy=False, balcony=False,
           gable_window=False, shutters='#2e4a6a', door_col='#2e4a6a', rr=random.Random(23))

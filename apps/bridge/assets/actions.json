@@ -477,12 +477,12 @@
   "hoarfell": [
     {
       "label": "BENCH",
-      "x": 3,
+      "x": 6,
       "y": 19,
       "add": true,
       "action": "sit",
       "seat": [
-        3.8,
+        6.0,
         19.55
       ],
       "facing": "down",

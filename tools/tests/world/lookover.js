@@ -226,7 +226,7 @@ function arrivals(id) {
       const bx1 = Math.max(...sections.map((S) => S.rect[2])), by1 = Math.max(...sections.map((S) => S.rect[3]));
       const names = lights.map((L) => L.name);
       for (const name of [...names, 'overlay']) {
-        const src = name === 'overlay' ? names[0] : name;
+        const src = name === 'overlay' ? (names.includes('noon') ? 'noon' : names[0]) : name;
         const full = document.createElement('canvas'); full.width = Math.round((bx1 - bx0) * 32); full.height = Math.round((by1 - by0) * 32);
         const fx = full.getContext('2d'); fx.imageSmoothingEnabled = false;
         for (const S of sections) {
