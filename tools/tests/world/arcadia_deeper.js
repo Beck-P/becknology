@@ -99,7 +99,9 @@ const ONLY = process.argv[3] || '';
     await H.ask('The old file'); if (!/CROWN/.test(await H.said())) fail('no crown in the file'); await H.shut();
     if (!await H.has('iris-arm/file')) fail('the file');
     // the heap: shut while Saint Ruin's never been beaten
-    await H.go('arcadia-scrapyard', [46, 11]);
+    // (Saint Ruin, beaten today, isn't on his tile, 46,11 — the spot in front of his throne; standing on it hid him under you)
+    await H.ev(() => { const d = new Date(), s = BridgeUndercity._save(); s.ruin = d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); });
+    await H.go('arcadia-scrapyard', [45, 12]);
     await H.ev(() => { const s = BridgeUndercity._save(); s.knuckles = false; s.ruin = null; });
     await H.use('THRONE'); await H.shut();
     if (await H.has('iris-arm/hand')) fail('the hand found with Saint Ruin unbeaten');

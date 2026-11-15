@@ -1369,6 +1369,12 @@ code. `js/arcadia-deep.js` (BridgeArcadiaDeep) holds the glue; each item's data 
   save, his trophy dropped or beaten today) — and a shop's **`favour`** in js/implants.js (`{ key, name, open(), line }`
   on the shop: designer pieces at the slot's cheapest clinic price while `open()` and not yet used; used favours kept in
   `bridge_implants.favours`; `BridgeImplants.favourOpen(shop)`, `priceIn(shop, id)`, `install(id, { price, favour })`).
+  **Found together** (js/multi.js, a partner within six tiles): each clue counts for her too, but only once her own
+  quest has reached that step (`after`); the heap's gate is the finder's (she was there for the fight) — alone, with
+  Ruin unbeaten, she can't dig; the hand and the arm are carried by both (each quest's own things); at Iris both are
+  handed over and the 400 goes into each pilot's own coins; nothing is taken from her; the favour is each pilot's own.
+  Test: `multi/mp_iris_arm.js`. (Saint Ruin stands on 46, 11, just in front of his throne: a test that put the pilot on
+  that tile hid him under her, leaving only his health bar.)
 - **A3 · Fishing in the Sump** (js/fishing.js `POOLS.sump`, `WATER.sump`: black water lit teal from under and the city's
   underside for a sky, no stars; the cast drawn in the world on the `arcadia` tileset too). Spots (assets/fishing.json):
   two OFF THE QUAY on the Sump's north quay — by Teo's boat (20, 19) and below the shrine (50, 19), both where the
