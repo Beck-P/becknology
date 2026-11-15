@@ -109,7 +109,10 @@ const SUITES = {
     ['combat/look.js', SHOTS + '/look'],
     ['combat/valley.js', SHOTS + '/valley'],
     ['combat/shipviz.js', SHOTS + '/shipviz'],
-  ]
+  ],
+  // the chess app's Review & Coach tab (games in, Stockfish's review, the coach by text and voice), and the coach's
+  // server function with a stand-in API
+  chess: [['chess/review.js', SHOTS + '/chess'], ['chess/coach_api.js']],
 };
 // what of each test's output is shown: one group of alternatives a line (add a test's own on a new line)
 const KEEP = new RegExp([
@@ -142,6 +145,7 @@ const KEEP = new RegExp([
   /arcadia-|BAD |implants|glitch|tuned|fitted|the cage|the book|Gage|shrine|Teo|freight|the way down|tougher|a Saint|came round|scrap pile|Sallow|clinic/,
   /ways:|shops:|range:|boughs:|brewing:|shrine|source hp|river:|falls:|deepwood:|lake:/,
   /seats sat on|depth row|^BAD /,
+  /^review: (reviewed|verdict|heard)/,
 ].map((r) => r.source).join('|'), 'i');
 const BAD = /PAGEERR|CONSOLE-ERR|^CONSOLE (?!log |info |warning |debug )|FAILED|\berrors?:? [1-9]|TypeError|ReferenceError|Cannot read/m;
 
@@ -161,7 +165,7 @@ for (const n of names) if (!SUITES[n]) { console.error('no suite "' + n + '" (' 
 if (names.includes('royale') && !fs.existsSync(path.join(ROOT, 'apps/runouts/dist/index.html'))) {
   console.error('royale needs Royale Link built: cd apps/runouts && npm install && npm run build'); process.exit(2);
 }
-if (names.includes('together') && !fs.existsSync(path.join(D, 'npm/chess/package'))) execFileSync(path.join(D, 'npm.sh'), { stdio: 'inherit' });
+if ((names.includes('together') || names.includes('chess')) && !fs.existsSync(path.join(D, 'npm/chess/package'))) execFileSync(path.join(D, 'npm.sh'), { stdio: 'inherit' });
 
 const PORT = +(process.env.BRIDGE_PORT || 8766);                 // another checkout's server (see chrome.js)
 ensure(PORT, 'serve.py', 'http://127.0.0.1:' + PORT + '/bridge/');

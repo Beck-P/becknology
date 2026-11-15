@@ -117,7 +117,7 @@ var BridgeCabinetModal = (function () {
           '<button id="cabinet-leave-btn"><span class="ip-key">Esc</span> Leave</button></div>' +
       '</div>' +
       '<div class="cm-screen">' +
-        '<iframe id="cabinet-iframe" src="' + escapeAttr(current ? current.url : 'about:blank') + '" allow="autoplay; gamepad; fullscreen"></iframe>' +
+        '<iframe id="cabinet-iframe" src="' + escapeAttr(current ? current.url : 'about:blank') + '" allow="autoplay; gamepad; fullscreen; microphone"></iframe>' +
       '</div>';
   }
 
