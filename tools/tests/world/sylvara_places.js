@@ -199,6 +199,32 @@ const OUT = process.argv[2] || '/tmp';
     if (await p.evaluate(() => BridgeWorld.getWorld().name) !== 'the Falls') fail('the cave\'s way out didn\'t lead back to the falls');
     console.log('cave: in along the ledge, the carving, the box, out');
   }
+  if (await isOpen('sylvara-lake')) {
+    // ---- on down the path to Mirror Lake: the source, the fire ring, the beach's rack, the long path home to Elderglade --
+    const toLake = (await inter('MIRROR LAKE'))[0];
+    if (!toLake || !near(cells, toLake[0], toLake[1])) fail('the way on down to Mirror Lake can\'t be reached');
+    else {
+      await stand(toLake[0], toLake[1] - 1, 'down'); await press(); await p.waitForTimeout(2200);
+      if (await p.evaluate(() => BridgeWorld.getWorld().name) !== 'Mirror Lake') fail('the path down from the falls didn\'t reach Mirror Lake');
+      const lc = await reach(await p.evaluate(() => [Math.round(BridgeCharacter.getX()), Math.round(BridgeCharacter.getY())]));
+      const lw = await p.evaluate(() => BridgeWorld.getWorld());
+      for (const l of ['THE MOONWELL\'S SOURCE', 'FIRE RING', 'ELDERGLADE', 'THE FALLS']) {
+        const it = lw.interactions.find(i => i.label === l);
+        if (!it || !near(lc, it.x, it.y)) fail('Mirror Lake: ' + l + ' can\'t be reached');
+      }
+      const lr = lw.river && lw.river.racks && lw.river.racks[0];
+      if (!lr || !near(lc, lr[0], lr[1])) fail('Mirror Lake\'s canoe rack can\'t be reached');
+      const ring = (await inter('FIRE RING'))[0];
+      await stand(ring[0], ring[1], 'up'); await press();
+      if (!/RING OF STONES/.test(await text())) fail('the fire ring says nothing');
+      await shut();
+      const home = (await inter('ELDERGLADE'))[0];
+      await stand(home[0], home[1] - 1, 'down'); await press(); await p.waitForTimeout(2200);
+      if (await p.evaluate(() => BridgeWorld.getWorld().name) !== 'Elderglade') fail('the long path home didn\'t reach Elderglade');
+      console.log('lake: down from the falls, the source, the fire ring, the rack, home to Elderglade');
+      await go('sylvara-falls', [16, 1]);
+    }
+  }
   const up = (await inter('THE SILVERRUN'))[0];
   await stand(up[0], up[1] + 1, 'up'); await press(); await p.waitForTimeout(2200);
   if (await p.evaluate(() => BridgeWorld.getWorld().name) === 'the Falls') fail('the way up didn\'t lead back to the Silverrun');
