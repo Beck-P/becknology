@@ -807,7 +807,7 @@ var BridgeVoyage = (function () {
     ctx.font = '16px "Pixelify Sans", monospace';
     ctx.textAlign = 'center';
     if (prompt) {
-      var t = 'E  ' + prompt.label;
+      var t = (document.documentElement.classList.contains('touch') ? 'A' : 'E') + '  ' + prompt.label;   // (the A button on a phone, as the hint says)
       var w = ctx.measureText(t).width + 28, x = canvas.width / 2, y = canvas.height - 70;
       ctx.fillStyle = 'rgba(14,12,22,0.82)'; roundRect(x - w / 2, y - 22, w, 32, 16);
       ctx.fillStyle = '#ffd98a'; ctx.fillText(t, x, y);

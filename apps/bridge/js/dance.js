@@ -116,7 +116,8 @@ var BridgeDance = (function () {
     BridgeInteractions.choose({
       title: 'The Dance Floor',
       text: 'THE TILES LIGHT UNDER YOUR FEET IN TIME WITH THE KICK. KIRI CATCHES YOUR EYE FROM THE DECKS AND TURNS SOMETHING UP.\n\n' +
-            'ARROWS RISE TO THE TOP IN TIME WITH THE MUSIC - HIT ←↓↑→ (OR WASD) AS THEY ARRIVE.',
+            (touch ? 'ARROWS RISE TO THE TOP IN TIME WITH THE MUSIC - TAP THEIR PADS AS THEY ARRIVE.'           // (a phone has the pads, not the keys)
+                   : 'ARROWS RISE TO THE TOP IN TIME WITH THE MUSIC - HIT ←↓↑→ (OR WASD) AS THEY ARRIVE.'),
       rows: rows,
       closeLabel: 'Not yet'
     });

@@ -147,7 +147,7 @@ var BridgeCatalog = (function () {
 
   function renderShellHTML() {
     var meta = getShopMeta(currentShop);
-    var html = '<div style="' +
+    var html = '<div class="term-panel" style="' +
       'width:min(720px,92vw);max-height:88vh;overflow:hidden;display:flex;flex-direction:column;' +
       'background:linear-gradient(180deg,rgba(20,30,46,0.96),rgba(10,18,28,0.96));' +
       'border:1px solid rgba(64,200,216,0.5);border-radius:8px;' +
@@ -178,7 +178,7 @@ var BridgeCatalog = (function () {
     html += '<div style="padding:12px 24px;border-top:1px solid rgba(64,200,216,0.25);' +
             'display:flex;justify-content:space-between;align-items:center;font-size:10px;' +
             'letter-spacing:3px;color:#777;">' +
-      '<span>ESC TO CLOSE</span>' +
+      '<button type="button" class="term-close"><span class="ip-key">Esc</span> CLOSE</button>' +
       '<span id="catalog-feedback" style="color:#80e0e8;"></span>' +
     '</div>';
 
@@ -227,7 +227,7 @@ var BridgeCatalog = (function () {
     if (!body) return;
     var items = getCatalog(currentShop);
     body.style.padding = '20px 24px';
-    body.innerHTML = '<div id="buy-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">' +
+    body.innerHTML = '<div id="buy-grid" class="term-2col" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">' +
       items.map(buyCardHTML).join('') +
     '</div>';
 
@@ -367,7 +367,7 @@ var BridgeCatalog = (function () {
           '<div style="font-size:10px;letter-spacing:3px;color:rgba(64,200,216,0.7);margin-bottom:10px;">' +
             'SELL FOR ' + Math.round(SELL_RATIO * 100) + '% OF BUY PRICE' +
           '</div>' +
-          '<div id="sell-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">' +
+          '<div id="sell-grid" class="term-2col" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">' +
             owned.map(sellCardHTML).join('') +
           '</div>';
 
@@ -752,7 +752,7 @@ var BridgeCatalog = (function () {
 
   function bindHandlers() {
     overlayEl.addEventListener('click', function (e) {
-      if (e.target === overlayEl) hide();
+      if (e.target === overlayEl || (e.target.closest && e.target.closest('.term-close'))) hide();   // the backdrop, or Close (a tap on a phone)
     });
     document.addEventListener('keydown', escHandler);
   }
