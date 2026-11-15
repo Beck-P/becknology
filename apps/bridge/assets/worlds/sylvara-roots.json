@@ -3803,6 +3803,18 @@
         31,
         22
       ]
+    },
+    {
+      "x": 46,
+      "y": 8,
+      "type": "enter_world",
+      "label": "THE DEEPWOOD",
+      "prompt": "PRESS E TO GO INTO THE OLD WOOD",
+      "target": "sylvara-deepwood",
+      "spawn": [
+        1,
+        18
+      ]
     }
   ],
   "designTiles": [
