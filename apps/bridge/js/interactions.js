@@ -1327,6 +1327,7 @@ var BridgeInteractions = (function () {
     topics = fresh.concat(topics.filter(function (t) { return fresh.indexOf(t) < 0; }));
     if (person.crew && typeof BridgeCrew !== 'undefined') {
       var after = person.crew.after && typeof BridgeQuests !== 'undefined' ? BridgeQuests.progress(person.crew.after) : null;
+      if (person.crew.when && typeof BridgeQuests !== 'undefined' && !BridgeQuests.has(person.crew.when)) after = { done: false };   // not till something's true (`when`, as a topic's: Ysolde, once you've reached the Last Ridge)
       topics.push(BridgeCrew.isHired(person.id)
         ? { q: 'About the work', a: person.crew.perkText.toUpperCase() }
         : after && !after.done

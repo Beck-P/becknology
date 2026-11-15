@@ -65,6 +65,8 @@ var BridgeExpedition = (function () {
   function toast(k, t, sub) { if (typeof BridgeQuests !== 'undefined' && BridgeQuests.toast) BridgeQuests.toast(k, t, sub); }
   function sfx(n) { if (typeof BridgeAudio !== 'undefined') BridgeAudio.sfx(n); }
   function carried(id) { return typeof BridgeInventory !== 'undefined' && BridgeInventory.getCount(id) > 0; }
+  var yProbe = { at: 0, told: 0 };
+  function ysolde() { return typeof BridgeCrew !== 'undefined' && BridgeCrew.has('mountaineer'); }   // the avalanche probe always in hand (js/crew.js)
   function held(id) { return typeof BridgeInventory !== 'undefined' && BridgeInventory.getSelectedItemId && BridgeInventory.getSelectedItemId() === id; }
   function day() { return Math.floor(Date.now() / 86400000); }
   // a crack's key: plain on the Last Ridge (as saved before), the world's id in front anywhere else with a crevasse field
@@ -119,7 +121,7 @@ var BridgeExpedition = (function () {
   }
 
   function lastRidge() {
-    var probe = carried('probe'), thermal = typeof BridgeGear !== 'undefined' && BridgeGear.has('cold');
+    var probe = carried('probe') || ysolde(), thermal = typeof BridgeGear !== 'undefined' && BridgeGear.has('cold');
     BridgeInteractions.choose({
       title: 'The Last Ridge',
       text: 'AN OLD BOLT IN THE ROCK AT THE EDGE, A BLUE ROPE TIED OFF TO IT, GOING DOWN THE FAR SIDE OF THE HOARSPIRE INTO THE CLOUD. ' +
@@ -323,6 +325,15 @@ var BridgeExpedition = (function () {
     if (BridgeWorld.getMode()) return;
     var x = BridgeCharacter.getX(), y = BridgeCharacter.getY();
     world.expedition.cairns.forEach(function (c, i) { if (Math.abs(c[0] - x) + Math.abs(c[1] - y) <= 2) sel = i; });
+    if (ysolde() && now - (yProbe.at || 0) > 900) {                // Ysolde in your crew (H6): her probe goes in two paces ahead as you walk
+      yProbe.at = now;
+      var hit = ahead(2).filter(function (t) { return hiddenAt(world, t[0], t[1]) && !st.seen[key(t[0], t[1])]; })[0];
+      if (hit) {
+        world.expedition.crevasses.forEach(function (t) { if (Math.abs(t[0] - hit[0]) <= 1 && Math.abs(t[1] - hit[1]) <= 1) st.seen[key(t[0], t[1])] = 1; });
+        store(); sfx('step');
+        if (!yProbe.told || now - yProbe.told > 60000) { yProbe.told = now; toast('Ysolde\'s probe', 'Hollow snow ahead', 'Her probe found it before your boots did'); }
+      }
+    }
     if (!BridgeCharacter.isMoving() && hiddenAt(world, x, y)) fallIn(world, x, y, now);
     // the weather: a whiteout now and then, a minute or two apart
     if (now > wx.next && !wx.end) {

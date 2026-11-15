@@ -1188,8 +1188,23 @@
         "q": "Heard anything?",
         "a": "THERE ARE CRYSTALS IN THE HOARSPIRE'S ROCK THAT GLOW LIKE FROST. OFF THE LINE, MOSTLY - YOU HAVE TO GO OUT OF YOUR WAY. AND SOMEBODY LEFT A REGISTER AT THE TOP. SIGN IT. I'LL CHECK.",
         "lead": "summit-register"
+      },
+      {
+        "q": "Past the hut",
+        "a": "YOU WENT FURTHER THAN I DID. DON'T LOOK PLEASED, IT MAKES ME WANT TO GO BACK UP. ASK ME THE OTHER THING. YOU KNOW WHAT I MEAN.",
+        "when": "gate:last-ridge"
       }
-    ]
+    ],
+    "crew": {
+      "role": "Mountaineer",
+      "wage": 240,
+      "perk": "mountaineer",
+      "ashore": true,
+      "when": "gate:last-ridge",
+      "notYet": "YOUR CREW? I DON'T CLIMB FOR PEOPLE WHO HAVEN'T BEEN HIGH. GET YOURSELF OUT ONTO THE LAST RIDGE AND ASK ME AGAIN.",
+      "pitch": "ALL RIGHT. I KEEP THE HUT - SOMEONE HAS TO - BUT I'LL KIT YOU OUT PROPERLY. LAYERS THAT WORK, SO THE COLD TAKES ITS TIME WITH YOU WHEREVER YOU ARE. AND MY OLD PROBE LASHED TO YOUR PACK, RIGGED TO GO IN AHEAD OF YOU. YOU WON'T EVEN HAVE TO THINK.",
+      "perkText": "Ysolde kits you out: the cold takes a third longer to wear you down anywhere it bites, and on a crevasse field her probe goes in two paces ahead of you as you walk. She keeps her guide's hut in Fellhaven."
+    }
   },
   "tove": {
     "name": "Tove Lindqvar",
@@ -1542,6 +1557,12 @@
       {
         "q": "Heard anything?",
         "a": "OLD BRYN SAYS THERE'S A LIGHT PAST THE HOARSPIRE. HE'S SAID IT EVERY WINTER FOR FORTY YEARS. THE FUNNY THING IS, THIS YEAR YSOLDE'S STARTED SAYING IT TOO."
+      },
+      {
+        "q": "Ysolde",
+        "a": "SHE CAME IN LAST NIGHT AND ASKED WHO'D BEEN OUT ON THE LAST RIDGE. I SAID YOU. SHE WENT QUIET AND HAD TWO COCOAS. THAT'S YSOLDE DECIDING SOMETHING.",
+        "when": "gate:last-ridge",
+        "lead": "ysolde-crew"
       }
     ]
   },

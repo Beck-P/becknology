@@ -168,6 +168,71 @@ const ONLY = process.argv[3] || '';
     console.log('v4 done');
   }
 
+  // ---- H6 · Ysolde joins the crew ----
+  if (part('h6')) {
+    await p.evaluate(() => { localStorage.removeItem('bridge_crew'); localStorage.removeItem('bridge_expedition'); localStorage.removeItem('bridge_log_seen'); });
+    await p.reload(); await p.waitForTimeout(2500);
+    await p.evaluate(() => { BridgeState.setPilot({ id: 't', name: 'BECK', suit_color: 'gold' }); BridgeIntro.hide(); BridgeWeather._pin && BridgeWeather._pin('hoarfell', 'clear'); });
+    await coins(1000);
+    await pinDay(0, 1, 11);
+    await go('hoarfell', [39, 25]);
+    if (await p.evaluate(() => BridgeQuests.has('gate:last-ridge'))) fail('the ridge counted before you went');
+    await use('YSOLDE');
+    let t = await rows();
+    if (t.some(r => /Past the hut/.test(r))) fail('her ridge topic before the ridge');
+    await pick(/^Join my crew\?/);
+    if (!/GET YOURSELF OUT ONTO THE LAST RIDGE/.test(await said())) fail('she signed on before the ridge');
+    await shut();
+    if (await p.evaluate(() => BridgeCrew.isHired('ysolde'))) fail('hired before the ridge');
+    // the ridge: a minute of cold without her, timed (coldRate 2: a chill every 6 s)
+    await go('hoarfell-ridge', [4, 40]);
+    if (!(await p.evaluate(() => BridgeQuests.has('gate:last-ridge')))) fail('the ridge not counted');
+    const chill = async () => {
+      await p.evaluate(() => { BridgeInventory.restoreEnergy(100); });
+      const e0 = await p.evaluate(() => BridgeInventory.getStats().energy);
+      await p.waitForTimeout(25000);
+      const e1 = await p.evaluate(() => BridgeInventory.getStats().energy);
+      return e0 - e1;
+    };
+    const without = await chill();
+    // back to Fellhaven: Mette's word, then Ysolde's
+    await go('hoarfell-lodge', [8, 9]);
+    await use('METTE');
+    t = await rows();
+    if (!t.some(r => /^Ysolde$/.test(r))) fail('Mette says nothing of Ysolde: ' + t.join(' | '));
+    else { await pick(/^Ysolde$/); if (!(await p.evaluate(() => (JSON.parse(localStorage.getItem('bridge_quest_meta') || '{}').leads || {})['ysolde-crew']))) fail('no lead from Mette'); }
+    await shut();
+    const nu = await p.evaluate(() => BridgeVillage && window.BRIDGE_NEXTUP.map(f => f('hoarfell')).flat().map(x => x.title).join(' / '));
+    if (!/Ysolde would sign on/.test(nu)) fail('Next up: ' + nu);
+    await go('hoarfell', [39, 25]);
+    await use('YSOLDE');
+    t = await rows();
+    if (!t.some(r => /Past the hut/.test(r))) fail('no ridge topic: ' + t.join(' | '));
+    await pick(/^Join my crew\?/);
+    const pitch = await said();
+    if (!/PROBE LASHED TO YOUR PACK/.test(pitch)) fail('the pitch: ' + pitch.slice(0, 120));
+    await p.screenshot({ path: OUT + '/hd_h6_pitch.png' });
+    await pick(/^Join my crew\?/);                                   // (asking again signs her on)
+    await p.waitForTimeout(2000);
+    const hire = (await rows()).join(' | ');
+    if (!(await p.evaluate(() => BridgeCrew.isHired('ysolde')))) { fail('not hired (rows: ' + hire + ')'); await p.evaluate(() => BridgeCrew.hire(BridgePeople.all().ysolde)); }
+    await shut();
+    if (await p.evaluate(() => window._coins) !== 760) console.log('coins after hiring:', await p.evaluate(() => window._coins));
+    if (!(await p.evaluate(() => BridgeCrew.has('mountaineer')))) fail('the perk is not on');
+    if (!(await p.evaluate(() => BridgeWorld.getWorld().interactions.some(i => i.label === 'YSOLDE')))) fail('she left her hut');
+    // with her: less cold, and the probe goes in ahead of you
+    await go('hoarfell-ridge', [4, 40]);
+    const withHer = await chill();
+    console.log('cold over 25 s on the ridge: without Ysolde', without, 'with', withHer);
+    if (!(withHer < without)) fail('the cold took as much with her: ' + withHer + ' vs ' + without);
+    await p.evaluate(() => { BridgeCharacter.init(4, 39); BridgeCharacter.setFacing('up'); });
+    await p.waitForTimeout(2500);
+    const seen = await p.evaluate(() => (JSON.parse(localStorage.getItem('bridge_expedition') || '{}').seen || {}));
+    if (!seen['4,37']) fail('her probe found nothing two paces ahead: ' + JSON.stringify(seen));
+    await p.screenshot({ path: OUT + '/hd_h6_probe.png' });
+    console.log('h6 done');
+  }
+
   console.log(errors ? 'FAILED with ' + errors + ' problem(s)' : 'OK');
   await b.close();
   process.exit(errors ? 1 : 0);

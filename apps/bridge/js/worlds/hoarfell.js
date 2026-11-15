@@ -51,6 +51,7 @@ var BridgeHoarfell = (function () {
     }
     // the Last Ridge is colder (`coldRate`), and colder again in a whiteout (js/expedition.js)
     var rate = (world.coldRate || 1) * (typeof BridgeExpedition !== 'undefined' && BridgeExpedition.whiteout() > 0.5 ? 1.5 : 1) * (suited() ? wx.suited : wx.rate);
+    if (typeof BridgeCrew !== 'undefined' && BridgeCrew.has('mountaineer')) rate *= 2 / 3;   // Ysolde in your crew: layered right, the cold takes a third slower
     if (now - lastChill > 12000 / rate && typeof BridgeInventory !== 'undefined') {
       lastChill = now;
       var st = BridgeInventory.getStats();
