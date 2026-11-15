@@ -292,7 +292,7 @@ var BridgeAlpine = (function () {
   // ---- the railway ------------------------------------------------------------------------------------------------------
   var STATIONS = {
     'hoarfell-promenade': { name: 'Fellhaven', key: 'fellhaven', spawn: [28, 23] },
-    'hoarfell-aurelle': { name: 'Aurelle', key: 'aurelle', spawn: [28, 34] }
+    'hoarfell-aurelle': { name: 'Aurelle', key: 'aurelle', spawn: [28, 35] }   // in front of the canopy (under it you're hidden)
   };
   function railway(inter) {
     var here = BridgeWorld.getWorldId(), to = inter.to || (here === 'hoarfell-aurelle' ? 'hoarfell-promenade' : 'hoarfell-aurelle');
