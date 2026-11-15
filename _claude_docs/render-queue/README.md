@@ -28,9 +28,9 @@ cores, an interior much less.
 | `arcadia-terraces.patch` | `scenes/arcadia_terraces.py` → `arcadia-terraces` | Cascade Tower's front was rows of big white window squares: darker glass, slimmer bars, fewer and dimmer lit offices with desks, screens, blinds and plants; the flats across the gap and the lit floors over the train tunnel toned down the same way. The script replays the old random rolls so nothing placed after the tower moves. Also in it (world JSON): Halo's two patio heaters and Cirrus's three cocktail tables, which you could walk through, are solid. | The tower front (the top sections of the look-over); `world/arcadia_terraces.js`. |
 | `lumar-crown-bridge-and-hill.patch` | `scenes/lumar_crown_bridge.py` → `lumar-crown-bridge`; `scenes/lumar_crown_hill.py` → `lumar-crown-hill`; `assets_capital.py` (`flagged` gains an optional `z`) | **The Old Bridge:** the loggia's roof is one flat red slab over half the street — you vanish under it crossing the bridge and the builder's statue pokes up through it. A low tiled roof over the arcade only; the statue across the street, THE BUILDER at 30,11 (the render moves its blocked tiles and the label's spot). **The Hill:** the gravel walks, the parade ground and the observatory terrace come out striped because the gravel sits exactly level with the grass; the gravel is raised a touch. | The bridge's street under the loggia, on a desktop and a phone, and that *The Admiral*'s clue THE LOGGIA (30,13) can still be stood beside; the Hill's parade ground. `world/capital.js`, `world/small_stories.js admiral`. |
 
-## Sylvara's closed places (four still to open)
-The Boughs and the Hollow Bough tavern are live. Still closed (`BridgeSylvara.OPEN` in `apps/bridge/js/worlds/sylvara.js` lists what's open): the falls (`sylvara-falls`), the cave behind them (`sylvara-fallcave`), Mirror Lake (`sylvara-lake`) and the Deepwood
-(`sylvara-deepwood`) — scripted, never rendered at full samples (about 70 minutes each outdoors on four free cores;
+## Sylvara's closed places (three still to open)
+The Boughs, the Hollow Bough tavern and the falls are live. Still closed (`BridgeSylvara.OPEN` in `apps/bridge/js/worlds/sylvara.js` lists what's open): the cave behind the falls (`sylvara-fallcave`), Mirror Lake (`sylvara-lake`) and the Deepwood
+(`sylvara-deepwood`) — scripted, never rendered at full samples (about 25 minutes each outdoors on four free cores — the falls took 24;
 preview first at low samples, fix what the preview shows — the Boughs needed crowns lowered off the walkways, bridges
 moved out from behind trunks and two houses off bridge ends — then render in full). `apps/bridge/CLAUDE.md`, *Sylvara's
 city, the Silverrun and the Deepwood (workstream F)*, says how a place opens: render, `scene_post.py`, the ways in put
@@ -38,7 +38,7 @@ back into the open worlds, its people and crowd line, `OPEN`, `atlas.py`. Two he
 (run from the repo root; they read commit `e93d7dc`, where the closed places' doors and people were kept — a shallow
 clone needs `git fetch --unshallow` first):
 ```
-python3 _claude_docs/render-queue/sylvara/restore_doors.py sylvara-falls       # the doors that lead to it, back into the open worlds' JSON
+python3 _claude_docs/render-queue/sylvara/restore_doors.py sylvara-fallcave    # the doors that lead to it, back into the open worlds' JSON
 python3 _claude_docs/render-queue/sylvara/restore_person.py <person-id>        # e.g. Fennick (the tavern), Sorrel — ids as in e93d7dc's people.json
 ```
 `tools/tests/world/sylvara_places.js` walks the city and goes into the tavern for Fennick's cider; extend it for each
