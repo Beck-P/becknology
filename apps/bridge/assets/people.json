@@ -4663,8 +4663,40 @@
       {
         "q": "Why no crew?",
         "a": "THEY LEAVE. EVERY ONE OF THEM, AFTER A RUN OR TWO. THEY SAY SHE HUMS AT NIGHT. SHE DOES. I LIKE IT."
+      },
+      {
+        "q": "What's the Mercy buying?",
+        "a": "FISH OFF LUMAR AND ANYTHING THAT GREW ON VERDANCE. THE SPACEPORT KITCHENS PAY OVER THE ODDS FOR REAL FOOD, AND I PAY YOU A BIT OVER WHAT YOU'D GET AT HOME. WHAT HAVE YOU GOT?",
+        "sell": [
+          { "id": "silverfin", "price": 16 },
+          { "id": "harbour_crab", "price": 21 },
+          { "id": "bluefin", "price": 32 },
+          { "id": "spore_minnow", "price": 7 },
+          { "id": "turnip", "price": 15 },
+          { "id": "carrot", "price": 24 },
+          { "id": "strawberry", "price": 17 },
+          { "id": "apple", "price": 7 },
+          { "id": "honey", "price": 32 }
+        ]
+      },
+      {
+        "q": "Chrome and circuit",
+        "a": "WHAT ARCADIA THROWS AWAY, LUMAR CAN'T GET. I'VE A CRATE OF IT FOR THE NEXT RUN. TAKE WHAT YOU LIKE BEFORE IT GOES.",
+        "stores": [
+          { "id": "circuit", "price": 20 },
+          { "id": "chrome_part", "price": 40 }
+        ]
       }
-    ]
+    ],
+    "crew": {
+      "role": "Hauler",
+      "wage": 180,
+      "perk": "hauler",
+      "ashore": true,
+      "board": { "label": "DEPARTURES BOARD", "was": "\"CREW WANTED. ASK FOR DESH.\"", "now": "\"CREW: {pilot}. STILL ABOARD.\"" },
+      "pitch": "ME? ON YOUR CREW? HA. ALL RIGHT - BUT THE MERCY DOESN'T FLY WITHOUT ME, SO I STAY WITH HER. WHAT YOU GET IS THIS: I PACK YOUR HOLDS THE WAY I PACK HERS. A TENTH MORE IN EVERY ONE, AND NOTHING RATTLES. AND YOUR NAME GOES ON MY BOARD.",
+      "perkText": "Desh packs your holds: every ship of yours carries a tenth more cargo. She stays with the Old Mercy at Arcadia's spaceport."
+    }
   },
   "nadia": {
     "name": "Nadia Voss",

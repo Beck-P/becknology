@@ -293,7 +293,7 @@ var BridgeLedger = (function () {
     if (has('BridgeCrew')) BridgeCrew.list().forEach(function (c) {
       var w = B && B.crewWage ? B.crewWage(c.id) : 0;
       rows.push({ name: c.name + ' · ' + c.role.toLowerCase() + ' (crew)', sub: (all[c.id] && all[c.id].crew ? all[c.id].crew.perkText : c.perkText) + (B && B.unpaid(c.id) ? ' · UNPAID: not working' : ''),
-                  fig: coins(w) + '<small>/day</small>', alert: B && B.unpaid(c.id), world: 'bridge', sheet: all[c.id] && all[c.id].sheet });
+                  fig: coins(w) + '<small>/day</small>', alert: B && B.unpaid(c.id), world: crewWorld(all[c.id]), sheet: all[c.id] && all[c.id].sheet });
     });
     // the farm's hands, by the day
     if (has('BridgeHomestead') && BridgeHomestead.HANDS) Object.keys(BridgeHomestead.HANDS).forEach(function (id) {
@@ -313,6 +313,8 @@ var BridgeLedger = (function () {
       buttons: [{ label: 'Pay them off', act: function () { F.dismiss(c.id); } }], closeLabel: 'Done' });
   }
 
+  // where a hand of yours is: aboard, but for one who stays ashore with her own ship (Desh, people.json `crew.ashore`)
+  function crewWorld(p) { return p && p.crew && p.crew.ashore && p.at && p.at[0] ? p.at[0].world : 'bridge'; }
   // ---- people you can hire ------------------------------------------------------------------------------------------
   function people() {
     var rows = [];
@@ -321,7 +323,7 @@ var BridgeLedger = (function () {
       var p = all[id];
       if (!p || !p.crew) return;
       var w = p.at && p.at[0] && p.at[0].world;
-      if (has('BridgeCrew') && BridgeCrew.isHired(id)) rows.push({ name: p.name + ' · ' + p.crew.role, sub: 'Your crew — at their post on the bridge. ' + (p.crew.perkText || ''), fig: '<span class="lg-ok">hired</span>', world: 'bridge' });
+      if (has('BridgeCrew') && BridgeCrew.isHired(id)) rows.push({ name: p.name + ' · ' + p.crew.role, sub: (p.crew.ashore ? 'Your crew — ' : 'Your crew — at their post on the bridge. ') + (p.crew.perkText || ''), fig: '<span class="lg-ok">hired</span>', world: crewWorld(p) });
       else if (has('BridgePeople') && BridgePeople.met(id)) rows.push({ name: p.name + ' · ' + p.crew.role, sub: (p.crew.after ? 'Not ready to leave yet. ' : 'Ask them to join your crew. ') + (p.crew.perkText || ''), fig: coins(p.crew.wage || 0), world: w });
       else rows.push({ name: '? ? ?', sub: 'Someone who might sail with you' + (regionOf(w) ? ' — somewhere in ' + regionOf(w) : ''), dim: true });
     });

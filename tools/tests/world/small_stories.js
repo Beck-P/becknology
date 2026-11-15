@@ -195,6 +195,67 @@ const ONLY = process.argv[3] || '';
     console.log('admiral', await has('admiral'));
   }
 
+  // ---- Desh: signed on at the spaceport (her perk on every hold), still with the Old Mercy, trading both ways ----
+  if (part('desh')) {
+    await p.evaluate(() => {
+      window._coins = 400;
+      BridgeProgression.awardCoins = (n) => { window._coins += n; return Promise.resolve(window._coins); };
+      BridgeProgression.wagerCoins = (n) => Promise.resolve(window._coins >= n ? (window._coins -= n, { ok: true, balance: window._coins }) : { ok: false, reason: 'insufficient' });
+      if (BridgeProgression.getBalance) BridgeProgression.getBalance = () => Promise.resolve(window._coins);
+    });
+    const hold = () => p.evaluate(() => [BridgeFleet.effective(BridgeFleet.all()[0]).hold, BridgeFleet.effective({ id: 'x', type: 'galleon', fits: [], guns: [], hold: {} }).hold]);
+    const before = await hold();
+    await go('arcadia-spaceport', [13, 24]);
+    await use('CAPTAIN DESH');
+    const t = await topics();
+    console.log('Desh:', JSON.stringify(t));
+    if (t.indexOf('Join my crew?') < 0) fail('no crew place with Desh');
+    await ask('Join my crew?');
+    const pitch = await said();
+    if (!/180 COINS UP FRONT, AS HAULER/.test(pitch)) fail('the pitch: ' + pitch.slice(-120));
+    await ask('Join my crew?'); await p.waitForTimeout(1500);
+    await shut();
+    if (!await p.evaluate(() => BridgeCrew.isHired('desh'))) fail('Desh not signed on');
+    if (await p.evaluate(() => window._coins) !== 220) fail('her wage: ' + await p.evaluate(() => window._coins));
+    const after = await hold();
+    console.log('hold (sloop, galleon) before', before, 'after', after);
+    if (after[0] !== Math.round(before[0] * 1.1) || after[1] !== Math.round(before[1] * 1.1)) fail('the holds aren\'t a tenth fuller');
+    if (!await p.evaluate(() => BridgeTrade.capacity(BridgeFleet.all()[0]) === BridgeFleet.effective(BridgeFleet.all()[0]).hold)) fail('trade doesn\'t see the hold');
+    // she stays with the Old Mercy: still at the spaceport after a reload, not aboard; her board names you
+    await go('arcadia-spaceport', [13, 24]);
+    if (!await p.evaluate(() => BridgeWorld.getWorld().interactions.some(i => i.label === 'CAPTAIN DESH'))) fail('Desh left the spaceport');
+    await use('DEPARTURES BOARD');
+    const board = await said();
+    if (!/CREW: ALYSSA/.test(board) || /ASK FOR DESH/.test(board)) fail('the board: ' + board.slice(-80));
+    await p.screenshot({ path: OUT + '/ss_desh_board.png' });
+    await shut();
+    // trade: fish and farm goods from your pack at a spaceport price; chrome and circuit to take home
+    await p.evaluate(() => { BridgeInventory.addItem('silverfin', 3); BridgeInventory.addItem('carrot', 2); });
+    await use('CAPTAIN DESH');
+    if ((await topics()).indexOf('About the work') < 0) fail('no About the work once hired');
+    await ask("What's the Mercy buying?"); await p.waitForTimeout(500);
+    await p.screenshot({ path: OUT + '/ss_desh_sell.png' });
+    const all = await p.evaluate(() => { const b = document.querySelector('.wd-opt[data-act="all"]'); const t = b ? b.textContent : ''; if (b) b.click(); return t; });
+    console.log('sell:', all);
+    await p.waitForTimeout(1500); await shut();
+    if (await count('silverfin') || await count('carrot')) fail('not sold');
+    if (await p.evaluate(() => window._coins) !== 220 + 3 * 16 + 2 * 24) fail('coins after the sale: ' + await p.evaluate(() => window._coins));
+    await use('CAPTAIN DESH');
+    await ask('Chrome and circuit'); await p.waitForTimeout(800);
+    const bought = await p.evaluate(() => { const b = [...document.querySelectorAll('#world-overlay button')].find(e => /Buy/.test(e.textContent) && !e.disabled); if (b) b.click(); return b ? b.textContent : ''; });
+    await p.waitForTimeout(1200);
+    await p.screenshot({ path: OUT + '/ss_desh_stores.png' });
+    await shut();
+    console.log('bought', bought, 'circuit', await count('circuit'), 'chrome', await count('chrome_part'), 'coins', await p.evaluate(() => window._coins));
+    if (await count('circuit') + await count('chrome_part') < 1) fail('nothing bought from the Mercy');
+    // the ledger knows where she is
+    const led = await p.evaluate(() => typeof BridgeLedger !== 'undefined' && BridgeLedger.roster ? JSON.stringify(BridgeLedger.roster().filter(r => /Desh/.test(r.name))) : '');
+    console.log('ledger roster:', led);
+    await go('bridge', [10, 8]);
+    if (await p.evaluate(() => BridgeWorld.getWorld().interactions.some(i => /DESH/.test(i.label)))) fail('Desh is standing on the bridge');
+    console.log('desh hired', await p.evaluate(() => BridgeCrew.isHired('desh')));
+  }
+
   console.log('errors', errors);
   await b.close();
 })();

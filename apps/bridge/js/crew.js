@@ -7,7 +7,10 @@
  * about with has(perk): a navigator speeds the galleon at the helm, a
  * quartermaster gets better prices, a runner finds more when foraging, a
  * trader sends home a cut whenever you make port, an engineer keeps your
- * businesses running twice as long between collections. A crew block with
+ * businesses running twice as long between collections, a hauler (Desh) packs
+ * every ship's hold a tenth fuller (js/fleet.js effective). A crew block with
+ * `ashore` keeps its person where they are (Desh stays with the Old Mercy at
+ * Arcadia's spaceport): not at a post aboard, not in the crew's day (js/aboard.js). A crew block with
  * `after` (a quest id) answers with `notYet` until that quest is complete.
  * The journal lists them. Once hired they live aboard: each stands at their
  * post on the bridge (decorate) instead of where you found them.
@@ -82,7 +85,13 @@ var BridgeCrew = (function () {
     var all = BridgePeople.all();
     Object.keys(over || hired).forEach(function (id) {
       var p = all[id];
-      if (!p || !p.crew || !p.sheet) return;
+      if (p && p.crew && p.crew.ashore && p.crew.board && !over) {   // her board says so (Desh's departures board: your name for CREW WANTED)
+        var bd = p.crew.board, pl = typeof BridgeState !== 'undefined' && BridgeState.getPilot ? BridgeState.getPilot() : null;
+        data.interactions.forEach(function (it) {
+          if (it.label === bd.label && typeof it.dialog === 'string') it.dialog = it.dialog.replace(bd.was, bd.now.replace('{pilot}', String(pl && pl.name || 'YOU').toUpperCase()));
+        });
+      }
+      if (!p || !p.crew || !p.sheet || p.crew.ashore) return;    // (one who keeps her own post ashore — Desh and the Old Mercy — stays there)
       var home = p.at.filter(function (e) { return e.world !== 'bridge'; })[0];
       if (data.crewPosts) {
         var post = data.crewPosts[id];

@@ -147,6 +147,7 @@ var BridgeFleet = (function () {
     var gunSkills = cr.filter(function (c) { return c.role === 'gunner'; }).map(function (c) { return c.skill; }).sort(function (a, b) { return b - a; });
     if (nav) sp.vmax *= 1 + 0.03 * nav;
     if (rig) { sp.turn *= 1 + 0.05 * rig; sp.storm *= 1 - 0.1 * rig; }
+    if (typeof BridgeCrew !== 'undefined' && BridgeCrew.has && BridgeCrew.has('hauler')) sp.hold = Math.round(sp.hold * 1.1);   // Desh packs your holds (people.json desh)
     sp.hands = cr.length;
     sp.short = Math.max(0, spec(ship.type).crew - cr.length);
     sp.gunners = cr.filter(function (c) { return c.role === 'gunner'; }).length;
