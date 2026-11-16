@@ -64,12 +64,47 @@ def material(x, r):
     return 'ash' if w > 0.05 else ('cinder' if w > -0.18 else 'scoria')
 
 
-ALB = {'crust_near': ('#221a1a', 0.35), 'trail': ('#4a3c34', 0.3), 'ash': ('#3e3638', 0.3), 'cinder': ('#332b2c', 0.35),
-       'scoria': ('#3a2a26', 0.3)}
-I.ground(k, walk | {(c, r) for (c, r) in lake if ell(c + 0.5, r + 0.5, LAKE) > 0.55}, material, ALB,
-         height=lambda x, r: -0.5 * I.smooth(1.18, 0.9, ell(x, r, LAKE, wob(x, r, 7))))      # the ground shelving down under the lava
-I.ridge(k, rim, top=3.6, slope=2.2, seed=31, rock='#3a3034', strata=('#4a3a3c', '#2e2426', '#5a3a36'), moss='#241c1e',
-        foot=0.7, ground=(material, ALB), patchy=True)
+ALB = {'crust_near': ('#221a1a', 0.35), 'trail': ('#4a3c34', 0.3), 'ash': ('#3c3436', 0.3), 'cinder': ('#342c2d', 0.35),
+       'scoria': ('#382a27', 0.3)}
+
+
+def floor_h(x, r):
+    # the ground shelving down under the lava, and elsewhere low drifts of ash and cinder rolling up toward the rim's foot
+    h = -0.5 * I.smooth(1.18, 0.9, ell(x, r, LAKE, wob(x, r, 7)))
+    drift = 0.07 * I.n2(x, r, 0.28, 41) + 0.03 * I.n2(x, r, 0.7, 42)
+    drift *= I.smooth(1.5, 2.6, ell(x, r, LAKE))                 # flat by the lake
+    drift *= 1.0 - I.smooth(1.6, 0.6, abs(x - 22.0)) * (r > 21)  # and along the trail
+    drift *= 1.0 - I.smooth(0.7, 0.92, ell(x, r, BOWL))          # meeting the rim's foot at its own level
+    for (a, b) in _FLAT:                                          # level where things stand on the ground or are cut into it
+        drift *= I.smooth(0.9, 2.0, math.hypot(x - a, r - b))
+    return h + drift
+
+
+_FLAT = [(9.5, 16.0), (33.0, 21.5), (14.5, 25.0), (31.5, 10.0), (10.5, 19.5), (30.0, 24.5), (35.5, 12.5), (15.0, 9.5),
+         (26.5, 26.5), (8.5, 24.0), (36.0, 26.0), (27.5, 22.0), (28.0, 21.0), (6.5, 13.5), (36.5, 22.5)]
+
+
+# past the map's edge the rim and the trail go on a few tiles (the render's margin and a wide screen show them), so the
+# mesh never just stops in the frame; where you walk is still `walk` (the collisions below)
+BEYOND = {(c, r) for c in range(-3, COLS + 3) for r in range(-4, ROWS + 4) if not (0 <= c < COLS and 0 <= r < ROWS)}
+TRAIL_ON = {(c, r) for (c, r) in BEYOND if r >= ROWS and NOTCH[0] <= c <= NOTCH[1]}
+I.ground(k, walk | TRAIL_ON | {(c, r) for (c, r) in lake if ell(c + 0.5, r + 0.5, LAKE) > 0.55}, material, ALB, height=floor_h)
+
+
+def rim_edge(x, r):
+    # how far out past the bowl's own (wobbling) ellipse, and past the notch the trail comes through: the rim's foot
+    # follows that line, not the tiles' staircase — a hair outside it, so no walkable tile's corner is under rock
+    e = ell(x, r, BOWL, wob(x, r, 3))
+    db = (math.sqrt(max(e, 0.0)) - 1.0) * math.sqrt(BOWL[2] * BOWL[3])
+    if r > 29.0:                                     # the notch: open between its walls, down to the map's foot
+        dn = max(NOTCH[0] - x, x - (NOTCH[1] + 1.0))
+        db = min(db, dn if r > 30.0 else max(dn, 30.0 - r))
+    return db - 0.55
+
+
+I.ridge(k, rim | (BEYOND - TRAIL_ON), top=3.6, slope=2.2, seed=31, rock='#3a3034', strata=('#4a3a3c', '#2e2426', '#5a3a36'), moss='#2a2224',
+        foot=0.35, ground=(material, ALB), patchy=False, bounds=(COLS, ROWS), edge=rim_edge, step=1 / 12)   # the rim walls the
+#                                                                                   whole map, its foot round the bowl's line
 
 # ---- the lava lake: glowing, crusted plates drifting on it, a rim of cooling rock -----------------------------------------
 bm = bmesh.new()

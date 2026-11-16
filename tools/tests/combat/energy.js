@@ -37,12 +37,16 @@ const CHARGED = { iron_dagger: 2, cutlass: 3, emberbrand: 3, boarding_pike: 3, w
     // each class's charged blow: hold through a swing, a beat more, let go (into the air); paid as you let go
     out.charged = {};
     for (const id of W) {
-      await full(); hold(id); BridgeCharacter.setFacing('right');
-      BridgeArms.keyDown(); BridgeInventory.useSelected();
-      for (let i = 0; i < 200 && !(BridgeArms.state() || {}).full; i++) await sleep(16);
-      const wasFull = !!(BridgeArms.state() || {}).full, e1 = en();          // (a staff's opening swing threw a bolt already)
-      BridgeArms.keyUp();
-      out.charged[id] = wasFull ? e1 - en() : 'never charged';
+      let cost = 'never charged';
+      for (let go = 0; go < 3 && cost === 'never charged'; go++) {             // (a swing asked for in the last frames of a roll or of the blow before is swallowed, more often on a slow machine: ask again)
+        await full(); hold(id); BridgeCharacter.setFacing('right');
+        BridgeArms.keyDown(); BridgeInventory.useSelected();
+        for (let i = 0; i < 200 && !(BridgeArms.state() || {}).full; i++) await sleep(16);
+        const wasFull = !!(BridgeArms.state() || {}).full, e1 = en();          // (a staff's opening swing threw a bolt already)
+        BridgeArms.keyUp();
+        if (wasFull) cost = e1 - en(); else await sleep(300);
+      }
+      out.charged[id] = cost;
     }
     // a plain bolt from the staff: paid on the swing's landing frame
     await full(); hold('wispcaller'); e0 = en(); const tb = now(); BridgeInventory.useSelected();

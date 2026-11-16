@@ -93,7 +93,10 @@ C.chandelier(k, 10.0, 12.1, 3.0, s=1.0, energy=40)
 for (x, r) in ((5.0, 9.5), (16.0, 9.0), (10.5, 11.5), (19.0, 6.0), (2.0, 7.5)):
     k.point_light(x, r, 2.5, '#ffd0a0', 14, radius=0.6)
 k.area_light(11.0, RB + 1.0, 3.8, '#8070c0', 70, 10.0, rot=(math.radians(-50), 0, 0))
-k.render(OUT, light_states={'full': {'flicker': 1.0}, 'dim': {'flicker': 0.82}}, light_samples=128, world_light=('#22142c', 0.42))
+k.render(OUT, light_states={'full': {'flicker': 1.0, '_art': 0.375}, 'dim': {'flicker': 0.82, '_art': 0.375}}, light_samples=128,
+         world_light=('#584436', 1.7))
+# (every lamp at three-eighths and the room's ambient lifted to a warm amber, so the rug lies in one band of the toy finish instead
+# of breaking into dark shapes where the bands' edges fell across it)
 
 # ---- the world ------------------------------------------------------------------------------------------------------------------
 P = 'PRESS E TO PLAY'

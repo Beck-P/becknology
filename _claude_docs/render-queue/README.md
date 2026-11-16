@@ -35,22 +35,21 @@ wall — came out grey because the finish's outline covered all of them: parts w
 (`scene_post.py` `LUSTRE_WORDS`; the estate and casino kits' chandeliers, sconces, torchères and candelabra,
 `A.candle(lustre=True)`, the penthouse's bottles) keep their colour and take the line round them instead. Name a new
 fitting's thin lit parts that way.
-**Still in the older finish, on purpose: the Neon Royale's four rooms** (`arcadia-casino`, `-casino-cards`,
-`-casino-dining`, `-casino-vip`). Their chandeliers are fine with the fix, but their neon sign letters (RUNOUTS, AURUM,
-the VIP crown, the floor's signs) and the slot cabinets' thin neon trims dim for the same reason, and the VIP room's and
-the floor's carpets break into dark shapes. To land them: name those tubes and letters `lustre` in the casino's own
-builders, give the two carpeted rooms the ambient the palace and Ashcombe House got (a warm fill so the finish's band
-edges don't fall across the open floor), re-render the four, compare with the old pictures. (A branch
-`claude/rooms-toy-finish` holds an earlier, unmerged attempt at the fittings with a different mechanism — `gleam`, a
-per-room switch: don't merge it.) For Beck's eye, shipped as they are: the opera foyer's floor is patchy in the toy
+**The Neon Royale's four rooms are in too** (`arcadia-casino`, `-casino-cards`, `-casino-dining`, `-casino-vip`, November
+2026). The casino kit's neon tubes, sign letters, slot cabinets' trims, reels and toppers, the bar's bottles and the
+table candles are named `lustre` (and the rooms' own signs and neon strips: `assets_signs` `neon` / `letters` and
+`assets_cyber.neon_shape` take an optional `part`, unchanged by default), so the neon stays lit. Each room's carpet
+lies in one band: its lamps lowered with the light states' `_art` (the floor 0.6, the card room and Aurum 0.5, the
+Crown Room 0.375) and its ambient lifted to a warm amber (`world_light=('#584436', …)`), so the finish's band edges
+no longer fall across open floor. (A branch `claude/rooms-toy-finish` holds an earlier, unmerged attempt at the
+fittings with a different mechanism — `gleam`: don't merge it.) For Beck's eye, shipped as they are: the casino
+stage's boards take a soft pool from the follow spot in the dim state; the opera foyer's floor is patchy in the toy
 finish, the Hollow's floor takes strong bands round its one lantern, and the Hall of Finds' moonlight pools.
 
 ## Found, not yet written (each needs a script fix first)
 Ranked by how much a player would notice; details and images were in the look-over's findings.
-Who has what (November 16): Hoarfell — a session on `claude/hoarfell-monastery`; the Crater and Cinder Key (Old Town landed) — `claude/render-found-list`; the Spires, the Stilts, Starling Holm and the Undercity — `claude/render-found-list-2`.
-- **Hoarfell** (Beck named it as the planet with things that look off): the **monastery's** buildings are plain flat white (rebuild-level); the **park's** kickers barely show; bands of snow inside the cliff foot are solid on the col and in the valley.
-- **The Crater** (`lumar-cinder-volcano`): now that the camera follows you, its walls are stretched noise with square corners at the map's edge and the floor is flat noise. **Cinder Key**'s volcano flank is in coarse stepped bands.
+Who has what (November 16; Hoarfell's monastery, park and col have landed): the Spires, the Stilts and Starling Holm (the Undercity landed) — `claude/render-found-list-2`.
+- **Hoarfell** (Beck named it as the planet with things that look off): in the valley the cliff's foot (`assets_isle.ridge`, foot=0.8) is a speckled band of rock and snow across row 7, all of it solid — only two tiles of it are clear snow, so it wants a render, not data: the col's crag walls (`scenes/hoarfell_col.py`, blocks starting where each row's solid tiles do) would fit its head cliff too.
 - **The Spires**: a pale wavy wash across the top of the plaza (check the light first).
 - **The Stilts**: the quay stairs are a plain grey slab.
 - **Starling Holm, built**: the café's parasols overlap the warehouse wall.
-- **Undercity**: on the customer side of the north stalls (row 14) you're half behind the middle block's roof (moving the block's back half a tile needs a render).

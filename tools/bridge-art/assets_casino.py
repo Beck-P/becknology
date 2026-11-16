@@ -277,7 +277,7 @@ def deco_wall(k, x0, x1, r_face, H, gaps=(), mirrors=True, neon=PINK, rng=None, 
         k.box(a, r_face, 0.9, b, r_face + 0.07, 0.96, (GOLD, 0.05), 'dado')
         k.box(a, r_face - 0.02, H - 0.42, b, r_face + 0.12, H - 0.3, (GOLD, 0.05), 'cornice')
         k.box(a, r_face - 0.02, H - 0.3, b, r_face + 0.16, H, (LACQUER_L, 0.05), 'cornice')
-        k.box(a, r_face + 0.12, H - 0.36, b, r_face + 0.15, H - 0.33, shade(neon, 0.45), 'cornice_neon', emit=(neon, 0.9))
+        k.box(a, r_face + 0.12, H - 0.36, b, r_face + 0.15, H - 0.33, shade(neon, 0.45), 'cornice_neon_lustre', emit=(neon, 0.9))
         k.box(a, r_face - 0.5, H, b, r_face + 0.16, H + 0.05, '#08060a', 'wall_cap')
         # fans along the cornice (a deco motif): little gold half-discs
         x = a + 0.4
@@ -295,7 +295,7 @@ def deco_wall(k, x0, x1, r_face, H, gaps=(), mirrors=True, neon=PINK, rng=None, 
             k.box(px - 0.2, r_face - 0.02, 0.0, px + 0.2, r_face + 0.16, 0.3, (GOLD, 0.05), 'pilaster_base')
             for s, zz in ((0.22, H - 0.62), (0.18, H - 0.54), (0.14, H - 0.48)):     # a stepped capital
                 k.box(px - s, r_face - 0.02, zz, px + s, r_face + 0.16, zz + 0.08, (GOLD, 0.05), 'pilaster_cap')
-            k.box(px - 0.025, r_face + 0.12, 0.4, px + 0.025, r_face + 0.14, H - 0.7, shade(neon, 0.45), 'flute', emit=(neon, 0.85))
+            k.box(px - 0.025, r_face + 0.12, 0.4, px + 0.025, r_face + 0.14, H - 0.7, shade(neon, 0.45), 'flute_lustre', emit=(neon, 0.85))
         for i in range(n):
             pa, pb = a + i * w + 0.3, a + (i + 1) * w - 0.3
             if pb - pa < 0.4 or clr(pa, pb):
@@ -340,7 +340,7 @@ def front_wall(k, x0, x1, r0, door, height=0.42, neon=PINK):
             continue
         k.box(a, r0, 0, b, r0 + 0.6, height, (LACQUER, 0.05), 'front_wall')
         k.box(a, r0, height, b, r0 + 0.6, height + 0.05, (GOLD, 0.05), 'wall_cap')
-        k.box(a, r0 - 0.01, height - 0.08, b, r0 + 0.02, height - 0.05, shade(neon, 0.45), 'front_neon', emit=(neon, 0.7))
+        k.box(a, r0 - 0.01, height - 0.08, b, r0 + 0.02, height - 0.05, shade(neon, 0.45), 'front_neon_lustre', emit=(neon, 0.7))
     k.box(door[0], r0, -0.01, door[1], r0 + 0.6, 0.02, (GOLD_D, 0.05), 'threshold')
     for xx in (door[0] - 0.22, door[1]):
         k.box(xx, r0, 0, xx + 0.22, r0 + 0.6, height + 0.55, (GOLD, 0.05), 'door_post')
@@ -383,7 +383,7 @@ def panorama(k, x0, x1, r_face, z0, z1, H, step=1.6, neon=PINK):
     k.box(x0 - 0.05, r_face - 0.5, z1, x1 + 0.05, r_face + 0.1, z1 + 0.1, (GOLD, 0.05), 'lintel')
     k.box(x0, r_face - 0.02, H - 0.42, x1, r_face + 0.12, H - 0.3, (GOLD, 0.05), 'cornice')
     k.box(x0, r_face - 0.02, H - 0.3, x1, r_face + 0.16, H, (LACQUER_L, 0.05), 'cornice')
-    k.box(x0, r_face + 0.12, H - 0.36, x1, r_face + 0.15, H - 0.33, shade(neon, 0.45), 'cornice_neon', emit=(neon, 0.9))
+    k.box(x0, r_face + 0.12, H - 0.36, x1, r_face + 0.15, H - 0.33, shade(neon, 0.45), 'cornice_neon_lustre', emit=(neon, 0.9))
     k.box(x0, r_face - 0.5, H, x1, r_face + 0.16, H + 0.05, '#08060a', 'wall_cap')
     n = max(1, int(round((x1 - x0) / step)))
     for i in range(n + 1):
@@ -440,7 +440,7 @@ def column(k, cx, cr, H, neon=PINK):
         a = 2 * math.pi * i / 8 + 0.2
         k.box(cx + math.cos(a) * 0.205 - 0.015, cr + math.sin(a) * 0.205 - 0.015, 0.5, cx + math.cos(a) * 0.205 + 0.015,
               cr + math.sin(a) * 0.205 + 0.015, H - 0.6, (GOLD, 0.05), 'col_flute')
-    k.cyl(cx, cr, 1.6, 1.68, 0.225, shade(neon, 0.45), 'col_neon', emit=(neon, 0.9), verts=16)
+    k.cyl(cx, cr, 1.6, 1.68, 0.225, shade(neon, 0.45), 'col_neon_lustre', emit=(neon, 0.9), verts=16)
     k.cone(cx, cr, H - 0.4, H - 0.15, 0.24, 0.36, (GOLD, 0.05), 'col_cap', verts=16)
     k.cyl(cx, cr, H - 0.15, H, 0.38, (GOLD_L, 0.05), 'col_cap', verts=16)
     k.sphere(cx, cr, H + 0.22, 0.22, 0.22, '#fff4e0', 'col_globe', emit=('#ffe0b0', 1.0), segs=12)     # a lit globe on top
@@ -474,13 +474,13 @@ def neon_crown(k, cx, r_face, z, s=1.0, col=YEL, gem=PINK, tube=0.026, energy=16
            (cx, z + 0.45 * s), (cx + w * 0.3, z + 0.95 * s), (cx + w * 0.55, z + 0.35 * s), (cx + w * 1.05, z + 0.75 * s), (cx + w, z)]
     seq = pts + [pts[0]]
     for (a, b), (c, d) in zip(seq, seq[1:]):
-        k.tube((a, r_face + 0.06, b), (c, r_face + 0.06, d), tube, shade(col, 0.5), 'neon', emit=(col, 0.95), verts=6)
+        k.tube((a, r_face + 0.06, b), (c, r_face + 0.06, d), tube, shade(col, 0.5), 'neon_lustre', emit=(col, 0.95), verts=6)
     for (a, b) in (pts[1], pts[3], pts[5], pts[7]):
-        k.sphere(a, r_face + 0.06, b + 0.07 * s, 0.07 * s, 0.07 * s, shade(col, 0.6), 'neon', emit=(col, 1.0), segs=8)
-    k.tube((cx - w * 0.95, r_face + 0.06, z + 0.16 * s), (cx + w * 0.95, r_face + 0.06, z + 0.16 * s), tube, shade(col, 0.5), 'neon',
+        k.sphere(a, r_face + 0.06, b + 0.07 * s, 0.07 * s, 0.07 * s, shade(col, 0.6), 'neon_lustre', emit=(col, 1.0), segs=8)
+    k.tube((cx - w * 0.95, r_face + 0.06, z + 0.16 * s), (cx + w * 0.95, r_face + 0.06, z + 0.16 * s), tube, shade(col, 0.5), 'neon_lustre',
            emit=(col, 0.95), verts=6)
     for dx in (-0.5, 0.0, 0.5):
-        k.sphere(cx + dx * w, r_face + 0.07, z + 0.08 * s, 0.06 * s, 0.06 * s, shade(gem, 0.5), 'neon_gem', emit=(gem, 1.0), segs=8)
+        k.sphere(cx + dx * w, r_face + 0.07, z + 0.08 * s, 0.06 * s, 0.06 * s, shade(gem, 0.5), 'neon_gem_lustre', emit=(gem, 1.0), segs=8)
     k.point_light(cx, r_face + 0.6, z + 0.5 * s, col, energy, radius=w * 0.5, group='flicker')
 
 
@@ -493,7 +493,7 @@ def crown_3d(k, cx, cr, z, s=1.0, col=GOLD, gem=PINK):
         x, r = cx + math.cos(a) * 0.5 * s, cr + math.sin(a) * 0.35 * s
         k.cone(x, r, z + 0.3 * s, z + 0.85 * s, 0.13 * s, 0.01, (col, 0.05), 'crown_point', verts=6)
         k.sphere(x, r, z + 0.88 * s, 0.06 * s, 0.06 * s, (GOLD_L, 0.05), 'crown_ball', segs=8)
-        k.sphere(x, r + 0.02, z + 0.17 * s, 0.05 * s, 0.05 * s, shade(gem, 0.6), 'crown_gem', emit=(gem, 0.9), segs=6)
+        k.sphere(x, r + 0.02, z + 0.17 * s, 0.05 * s, 0.05 * s, shade(gem, 0.6), 'crown_gem_lustre', emit=(gem, 0.9), segs=6)
 
 
 # ---- the tables ------------------------------------------------------------------------------------------------------
@@ -722,7 +722,7 @@ def slot_machine(k, live, cx, r0, theme=0, playable=False, w=0.8, stool=True, rn
     k.box(x0 + 0.05, r0 + 0.62, 0.15, x1 - 0.05, r0 + 0.63, 0.62, shade(body, 0.7), 'slot_belly', emit=(glow, 0.25))
     k.box(x0, r0 + 0.05, 0.72, x1, r0 + 0.82, 0.86, ('#1a1620', 0.05), 'slot_deck', bevel=0.012)
     for i, col in enumerate((Y.RED, YEL, Y.GREEN, CYAN)):
-        k.box(x0 + 0.1 + i * 0.16, r0 + 0.62, 0.86, x0 + 0.2 + i * 0.16, r0 + 0.74, 0.885, shade(col, 0.5), 'slot_button', emit=(col, 0.8))
+        k.box(x0 + 0.1 + i * 0.16, r0 + 0.62, 0.86, x0 + 0.2 + i * 0.16, r0 + 0.74, 0.885, shade(col, 0.5), 'slot_button_lustre', emit=(col, 0.8))
     k.box(x0, r0, 0.86, x1, r0 + 0.45, 1.98, (body, 0.06), 'slot_cabinet', bevel=0.015)
     k.box(x0 + 0.06, r0 + 0.45, 0.98, x1 - 0.06, r0 + 0.47, 1.62, '#06040a', 'slot_bezel')
     # the reels: three windows, a symbol in each row
@@ -730,20 +730,20 @@ def slot_machine(k, live, cx, r0, theme=0, playable=False, w=0.8, stool=True, rn
     for i in range(3):
         rx0 = x0 + 0.1 + i * (w - 0.2) / 3
         rx1 = rx0 + (w - 0.2) / 3 - 0.03
-        k.box(rx0, r0 + 0.47, 1.06, rx1, r0 + 0.475, 1.52, '#e8e4dc', 'slot_reel', emit=('#fff8e8', 0.35))
+        k.box(rx0, r0 + 0.47, 1.06, rx1, r0 + 0.475, 1.52, '#e8e4dc', 'slot_reel_lustre', emit=('#fff8e8', 0.35))
         for j in range(3):
             c = rng.choice(sym)
             mz = 1.13 + j * 0.15
-            k.box(rx0 + 0.05, r0 + 0.476, mz, rx1 - 0.05, r0 + 0.48, mz + 0.07, shade(c, 0.6), 'slot_symbol', emit=(c, 0.7))
-    k.box(x0 + 0.08, r0 + 0.48, 1.28, x1 - 0.08, r0 + 0.485, 1.3, '#c01020', 'payline', emit=('#ff3040', 0.9))
-    k.box(x0 + 0.08, r0 + 0.45, 1.66, x1 - 0.08, r0 + 0.47, 1.9, shade(body, 0.6), 'slot_screen', emit=(glow, 0.6))
+            k.box(rx0 + 0.05, r0 + 0.476, mz, rx1 - 0.05, r0 + 0.48, mz + 0.07, shade(c, 0.6), 'slot_symbol_lustre', emit=(c, 0.7))
+    k.box(x0 + 0.08, r0 + 0.48, 1.28, x1 - 0.08, r0 + 0.485, 1.3, '#c01020', 'payline_lustre', emit=('#ff3040', 0.9))
+    k.box(x0 + 0.08, r0 + 0.45, 1.66, x1 - 0.08, r0 + 0.47, 1.9, shade(body, 0.6), 'slot_screen_lustre', emit=(glow, 0.6))
     for xx in (x0 - 0.01, x1 - 0.03):                      # side light pipes
-        k.box(xx, r0 + 0.2, 0.72, xx + 0.04, r0 + 0.5, 1.98, shade(glow, 0.45), 'slot_pipe', emit=(glow, 0.8))
+        k.box(xx, r0 + 0.2, 0.72, xx + 0.04, r0 + 0.5, 1.98, shade(glow, 0.45), 'slot_pipe_lustre', emit=(glow, 0.8))
     # the topper: a rounded sign with a crown, on a neck
     k.box(cx - 0.12, r0 + 0.1, 1.98, cx + 0.12, r0 + 0.3, 2.08, ('#1a1620', 0.05), 'topper_neck')
     k.cyl_y(cx, r0 + 0.08, r0 + 0.3, 2.34, w / 2 - 0.02, 0.28, (body, 0.06), 'topper', verts=20)
-    k.cyl_y(cx, r0 + 0.3, r0 + 0.31, 2.34, w / 2 - 0.08, 0.22, shade(glow, 0.45), 'topper_face', emit=(glow, 0.85), verts=20)
-    k.box(cx - 0.16, r0 + 0.31, 2.28, cx + 0.16, r0 + 0.315, 2.42, shade(YEL, 0.5), 'topper_crown', emit=(YEL, 0.95))
+    k.cyl_y(cx, r0 + 0.3, r0 + 0.31, 2.34, w / 2 - 0.08, 0.22, shade(glow, 0.45), 'topper_face_lustre', emit=(glow, 0.85), verts=20)
+    k.box(cx - 0.16, r0 + 0.31, 2.28, cx + 0.16, r0 + 0.315, 2.42, shade(YEL, 0.5), 'topper_crown_lustre', emit=(YEL, 0.95))
     k.point_light(cx, r0 + 0.9, 1.5, glow, 3.5 if not playable else 5.0, radius=0.2, group='pulse')
     live.chases.append([round(x0 + 0.01, 3), round(r0 + 0.5 - 1.98 * C45, 3), round(r0 + 0.5 - 0.74 * C45, 3),
                         round(cx - (w / 2 - 0.1), 3), round(r0 + 0.31 - 2.34 * C45, 3), round(cx + (w / 2 - 0.1), 3),
@@ -759,7 +759,7 @@ def slot_bank(k, live, x0, r0, n, w=0.85, themes=None, playable=(), header=None,
     rng = rng or k.rng
     x1 = x0 + n * w
     k.box(x0 - 0.1, r0 - 0.3, 0.0, x1 + 0.1, r0, 2.75, (LACQUER, 0.05), 'bank_spine')
-    k.box(x0 - 0.1, r0 - 0.02, 2.62, x1 + 0.1, r0 + 0.04, 2.66, shade(header_col, 0.45), 'bank_neon', emit=(header_col, 0.9))
+    k.box(x0 - 0.1, r0 - 0.02, 2.62, x1 + 0.1, r0 + 0.04, 2.66, shade(header_col, 0.45), 'bank_neon_lustre', emit=(header_col, 0.9))
     for xx in (x0 - 0.14, x1 + 0.04):
         k.box(xx, r0 - 0.32, 0.0, xx + 0.1, r0 + 0.85, 0.9, (GOLD, 0.05), 'bank_end')
         k.box(xx, r0 - 0.32, 0.0, xx + 0.1, r0 + 0.02, 2.8, (GOLD, 0.05), 'bank_end')
@@ -769,7 +769,7 @@ def slot_bank(k, live, x0, r0, n, w=0.85, themes=None, playable=(), header=None,
         slot_machine(k, live, cx, r0, theme=(themes[i % len(themes)] if themes else i), playable=i in playable, w=w - 0.05, rng=rng)
         xs.append(cx)
     if header:
-        SG.letters(k, header, font, (x0 + x1) / 2, r0 - 0.02, 2.74, size=0.3, col=header_col, energy=6)
+        SG.letters(k, header, font, (x0 + x1) / 2, r0 - 0.02, 2.74, size=0.3, col=header_col, energy=6, part='letters_lustre')
     k.solid(x0 - 0.1, r0 - 0.3, x1 + 0.1, r0)
     return xs
 
@@ -792,7 +792,7 @@ def betting_counter(k, x0, x1, r0, r1, top=GOLD, glow=CYAN):
     k.box(x0, r0, 0.0, x1, r1, 1.0, (LACQUER, 0.05), 'counter', bevel=0.02)
     k.box(x0 - 0.04, r0 - 0.04, 1.0, x1 + 0.04, r1 + 0.04, 1.06, (top, 0.05), 'counter_top')
     k.box(x0 + 0.05, r1, 0.12, x1 - 0.05, r1 + 0.01, 0.9, shade(glow, 0.3), 'counter_front', emit=(glow, 0.3))
-    k.box(x0, r1 + 0.01, 0.93, x1, r1 + 0.03, 0.96, shade(glow, 0.45), 'counter_neon', emit=(glow, 0.9))
+    k.box(x0, r1 + 0.01, 0.93, x1, r1 + 0.03, 0.96, shade(glow, 0.45), 'counter_neon_lustre', emit=(glow, 0.9))
 
 
 def bet_terminal(k, live, cx, cr, kind, col=CYAN, w=0.6):
@@ -802,7 +802,7 @@ def bet_terminal(k, live, cx, cr, kind, col=CYAN, w=0.6):
     k.box(cx - w / 2, cr - 0.16, 0.92, cx + w / 2, cr + 0.16, 1.0, (GOLD, 0.05), 'term_head', bevel=0.01)
     k.poly([(cx - w / 2 + 0.04, cr - 0.1, 1.42), (cx + w / 2 - 0.04, cr - 0.1, 1.42), (cx + w / 2 - 0.04, cr + 0.12, 1.02),
             (cx - w / 2 + 0.04, cr + 0.12, 1.02)], '#081020', 'term_screen', emit=('#141a3a', 0.8))
-    k.box(cx - 0.13, cr + 0.08, 0.3, cx + 0.13, cr + 0.09, 0.85, shade(col, 0.4), 'term_neon', emit=(col, 0.85))
+    k.box(cx - 0.13, cr + 0.08, 0.3, cx + 0.13, cr + 0.09, 0.85, shade(col, 0.4), 'term_neon_lustre', emit=(col, 0.85))
     k.box(cx - w / 2, cr - 0.14, 1.0, cx - w / 2 + 0.03, cr - 0.08, 1.45, (GOLD, 0.05), 'term_bezel')
     k.box(cx + w / 2 - 0.03, cr - 0.14, 1.0, cx + w / 2, cr - 0.08, 1.45, (GOLD, 0.05), 'term_bezel')
     k.box(cx - w / 2, cr - 0.14, 1.42, cx + w / 2, cr - 0.08, 1.46, (GOLD, 0.05), 'term_bezel')
@@ -865,12 +865,12 @@ def bottle_tower(k, cx, cr, h=2.6, rad=0.45):
     cols = (CYAN, YEL, Y.GREEN, PINK, PURP, '#f09040', '#f0f0f0')
     for li, zz in enumerate((1.15, 1.6, 2.05)):
         k.cyl(cx, cr, zz - 0.04, zz, rad, (GOLD, 0.05), 'tower_shelf', verts=16)
-        k.cyl(cx, cr, zz - 0.05, zz - 0.04, rad + 0.01, shade(PINK, 0.45), 'tower_neon', emit=(PINK, 0.8), verts=16)
+        k.cyl(cx, cr, zz - 0.05, zz - 0.04, rad + 0.01, shade(PINK, 0.45), 'tower_neon_lustre', emit=(PINK, 0.8), verts=16)
         for i in range(12):
             a = 2 * math.pi * i / 12 + li * 0.25
             col = cols[(i + li * 3) % len(cols)]
             k.cyl(cx + math.cos(a) * (rad - 0.1), cr + math.sin(a) * (rad - 0.1), zz, zz + 0.28 + (i % 3) * 0.04, 0.045,
-                  (col, 0.05), 'bottle', emit=(col, 0.4), verts=6)
+                  (col, 0.05), 'bottle_lustre', emit=(col, 0.4), verts=6)
     k.cyl(cx, cr, h, h + 0.08, rad + 0.05, (GOLD, 0.05), 'tower_cap', verts=16)
     crown_3d(k, cx, cr, h + 0.08, s=0.55)
     k.point_light(cx, cr, h + 0.3, '#ffd080', 14, radius=0.3, group='flicker')
@@ -884,8 +884,8 @@ def island_bar(k, cx, cr, w=5.4, d=3.1, top=GOLD, stools=()):
     inner = stadium(cx, cr, w - 1.1, d - 1.1, n=12)
     rim(k, outer, inner, 0.0, 1.0, (LACQUER, 0.05), 'bar_ring')
     rim(k, stadium(cx, cr, w + 0.1, d + 0.1, n=12), stadium(cx, cr, w - 1.2, d - 1.2, n=12), 1.0, 1.07, (top, 0.05), 'bar_top')
-    rail(k, stadium(cx, cr, w + 0.14, d + 0.14, n=12), 0.2, 0.03, shade(CYAN, 0.45), 'bar_neon', emit=(CYAN, 0.9), verts=5)
-    rail(k, stadium(cx, cr, w + 0.06, d + 0.06, n=12), 0.95, 0.015, shade(PINK, 0.45), 'bar_neon', emit=(PINK, 0.9), verts=4)
+    rail(k, stadium(cx, cr, w + 0.14, d + 0.14, n=12), 0.2, 0.03, shade(CYAN, 0.45), 'bar_neon_lustre', emit=(CYAN, 0.9), verts=5)
+    rail(k, stadium(cx, cr, w + 0.06, d + 0.06, n=12), 0.95, 0.015, shade(PINK, 0.45), 'bar_neon_lustre', emit=(PINK, 0.9), verts=4)
     bottle_tower(k, cx, cr, rad=min(0.55, d / 2 - 0.85))
     for i in range(9):                                        # glasses along the front
         x = cx - w / 2 + 0.9 + i * (w - 1.8) / 8
@@ -928,7 +928,7 @@ def stage(k, live, x0, x1, r_face, depth=2.2, h=0.4, curtain=VELVET, crown=True)
         for i in range(int(L / 0.22) + 1):
             t = i / max(1, int(L / 0.22))
             x, r = a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t
-            k.sphere(x, r + 0.02, h * 0.5, 0.035, 0.035, '#fff0c0', 'stage_bulb', emit=('#ffe090', 1.0), segs=5)
+            k.sphere(x, r + 0.02, h * 0.5, 0.035, 0.035, '#fff0c0', 'stage_bulb_lustre', emit=('#ffe090', 1.0), segs=5)
             live.bulbs.append(live.at(x, r + 0.02, h * 0.5))
     # backdrop: a dark panel with a neon starburst and a crown
     bx0, bx1 = x0 + 0.5, x1 - 0.5
@@ -937,7 +937,7 @@ def stage(k, live, x0, x1, r_face, depth=2.2, h=0.4, curtain=VELVET, crown=True)
     for i in range(13):
         a = math.pi * i / 12
         k.tube((cx, r_face + 0.08, h + 0.6), (cx + math.cos(a) * 1.4, r_face + 0.08, h + 0.6 + math.sin(a) * 1.4), 0.016,
-               shade(GOLD_L, 0.5), 'starburst', emit=(YEL, 0.75), verts=4)
+               shade(GOLD_L, 0.5), 'starburst_lustre', emit=(YEL, 0.75), verts=4)
     if crown:
         neon_crown(k, cx, r_face + 0.08, h + 1.85, s=0.38, col=PINK, gem=CYAN, energy=8)
     # curtains: swags at the top, drapes down the sides
@@ -970,9 +970,9 @@ def cocktail_table(k, cx, cr, glow=PINK):
     k.cyl(cx, cr, 0.0, 0.04, 0.2, (GOLD_D, 0.05), 'ct_foot', verts=12)
     k.cyl(cx, cr, 0.04, 0.68, 0.035, (GOLD, 0.05), 'ct_post', verts=6)
     k.cyl(cx, cr, 0.68, 0.72, 0.3, (LACQUER, 0.04), 'ct_top', verts=18)
-    k.cyl(cx, cr, 0.665, 0.68, 0.31, shade(glow, 0.45), 'ct_neon', emit=(glow, 0.8), verts=18)
+    k.cyl(cx, cr, 0.665, 0.68, 0.31, shade(glow, 0.45), 'ct_neon_lustre', emit=(glow, 0.8), verts=18)
     k.cyl(cx + 0.08, cr - 0.05, 0.72, 0.84, 0.04, ('#f0c040', 0.05), 'glass', emit=('#ffd060', 0.3), verts=6)
-    k.cyl(cx - 0.05, cr + 0.06, 0.72, 0.76, 0.06, '#f0e0c0', 'candle', emit=('#ffb050', 0.9), verts=8)
+    k.cyl(cx - 0.05, cr + 0.06, 0.72, 0.76, 0.06, '#f0e0c0', 'candle_lustre', emit=('#ffb050', 0.9), verts=8)
     k.point_light(cx, cr, 0.95, '#ffb060', 2.5, radius=0.1, group='flicker')
 
 
@@ -982,7 +982,7 @@ def link_kiosk(k, live, x0, x1, r0, n=4, col=CYAN):
     xs = []
     k.box(x0 - 0.2, r0 - 0.2, 0.0, x1 + 0.2, r0 + 0.1, 0.08, (GOLD_D, 0.05), 'link_plinth')
     k.box(x0 - 0.1, r0 - 0.25, 0.08, x1 + 0.1, r0, 2.1, (LACQUER_L, 0.05), 'link_spine')
-    k.box(x0 - 0.1, r0 - 0.02, 1.95, x1 + 0.1, r0 + 0.05, 2.0, shade(col, 0.45), 'link_neon', emit=(col, 0.9))
+    k.box(x0 - 0.1, r0 - 0.02, 1.95, x1 + 0.1, r0 + 0.05, 2.0, shade(col, 0.45), 'link_neon_lustre', emit=(col, 0.9))
     for i in range(n):
         cx = x0 + (i + 0.5) * (x1 - x0) / n
         bet_terminal(k, live, cx, r0 + 0.3, 'link', col=col, w=0.62)
@@ -1006,7 +1006,7 @@ def _icon(k, kind, cx, r, cz, s, col):
     def ln(pts, closed=False, t=0.016):
         seq = list(pts) + ([pts[0]] if closed else [])
         for (a, b), (c, d) in zip(seq, seq[1:]):
-            k.tube((cx + a * s, r, cz + b * s), (cx + c * s, r, cz + d * s), t, shade(col, 0.5), 'icon', emit=(col, 0.95), verts=4)
+            k.tube((cx + a * s, r, cz + b * s), (cx + c * s, r, cz + d * s), t, shade(col, 0.5), 'icon_lustre', emit=(col, 0.95), verts=4)
 
     def circ(x, z, rad, n=10):
         ln([(x + math.cos(2 * math.pi * i / n) * rad, z + math.sin(2 * math.pi * i / n) * rad) for i in range(n)], True)
@@ -1074,13 +1074,13 @@ def runouts_cabinet(k, live, cx, r0, mode, w=0.82):
     k.box(x0 - 0.02, r0 + 0.5, 0.88, x1 + 0.02, r0 + 0.8, 1.0, ('#c8ccd8', 0.04), 'ro_panel', bevel=0.01)
     for i in range(3):
         c = (col, '#f0f0f0', col)[i]
-        k.cyl(cx - 0.18 + i * 0.18, r0 + 0.66, 1.0, 1.02, 0.035, shade(c, 0.5), 'ro_button', emit=(c, 0.8), verts=8)
+        k.cyl(cx - 0.18 + i * 0.18, r0 + 0.66, 1.0, 1.02, 0.035, shade(c, 0.5), 'ro_button_lustre', emit=(c, 0.8), verts=8)
     k.box(x0, r0, 0.95, x1, r0 + 0.42, 1.95, ('#14101c', 0.05), 'ro_cabinet', bevel=0.015)
     k.box(x0 + 0.06, r0 + 0.42, 1.04, x1 - 0.06, r0 + 0.44, 1.7, '#04040a', 'ro_bezel')
     k.box(x0 + 0.1, r0 + 0.44, 1.08, x1 - 0.1, r0 + 0.445, 1.66, '#081018', 'ro_screen', emit=(shade(col, 0.5), 0.6))
     live.screen(x0 + 0.1, x1 - 0.1, r0 + 0.445, 1.08, 1.66, 'runouts:' + mode)
     for xx in (x0 - 0.005, x1 - 0.025):
-        k.box(xx, r0 + 0.05, 0.1, xx + 0.03, r0 + 0.62, 1.95, shade(col, 0.45), 'ro_trim', emit=(col, 0.85))
+        k.box(xx, r0 + 0.05, 0.1, xx + 0.03, r0 + 0.62, 1.95, shade(col, 0.45), 'ro_trim_lustre', emit=(col, 0.85))
     k.box(x0 - 0.03, r0 + 0.2, 1.95, x1 + 0.03, r0 + 0.5, 2.3, ('#08060c', 0.05), 'ro_marquee_box')
     k.box(x0, r0 + 0.5, 1.98, x1, r0 + 0.51, 2.27, '#0a0610', 'ro_marquee')
     _icon(k, icon, cx, r0 + 0.52, 2.125, 0.34, col)
@@ -1093,14 +1093,14 @@ def dining_table(k, cx, cr, rad=0.48, cloth='#ece4d4', chairs=((0, -1), (0, 1)),
     """A round table under a white cloth to the floor, a candle, places laid; gold chairs round it."""
     k.cyl(cx, cr, 0.0, 0.74, rad, (cloth, 0.06), 'tablecloth', verts=22)
     k.cyl(cx, cr, 0.74, 0.76, rad + 0.02, (shade(cloth, 1.05), 0.05), 'tablecloth_top', verts=22)
-    k.cyl(cx, cr, 0.76, 0.78, 0.07, (GOLD, 0.05), 'candle_dish', verts=10)
-    k.cyl(cx, cr, 0.78, 0.92, 0.03, '#f4ecd8', 'candle', emit=('#ffcf80', 0.6), verts=8)
-    k.sphere(cx, cr, 0.95, 0.02, 0.03, '#fff0c0', 'flame', emit=('#ffb040', 1.0), segs=5)
+    k.cyl(cx, cr, 0.76, 0.78, 0.07, (GOLD, 0.05), 'candle_dish_lustre', verts=10)
+    k.cyl(cx, cr, 0.78, 0.92, 0.03, '#f4ecd8', 'candle_lustre', emit=('#ffcf80', 0.6), verts=8)
+    k.sphere(cx, cr, 0.95, 0.02, 0.03, '#fff0c0', 'flame_lustre', emit=('#ffb040', 1.0), segs=5)
     k.point_light(cx, cr, 1.05, '#ffb060', 2.2, radius=0.08, group='flicker')
     for (dx, dr) in chairs:
         px, pr = cx + dx * rad * 0.55, cr + dr * rad * 0.55
         k.cyl(px, pr, 0.76, 0.765, 0.12, ('#f8f4ec', 0.04), 'plate', verts=12)
-        k.cyl(px + 0.1, pr - 0.12 * dr if dr else pr - 0.1, 0.76, 0.9, 0.025, ('#e8e8f0', 0.04), 'wine_glass', emit=('#c02040', 0.2), verts=6)
+        k.cyl(px + 0.1, pr - 0.12 * dr if dr else pr - 0.1, 0.76, 0.9, 0.025, ('#e8e8f0', 0.04), 'wine_glass_lustre', emit=('#c02040', 0.2), verts=6)
         fx = {(0, -1): 'down', (0, 1): 'up', (-1, 0): 'right', (1, 0): 'left'}[(dx, dr)]
         off = chair_off or rad + 0.3
         club_chair(k, cx + dx * off, cr + dr * off, fx, col=chair_col)
@@ -1181,7 +1181,7 @@ def prize_coupe(k, cx, cr, z=0.5, col='#e8c050', glass='#1a2a4a', neon=PINK):
     k.blob(cx - 0.12, cr - 0.06, z + 0.45, 0.2, 0.08, 0.03, '#c8b8e0', 'coupe_glint', emit=('#e8d8ff', 0.5), segs=8)
     for side in (-1, 1):
         k.tube((cx - L / 2 + 0.15, cr + side * W * 0.47, z + 0.14), (cx + L / 2 - 0.2, cr + side * W * 0.4, z + 0.1), 0.018,
-               shade(neon, 0.45), 'coupe_neon', emit=(neon, 0.95), verts=4)
+               shade(neon, 0.45), 'coupe_neon_lustre', emit=(neon, 0.95), verts=4)
         k.poly([(cx - L / 2 + 0.05, cr + side * 0.3, z + 0.3), (cx - L / 2 + 0.45, cr + side * 0.3, z + 0.3),
                 (cx - L / 2 + 0.1, cr + side * 0.35, z + 0.6)], (col, 0.04), 'coupe_fin')
     k.box(cx + L / 2 - 0.08, cr - 0.3, z + 0.08, cx + L / 2, cr + 0.3, z + 0.14, '#ffffff', 'coupe_lamp', emit=('#e8f8ff', 1.0))
@@ -1274,13 +1274,13 @@ def royale_facade(k, st, x0, x1, RF, rng=None):
     for xx in (bx0 + 0.15, cx - 1.25, cx + 1.25, bx1 - 0.15):
         k.cyl(xx, RF - 0.08, 0.0, 0.15, 0.2, (GOLD_D, 0.05), 'portico_col_base', verts=12)
         k.cyl(xx, RF - 0.08, 0.15, G, 0.13, (GOLD, 0.04), 'portico_col', verts=12)
-        k.cyl(xx, RF - 0.08, 0.6, 0.66, 0.135, shade(PINK, 0.45), 'portico_col_neon', emit=(PINK, 0.9), verts=12)
+        k.cyl(xx, RF - 0.08, 0.6, 0.66, 0.135, shade(PINK, 0.45), 'portico_col_neon_lustre', emit=(PINK, 0.9), verts=12)
     k.point_light(cx, RF + 0.4, 1.2, '#ffc070', 30, radius=1.2, group='flicker')
     # the marquee: a deep box over the portico, its face a lightbox framed in bulbs
     mx0, mx1, mz0, mz1, out = cx - 4.3, cx + 4.3, G + 0.02, G + 0.5, 0.55
     k.box(mx0, RF, mz0, mx1, RF + out, mz1, (LACQUER_L, 0.05), 'marquee')
     k.box(mx0 - 0.04, RF, mz1, mx1 + 0.04, RF + out + 0.04, mz1 + 0.06, (GOLD, 0.05), 'marquee_top')
-    k.box(mx0 - 0.04, RF + out + 0.04, mz1 + 0.02, mx1 + 0.04, RF + out + 0.08, mz1 + 0.07, shade(PINK, 0.45), 'marquee_neon', emit=(PINK, 0.9))
+    k.box(mx0 - 0.04, RF + out + 0.04, mz1 + 0.02, mx1 + 0.04, RF + out + 0.08, mz1 + 0.07, shade(PINK, 0.45), 'marquee_neon_lustre', emit=(PINK, 0.9))
     k.box(mx0 + 0.15, RF + out, mz0 + 0.12, mx1 - 0.15, RF + out + 0.01, mz1 - 0.12, '#f4e4c0', 'marquee_face', emit=('#fff0d0', 0.6))
     SG.letters(k, 'CASINO  -  LADY VELVET TONIGHT  -  THE CROWN ROOM', 'PoiretOne', cx, RF + out + 0.01, mz0 + 0.16, size=0.17,
                col='#5a0a14', lit=False, depth=0.01)
@@ -1288,12 +1288,12 @@ def royale_facade(k, st, x0, x1, RF, rng=None):
     for i in range(n + 1):
         x = mx0 + i * (mx1 - mx0) / n
         for z in (mz0 + 0.05, mz1 - 0.05):
-            k.sphere(x, RF + out + 0.03, z, 0.035, 0.035, '#fff0c0', 'marquee_bulb', emit=('#ffe090', 1.0), segs=5)
+            k.sphere(x, RF + out + 0.03, z, 0.035, 0.035, '#fff0c0', 'marquee_bulb_lustre', emit=('#ffe090', 1.0), segs=5)
             st.bulbs.append([round(x, 3), round(RF + out + 0.03 - z * C45, 3)])
     for side in (mx0, mx1):                                      # the marquee's ends, bulbs down them too
         for j in range(1, 3):
             z = mz0 + 0.05 + j * (mz1 - mz0 - 0.1) / 3
-            k.sphere(side, RF + out + 0.03, z, 0.035, 0.035, '#fff0c0', 'marquee_bulb', emit=('#ffe090', 1.0), segs=5)
+            k.sphere(side, RF + out + 0.03, z, 0.035, 0.035, '#fff0c0', 'marquee_bulb_lustre', emit=('#ffe090', 1.0), segs=5)
             st.bulbs.append([round(side, 3), round(RF + out + 0.03 - z * C45, 3)])
     for i in range(10):                                          # bulbs under the marquee light the steps
         k.point_light(mx0 + 0.5 + i * (mx1 - mx0 - 1) / 9, RF + 1.0, mz0 - 0.1, '#ffd890', 6, radius=0.2, group='flicker')
@@ -1308,7 +1308,7 @@ def royale_facade(k, st, x0, x1, RF, rng=None):
         z = nz0 + 0.06 + j * (nz1 - nz0 - 0.12) / int((nz1 - nz0) / 0.2)
         frame += [(nx0 + 0.06, z), (nx1 - 0.06, z)]
     for (x, z) in frame:
-        k.sphere(x, RF + 0.1, z, 0.04, 0.04, '#fff0c0', 'name_bulb', emit=('#ffe090', 1.0), segs=5)
+        k.sphere(x, RF + 0.1, z, 0.04, 0.04, '#fff0c0', 'name_bulb_lustre', emit=('#ffe090', 1.0), segs=5)
         st.bulbs.append([round(x, 3), round(RF + 0.1 - z * C45, 3)])
     SG.neon(k, 'Neon', 'Pacifico', cx - 1.5, RF + 0.08, 4.3, size=1.6, col=PINK, tube=0.036, energy=30)
     SG.letters(k, 'ROYALE', 'Limelight', cx + 0.2, RF + 0.08, 2.92, size=1.12, col=GOLD_L, energy=40)
@@ -1319,7 +1319,7 @@ def royale_facade(k, st, x0, x1, RF, rng=None):
         rf = RF - 0.6 * (1 - s_)
         k.box(cx - hw, rb + 0.1, z0_, cx + hw, rf, z1_, (LACQUER, 0.04), 'setback')
         k.box(cx - hw - 0.03, rb + 0.08, z1_ - 0.06, cx + hw + 0.03, rf + 0.04, z1_, (GOLD, 0.05), 'setback_trim')
-        k.box(cx - hw, rf, z0_ + 0.12, cx + hw, rf + 0.01, z0_ + 0.18, shade(PINK, 0.45), 'setback_neon', emit=(PINK, 0.9))
+        k.box(cx - hw, rf, z0_ + 0.12, cx + hw, rf + 0.01, z0_ + 0.18, shade(PINK, 0.45), 'setback_neon_lustre', emit=(PINK, 0.9))
         x = cx - hw + 0.25
         while x < cx + hw - 0.2:
             k.box(x - 0.03, rf, z0_, x + 0.03, rf + 0.05, z1_, (GOLD, 0.05), 'fin')
@@ -1347,5 +1347,5 @@ def gold_palm(k, cx, cr, h=1.8):
         k.blob(cx + math.cos(a) * 0.5, cr + math.sin(a) * 0.4, h - 0.1, 0.6, 0.16, 0.07, ('#3a8a4a', 0.2), 'frond',
                rot=(0, 18 * math.sin(a), math.degrees(a)), segs=8)
     for i in range(6):
-        k.sphere(cx + 0.07 * math.cos(i * 2.1), cr + 0.07 * math.sin(i * 2.1), 0.7 + i * 0.17, 0.025, 0.025, YEL, 'fairy', emit=(YEL, 1.0), segs=4)
+        k.sphere(cx + 0.07 * math.cos(i * 2.1), cr + 0.07 * math.sin(i * 2.1), 0.7 + i * 0.17, 0.025, 0.025, YEL, 'fairy_lustre', emit=(YEL, 1.0), segs=4)
     k.solid(cx - 0.32, cr - 0.32, cx + 0.32, cr + 0.32)

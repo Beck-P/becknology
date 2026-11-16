@@ -133,7 +133,8 @@ global.PHONE_EXTRA = async ({ page, go, useIt, press, audit, closeByTap, tapAt, 
     return q + ':' + (c.display === 'none' || r.width < 2 ? 'none' : c.visibility === 'hidden' || +c.opacity < 0.05 ? 'hidden' : 'shown'); }).join(' '), CTL);
   // a line said over it: nothing of the controls on top of the card, and back as they were after
   const sayOver = async (p, tag) => {
-    const before = await ctl(p);
+    const foes = () => p.evaluate(() => typeof BridgeSeaFight !== 'undefined' && BridgeSeaFight._foes ? BridgeSeaFight._foes().map(o => o.state + '@' + Math.round(o.hull * 100 || 0)).join(',') : '');
+    const before = await ctl(p), foes0 = /^fight/.test(tag) ? await foes() : '';
     await p.evaluate(() => BridgeInteractions.say('A NOTE', 'Somebody has carved their initials here, and a little boat.')); await p.waitForTimeout(600);
     const a = await audit(p), during = await ctl(p);
     if (/^(sea|fight)/.test(tag)) {                                       // at sea the island's way back and name stay under the sloop
@@ -152,7 +153,11 @@ global.PHONE_EXTRA = async ({ page, go, useIt, press, audit, closeByTap, tapAt, 
     if (/stick:shown|dpad-action:shown|inventory-panel:shown/.test(during)) fail(tag + ': the touch controls show over a line: ' + during);
     if (over) fail(tag + ': something over the line\'s card: ' + over);
     if (!out) fail(tag + ': the line didn\'t close by a tap');
-    if (after !== before) fail(tag + ': not back as they were: ' + before + ' → ' + after);
+    // a fight goes on while the line is up: if she struck, sank or sheered off meanwhile (a slow run), FIRE rightly went with her
+    const over2 = /^fight/.test(tag) && !/sf-fire:shown/.test(after) && !(await p.evaluate(() => BridgeSeaFight.busy()));
+    const cmp = (s) => over2 ? s.replace(/ #sf-fire:\w+/, '') : s;
+    if (/^fight/.test(tag)) console.log(tag + ': her state ' + foes0 + ' → ' + (await foes()) + (over2 ? ' — the fight ended while the line was up (FIRE not compared)' : ''));
+    if (cmp(after) !== cmp(before)) fail(tag + ': not back as they were: ' + before + ' → ' + after);
   };
   if (!ONLY || ONLY.indexOf('ride') >= 0) {
     const p = await page('phone', { bridge_country: JSON.stringify({ horse: { coat: 'bay', name: 'Clover' }, riding: 'horse' }) });
@@ -197,9 +202,17 @@ global.PHONE_EXTRA = async ({ page, go, useIt, press, audit, closeByTap, tapAt, 
       }
       if (!ONLY || ONLY.indexOf('fight') >= 0) {
         await p.evaluate(() => BridgeSeaFight._spawn('cutter'));
-        await p.waitForFunction(() => !!document.getElementById('sloop-menu'), null, { timeout: 10000 }).catch(() => {});   // her hail, answered before the line
-        await p.waitForTimeout(400);
-        await p.evaluate(() => { const m = document.getElementById('sloop-menu'); if (m) { const bs = [...m.querySelectorAll('button')].filter(e => !e.disabled), b = bs.find(e => /^Fight/.test(e.textContent)) || bs.find(e => /Run for it|Got it/.test(e.textContent)); b && b.click(); } }); await p.waitForTimeout(1500);
+        // her hail, answered before the line. The game's clock runs slow on a loaded machine (she can take a minute to close and
+        // hail), so this waits on what she's doing, not on the wall clock: answer her offer whenever it's up, until she's hostile
+        let on = false;
+        for (const t0 = Date.now(); Date.now() - t0 < 240000 && !on;) {
+          await p.waitForTimeout(400);
+          on = await p.evaluate(() => { const m = document.getElementById('sloop-menu');
+            if (m) { const bs = [...m.querySelectorAll('button')].filter(e => !e.disabled), b = bs.find(e => /^Fight/.test(e.textContent)) || bs.find(e => /Run for it|Got it/.test(e.textContent)); b && b.click(); return false; }
+            return BridgeSeaFight._foes().some(o => /^(fight|chase|hunt)$/.test(o.state)); });
+        }
+        if (!on) fail('fight (' + size + '): no fight began (her state: ' + await p.evaluate(() => BridgeSeaFight._foes().map(o => o.state).join(',') || 'gone') + ')');
+        await p.waitForTimeout(1500);
         await p.screenshot({ path: OUT + '/po_fight_hud_' + size + '.png' });
         await sayOver(p, 'fight_' + size);
       }
