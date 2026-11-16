@@ -53,4 +53,3 @@ Ranked by how much a player would notice; details and images were in the look-ov
 - **The Spires**: a pale wavy wash across the top of the plaza (check the light first).
 - **The Stilts**: the quay stairs are a plain grey slab.
 - **Starling Holm, built**: the café's parasols overlap the warehouse wall.
-- **Undercity**: on the customer side of the north stalls (row 14) you're half behind the middle block's roof (moving the block's back half a tile needs a render).
