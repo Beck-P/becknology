@@ -48,8 +48,8 @@ finish, the Hollow's floor takes strong bands round its one lantern, and the Hal
 
 ## Found, not yet written (each needs a script fix first)
 Ranked by how much a player would notice; details and images were in the look-over's findings.
-Who has what (November 16): Hoarfell's col (the monastery and the park landed) — a session on `claude/hoarfell-monastery`; the Spires, the Stilts and Starling Holm (the Undercity landed) — `claude/render-found-list-2`.
-- **Hoarfell** (Beck named it as the planet with things that look off): bands of snow inside the cliff foot are solid on the col and in the valley.
+Who has what (November 16; Hoarfell's monastery, park and col have landed): the Spires, the Stilts and Starling Holm (the Undercity landed) — `claude/render-found-list-2`.
+- **Hoarfell** (Beck named it as the planet with things that look off): in the valley the cliff's foot (`assets_isle.ridge`, foot=0.8) is a speckled band of rock and snow across row 7, all of it solid — only two tiles of it are clear snow, so it wants a render, not data: the col's crag walls (`scenes/hoarfell_col.py`, blocks starting where each row's solid tiles do) would fit its head cliff too.
 - **The Spires**: a pale wavy wash across the top of the plaza (check the light first).
 - **The Stilts**: the quay stairs are a plain grey slab.
 - **Starling Holm, built**: the café's parasols overlap the warehouse wall.
