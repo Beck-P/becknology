@@ -47,9 +47,8 @@ finish, the Hollow's floor takes strong bands round its one lantern, and the Hal
 
 ## Found, not yet written (each needs a script fix first)
 Ranked by how much a player would notice; details and images were in the look-over's findings.
-Who has what (November 16): Hoarfell's park and col (the monastery landed) — a session on `claude/hoarfell-monastery`; Cinder Key (Old Town and the Crater landed) — `claude/render-found-list`; the Spires, the Stilts and Starling Holm (the Undercity landed) — `claude/render-found-list-2`.
+Who has what (November 16): Hoarfell's park and col (the monastery landed) — a session on `claude/hoarfell-monastery`; the Spires, the Stilts and Starling Holm (the Undercity landed) — `claude/render-found-list-2`.
 - **Hoarfell** (Beck named it as the planet with things that look off): the **park's** kickers barely show; bands of snow inside the cliff foot are solid on the col and in the valley.
-- **Cinder Key**'s volcano flank is in coarse stepped bands.
 - **The Spires**: a pale wavy wash across the top of the plaza (check the light first).
 - **The Stilts**: the quay stairs are a plain grey slab.
 - **Starling Holm, built**: the café's parasols overlap the warehouse wall.

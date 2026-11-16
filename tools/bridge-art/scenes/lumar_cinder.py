@@ -162,7 +162,7 @@ ALB = {'path': ('#6e5a4c', 0.3), 'path_edge': ('#5e4a40', 0.3), 'boards': ('#5a3
 I.ground(k, walk, material, ALB)
 
 
-def vmaterial(x, r):
+def vmaterial(x, r, jx=0.0, jr=0.0):
     """The cone's skin: rock and cinder in rough bands round it, lava in the gullies down from the rim, crust at the top."""
     h = vheight(x, r)
     if h < 0.05:
@@ -177,29 +177,35 @@ def vmaterial(x, r):
     gully = abs(math.sin(a * 6 + 1.6 * I.n2(x, r, 0.18, 97) + 0.5 * I.n2(x, r, 0.6, 101)))
     if gully < 0.06 + 0.03 * I.n2(x, r, 0.9, 102) and d < 4 + 9 * (0.5 + 0.5 * I.n2(a * 3, 0, 0.7, 98)):
         return 'lava'
-    band = int(h * 2.2 + 0.7 * I.n2(x, r, 0.3, 99)) % 3
+    # long wavy beds of rock, cinder and scree round the cone (not contour steps), their edges dithered by the caller
+    x, r = x + jx, r + jr                            # (the jitter only for the beds: the lava's lines stay whole)
+    band = int(vheight(x, r) * 1.4 + 1.1 * I.n2(x, r, 0.2, 99) + 0.3 * I.n2(x, r, 0.9, 103)) % 3
     return ('rock', 'cinder', 'scree')[band] if I.n2(x, r, 1.3, 100) > -0.45 else 'ashfall'
 
 
-VALB = {'rock': ('#3e3236', 0.25), 'cinder': ('#2a2022', 0.35), 'scree': ('#4a3c3a', 0.3), 'ashfall': ('#5a5050', 0.35),
+VALB = {'rock': ('#3e3236', 0.25), 'cinder': ('#30262a', 0.35), 'scree': ('#463838', 0.3), 'ashfall': ('#544a4a', 0.35),
         'crust': ('#1e1414', 0.3)}
 VALB.update({'g:' + key: a for key, a in ALB.items()})
+VN = 12                                                # the cone's mesh: twelve quads a tile, fine enough that its beds don't step
 _vf = {}
 for (c, r) in VOLC:
-    for j in range(8):
-        for i in range(8):
-            a = (c * 8 + i, r * 8 + j)
-            _vf.setdefault(vmaterial(c + (i + 0.5) / 8, r + (j + 0.5) / 8), []).append((a, (a[0] + 1, a[1]), (a[0] + 1, a[1] + 1), (a[0], a[1] + 1)))
+    for j in range(VN):
+        for i in range(VN):
+            a = (c * VN + i, r * VN + j)
+            h1 = math.sin(a[0] * 12.9898 + a[1] * 78.233) * 43758.5453          # a hair's jitter: bed edges dither, not stair
+            h2 = math.sin(a[0] * 39.346 + a[1] * 11.135) * 24634.6345
+            jx, jr = 0.03 * (2 * (h1 - math.floor(h1)) - 1), 0.03 * (2 * (h2 - math.floor(h2)) - 1)
+            _vf.setdefault(vmaterial(c + (i + 0.5) / VN, r + (j + 0.5) / VN, jx, jr), []).append((a, (a[0] + 1, a[1]), (a[0] + 1, a[1] + 1), (a[0], a[1] + 1)))
 _vh = {}
 
 
 def _vz(p):
     if p not in _vh:
-        _vh[p] = vheight(p[0] / 8, p[1] / 8)
+        _vh[p] = vheight(p[0] / VN, p[1] / VN)
     return _vh[p]
 
 
-I._mesh(k, {key: f for key, f in _vf.items() if key != 'lava'}, lambda p: (p[0] / 8, p[1] / 8, _vz(p) - 0.004), VALB, 'volcano')
+I._mesh(k, {key: f for key, f in _vf.items() if key != 'lava'}, lambda p: (p[0] / VN, p[1] / VN, _vz(p) - 0.004), VALB, 'volcano')
 lava = _vf.get('lava', [])
 if lava:                                               # the lava, glowing: its own mesh, emissive
     bm = bmesh.new()
@@ -208,7 +214,7 @@ if lava:                                               # the lava, glowing: its 
         vs = []
         for p in f:
             if p not in vm:
-                vm[p] = bm.verts.new((p[0] / 8, -p[1] / 8 * S, _vz(p) + 0.01))
+                vm[p] = bm.verts.new((p[0] / VN, -p[1] / VN * S, _vz(p) + 0.01))
             vs.append(vm[p])
         bm.faces.new(vs)
     me = bpy.data.meshes.new('lava')
