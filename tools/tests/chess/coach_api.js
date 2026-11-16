@@ -78,6 +78,7 @@ const check = (name, ok, more = '') => { if (!ok) failed++; console.log((ok ? 'o
   check('the question goes to Claude Opus 5.5, streamed, through the beta endpoint', calls.length === 1 && calls[0].kind === 'beta' && p.model === 'claude-opus-5-5' && p.max_tokens >= 8000 && p.output_config.effort === 'medium');
   check('…with a refusal fallback and thinking that survives an edited history', p.fallbacks === 'default' && p.betas.includes('server-side-fallback-2026-07-01') && p.betas.includes('thinking-binding-controls-2026-08-01') && p.thinking.type === 'adaptive' && p.thinking.block_binding.prefix_mismatch_behavior === 'drop_block');
   check('…the three tools, free to use them, and the conversation exactly as it came', p.tools.map((t) => t.name).join() === 'evaluate_moves,analyze_line,find_threats' && p.tool_choice.type === 'auto' && JSON.stringify(p.messages) === JSON.stringify(round));
+  check('…each able to start from the position before the last move', p.tools.every((t) => t.input_schema.properties.start.enum.join() === 'current,before_last_move') && /asked ahead/.test(p.system) && /before_last_move/.test(p.system));
   check('the system prompt is the coach\'s, and says where the truth comes from', typeof p.system === 'string' && /chess coach/.test(p.system) && /Stockfish's evaluations and lines are the facts/.test(p.system) && /\[asked by voice\]/.test(p.system));
   check('the words go down as they come, then the whole reply', r.status === 200 && /text\/event-stream/.test(r.head['Content-Type']) && r.events.filter((e) => e.t === 'text').map((e) => e.d).join('') === 'Because the knight is pinned.' && r.events[r.events.length - 1].t === 'done' && r.events[r.events.length - 1].stop === 'end_turn' && r.events[r.events.length - 1].content[0].signature === 'sig' && r.ended);
 
@@ -103,6 +104,15 @@ const check = (name, ok, more = '') => { if (!ok) failed++; console.log((ok ? 'o
   const plain = calls[calls.length - 1];
   check('a request the API rejects is tried once more the plain way', calls.length === n + 2 && plain.kind === 'plain' && !('betas' in plain.params) && !('fallbacks' in plain.params) && !('cache_control' in plain.params) && plain.params.thinking.type === 'adaptive' && !plain.params.thinking.block_binding && r.events.map((e) => e.t).join() === 'text,done');
   check('…without the thinking blocks, the tool call and its result kept', JSON.stringify(plain.params.messages[1].content.map((b) => b.type)) === '["tool_use"]' && plain.params.messages[2].content[0].type === 'tool_result' && plain.params.messages.length === 3);
+  n = calls.length;
+  script = [{ text: ['Straight '], message: { stop_reason: 'end_turn', content: [{ type: 'text', text: 'Straight ' }] } }];
+  r = await call(on, { body: { messages: round } });
+  check('…and from then on this instance asks the plain way first: no second wasted trip', calls.length === n + 1 && calls[calls.length - 1].kind === 'plain' && r.events[r.events.length - 1].stop === 'end_turn');
+  const other = createHandler(() => client);
+  script = [{ error: refused(400, 'messages.1.content.0: Invalid `signature` in `thinking` block. The block is bound to a different conversation.') }, { message: answer }, { message: answer }];
+  await call(other, { body: { messages: round } });
+  await call(other, { body: { messages: round } });
+  check('a history the API no longer recognises is a one-off: the next request tries the full way again', calls.slice(-3).map((c) => c.kind).join() === 'beta,plain,beta');
   n = calls.length;
   script = [{ text: ['Half an '], error: refused(400, 'late') }];
   r = await call(on, { body: { messages: ask } });

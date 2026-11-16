@@ -6,6 +6,10 @@
 // tool calls instead of an answer: they're run on this page's Stockfish (runTool) and the conversation
 // goes back up with the results, round after round until there's an answer.
 //
+// Each round trip to the model is seconds of waiting, so what a question is plainly going to need is
+// looked up first (lookAhead): a move it names, a threat it asks about. The answer then usually comes
+// in one trip.
+//
 // The conversation is kept here and only ever added to: every reply goes back exactly as it came
 // (the server's file says why). A new game starts a new conversation.
 import { Chess, describePosition, evalText, finishedEval, legalHints, lineToSan, passedFen, sideName, tryMove } from "./chessx.js";
@@ -14,7 +18,7 @@ import { ENGINE_NAME } from "./engine.js";
 const API = "/api/chess-coach";
 const MAX_ROUNDS = 4;                 // rounds of engine checks for one question, before "answer now"
 const MAX_CHARS = 350000;             // of conversation: past this the next question starts a fresh one
-const TOOL_SEARCH = { depth: 18, movetime: 1200 };
+const TOOL_SEARCH = { depth: 18, movetime: 1000 };
 
 const SORRY = {
   disabled: "The coach is switched off on this copy of the site (it has no AI key). Stockfish still works.",
@@ -57,19 +61,33 @@ const pawns = (ev) => (ev.mate === null || ev.mate === undefined ? ev.cp / 100 :
 
 // ---------- the tools ----------
 
-function playLine(fen, moves) {
+// Where a tool call starts from: the position on the board, or (start: "before_last_move") the one
+// the last move was played in — where "why not … instead?" has to be looked at.
+function origin(base, arg) {
+  if (arg.start !== "before_last_move") return { fen: base.fen, name: "the position on the board", live: base.live };
+  if (!base.prev) return { error: "There is no move before the position on the board, so there is no earlier position to start from. Leave `start` out." };
+  return { fen: base.prev, name: `the position before ${base.last}`, live: null };
+}
+
+function playLine(from, moves) {
+  if (from.error) return from;
+  const fen = from.fen;
   const c = new Chess(fen);
   const played = [];
   for (const mv of Array.isArray(moves) ? moves.slice(0, 40) : []) {
     const before = c.fen();
     const m = tryMove(c, mv);
     if (!m) {
-      const sofar = played.length ? `after ${lineToSan(fen, played, 40).text}` : "in the position on the board";
+      const sofar = played.length ? `after ${lineToSan(fen, played, 40).text}` : `in ${from.name}`;
       return { error: `"${mv}" is not a legal move ${sofar} (${sideName(new Chess(before).turn())} to move). Legal moves there: ${legalHints(new Chess(before), mv).join(", ")}.` };
     }
     played.push(m.from + m.to + (m.promotion || ""));
   }
-  return { fen: c.fen(), text: played.length ? lineToSan(fen, played, 40).text : "", chess: c };
+  const text = played.length ? lineToSan(fen, played, 40).text : "";
+  const cap = (t) => t[0].toUpperCase() + t.slice(1);
+  // "After 14. Rd1" / "In the position on the board", and the same inside a sentence
+  const after = text ? (from.name === "the position on the board" ? `after ${text}` : `after ${text} from ${from.name}`) : `in ${from.name}`;
+  return { fen: c.fen(), text, chess: c, after, After: cap(after), plain: !text && from.live ? from.live : null };
 }
 
 const overText = (c) => (c.isCheckmate() ? `checkmate - ${sideName(c.turn() === "w" ? "b" : "w")} wins` : c.isStalemate() ? "stalemate - a draw" : "a draw");
@@ -87,13 +105,13 @@ export async function runTool(engine, name, input, base) {
     if (name === "evaluate_moves") {
       const cands = Array.isArray(arg.moves) ? arg.moves.filter((m) => typeof m === "string").slice(0, 6) : [];
       if (!cands.length) return { text: "Give at least one move to try in `moves`.", isError: true };
-      const line = playLine(base.fen, arg.after);
+      const line = playLine(origin(base, arg), arg.after);
       if (line.error) return { text: line.error, isError: true };
-      const here = line.text ? `After ${line.text}` : "In the position on the board";
+      const here = line.After;
       const over = finishedEval(line.chess);
       if (over) return { text: `${here} the game is over (${overText(line.chess)}), so there are no moves to try.`, isError: false };
       const mover = line.chess.turn();
-      const best = !line.text && base.live && base.live.fen === line.fen && base.live.depth >= 14 ? base.live : await search(engine, line.fen, 1);
+      const best = line.plain && line.plain.fen === line.fen && line.plain.depth >= 14 ? line.plain : await search(engine, line.fen, 1);
       const bestSan = lineToSan(line.fen, best.lines[0].pv, 1).text;
       const out = [`${here} (${sideName(mover)} to move), Stockfish's best move is ${bestSan} (${evalText(best.lines[0])}). Evaluations are from White's point of view.`];
       for (const cand of cands) {
@@ -117,9 +135,9 @@ export async function runTool(engine, name, input, base) {
     }
 
     if (name === "analyze_line") {
-      const line = playLine(base.fen, arg.moves);
+      const line = playLine(origin(base, arg), arg.moves);
       if (line.error) return { text: line.error, isError: true };
-      const here = line.text ? `After ${line.text}` : "The position on the board";
+      const here = line.After.replace(/^In /, "").replace(/^t/, "T");
       const over = finishedEval(line.chess);
       if (over) return { text: `${here}: ${overText(line.chess)}.\n${describePosition(line.fen)}`, isError: false };
       const n = Math.max(1, Math.min(5, Math.round(Number(arg.lines)) || 3));
@@ -128,9 +146,9 @@ export async function runTool(engine, name, input, base) {
     }
 
     if (name === "find_threats") {
-      const line = playLine(base.fen, arg.after);
+      const line = playLine(origin(base, arg), arg.after);
       if (line.error) return { text: line.error, isError: true };
-      const here = line.text ? `after ${line.text}` : "in the position on the board";
+      const here = line.after;
       if (finishedEval(line.chess)) return { text: `The game is over ${here} (${overText(line.chess)}).`, isError: false };
       const mover = line.chess.turn();
       const foe = sideName(mover === "w" ? "b" : "w");
@@ -152,6 +170,42 @@ export async function runTool(engine, name, input, base) {
   }
 }
 
+// ---------- looking ahead ----------
+
+const PIECE_WORD = { king: "K", queen: "Q", rook: "R", bishop: "B", knight: "N" };
+
+// "knight takes e5", "castle kingside", "bishop to c4" as the notation they mean
+export function spokenMoves(text) {
+  return String(text)
+    .replace(/\b(?:castl(?:e|es|ing)\s+(?:on\s+the\s+)?(?:queen\s?side|long)|(?:long|queen\s?side)\s+castl(?:e|es|ing))\b/gi, " O-O-O ")
+    .replace(/\b(?:castl(?:e|es|ing)\s+(?:on\s+the\s+)?(?:king\s?side|short)|(?:short|king\s?side)\s+castl(?:e|es|ing))\b/gi, " O-O ")
+    .replace(/\b(king|queen|rook|bishop|knight)\s+(?:(takes|captures|x)\s+(?:on\s+)?|to\s+)?([a-h][1-8])\b/gi, (m, p, x, sq) => ` ${PIECE_WORD[p.toLowerCase()]}${x ? "x" : ""}${sq.toLowerCase()} `)
+    .replace(/\b([a-h])\s*(?:pawn\s+)?(?:takes|captures)\s+(?:on\s+)?([a-h][1-8])\b/gi, (m, f, sq) => ` ${f.toLowerCase()}x${sq.toLowerCase()} `);
+}
+
+const MOVE_WORD = /^(?:O-O(?:-O)?|[KQRBNkqrn]?[a-h]?[1-8]?x?[a-h][1-8](?:=?[QRBNqrbn])?|[a-h][1-8][a-h][1-8][qrbn]?)$/;
+const BARE_SQUARE = /^[a-h][1-8]$/;
+const ASKS_ABOUT_A_MOVE = /why not|what about|how about|what if|instead|rather than|can i|could i|can't i|couldn't i|should i|shouldn't i|is it|was it|\bplay(?:ed|ing|s)?\b|\bmove\b|\bpush/i;
+const ASKS_ABOUT_THREATS = /\bthreat|threaten|\bwhy (?:do|did|must|should) (?:i|he|she|they|white|black) (?:have to|need to)|what (?:is|was|does|did) (?:he|she|they|white|black|my opponent|the opponent)\b.*\b(?:want|up to|planning|trying|going for|do)/i;
+
+// The moves a question names that could be played here, or could have been played instead of the last move
+export function namedMoves(question, base) {
+  const here = [], instead = [];
+  const words = spokenMoves(question).replace(/\b\d+\s*\.+/g, " ").split(/[^A-Za-z0-9+#=-]+/).filter(Boolean);
+  const intent = ASKS_ABOUT_A_MOVE.test(question);
+  for (const w0 of words) {
+    const w = w0.replace(/[+#]+$/, "");
+    if (!MOVE_WORD.test(w)) continue;
+    if (BARE_SQUARE.test(w) && !intent) continue;                 // "the pawn on e5" isn't a move
+    const find = (fen) => { const c = new Chess(fen); const m = tryMove(c, w); return m ? m.san : null; };
+    const a = find(base.fen);
+    const b = !a && base.prev ? find(base.prev) : null;
+    if (a && !here.includes(a)) here.push(a);
+    else if (b && b !== base.lastSan && !(base.known || []).includes(b) && !instead.includes(b)) instead.push(b);   // (known: its line is already in the message)
+  }
+  return { here: here.slice(0, 3), instead: instead.slice(0, 3) };
+}
+
 function toolStatus(call) {
   const a = call.input || {};
   const list = (x) => (Array.isArray(x) ? x.filter((m) => typeof m === "string").slice(0, 6).join(", ") : "");
@@ -164,11 +218,13 @@ function toolStatus(call) {
 
 export class Coach {
   // engine: the Engine for tool searches. snapshot(): what's on the board now —
-  //   { key, fen, where, played, game, complete, live }
+  //   { key, fen, where, played, game, complete, live, prev, last, lastSan }
   //   key: which game or set-up this is about; where: how the position came about, in a line or two;
   //   played: what happened next in the game, if anything; game: the whole game in text (null for a
   //   bare position); complete: whether the game's review has finished; live: the engine's result
-  //   for `fen`, if it has one.
+  //   for `fen`, if it has one; prev: the position the last move was played in (null at the start),
+  //   last: that move with its number ("9...b5"), lastSan: without ("b5"); known: moves instead of
+  //   it whose engine line `where` already gives.
   constructor({ engine, snapshot }) {
     this.engine = engine;
     this.snapshot = snapshot;
@@ -177,6 +233,7 @@ export class Coach {
     this.sentGame = null;         // 'partial' | 'complete' once the game's text has gone up
     this.abort = null;
     this.trimmed = false;
+    this.last = { rounds: 0, ahead: 0 };    // the last question: trips back for engine checks, checks made ahead
   }
 
   reset() {
@@ -212,8 +269,11 @@ export class Coach {
         live = await this.engine.analyze(snap.fen, { kind: "tool", multipv: 3, depth: 16, movetime: 1500 });
       }
       if (ctl.signal.aborted) throw new DOMException("stopped", "AbortError");
-      const base = { fen: snap.fen, live };
-      this.messages.push({ role: "user", content: this.frame(snap, live, question, voice) });
+      const base = { fen: snap.fen, live, prev: snap.prev || null, last: snap.last || "", lastSan: snap.lastSan || "", known: snap.known || [] };
+      const ahead = await this.lookAhead(question, base, onStatus);
+      if (ctl.signal.aborted) throw new DOMException("stopped", "AbortError");
+      this.last = { rounds: 0, ahead: ahead.count };
+      this.messages.push({ role: "user", content: this.frame(snap, live, question, voice, ahead.text) });
 
       let answer = "";
       for (let round = 0; ; round++) {
@@ -228,6 +288,7 @@ export class Coach {
         const calls = res.content.filter((b) => b.type === "tool_use");
         if (res.stop !== "tool_use" || !calls.length) break;
         if (answer && !answer.endsWith("\n")) { answer += "\n\n"; onText("\n\n"); }
+        this.last.rounds = round + 1;
         const results = [];
         for (const call of calls) {
           onStatus(toolStatus(call));
@@ -251,8 +312,28 @@ export class Coach {
     }
   }
 
+  // What the question is plainly going to need from the engine, asked for before the model is: a
+  // move it names (here, or instead of the move just played), what the other side threatens.
+  // → { text, count }
+  async lookAhead(question, base, onStatus) {
+    const out = [];
+    let count = 0;
+    const run = async (name, input) => {
+      const r = await runTool(this.engine, name, input, base);
+      if (!r.isError) { out.push(r.text); count++; }
+    };
+    try {
+      const over = finishedEval(new Chess(base.fen));
+      const named = namedMoves(question, base);
+      if (named.here.length && !over) { onStatus(`Stockfish is checking ${named.here.join(", ")}…`); await run("evaluate_moves", { moves: named.here }); }
+      if (named.instead.length) { onStatus(`Stockfish is checking ${named.instead.join(", ")}…`); await run("evaluate_moves", { moves: named.instead, start: "before_last_move" }); }
+      if (ASKS_ABOUT_THREATS.test(question) && !over && !new Chess(base.fen).inCheck()) { onStatus("Stockfish is looking for the threat…"); await run("find_threats", {}); }
+    } catch { /* the engine isn't there: the coach can still ask for what it needs */ }
+    return { text: out.length ? `Stockfish was asked ahead about what the question mentions (the same checks the tools would run):\n${out.join("\n\n")}` : "", count };
+  }
+
   // The question with everything the coach needs to see the board, as one message
-  frame(snap, live, question, voice) {
+  frame(snap, live, question, voice, ahead = "") {
     const parts = [];
     if (this.trimmed && !this.messages.length) parts.push("(The earlier part of this conversation was cleared to save space. It was about the same game.)");
     const want = snap.game ? (snap.complete ? "complete" : "partial") : null;
@@ -266,6 +347,7 @@ export class Coach {
     if (!finishedEval(c)) pos.push(linesText(snap.fen, live) || "(Stockfish has no lines for this position yet.)");
     if (snap.played) pos.push(snap.played);
     parts.push(pos.join("\n"));
+    if (ahead) parts.push(ahead);
     return `<board>\n${parts.join("\n\n")}\n</board>\n\n${voice ? "[asked by voice] " : ""}${question.trim()}`;
   }
 
