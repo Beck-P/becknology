@@ -972,7 +972,7 @@ def cocktail_table(k, cx, cr, glow=PINK):
     k.cyl(cx, cr, 0.68, 0.72, 0.3, (LACQUER, 0.04), 'ct_top', verts=18)
     k.cyl(cx, cr, 0.665, 0.68, 0.31, shade(glow, 0.45), 'ct_neon_lustre', emit=(glow, 0.8), verts=18)
     k.cyl(cx + 0.08, cr - 0.05, 0.72, 0.84, 0.04, ('#f0c040', 0.05), 'glass', emit=('#ffd060', 0.3), verts=6)
-    k.cyl(cx - 0.05, cr + 0.06, 0.72, 0.76, 0.06, '#f0e0c0', 'candle', emit=('#ffb050', 0.9), verts=8)
+    k.cyl(cx - 0.05, cr + 0.06, 0.72, 0.76, 0.06, '#f0e0c0', 'candle_lustre', emit=('#ffb050', 0.9), verts=8)
     k.point_light(cx, cr, 0.95, '#ffb060', 2.5, radius=0.1, group='flicker')
 
 
@@ -1093,14 +1093,14 @@ def dining_table(k, cx, cr, rad=0.48, cloth='#ece4d4', chairs=((0, -1), (0, 1)),
     """A round table under a white cloth to the floor, a candle, places laid; gold chairs round it."""
     k.cyl(cx, cr, 0.0, 0.74, rad, (cloth, 0.06), 'tablecloth', verts=22)
     k.cyl(cx, cr, 0.74, 0.76, rad + 0.02, (shade(cloth, 1.05), 0.05), 'tablecloth_top', verts=22)
-    k.cyl(cx, cr, 0.76, 0.78, 0.07, (GOLD, 0.05), 'candle_dish', verts=10)
-    k.cyl(cx, cr, 0.78, 0.92, 0.03, '#f4ecd8', 'candle', emit=('#ffcf80', 0.6), verts=8)
-    k.sphere(cx, cr, 0.95, 0.02, 0.03, '#fff0c0', 'flame', emit=('#ffb040', 1.0), segs=5)
+    k.cyl(cx, cr, 0.76, 0.78, 0.07, (GOLD, 0.05), 'candle_dish_lustre', verts=10)
+    k.cyl(cx, cr, 0.78, 0.92, 0.03, '#f4ecd8', 'candle_lustre', emit=('#ffcf80', 0.6), verts=8)
+    k.sphere(cx, cr, 0.95, 0.02, 0.03, '#fff0c0', 'flame_lustre', emit=('#ffb040', 1.0), segs=5)
     k.point_light(cx, cr, 1.05, '#ffb060', 2.2, radius=0.08, group='flicker')
     for (dx, dr) in chairs:
         px, pr = cx + dx * rad * 0.55, cr + dr * rad * 0.55
         k.cyl(px, pr, 0.76, 0.765, 0.12, ('#f8f4ec', 0.04), 'plate', verts=12)
-        k.cyl(px + 0.1, pr - 0.12 * dr if dr else pr - 0.1, 0.76, 0.9, 0.025, ('#e8e8f0', 0.04), 'wine_glass', emit=('#c02040', 0.2), verts=6)
+        k.cyl(px + 0.1, pr - 0.12 * dr if dr else pr - 0.1, 0.76, 0.9, 0.025, ('#e8e8f0', 0.04), 'wine_glass_lustre', emit=('#c02040', 0.2), verts=6)
         fx = {(0, -1): 'down', (0, 1): 'up', (-1, 0): 'right', (1, 0): 'left'}[(dx, dr)]
         off = chair_off or rad + 0.3
         club_chair(k, cx + dx * off, cr + dr * off, fx, col=chair_col)
