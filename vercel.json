@@ -36,6 +36,7 @@
     { "source": "/bridge", "destination": "/apps/bridge/index.html" },
     { "source": "/bridge/(.*)", "destination": "/apps/bridge/$1" },
     { "source": "/chess", "destination": "/apps/chess/index.html" },
+    { "source": "/coach", "destination": "/apps/chess/index.html" },
     { "source": "/chess/(.*)", "destination": "/apps/chess/$1" },
     { "source": "/asteroids", "destination": "/apps/asteroids/index.html" },
     { "source": "/breakout", "destination": "/apps/breakout/index.html" },
