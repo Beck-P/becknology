@@ -1193,6 +1193,8 @@ var BridgeWorld = (function () {
         drawQuestMark(ctx, offX + mx * ts, offY + my * ts, ts, now);
       }
     }
+    // the way there (js/route.js): a quiet gold "this way" over the door, lift or pier that's the next leg
+    if (typeof BridgeRoute !== 'undefined' && BridgeRoute.drawMark) BridgeRoute.drawMark(ctx, offX, offY, ts, now, w, h);
     if (typeof BridgeInteractions !== 'undefined' && BridgeInteractions.placePrompt) {
       BridgeInteractions.placePrompt(screenView);
     }

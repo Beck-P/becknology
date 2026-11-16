@@ -162,7 +162,8 @@ var BridgeInteractions = (function () {
       var parts = promptParts(t);
       var html = '<span class="ip-key">' + (TOUCH ? 'Tap' : 'E') + '</span><span class="ip-verb">' + esc(parts.verb) + '</span>' +
                  (parts.label && parts.label.toLowerCase() !== parts.verb.toLowerCase() ? '<span class="ip-label">' + esc(parts.label) + '</span>' : '') +
-                 (parts.to ? '<span class="ip-to">\u2192 ' + esc(parts.to) + '</span>' : '');
+                 (parts.to ? '<span class="ip-to">\u2192 ' + esc(parts.to) + '</span>' : '') +
+                 (typeof BridgeRoute !== 'undefined' && BridgeRoute.isNext && BridgeRoute.isNext(t) ? '<span class="ip-way">this way</span>' : '');   // js/route.js
       if (html !== promptState.html) { el.innerHTML = html; promptState.html = html; }
       promptState.shown = t;
       el.classList.add('visible');

@@ -2742,6 +2742,39 @@ html.touch #quest-tracker { top: calc(100px + env(safe-area-inset-top)); right: 
   .qtr-title { font-size: 13px; } .qtr-leads { font-size: 11px; } .qtr-leads li:nth-child(n+2), .qtr-rumour { display: none; }
 }
 @media (max-width: 960px) { body:has(.quest-toast.visible) #quest-tracker { opacity: 0; } }   /* the toast is centred: give it the room */
+/* the way there (js/route.js): the next leg under the lead, in the tracker, the journal, the pill and the map */
+.qtr-way { position: relative; margin-top: 5px; padding: 4px 0 0 15px; border-top: 1px dashed rgba(255, 213, 106, 0.25);
+  font-size: 12px; line-height: 1.35; color: #ffe8b0; }
+.qtr-way::before { content: '\00BB'; position: absolute; left: 1px; top: 2px; font-size: 13px; color: #ffd56a; }
+.qtr-dest { cursor: default; }
+.qtr-stop { margin-left: auto; height: 18px; padding: 0 7px; border-radius: 4px; border: 1px solid rgba(255, 255, 255, 0.18); background: none;
+  color: rgba(242, 238, 230, 0.7); font: inherit; font-size: 9px; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; }
+.qtr-stop:hover { color: #ffd56a; border-color: rgba(255, 213, 106, 0.5); }
+html.touch .qtr-stop { height: 36px; min-width: 52px; margin: -8px -4px -6px auto; font-size: 10px; }
+@media (max-width: 760px) { .qtr-way { font-size: 11px; } }
+.ip-way { color: #ffd56a; font-size: 0.85em; letter-spacing: 0.5px; white-space: nowrap; }
+.ip-way::before { content: '\00BB '; }
+.jn-way { display: block; margin-top: 2px; font-size: 12px; color: var(--gm-accent); }
+.jn-way::before, .jn-clues li.way::before { content: '\00BB'; }
+.jn-way::before { margin-right: 5px; }
+p.jn-way { margin: 2px 0 0; }
+.jn-clues li.way { color: var(--gm-accent); }
+.jn-clues li.way::before { font-size: 12px; top: 2px; color: var(--gm-accent); }
+.mp-way { margin: 0 0 10px; padding: 8px 10px; border: 1px solid var(--gm-accent); border-radius: 8px; background: var(--gm-cell); }
+.mp-way-head { display: flex; align-items: center; gap: 8px; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--gm-title); }
+.mp-way-head .gm-btn { margin-left: auto; }
+.mp-way-line { font-size: 13px; color: var(--gm-ink); margin-top: 3px; }
+.mp-way-stops { list-style: none; margin: 6px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 2px 0; font-size: 12px; color: var(--gm-dim); }
+.mp-way-stops li + li::before { content: '\2192'; margin: 0 6px; color: var(--gm-accent); }
+.mp-way-stops li.here { color: var(--gm-accent); font-weight: 600; }
+.mp-way-stops li.end { color: var(--gm-ink); font-weight: 600; }
+.mp-node.on-way { border-color: var(--gm-accent); border-style: dashed; }
+.mp-node.way-end { border-color: var(--gm-accent); box-shadow: 0 0 0 1px var(--gm-accent) inset; font-weight: 600; }
+.mp-node.way-end::after { content: '\00BB'; color: var(--gm-accent); }
+.mp-isle.on-way > .mp-isle-name { color: var(--gm-accent); }
+.mp-wayto { margin-top: 6px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 12px; color: var(--gm-dim); }
+.mp-wayto span { flex: 1 1 100%; color: var(--gm-ink); }
+.mp-wayto span::before { content: '\00BB  '; color: var(--gm-accent); }
 #quest-tracker { transition: opacity 0.3s; }
 .jn-empty { font-size: 13px; line-height: 1.45; color: var(--gm-dim); padding: 6px 0; }
 
@@ -2887,6 +2920,7 @@ button.mp-node:hover { border-color: var(--gm-line); background: var(--gm-cell);
 .mp-node.here { color: var(--gm-accent); font-weight: 600; }
 .mp-node i { font-style: normal; font-size: 11px; color: var(--gm-dim); font-weight: 400; }
 .mp-node.unknown { cursor: default; color: var(--gm-dim); font-weight: 600; }
+html.touch button.mp-node { min-height: 36px; align-items: center; margin: 0; }   /* a finger's worth (the phone pass) */
 
 /* the Menu pill: the way in on touch (it was the Journal pill) */
 #journal-pill .jp-ico canvas { width: 16px; height: 16px; image-rendering: pixelated; display: block; }

@@ -63,6 +63,7 @@ const SUITES = {
     ['world/far_dialogs.js', SHOTS],
     ['world/lumar_deeper.js', SHOTS],
     ['world/rumours.js', SHOTS],
+    ['world/wayfinding.js', SHOTS + '/wayfinding'],
     ['world/events.js', SHOTS],
     ['world/boards.js', SHOTS],
     // (each phone test once per size: both sizes in one run take longer than a test is given)
