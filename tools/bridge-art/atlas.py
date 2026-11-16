@@ -31,7 +31,8 @@ SYSTEMS = [
 ISLES = ['lumar', 'lumar-crown', 'lumar-tern', 'lumar-holm', 'lumar-sapphire', 'lumar-rose', 'lumar-cliff', 'lumar-crimson', 'lumar-cinder', 'lumar-midnight', 'lumar-saltmere']
 INSIDE = {'lumar-home': 'lumar-sapphire', 'lumar-manor': 'lumar-crown', 'lumar-manor-drawing': 'lumar-crown', 'lumar-manor-library': 'lumar-crown',
           'lumar-manor-dining': 'lumar-crown', 'lumar-manor-bedroom': 'lumar-crown',
-          'lumar-gloaming': 'lumar-saltmere'}       # the ghost ship, boarded at sea (js/sloop.js): Saltmere's own
+          'lumar-gloaming': 'lumar-saltmere',
+          'lumar-undercroft': 'lumar-midnight', 'lumar-undercroft-a': 'lumar-midnight'}   # the crypt, down from Midnight's graveyard       # the ghost ship, boarded at sea (js/sloop.js): Saltmere's own
 # ways between places that the JS makes or opens, not the world JSON: (from, to, the interactions' labels, kind[, x, y])
 # - x, y only for one the JS adds as the world loads (the rest are found by label, so the map can mark them)
 EXTRA = [
@@ -47,11 +48,18 @@ EXTRA = [
     ('arcadia-spires', 'arcadia-members', ['THE ORRERY'], 'door'),            # js/spires.js: members, by introduction or bought
     ('arcadia-casino', 'arcadia-casino-vip', ['THE CROWN ROOM'], 'door'),     # js/worlds/casino.js: the rope opens for poker winners
     ('lumar-crown', 'lumar-crown-palace', ['PALACE GATE'], 'door'),           # js/crown.js
-    ('lumar-crown', 'lumar-crown-oldtown', ['THE OLD TOWN'], 'door', 3, 21),   # js/capital.js: Crownhaven's districts
+    ('lumar-crown', 'lumar-crown-oldtown', ['THE OLD TOWN'], 'door', 4, 21),   # js/capital.js: Crownhaven's districts (CROWN: the
+    ('lumar-crown', 'lumar-crown-arsenal', ['THE ARSENAL'], 'door', 60, 25),    #   tile its `find` picks on today's render)
+    ('lumar-crown', 'lumar-crown-stilts', ['QUAY STAIRS'], 'door', 46, 33),
+    ('lumar-crown-oldtown', 'lumar-crown-canals', ['NORTH GATE'], 'door'),      # js/capital.js GATES: a district's dialog
+    ('lumar-crown-oldtown', 'lumar-crown-bridge', ['BRIDGE GATE'], 'door'),     #   label made a way through as it loads
+    ('lumar-crown-canals', 'lumar-crown-hill', ['FUNICULAR'], 'lift'),
+    ('lumar-crown-bridge', 'lumar-crown-arsenal', ['EAST GATE'], 'door'),
     ('lumar-sapphire', 'lumar-sapphire-market', ['FLOATING MARKET'], 'door', 44, 22),   # js/sapphire.js
     ('lumar-rose', 'lumar-rose-springs', ['ROSEWELL'], 'door', 52, 22),            # js/rose.js
     ('lumar-rose-mine', 'lumar-rose-mine-a', ['THE LIFT'], 'lift'),           # js/mine.js: the floors below
     ('lumar-rose-mine-a', 'lumar-rose-mine', ['LADDER UP'], 'lift'),
+    ('lumar-undercroft', 'lumar-undercroft-a', ['STAIR DOWN'], 'lift'),          # js/dungeon.js: tonight's crypt, floor by floor
     ('hoarfell', 'hoarfell-summit', ['CHAIRLIFT'], 'lift'),                   # js/worlds/hoarfell.js
     ('hoarfell-summit', 'hoarfell', ['CHAIRLIFT'], 'lift'),
     ('hoarfell-piste', 'hoarfell-summit', ['CHAIRLIFT'], 'lift'),
@@ -62,6 +70,20 @@ EXTRA = [
     ('hoarfell-summit', 'hoarfell-ridge', ['THE LAST RIDGE'], 'climb', 24, 9),   # js/expedition.js
     ('hoarfell-ridge', 'hoarfell-icestep', ['THE ICE STEP'], 'climb'),
     ('hoarfell-ridge', 'hoarfell-hollow', ['THE ICE DOOR'], 'door'),
+    ('sylvara', 'sylvara-roots', ['THE ROOTMARKET'], 'door', 44, 18),          # js/worlds/sylvara.js JOINS: Elderglade's
+    ('sylvara', 'sylvara-river', ['THE SILVERRUN'], 'door', 17, 31),           #   ways on, the Heartwood Hall's stair
+    ('sylvara-hall', 'sylvara-crown', ['THE HEARTWOOD STAIR'], 'door', 1, 7),
+    ('hoarfell', 'hoarfell-promenade', ['THE PROMENADE'], 'door', 2, 16),      # js/alpine.js: the way down (openNear 2,16)
+    ('hoarfell-promenade', 'hoarfell-aurelle', ['THE TRAIN'], 'train'),        # js/alpine.js: the Aurelle Line
+    ('hoarfell-aurelle', 'hoarfell-promenade', ['THE TRAIN'], 'train'),
+    ('hoarfell-aurelle', 'hoarfell-glacier', ['BUREAU DES GUIDES'], 'climb', 9, 17),   # js/touring.js: the High Route
+    ('hoarfell-glacier', 'hoarfell-aurelle', ['THE WAY DOWN'], 'door'),
+    ('hoarfell-glacier', 'hoarfell-hut-bleue', ['CABANE BLEUE'], 'door'),
+    ('hoarfell-hut-bleue', 'hoarfell-col', ['ON TO THE COL'], 'climb', 10, 9),
+    ('hoarfell-col', 'hoarfell-hut-col', ['REFUGE DU COL'], 'door'),
+    ('hoarfell-hut-col', 'hoarfell-valley', ['DOWN TO THE VALLEY'], 'climb', 10, 9),
+    ('hoarfell-valley', 'hoarfell-aurelle', ['THE WAY OUT'], 'climb'),          # js/alpine.js `vale`
+    ('hoarfell-monastery', 'hoarfell-heart', ['THE ICE GATE'], 'door'),         #   once the bell has rung
     ('verdance-village', 'verdance-east', ['STATION ROAD'], 'door', 45, 11),   # js/village.js: Brambleford's street runs on east
     ('verdance-east', 'verdance-downs', ['THE DOWNS'], 'door', 18, 31),        # js/village.js: over the mended bridge
     ('verdance-downs', 'verdance-market', ['THE LANE TO THISTLECOMBE'], 'door', 55, 20),   # js/makers.js: the lanes
@@ -108,8 +130,9 @@ def transit_exits(wid, w):
 
 
 # mine floors are one place on the map (the same three caves, twenty floors)
-MERGE = {'lumar-rose-mine-b': 'lumar-rose-mine-a', 'lumar-rose-mine-c': 'lumar-rose-mine-a'}
-NAMES = {'lumar-rose-mine-a': 'The Mine Floors', 'lumar': "Diggen's Point Harbour"}
+MERGE = {'lumar-rose-mine-b': 'lumar-rose-mine-a', 'lumar-rose-mine-c': 'lumar-rose-mine-a',
+         'lumar-undercroft-b': 'lumar-undercroft-a', 'lumar-undercroft-c': 'lumar-undercroft-a'}   # (and the crypt's three)
+NAMES = {'lumar-rose-mine-a': 'The Mine Floors', 'lumar-undercroft-a': 'The Crypt Floors', 'lumar': "Diggen's Point Harbour"}
 
 
 def system_of(wid):

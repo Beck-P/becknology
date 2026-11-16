@@ -121,7 +121,7 @@ def ground(k, cells, material, albedo, step=0.125, bump=0.012, seed=7, height=No
 
 
 def ridge(k, cells, top=3.0, slope=1.1, seed=5, rock='#3a3034', strata=('#4a3c3e', '#352a2e', '#5a4642'),
-          moss='#5a2a2a', notches=(), step=0.125, foot=0.0, ground=None, patchy=True, bounds=None):
+          moss='#5a2a2a', notches=(), step=0.125, foot=0.0, ground=None, patchy=True, bounds=None, edge=None):
     """A rock massif over `cells`: rising `slope` tiles in from its edge to
     about `top`, cliffs banded in strata, a mossy crown. notches: rects
     (x0, r0, x1, r1) kept at ground level (a cave mouth cut into the face).
@@ -131,7 +131,10 @@ def ridge(k, cells, top=3.0, slope=1.1, seed=5, rock='#3a3034', strata=('#4a3c3e
     patchy=False keeps the crown one material (snow) instead of breaking it
     with bare rock. bounds: (cols, rows) of the map: off the map counts as
     more massif, so it keeps rising to the edge instead of dropping in a cliff
-    there (a rim that walls the whole map). Returns height(x, r)."""
+    there (a rim that walls the whole map). edge: a function (x, r) -> how far
+    in from the massif's edge (tiles, negative outside), for a cliff whose foot
+    follows a smooth line rather than the cells' edge (give cells reaching past
+    that line, so the mesh covers it). Returns height(x, r)."""
     cellset = set(cells)
     if bounds:
         W_, R_ = bounds
@@ -157,7 +160,7 @@ def ridge(k, cells, top=3.0, slope=1.1, seed=5, rock='#3a3034', strata=('#4a3c3e
     def height(x, r):
         if any(a <= x <= c and b <= r <= d for (a, b, c, d) in notches):
             return 0.0
-        d = inside_dist(x, r)
+        d = inside_dist(x, r) if edge is None else edge(x, r)
         if foot:      # pulled in by a wandering amount, never pushed out past the cells' edge
             d = d - foot * (0.55 + 0.45 * n2(x, r, 0.55, seed + 7)) + 0.1 * n2(x, r, 1.7, seed + 1) - 0.1
         else:

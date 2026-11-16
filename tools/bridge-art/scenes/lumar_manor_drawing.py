@@ -51,7 +51,7 @@ E.vase_of_flowers(k, 12.9, 2.22, 0.86, s=0.95, col=SILK, band='#f0ece4', kind='b
 E.portrait(k, 12.9, 2.0, 1.72, w=0.72, h=0.98, sitter='lady', coat='#7a2a3a', hair='#c8a060', bg=('#2a3a2a', '#3a4a36', '#22261a'))
 E.china_cabinet(k, 17.15, 18.85, 2.0, top=2.45)
 for x in (8.55, 11.45):
-    E.sconce(k, x, 2.0, z=2.2, energy=5)
+    E.sconce(k, x, 2.0, z=2.2, energy=2.5)
 
 # ---- the piano and the harp, the chaise ------------------------------------------------------------------------------
 CA.grand_piano(k, 3.15, 5.05, col='#16121a', facing='right')
@@ -88,7 +88,7 @@ E.vase_of_flowers(k, 4.6, 9.7, z, s=0.75, col='#f0ece4', kind='rose')
 for (x, r) in ((5.5, 9.0), (15.0, 9.5)):
     k.point_light(x, r, 3.1, '#ffd8a8', 30, radius=0.6, group='lamp')
 
-render(k, OUT)
+render(k, OUT, ambient=('#5a4a40', 1.8))     # a warm night ambient keeps the floor in one band of the toy finish
 
 I = [door('THE HALL', x, y, 'lumar-manor', [1, 10]) for (x, y) in EAST]
 I += [

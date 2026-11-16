@@ -246,7 +246,8 @@ for rr in range(ROWS):
     for c in range(COLS):
         x, r = c + 0.5, rr + 0.5
         on_landing = LAND[0] < x < LAND[2] and LAND[1] < r < LAND[3]
-        row += '1' if lake_d(x, r) > 0.35 and not on_landing else '0'
+        row += '1' if lake_d(x, r) > 0.2 and not on_landing else '0'   # 0.2: at 0.35 the river's mouth (23, 10) fell just short and
+                                                                       # the canoe couldn't get from the river into the lake
         if lake_d(x, rr + 0.7) < -0.15:
             walk.add((c, rr))
     water_rows.append(row)

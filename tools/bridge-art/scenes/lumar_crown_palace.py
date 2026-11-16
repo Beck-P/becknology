@@ -58,7 +58,7 @@ def tall_window(x, w=1.1, z0=1.25, z1=3.4):
         k.box(x - w / 2, 2.06, z0 + (z1 - z0) * i / 4 - 0.02, x + w / 2, 2.09, z0 + (z1 - z0) * i / 4 + 0.02, ('#4a4438', 0.12), 'window_bar')
     k.box(x - 0.025, 2.06, z0, x + 0.025, 2.09, z1, ('#4a4438', 0.12), 'window_bar')
     k.box(x - w / 2 - 0.2, 2.0, z0 - 0.2, x + w / 2 + 0.2, 2.3, z0 - 0.1, (shade(STONE, 1.1), 0.1), 'sill')
-    k.area_light(x, 2.6, 2.0, '#8098d0', 30, 1.0, rot=(math.radians(-65), 0, 0))
+    k.area_light(x, 2.6, 2.0, '#8098d0', 12, 1.0, rot=(math.radians(-65), 0, 0))
 
 
 for x in (3.9, 18.1):
@@ -111,11 +111,11 @@ for dx in (-0.22, 0.0, 0.22):
 k.point_light(CX, 3.4, 3.6, '#ffe0a0', 40, radius=0.4)
 k.point_light(CX, 4.6, 2.2, '#ffd8a0', 45, radius=0.4)                 # lamplight on the throne
 for x in (8.9, 13.1):                                   # candle stands on the dais
-    k.cyl(x, 2.5, 0.45, 0.55, 0.16, (GOLD, 0.25), 'stand_foot', verts=10)
-    k.cyl(x, 2.5, 0.55, 1.75, 0.035, (GOLD, 0.25), 'stand_shaft', verts=8)
+    k.cyl(x, 2.5, 0.45, 0.55, 0.16, (GOLD, 0.25), 'stand_foot_lustre', verts=10)
+    k.cyl(x, 2.5, 0.55, 1.75, 0.035, (GOLD, 0.25), 'stand_shaft_lustre', verts=8)
     for dx in (-0.2, 0.0, 0.2):
-        k.cyl(x + dx, 2.5, 1.72, 1.76, 0.05, (GOLD, 0.25), 'stand_cup', verts=8)
-        A.candle(k, x + dx, 2.5, 1.76, energy=2.5)
+        k.cyl(x + dx, 2.5, 1.72, 1.76, 0.05, (GOLD, 0.25), 'stand_cup_lustre', verts=8)
+        A.candle(k, x + dx, 2.5, 1.76, energy=2.5, lustre=True)
 k.solid(7.4, 2.0, 14.6, 5.0)                            # the dais: you stand at its foot, on the carpet
 
 # ---- the long carpet down the hall --------------------------------------------------------------------------------
@@ -172,17 +172,19 @@ for (x, r) in ((1.8, 12.2), (20.2, 12.2)):
     A.potted_plant(k, x, r)
 for r in (8.0, 11.0):                                   # standing candelabra down the carpet
     for x in (9.1, 12.9):
-        k.cyl(x, r, 0.0, 0.08, 0.2, (GOLD, 0.25), 'cand_foot', verts=10)
-        k.cyl(x, r, 0.08, 1.5, 0.035, (GOLD, 0.25), 'cand_shaft', verts=8)
-        k.tube((x - 0.22, r, 1.42), (x + 0.22, r, 1.42), 0.025, (GOLD, 0.25), 'cand_arm', verts=6)
+        k.cyl(x, r, 0.0, 0.08, 0.2, (GOLD, 0.25), 'cand_foot_lustre', verts=10)
+        k.cyl(x, r, 0.08, 1.5, 0.035, (GOLD, 0.25), 'cand_shaft_lustre', verts=8)
+        k.tube((x - 0.22, r, 1.42), (x + 0.22, r, 1.42), 0.025, (GOLD, 0.25), 'cand_arm_lustre', verts=6)
         for dx in (-0.22, 0.0, 0.22):
-            A.candle(k, x + dx, r, 1.45 if dx else 1.5, energy=1.8)
+            A.candle(k, x + dx, r, 1.45 if dx else 1.5, energy=1.8, lustre=True)
         k.solid(x - 0.25, r - 0.25, x + 0.25, r + 0.25)
 
 # ---- light: chandeliers down the hall ----------------------------------------------------------------------------
-for (x, r, e) in ((CX, 5.5, 160), (CX, 9.5, 140), (4.4, 7.0, 110), (17.8, 9.4, 100)):
+for (x, r, e) in ((CX, 5.5, 128), (CX, 9.5, 112), (4.4, 7.0, 66), (17.8, 9.4, 60)):
     A.hanging_lamp(k, x, r, z=2.8, energy=e, visible=False)
-k.render(OUT, light_states={'full': {'flicker': 1.0}, 'dim': {'flicker': 0.82}}, light_samples=128, world_light=('#3a4060', 0.5))
+k.render(OUT, light_states={'full': {'flicker': 1.0}, 'dim': {'flicker': 0.82}}, light_samples=128, world_light=('#5a4a40', 1.45))
+# (the lamps a little softer and the room's ambient lifted, so the floor lies in one even band of the toy finish: the
+# pools under the lamps used to break it into hard-edged dark shapes)
 
 w = json.load(open(WORLD)) if os.path.exists(WORLD) else {}
 w.update({'name': 'The Palace of the Emerald Crown', 'width': COLS, 'height': ROWS, 'tileSize': 16, 'tileset': 'lumar',

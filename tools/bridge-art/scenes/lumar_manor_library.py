@@ -121,7 +121,7 @@ E.torchere(k, 4.3, 7.0, h=1.7, energy=10)
 for (x, r) in ((4.0, 5.5), (4.5, 10.0), (12.0, 9.5), (16.5, 10.0)):
     k.point_light(x, r, 3.0, '#ffd8a8', 44, radius=0.6, group='lamp')
 
-render(k, OUT)
+render(k, OUT, ambient=('#5a4a40', 1.8))     # a warm night ambient keeps the floor in one band of the toy finish
 
 I = [door('THE HALL', x, y, 'lumar-manor', [24, 8]) for (x, y) in WEST]
 I += [

@@ -48,7 +48,7 @@ var BridgeStatsPanel = (function () {
   }
 
   function renderShellHTML() {
-    var html = '<div style="' +
+    var html = '<div class="term-panel" style="' +
       'width:min(640px,92vw);max-height:88vh;overflow:hidden;display:flex;flex-direction:column;' +
       'background:linear-gradient(180deg,rgba(20,30,46,0.96),rgba(10,18,28,0.96));' +
       'border:1px solid rgba(64,200,216,0.5);border-radius:8px;' +
@@ -63,7 +63,7 @@ var BridgeStatsPanel = (function () {
     // Body
     html += '<div style="padding:20px 24px;overflow-y:auto;flex:1;">' +
       // Top stats row
-      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px;">' +
+      '<div class="term-2col" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px;">' +
         statCard('COINS', '<span id="stats-coins">…</span>', '#ffe080') +
         statCard('TROPHIES', '<span id="stats-trophies">…</span> / ' + TROPHIES.length, '#ffe080') +
         statCard('WORLDS VISITED', '<span id="stats-worlds">…</span> / 6', '#80e0e8') +
@@ -78,7 +78,7 @@ var BridgeStatsPanel = (function () {
     // Footer
     html += '<div style="padding:12px 24px;border-top:1px solid rgba(64,200,216,0.25);' +
             'display:flex;justify-content:flex-end;font-size:10px;letter-spacing:3px;color:#777;">' +
-      '<span>ESC TO CLOSE</span>' +
+      '<button type="button" class="term-close"><span class="ip-key">Esc</span> CLOSE</button>' +
     '</div>';
 
     html += '</div>';
@@ -157,7 +157,7 @@ var BridgeStatsPanel = (function () {
 
   function bindHandlers() {
     overlayEl.addEventListener('click', function (e) {
-      if (e.target === overlayEl) hide();
+      if (e.target === overlayEl || (e.target.closest && e.target.closest('.term-close'))) hide();   // the backdrop, or Close (a tap on a phone)
     });
     document.addEventListener('keydown', escHandler);
   }

@@ -215,7 +215,8 @@ def back_bar(k, x0, x1, r_face, H, neon=Y.PINK, mirror=True):
             x += k.rng.uniform(0.09, 0.13)
     for col, bs in bottles.items():
         for (x, z, h) in bs:
-            k.cyl(x, r_face + 0.16, z, z + h * 0.7, 0.035, (shade(col, 0.5), 0.03), 'bottle', emit=(col, 0.35), verts=8)
+            # 'lustre': a bottle is 2 px wide, all edge — the toy line would darken all of it (scene_post LUSTRE_WORDS)
+            k.cyl(x, r_face + 0.16, z, z + h * 0.7, 0.035, (shade(col, 0.5), 0.03), 'bottle_lustre', emit=(col, 0.35), verts=8)
             k.cyl(x, r_face + 0.16, z + h * 0.7, z + h, 0.012, '#1a1a1e', 'bottle_neck', verts=6)
     k.point_light((x0 + x1) / 2, r_face + 0.6, 1.6, '#f0a0d8', 14, radius=0.4)
     k.solid(x0, r_face, x1, F + 0.04)

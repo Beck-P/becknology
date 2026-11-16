@@ -16,8 +16,8 @@ const fail = (m) => { errors++; console.log('FAILED: ' + m); };
 
 // ---- the screens ---------------------------------------------------------------------------------------------------------
 // world + at: where to stand; use: the interaction (label, or a predicate on it); then: steps after it opens (a row or option
-// to pick by its text); act: anything more, played from the test (a fish landed); menu: a menu tab instead; seed: localStorage before the page loads; prep: run in the page first.
-const SCREENS = [
+// to pick by its text); act: anything more, played from the test (a fish landed); menu: a menu tab instead; open: run in the page to open it instead; seed: localStorage before the page loads; prep: run in the page first.
+const SCREENS = global.PHONE_SCREENS || [   // (world/phone_pass_old.js hands in the older screens and runs this same pass over them)
   { id: 'bess', world: 'lumar', at: [9, 14], use: 'HARBOURMASTER', prep: () => { ['first-hour'].forEach(q => BridgeQuests._done && BridgeQuests._done(q)); } },
   { id: 'shop', world: 'lumar-square', at: [19, 11], use: 'FISHMONGER' },
   { id: 'board', world: 'verdance-village', at: [15, 13], use: (i) => i.type === 'notice_board' },
@@ -71,6 +71,9 @@ const SCREENS = [
   { id: 'map', menu: 'map', world: 'lumar', at: [9, 16] },
   { id: 'pack', menu: 'backpack', world: 'lumar', at: [9, 16], prep: () => { BridgeInventory.addItem('silverfin', 2); BridgeInventory.addItem('wheat', 3); } },
   { id: 'ledger', menu: 'ledger', world: 'lumar', at: [9, 16] },
+  // the way there (js/route.js): a place's map with Show me the way, and All places with a route picked out
+  { id: 'mapway', world: 'lumar', at: [9, 16], open: () => BridgeMenu.open('map', { world: 'lumar-crown-stilts' }), seed: { bridge_log_seen: JSON.stringify({ bridge: 1, hangar: 1, lumar: 1, 'lumar-square': 1, 'lumar-crown': 1, 'lumar-crown-oldtown': 1, 'lumar-crown-stilts': 1 }) } },
+  { id: 'mapallway', world: 'lumar', at: [9, 16], open: () => { BridgeRoute.show('lumar-crown-stilts'); BridgeMenu.open('map', { all: true }); }, seed: { bridge_log_seen: JSON.stringify({ bridge: 1, hangar: 1, lumar: 1, 'lumar-square': 1, 'lumar-crown': 1, 'lumar-crown-oldtown': 1, 'lumar-crown-stilts': 1 }) } },
 ];
 
 (async () => {
@@ -143,7 +146,8 @@ const SCREENS = [
     }
     return { ok: true, how, label: spot.label };
   }
-  const PANELS = '#world-overlay .world-dialog, #game-menu.open .gm-card, #darts.visible, #eights, #fishing, #transit-ride, #fish-reveal, #item-get, #festival-screen';
+  const PANELS = '#world-overlay .world-dialog, #game-menu.open .gm-card, #darts.visible, #eights, #fishing, #transit-ride, #fish-reveal, #item-get, #festival-screen' +
+    (global.PHONE_PANELS ? ', ' + global.PHONE_PANELS : '');
   const openPanels = (p) => p.evaluate((sel) => [...document.querySelectorAll(sel)].filter(e => {
     const s = getComputedStyle(e), r = e.getBoundingClientRect();
     return s.display !== 'none' && s.visibility !== 'hidden' && +s.opacity > 0.05 && r.width > 4 && r.height > 4;
@@ -196,11 +200,11 @@ const SCREENS = [
   async function closeByTap(p) {
     const before = await openPanels(p);
     if (!before.length) return true;
-    const box = await p.evaluate((sel) => {
+    const find = () => p.evaluate((sel) => {
       const vis = (e) => { const s = getComputedStyle(e), r = e.getBoundingClientRect(); return s.display !== 'none' && s.visibility !== 'hidden' && r.width > 4 && r.height > 4; };
       const pns = [...document.querySelectorAll(sel)].filter(vis), pn = pns.find(e => e.matches('.world-dialog')) || pns.pop();   // a dialog over a panel first
-      const els = [...pn.querySelectorAll('button, .wd-opt, .wd-btn, .wd-hint, .qj-close, [data-act], .gm-x, .gm-close, .wd-sell-row.pick')].filter(vis);
-      const e = els.find(e => /^(✕|×|close|goodbye|leave|done|back|not now|walk away|never mind|cancel|stand up|quit|that's all|bye)\b/i.test(e.textContent.trim()) || /close/i.test(e.getAttribute('aria-label') || '') || e.classList.contains('wd-hint') || e.classList.contains('qj-close'))
+      const els = [...pn.querySelectorAll('button, .wd-opt, .wd-btn, .wd-hint, .qj-close, [data-act], [role=button], .gm-x, .gm-close, .wd-sell-row.pick')].filter(vis);
+      const e = els.find(e => /^(✕|×|close|goodbye|leave|done|back|not now|walk away|never mind|cancel|stand up|quit|that's all|bye|got it|keep sailing)\b/i.test(e.textContent.trim()) || /close|^back/i.test(e.getAttribute('aria-label') || '') || e.classList.contains('wd-hint') || e.classList.contains('qj-close'))
         || els.find(e => /(✕|×|close|goodbye|leave|done|not now|walk away|never mind|cancel)\s*$/i.test(e.textContent.trim()));
       document.querySelectorAll('[data-pp-closing]').forEach(x => x.removeAttribute('data-pp-closing')); pn.setAttribute('data-pp-closing', '1');
       const t = e || pn;
@@ -208,11 +212,14 @@ const SCREENS = [
       const r = t.getBoundingClientRect();
       return { x: r.x + Math.min(r.width / 2, 40), y: r.y + Math.min(r.height / 2, 20), what: e ? e.textContent.trim().slice(0, 20) || e.className : 'the card' };
     }, PANELS);
-    for (let i = 0; i < 4; i++) {
+    let box = await find();
+    for (let i = 0; i < 8; i++) {                                         // (a long line: a page a tap)
+      if (i) { const again = await p.evaluate(() => { const e = document.querySelector('[data-pp-closing]'); return !!(e && e.isConnected); }) && await openPanels(p); if (again && again.length) box = Object.assign(await find(), { what: box.what }); }   // (measured again: a card still sliding in moves)
+      if (process.env.PP_DEBUG) console.log('  close: tap', JSON.stringify(box), await p.evaluate(([x, y]) => { const e = document.elementFromPoint(x, y); return e ? (e.id || e.className || e.tagName) + '' : 'nothing'; }, [box.x, box.y]));
       await tapAt(p, box.x, box.y); await p.waitForTimeout(700);
       const gone = await p.evaluate(() => { const e = document.querySelector('[data-pp-closing]'); if (!e || !e.isConnected) return true; const c = getComputedStyle(e); return c.display === 'none' || c.visibility === 'hidden' || +c.opacity < 0.05 || e.getBoundingClientRect().width < 4; });
       if (gone) return box.what;                                            // (that screen: a panel under it, the fishing, may stay)
-      if (box.what !== 'the card') break;                                   // a line typing out: the first tap finishes it
+      if (box.what !== 'the card' && !/skip/i.test(box.what)) break;          // a line typing out: the first tap (on it, or its Skip) finishes it
     }
     return false;
   }
@@ -227,12 +234,13 @@ const SCREENS = [
         await go(p, S.world, S.at[0], S.at[1]); await p.waitForTimeout(1500);
         let how = '';
         if (S.menu) { await p.evaluate((m) => BridgeMenu.open(m), S.menu); await p.waitForTimeout(1200); how = 'menu ' + S.menu; }
+        else if (S.open) { await p.evaluate(S.open); await p.waitForTimeout(1200); how = 'opened by its module'; }   // (a screen a module opens from several places)
         else { const r = await useIt(p, S.use); if (!r.ok) { if (S.optional) console.log(size + ' ' + S.id + ': ' + r.why + ' (not on now)'); else fail(S.id + ': ' + r.why); await p.context().close(); continue; } how = r.how; }
         for (const t of (S.then || [])) { if (!await press(p, t)) console.log('  ' + S.id + ': no "' + t + '" to tap'); }
         if (S.act) await S.act(p);                                          // a screen got to by playing (a fish landed)
         await p.waitForTimeout(S.wait || 600);
         const a = await audit(p);
-        await p.screenshot({ path: OUT + '/pp_' + S.id + '_' + size + '.png' });
+        await p.screenshot({ path: OUT + '/' + (global.PHONE_PREFIX || 'pp_') + S.id + '_' + size + '.png' });
         const out = await closeByTap(p);
         console.log(size + ' ' + S.id + ' [' + how + '] ' + a.panels.join(' ') + (a.problems.length ? '\n    ' + a.problems.join('\n    ') : ' ok') + (out ? '' : '\n    no way to close it by a tap'));
         if (!a.panels.length) fail(S.id + ' (' + size + '): nothing opened');
@@ -242,8 +250,9 @@ const SCREENS = [
       await p.context().close();
     }
   }
+  if (global.PHONE_EXTRA) await global.PHONE_EXTRA({ page, go, useIt, press, audit, closeByTap, openPanels, tapAt, fail, OUT, ONLY });
   // ---- a plain line over the controls, and back as they were: walking, fishing, a line opened from another dialog ----
-  if (!ONLY || ONLY.indexOf('controls') >= 0) {
+  if (!global.PHONE_SCREENS && (!ONLY || ONLY.indexOf('controls') >= 0)) {
     const p = await page('phone');
     const ctl = () => p.evaluate(() => ['.stick', '.dpad-action', '#inventory-panel'].map(q => { const e = document.querySelector(q); if (!e) return q + ':none'; const c = getComputedStyle(e); return q + ':' + (c.display === 'none' ? 'none' : c.visibility === 'hidden' || +c.opacity < 0.05 ? 'hidden' : 'shown'); }).join(' '));
     const sayAndClose = async (tag) => {
@@ -284,8 +293,38 @@ const SCREENS = [
     await p.context().close();
   }
 
+  // ---- the way there (js/route.js): the tracker's block for a place you asked the way to, and the pill's "this way" ----
+  if (!global.PHONE_SCREENS && (!ONLY || ONLY.indexOf('way') >= 0)) {
+    for (const size of USE) {
+      const p = await page(size, { bridge_log_seen: JSON.stringify({ bridge: 1, hangar: 1, lumar: 1, 'lumar-square': 1, 'lumar-crown': 1, 'lumar-crown-oldtown': 1, 'lumar-crown-stilts': 1 }),
+                                   bridge_quest_meta: JSON.stringify({ heard: { 'keepers-log': { t: 1, who: 'Hetty' } }, track: 'keepers-log' }) });
+      await go(p, 'lumar', 9, 16); await p.waitForTimeout(1200);
+      await p.evaluate(() => BridgeRoute.show('lumar-crown-stilts')); await p.waitForTimeout(1500);
+      const t = await p.evaluate(() => {
+        const vw = innerWidth, vh = innerHeight, e = document.querySelector('#quest-tracker.on'), out = [];
+        if (!e) return { text: '', problems: ['no tracker'] };
+        const r = e.getBoundingClientRect();
+        if (r.left < 0 || r.right > vw || r.top < 0 || r.bottom > vh) out.push('the tracker off the screen ' + [r.left, r.top, r.right, r.bottom].map(Math.round));
+        const s = e.querySelector('.qtr-stop'), b = s && s.getBoundingClientRect();
+        if (!s) out.push('no Stop'); else if (Math.min(b.width, b.height) < 35.5) out.push('Stop is ' + Math.round(b.width) + 'x' + Math.round(b.height));
+        else { const h = document.elementFromPoint(b.left + b.width / 2, b.top + b.height / 2); if (h && !s.contains(h)) out.push('Stop covered by ' + (h.id || h.className)); }
+        [...document.querySelectorAll('#coin-hud, #journal-pill, #act-pill, #sound-pill, #chart-pill, #home-pill, #mp-pill')].forEach(o => { const q = o.getBoundingClientRect(); if (q.width && q.right > r.left && q.left < r.right && q.bottom > r.top && q.top < r.bottom) out.push('over ' + (o.id || o.className)); });
+        return { text: e.innerText.replace(/\s+/g, ' '), problems: out };
+      });
+      await p.screenshot({ path: OUT + '/pp_way_' + size + '.png' });
+      console.log(size + ' way: ' + t.text + (t.problems.length ? '\n    ' + t.problems.join('\n    ') : ' ok'));
+      t.problems.forEach(m => fail('way (' + size + '): ' + m));
+      if (!/Market Square|Harbour|ship|Crownhaven/i.test(t.text)) fail('way (' + size + '): no line in the tracker: ' + t.text);
+      const tap = await p.evaluate(() => { const s = document.querySelector('.qtr-stop'); if (!s) return null; const b = s.getBoundingClientRect(); return [b.left + b.width / 2, b.top + b.height / 2]; });
+      if (tap) { await tapAt(p, tap[0], tap[1]); await p.waitForTimeout(1500); }
+      const after = await p.evaluate(() => BridgeRoute.showing());
+      if (after) fail('way (' + size + '): Stop didn\'t stop it');
+      await p.context().close();
+    }
+  }
+
   // ---- a lead that names someone who's gone home for the night says when they're back (js/routines.js whereabouts) ----
-  if (!ONLY || ONLY.indexOf('lead') >= 0) {
+  if (!global.PHONE_SCREENS && (!ONLY || ONLY.indexOf('lead') >= 0)) {
     const p = await page('phone');
     // through a day on Verdance's clock: Nell (the flower stall) is at her stall some of it and off home the rest
     const w = await p.evaluate(() => { const out = []; const t0 = Date.parse('2026-11-16T00:00:00Z'); for (let h = 0; h < 48; h++) { BridgeClock._at(t0 + h * 1800000); const a = BridgePeople.all().nell.at[0]; out.push(BridgeRoutines.whereabouts(a.world, a.label)); } return out; });
@@ -296,7 +335,7 @@ const SCREENS = [
     await p.context().close();
   }
 
-  console.log('phone_pass: errors', errors);
+  console.log((global.PHONE_PREFIX ? 'phone_pass_old' : 'phone_pass') + ': errors', errors);
   await b.close();
   process.exit(errors ? 1 : 0);
 })();

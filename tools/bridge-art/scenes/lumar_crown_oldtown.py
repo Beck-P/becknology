@@ -56,7 +56,8 @@ CHAPEL = (45.6, 50.0)                     # St Elmo's, in the fourth row
 # the rows of houses, north to south: (back, front) and the alleys through each (whole tiles, two wide, staggered so
 # the way down through the town winds)
 ROWSPEC = [
-    dict(name='B', back=7.4, front=10.0, gaps=[(14.0, 16.0), (44.0, 46.0)], x0=12.0, storeys=(2, 3, 3), seed=201,
+    dict(name='B', back=7.4, front=10.0, gaps=[(14.0, 16.0), (44.0, 46.0)], x0=12.0, storeys=(2, 2, 2), seed=201,   # two: the
+         # wall lane to the North Gate behind them shows over their roofs (three hid it); still three picks, the same dice
          signs=[(13.0, 'bottle'), (41.0, 'compass')]),
     dict(name='C', back=14.6, front=17.2, gaps=[(9.0, 11.0), WELLSQ, (49.0, 51.0)], x0=WX + 0.5, storeys=(2, 2, 3), seed=202,
          signs=[(7.0, 'mug'), (46.0, 'bread')]),
@@ -182,6 +183,52 @@ while x < kx1 - 0.3:
     k.box(x, kr1 - 0.2, 5.6, x + 0.44, kr1 + 0.1, 6.05, (shade(CAP.WALL_STONE, rng.uniform(0.9, 1.05)), 0.12), 'merlon', bevel=0.015)
     x += 0.74
 k.box(kx0 + 0.3, kr0 + 0.3, 5.55, kx1 - 0.3, kr1 - 0.3, 5.62, ('#6e685e', 0.25), 'path_keeptop')
+# the keep's roof (it was one flat plane of beige): a wall walk of flags inside battlements on all four sides, and in the
+# middle a low leaded roof, hipped to a short ridge, its lead in rolls and its hips capped; a chimney stack, a hatch up from
+# the stair, a water butt. Its own dice, so nothing placed after it moves.
+_dice = rng.getstate()
+kr_ = random.Random(5102)
+for (a, b, c, d) in ((kx0 + 0.3, kr0 + 0.3, kx1 - 0.3, kr0 + 0.9), (kx0 + 0.3, kr1 - 0.9, kx1 - 0.3, kr1 - 0.3),
+                     (kx0 + 0.3, kr0 + 0.9, kx0 + 0.9, kr1 - 0.9), (kx1 - 0.9, kr0 + 0.9, kx1 - 0.3, kr1 - 0.9)):
+    CAP.flagged(k, a, b, c, d, tone='#8a8274', rng=kr_, part='path_keepwalk', z=5.66)
+for (xa, ra, xb, rb_, along_x) in ((kx0, kr0 - 0.1, kx1, kr0 + 0.2, True), (kx0 - 0.1, kr0, kx0 + 0.2, kr1 - 0.2, False),
+                                   (kx1 - 0.2, kr0, kx1 + 0.1, kr1 - 0.2, False)):
+    k.box(xa, ra, 5.6, xb, rb_, 5.72, (shade(CAP.WALL_STONE, 1.02), 0.12), 'parapet')
+    t = (xa if along_x else ra) + 0.1
+    end = xb if along_x else rb_
+    while t < end - 0.35:
+        if along_x:
+            k.box(t, ra, 5.72, t + 0.42, rb_, 6.05, (shade(CAP.WALL_STONE, kr_.uniform(0.88, 1.05)), 0.12), 'merlon', bevel=0.015)
+        else:
+            k.box(xa, t, 5.72, xb, t + 0.42, 6.05, (shade(CAP.WALL_STONE, kr_.uniform(0.88, 1.05)), 0.12), 'merlon', bevel=0.015)
+        t += 0.74
+LX0, LR0, LX1, LR1, LZ0, LZ1 = kx0 + 1.0, kr0 + 1.0, kx1 - 1.5, kr1 - 1.0, 5.66, 6.9   # clear of the turret
+LEAD = '#5e6872'
+lrm = (LR0 + LR1) / 2
+inset = min(LX1 - LX0, LR1 - LR0) / 2                       # hipped: the ridge runs east-west, short
+ridge = [(LX0 + inset, lrm, LZ1), (LX1 - inset, lrm, LZ1)]
+k.loft([[(LX0, LR0, LZ0), (LX1, LR0, LZ0), (LX1, LR1, LZ0), (LX0, LR1, LZ0)],
+        [(ridge[0][0], lrm - 0.01, LZ1), (ridge[1][0], lrm - 0.01, LZ1), (ridge[1][0], lrm + 0.01, LZ1), (ridge[0][0], lrm + 0.01, LZ1)]],
+       (LEAD, 0.3), 'roof_lead', closed=True, smooth=False)
+for i in range(1, 7):                                        # the lead's rolls: rings up the slopes, a shade lighter
+    f = i / 7
+    z = LZ0 + (LZ1 - LZ0) * f + 0.015
+    ax0, ax1 = LX0 + (ridge[0][0] - LX0) * f, LX1 + (ridge[1][0] - LX1) * f
+    ar0, ar1 = LR0 + (lrm - LR0) * f, LR1 + (lrm - LR1) * f
+    for (p, q) in (((ax0, ar0), (ax1, ar0)), ((ax1, ar0), (ax1, ar1)), ((ax1, ar1), (ax0, ar1)), ((ax0, ar1), (ax0, ar0))):
+        k.tube((p[0], p[1], z), (q[0], q[1], z), 0.022, shade(LEAD, 1.12 if i % 2 else 1.05), 'roof_lead_roll', verts=4)
+for (cx_, cr_) in ((LX0, LR0), (LX1, LR0), (LX1, LR1), (LX0, LR1)):   # hip and ridge caps
+    near = ridge[0] if cx_ < (LX0 + LX1) / 2 else ridge[1]
+    k.tube((cx_, cr_, LZ0 + 0.03), (near[0], near[1], LZ1 + 0.03), 0.045, shade(LEAD, 0.8), 'roof_ridge', verts=6)
+k.tube((ridge[0][0], lrm, LZ1 + 0.04), (ridge[1][0], lrm, LZ1 + 0.04), 0.05, shade(LEAD, 0.8), 'roof_ridge', verts=6)
+k.box(LX0 - 0.06, LR0 - 0.06, LZ0 - 0.04, LX1 + 0.06, LR1 + 0.06, LZ0 + 0.02, '#4a4e54', 'roof_gutter')
+W.chimney_stack(k, LX0 + 0.9, lrm - 0.3, lrm + 0.1, LZ0, LZ1 + 0.8, roof_z=LZ1 - 0.2)
+k.box(kx0 + 1.2, kr1 - 0.85, 5.66, kx0 + 1.9, kr1 - 0.4, 5.86, (A.WOOD_D, 0.14), 'hatch')          # the stair's hatch
+k.box(kx0 + 1.15, kr1 - 0.9, 5.86, kx0 + 1.95, kr1 - 0.35, 5.92, (A.WOOD_DD, 0.14), 'hatch_lid')
+k.cyl(kx1 - 1.3, kr1 - 0.65, 5.66, 6.1, 0.2, (A.WOOD_D, 0.14), 'water_butt', verts=12)
+for zz in (5.74, 6.0):
+    k.cyl(kx1 - 1.3, kr1 - 0.65, zz, zz + 0.04, 0.205, A.IRON, 'barrel_hoop', verts=12)
+rng.setstate(_dice)
 CAP.tower(k, kx1 - 0.6, kr0 + 0.6, R=0.7, h=6.6, roof='#44567a', windows=1, flag='#2e8a5a', light=False)
 for s in (-1, 1):
     W.wall_lantern(k, 8.5 + s * 0.85, kr1 + 0.02, z=1.4, energy=14)
@@ -194,10 +241,11 @@ for sp in ROWSPEC:
     for i, (a, b) in enumerate(segs(sp)):
         jog = random.Random(sp['seed'] * 7 + i).choice((-0.6, -0.4, 0.0, 0.4, 0.6))
         CAP.row(k, a, b, sp['back'], sp['front'] + jog, seed=sp['seed'] * 10 + i, smoke=SMOKE, storeys=sp['storeys'],
-                signs=sp['signs'], shops=0.4, jitter=0.2, gable_front=0.15)
+                signs=sp['signs'], shops=0.4, jitter=0.2, gable_front=0.15, gable_hip=True)
     CAP.yard_life(k, sp['x0'] - 0.1, EX - 0.4, sp['back'] - YARD, sp['back'], seed=sp['seed'] + 900,
                   gaps=[g for g in sp['gaps'] if g != CHAPEL] + ([(THEATRE[0], THEATRE[1])] if sp['name'] == 'B' else []))
-CAP.theatre(k, THEATRE[0], THEATRE[1], THEATRE[2], THEATRE[3])
+CAP.theatre(k, THEATRE[0], THEATRE[1], THEATRE[2], THEATRE[3], stage_depth=2.2)   # its house behind kept low: the lane to
+#                                                                                 the North Gate shows over it
 CAP.chapel(k, CHAPEL[0] + 0.3, CHAPEL[1] - 1.5, 21.4, 24.4, tower_side=1)
 CAP.arch_house(k, 29.0, 31.0, 21.8, 24.0)                  # the Arch House over the alley in the fourth row
 for (ga, gb), sp in (((14.0, 16.0), ROWSPEC[0]), ((24.0, 26.0), ROWSPEC[3])):     # washing strung across two alleys

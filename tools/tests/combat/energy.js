@@ -33,6 +33,7 @@ const CHARGED = { iron_dagger: 2, cutlass: 3, emberbrand: 3, boarding_pike: 3, w
     // a roll, straight up the open path and back
     await full(); let e0 = en(); BridgeCharacter.setFacing('up'); BridgeArms.roll(); out.roll = e0 - en();
     await settle(); await sleep(200); BridgeCharacter.setFacing('down'); BridgeArms.roll();
+    await settle(); await sleep(200);                                   // (the roll back has to finish before the first swing, or that swing is swallowed and the first weapon never charges)
     // each class's charged blow: hold through a swing, a beat more, let go (into the air); paid as you let go
     out.charged = {};
     for (const id of W) {

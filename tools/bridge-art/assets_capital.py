@@ -20,6 +20,8 @@ import os
 import random
 import sys
 
+import bpy                        # noqa: E402  (theatre: a roof built only to use up its dice, then thrown away)
+
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import assets_lumar as A          # noqa: E402
 import assets_town as W           # noqa: E402
@@ -666,15 +668,30 @@ def lane(k, x0, r0, x1, r1, tone='#9a9080', worn=None):
     cobbles(k, x0, r0, x1, r1, tone=tone, size=0.26, skip=worn)
 
 
-def theatre(k, x0, x1, r_back, r_front, name='LANTERN THEATRE'):
+def theatre(k, x0, x1, r_back, r_front, name='LANTERN THEATRE', stage_depth=None, back_h=1.7):
     """A playhouse's front on its square: a rusticated ground floor with three arched doors, a giant order of columns
     up the two floors over it carrying a pediment, a lettered frieze, playbills, lamps on brackets, a rooftop lantern
-    over the house behind."""
+    over the house behind. stage_depth: the full height only that deep behind the front (tiles), the auditorium behind
+    it low (back_h) under a lead roof sloping down to the back — so a lane behind it isn't hidden under its roof from the
+    camera (the Old Town's lane to the North Gate). Off by default; the scene's dice come out of it as they always did."""
     cx = (x0 + x1) / 2
     rf = r_front
     H = 4.4
     cream = '#e8dcc4'
-    k.box(x0, r_back, -0.02, x1, rf - 0.02, H, (shade(cream, 0.9), 0.08), 'house_wall')
+    rb_hi = rf - stage_depth if stage_depth else r_back
+    k.box(x0, rb_hi, -0.02, x1, rf - 0.02, H, (shade(cream, 0.9), 0.08), 'house_wall')
+    if stage_depth:                                  # the auditorium behind: low walls, a lead roof falling to the back
+        k.box(x0 + 0.1, r_back, -0.02, x1 - 0.1, rb_hi + 0.02, back_h, (shade(cream, 0.84), 0.08), 'house_wall')
+        zt = back_h + 0.55
+        k.quads([((x0 + 0.02, r_back - 0.08, back_h), (x1 - 0.02, r_back - 0.08, back_h), (x1 - 0.02, rb_hi, zt), (x0 + 0.02, rb_hi, zt))],
+                ('#6a7478', 0.18), 'roof_lead')
+        for i in range(int((x1 - x0) / 0.9)):        # lead rolls down the slope
+            x = x0 + 0.45 + i * 0.9
+            k.tube((x, r_back - 0.06, back_h + 0.02), (x, rb_hi - 0.02, zt + 0.02), 0.035, '#7e888c', 'roof_lead_roll', verts=5)
+        k.box(x0, r_back - 0.14, back_h - 0.12, x1, r_back - 0.02, back_h + 0.02, ('#d8ccb4', 0.1), 'gutter')
+        for vx in (x0 + 2.2, cx + 1.6, x1 - 2.4):       # smoke vents off the house's lamps
+            k.cyl(vx, (r_back + rb_hi) / 2, zt - 0.3, zt + 0.25, 0.14, ('#5a6266', 0.15), 'roof_vent', verts=8)
+            k.cone(vx, (r_back + rb_hi) / 2, zt + 0.25, zt + 0.42, 0.22, 0.04, '#4a5256', 'roof_vent', verts=8)
     # rusticated ground floor: deep-jointed blocks
     rng = random.Random(77)
     coursed(k, x0, x1, 0.0, 1.7, rf, '#d8ccb4', rng=rng, skip=[(cx + d - 0.55, cx + d + 0.55, 0.0, 1.55) for d in (-2.0, 0.0, 2.0)],
@@ -723,7 +740,19 @@ def theatre(k, x0, x1, r_back, r_front, name='LANTERN THEATRE'):
     k.cyl_y(cx, rf + 0.32, rf + 0.4, pz + 0.55, 0.32, 0.32, '#c8a040', 'pediment_lyre', verts=16)     # a gilt sunburst
     k.cyl_y(cx, rf + 0.38, rf + 0.42, pz + 0.55, 0.2, 0.2, '#e8c860', 'pediment_lyre', verts=12)
     # the roof of the house behind: a long copper-green hip, a lantern on its ridge
-    rm, zr = W._gable_roof(k, x0, x1, r_back, rf - 0.02, H + 0.3, 1.4, '#3e7a6a')
+    if stage_depth:
+        # burn the dice the full-depth roof would have used (built, then thrown away), so everything after comes out as
+        # before; then the front block's own lower roof on borrowed dice
+        n = len(k.parts)
+        W._gable_roof(k, x0, x1, r_back, rf - 0.02, H + 0.3, 1.4, '#3e7a6a')
+        for pt in k.parts[n:]:
+            bpy.data.objects.remove(pt['obj'], do_unlink=True)
+        del k.parts[n:]
+        _after = k.rng.getstate()
+        rm, zr = W._gable_roof(k, x0, x1, rb_hi, rf - 0.02, H + 0.3, 0.8, '#3e7a6a')
+        k.rng.setstate(_after)
+    else:
+        rm, zr = W._gable_roof(k, x0, x1, r_back, rf - 0.02, H + 0.3, 1.4, '#3e7a6a')
     k.cyl((x0 + x1) / 2, rm, zr - 0.1, zr + 0.6, 0.45, ('#efe6d2', 0.08), 'roof_lantern', verts=12)
     k.cyl((x0 + x1) / 2, rm, zr + 0.15, zr + 0.5, 0.47, '#5a3a18', 'window_glass', emit=(W.GLOW, 0.9), verts=12)
     k.cone((x0 + x1) / 2, rm, zr + 0.6, zr + 1.0, 0.55, 0.05, ('#3e7a6a', 0.1), 'roof_cone', verts=12)

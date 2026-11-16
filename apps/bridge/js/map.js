@@ -28,7 +28,8 @@ var BridgeMap = (function () {
   var PLANET = { lumar: 'lumar', arcadia: 'arcadia', enigma: 'enigma', singularity: 'singularity', verdance: 'verdance', hoarfell: 'hoarfell', sylvara: 'sylvara' };
   var SYS_RX = { ship: /^(bridge|quarters|hangar|gameroom|office|ship-[a-z]+)$/, lumar: /^lumar/, arcadia: /^(arcadia|cyber-noodle|chrome-clinic|junk-pawn|tech-repair|null-den)/,
                  enigma: /^enigma/, singularity: /^singularity/, verdance: /^verdance/, hoarfell: /^hoarfell/, sylvara: /^sylvara/ };
-  var MERGE = { 'lumar-rose-mine-b': 'lumar-rose-mine-a', 'lumar-rose-mine-c': 'lumar-rose-mine-a' };
+  var MERGE = { 'lumar-rose-mine-b': 'lumar-rose-mine-a', 'lumar-rose-mine-c': 'lumar-rose-mine-a',
+                'lumar-undercroft-b': 'lumar-undercroft-a', 'lumar-undercroft-c': 'lumar-undercroft-a' };   // atlas.py MERGE
 
   fetch('/bridge/assets/atlas.json?v=' + Date.now()).then(function (r) { return r.json(); })
     .then(function (d) { atlas = d; }).catch(function () { atlas = { systems: [], isles: [], worlds: {} }; })
@@ -411,6 +412,7 @@ var BridgeMap = (function () {
     var wi = whereIs(wid);
     place.innerHTML = '<div class="mp-place-name">' + esc(placeName(wid)) + '</div><div class="mp-place-where">' + (wi ? esc(wi) + ' \u00b7 ' : '') +
       (live ? '<b>you are here</b>' : 'you\'ve been here') + '</div>';
+    wayButton(place, wid, live);
     worldData(wid, function (data) {
       if (!root || !body.isConnected) return;
       if (!data) { body.querySelector('.mp-loading').textContent = 'No map of this place.'; return; }
@@ -570,6 +572,7 @@ var BridgeMap = (function () {
     var S = seen(), h = here(), hs = sysOf(h);
     var wrap = document.createElement('div');
     wrap.className = 'mp-all';
+    wayStrip(body);
     (atlas.systems || []).forEach(function (sys) {
       var ids = Object.keys(atlas.worlds).filter(function (k) { return atlas.worlds[k].sys === sys.id; });
       var been = ids.filter(function (k) { return S[k]; }).length;
@@ -591,7 +594,7 @@ var BridgeMap = (function () {
           var beenIsle = inIsle.some(function (k) { return S[k]; });
           if (!beenIsle && !known) { hidden++; return; }
           var sub = document.createElement('div');
-          sub.className = 'mp-isle' + (beenIsle ? '' : ' unseen') + (atlas.worlds[h] && atlas.worlds[h].isle === isle ? ' here' : '');
+          sub.className = 'mp-isle' + (beenIsle ? '' : ' unseen') + (atlas.worlds[h] && atlas.worlds[h].isle === isle ? ' here' : '') + (onWay[isle] ? ' on-way' : '');
           sub.innerHTML = '<div class="mp-isle-name">' + esc(isleName(isle)) + (beenIsle ? '' : '<i>on your chart · not been ashore</i>') + '</div>';
           if (beenIsle) sub.appendChild(tree(isle, inIsle, S, h));
           card.appendChild(sub);
@@ -643,7 +646,7 @@ var BridgeMap = (function () {
       return out;
     }
     function node(k) {
-      var inner = items(k), cls = 'mp-node' + (k === h ? ' here' : '');
+      var inner = items(k), cls = 'mp-node' + (k === h ? ' here' : '') + wayCls(k);
       var label = S[k] ? '<button type="button" class="' + cls + '" data-w="' + esc(k) + '">' + esc(placeName(k)) + (k === h ? ' <i>you are here</i>' : '') + '</button>'
                        : '<span class="mp-node unknown">?<i>' + esc(via[k] ? title(via[k]) + ' \u00b7 not been yet' : 'a way on, not taken yet') + '</i></span>';
       return '<li>' + label + (inner ? '<ul>' + inner + '</ul>' : '') + '</li>';
@@ -653,6 +656,43 @@ var BridgeMap = (function () {
     ul.innerHTML = shown(rootId) ? node(rootId) : items(rootId);
     return ul;
   }
+  // ---- the way there (js/route.js), on the map ----------------------------------------------------------------------
+  // All places picks out the route from where you are: a line above the cards (the places it goes through, in order),
+  // and those places in the trees (gold, the end of it ringed). A place you've been offers "Show me the way" on its map.
+  var onWay = {}, wayEnd = null;
+  function wayCls(k) { return onWay[k] ? (k === wayEnd ? ' way-end' : ' on-way') : ''; }
+  function wayStrip(body) {
+    onWay = {}; wayEnd = null;
+    var R = typeof BridgeRoute !== 'undefined' ? BridgeRoute : null, r = R && R.current();
+    if (!r || !r.legs || !r.legs.length) return;
+    var ws = R.worlds();
+    ws.forEach(function (w) { onWay[w] = 1; var A = W(w); if (A && A.isle) onWay[A.isle] = 1; });
+    wayEnd = ws[ws.length - 1];
+    var el = document.createElement('div');
+    el.className = 'mp-way';
+    el.innerHTML = '<div class="mp-way-head"><span>The way to ' + esc(r.region ? r.name : placeName(r.to)) + '</span>' +
+      (R.showing() ? '<button type="button" class="gm-btn gm-btn-sm" data-a="stopway">Stop</button>' : '') + '</div>' +
+      '<div class="mp-way-line">' + esc(R.line(r)) + '</div>' +
+      '<ol class="mp-way-stops">' + ws.map(function (w, i) {
+        return '<li class="' + (i === 0 ? 'here' : i === ws.length - 1 ? 'end' : '') + '">' + esc(i === 0 ? 'You' : placeName(w)) + '</li>';
+      }).join('') + '</ol>';
+    body.appendChild(el);
+    var sb = el.querySelector('[data-a="stopway"]');
+    if (sb) sb.addEventListener('click', function (e) { e.stopPropagation(); R.stop(); draw(); });
+  }
+  function wayButton(place, wid, live) {
+    var R = typeof BridgeRoute !== 'undefined' ? BridgeRoute : null;
+    if (!R || live || !visited(wid)) return;
+    var on = R.showing() === wid, w = on ? R.line(R.current()) : R.lineTo(wid);
+    place.insertAdjacentHTML('beforeend', '<div class="mp-wayto">' + (w ? '<span>' + esc(w) + '</span>' : '') +
+      '<button type="button" class="gm-btn gm-btn-sm" data-a="way">' + (on ? 'Stop showing the way' : 'Show me the way') + '</button></div>');
+    place.querySelector('[data-a="way"]').addEventListener('click', function (e) {
+      e.stopPropagation();
+      if (on) R.stop(); else R.show(wid);
+      draw();
+    });
+  }
+
   // ---- Arcadia, side on ---------------------------------------------------------------------------------------------
   // A cutaway of the vertical city (assets/arcadia-lifts.json through js/transit.js): the Spires over the smog, the
   // Mid-Levels and the Loop's ring, the District on the street, the Undercity and the Sump below it; each main place where
@@ -847,5 +887,6 @@ var BridgeMap = (function () {
   }
 
   return { ready: ready, visited: visited, placeName: placeName, regionOf: regionOf, newDoors: newDoors, unseenSystems: unseenSystems,
-           markers: function (wid, data) { return markersFor(wid, data || BridgeWorld.getWorld()); }, atlas: function () { return atlas; } };
+           markers: function (wid, data) { return markersFor(wid, data || BridgeWorld.getWorld()); }, atlas: function () { return atlas; },
+           seen: seen, isleName: isleName, sysName: sysName };
 })();

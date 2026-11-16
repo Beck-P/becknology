@@ -166,9 +166,10 @@ with k.variant('shuttle', 'parked'):
     P.shuttle(k, PX - 1.7, PR - 0.1)
 k.solid(PX - 1.8, PR - 1.1, PX + 2.0, PR + 0.9)
 F.windsock(k, 44.4, 3.0)
-for x in (35.1, 38.0):                                          # BRAMBLEFORD on a board between two posts
-    k.box(x - 0.06, 9.55, 0, x + 0.06, 9.67, 1.25, (V.WOOD_D, 0.15), 'post')
-V.board_sign(k, 'BRAMBLEFORD', 'IMFellEnglishSC', 36.55, 9.68, 0.8, size=0.22, board='#3a5a32', ink='#f0e8c8', trim='#d8c890')
+for x in (34.98, 38.12):                                        # BRAMBLEFORD on a tall board between two posts, in letters
+    k.box(x - 0.07, 9.55, 0, x + 0.07, 9.69, 1.72, (V.WOOD_D, 0.15), 'post')     # big enough to read on a phone
+    k.cone(x, 9.62, 1.72, 1.82, 0.09, 0.02, (V.WOOD_D, 0.15), 'post_cap', verts=4)
+V.board_sign(k, 'BRAMBLEFORD', 'IMFellEnglishSC', 36.55, 9.69, 0.98, size=0.4, board='#3a5a32', ink='#f0e8c8', trim='#d8c890', pad=0.12)
 k.solid(35, 9, 38, 10)
 F.wildflowers(k, 34.0, 2.6, 45.0, 9.0, 60)
 
@@ -329,7 +330,7 @@ SMOKE.append([17.88, round(rm - 0.15 - (zr + 1.05) * C, 3)])
 V.flower_bed(k, 14.6, 32.6, 16.0, 33.2)
 V.flower_bed(k, 17.0, 32.6, 18.4, 33.2)
 for (x, r) in ((20.6, 29.6), (21.9, 32.2), (40.6, 30.4), (42.8, 32.0)):
-    F.apple_tree(k, x, r, h=k.rng.uniform(2.2, 2.6))
+    F.apple_tree(k, x, r, h=k.rng.uniform(2.2, 2.6), solid=False)
     # the one by Nan Ashby's hedge stands only on its own tile: the strip under the allotment fences goes past it to the shed
     k.solid(x - 0.35, r - 0.35, x + (0.05 if x == 21.9 else 0.35), r + 0.35)
 

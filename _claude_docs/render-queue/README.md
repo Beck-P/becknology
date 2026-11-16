@@ -28,14 +28,29 @@ Empty: the Old Bridge, the Terraces and the Hill landed in November 2026.
 ## Sylvara's places: all open
 The Boughs, the Hollow Bough tavern, the falls, the cave behind them, Mirror Lake and the Deepwood are live (`BridgeSylvara.OPEN` in `apps/bridge/js/worlds/sylvara.js`). The helpers that put their doors and people back from `e93d7dc` are kept in `sylvara/` for reference. What's still worth doing there is in `apps/bridge/CLAUDE.md`, *Sylvara's city, the Silverrun and the Deepwood (workstream F)*: the river reaches are plainer than the Look Book — a rebuild, not a re-render.
 
+## Rooms in the toy finish (November 2026)
+Every room, cave and deck was re-rendered in the toy finish (62 of them; the rest were current already), each with its
+world JSON left exactly as it was. Light fittings 1–2 px wide — a chandelier's gilt arms, candles and flames, a bottle
+wall — came out grey because the finish's outline covered all of them: parts with **`lustre`** in their name
+(`scene_post.py` `LUSTRE_WORDS`; the estate and casino kits' chandeliers, sconces, torchères and candelabra,
+`A.candle(lustre=True)`, the penthouse's bottles) keep their colour and take the line round them instead. Name a new
+fitting's thin lit parts that way.
+**Still in the older finish, on purpose: the Neon Royale's four rooms** (`arcadia-casino`, `-casino-cards`,
+`-casino-dining`, `-casino-vip`). Their chandeliers are fine with the fix, but their neon sign letters (RUNOUTS, AURUM,
+the VIP crown, the floor's signs) and the slot cabinets' thin neon trims dim for the same reason, and the VIP room's and
+the floor's carpets break into dark shapes. To land them: name those tubes and letters `lustre` in the casino's own
+builders, give the two carpeted rooms the ambient the palace and Ashcombe House got (a warm fill so the finish's band
+edges don't fall across the open floor), re-render the four, compare with the old pictures. (A branch
+`claude/rooms-toy-finish` holds an earlier, unmerged attempt at the fittings with a different mechanism — `gleam`, a
+per-room switch: don't merge it.) For Beck's eye, shipped as they are: the opera foyer's floor is patchy in the toy
+finish, the Hollow's floor takes strong bands round its one lantern, and the Hall of Finds' moonlight pools.
+
 ## Found, not yet written (each needs a script fix first)
 Ranked by how much a player would notice; details and images were in the look-over's findings.
-- **Hoarfell** (Beck named it as the planet with things that look off): the **monastery's** buildings are plain flat white (rebuild-level); the **piste's** couloir walls run in tile steps with rectangular ice patches and the park's kickers barely show; **Fellhaven's** tarn ice is brighter than the snow at night (not the scene: js/litscene.js `hoarfell()` mixes the ice's shade 42% toward a fixed `ICE_SH` that never darkens with the night, so every Hoarfell ice surface — the tarn, the glacier's blue bands, the pistes' ice — is lighter than the snow after dark; an engine change that moves every Hoarfell place's night picture, so it wants Beck's or the engine owner's nod); bands of snow inside the cliff foot are solid on the col and in the valley.
-- **Old Town** (`lumar-crown-oldtown`): the Old Keep's roof is one flat beige plane (the Admiral's cat was "on the roof of the Old Keep"); tall gable houses reach up into the lane north of them.
+Who has what (November 16): Hoarfell — a session on `claude/hoarfell-monastery`; the Crater and Cinder Key (Old Town landed) — `claude/render-found-list`; the Spires, the Stilts, Starling Holm and the Undercity — `claude/render-found-list-2`.
+- **Hoarfell** (Beck named it as the planet with things that look off): the **monastery's** buildings are plain flat white (rebuild-level); the **park's** kickers barely show; bands of snow inside the cliff foot are solid on the col and in the valley.
 - **The Crater** (`lumar-cinder-volcano`): now that the camera follows you, its walls are stretched noise with square corners at the map's edge and the floor is flat noise. **Cinder Key**'s volcano flank is in coarse stepped bands.
 - **The Spires**: a pale wavy wash across the top of the plaza (check the light first).
-- **Brambleford**: the landing green's BRAMBLEFORD sign can't be read (letters about 5 px tall).
-- **The Stilts**: the quay stairs are a plain grey slab. **The Hill**: the drop below the terrace is flat and the city roofs below are in an older finish.
-- **The ship**: the game room's and the hangar's doors back to the bridge read as gaps (the bridge's own side doors are being fixed); in the game room the dust sheets over unfound games look like ghosts.
+- **The Stilts**: the quay stairs are a plain grey slab.
 - **Starling Holm, built**: the café's parasols overlap the warehouse wall.
 - **Undercity**: on the customer side of the north stalls (row 14) you're half behind the middle block's roof (moving the block's back half a tile needs a render).
