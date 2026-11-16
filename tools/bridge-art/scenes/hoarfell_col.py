@@ -15,7 +15,10 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from scenekit import Kit, apply_world, shade  # noqa: E402
+import random                          # noqa: E402
+
 import assets_alpine as A              # noqa: E402
+import assets_hoarfell_rich as HR      # noqa: E402
 import assets_isle as I                # noqa: E402
 import assets_signs as G               # noqa: E402
 import assets_snow as N                # noqa: E402
@@ -72,9 +75,7 @@ def material(x, r):
     d = inside(x, r)
     if d < -0.2:
         return 'snow'
-    if r < 8:
-        return 'windpack' if I.n2(x, r, 0.8, 5) > 0.2 else 'snow'
-    return 'powder'
+    return 'powder' if r >= 8 else 'snow'
 
 
 cells = [(c, r) for c in range(-1, COLS + 1) for r in range(-10, ROWS + 1)]
@@ -90,9 +91,58 @@ for (x0, ph) in ((19.0, 0.0), (25.0, 1.4)):
 
 # the rock walls either side, the peaks over the col
 wall_cells = [(c, r) for c in range(-1, COLS + 1) for r in range(-10, ROWS + 1) if inside(c + 0.5, r + 0.5) < -0.6]
-I.ridge(k, wall_cells, top=4.6, slope=1.8, seed=79, rock='#d6dee9', strata=('#6a7284', '#525a6c', '#7c8496'), moss=N.ROOF_SNOW, foot=0.7, patchy=False)
-peaks = [(c, r) for c in range(-1, COLS + 1) for r in range(-10, -1) if abs(c - 22) > 4]
-I.ridge(k, peaks, top=10.0, slope=2.6, seed=83, rock='#d6dee9', strata=('#5e6678', '#485062', '#727a8c'), moss=N.ROOF_SNOW, foot=0.9, patchy=False)
+# The walls are Fellhaven's crag (assets_hoarfell_rich): blocks of rock a row deep, each with a dark face toward you, a
+# jagged top, cracks and a snow ledge, stepping up away from the bowl and up toward the peaks behind the col. Each row's
+# blocks start where that row's solid tiles do (the cliff's foot is the edge of where you can walk; it used to wander up
+# to a tile in front of it, so snow there looked walkable and wasn't), and past four tiles in the rock gives way to the
+# smooth snow of the tops.
+WALL_EDGE = 0.6                                                      # the wall begins at inside() == -0.6, as its tiles do
+
+
+def wall_z(d, r, rr=None):
+    """The rock's top d tiles into the wall at row r: terraces up away from the bowl, higher toward the peaks."""
+    return 0.9 + 0.72 * min(d, 5.0) + 0.6 * max(0.0, -r) + 0.25 * max(0.0, -r - 4.0)
+
+
+crr = random.Random(79)
+for r in range(-10, ROWS + 1):
+    rm_ = r + 0.5
+    lo, hi = walls(rm_)
+    for side in (-1, 1):
+        e = (lo - WALL_EDGE) if side < 0 else (hi + WALL_EDGE)
+        d = 0.0
+        while d < 4.2:
+            w_ = crr.uniform(0.6, 1.5)
+            xa_, xb_ = (e - d - w_, e - d) if side < 0 else (e + d, e + d + w_)
+            gap = crr.uniform(0.03, 0.07)
+            top = wall_z(d + w_ / 2, rm_) + crr.uniform(-0.45, 0.3)              # rough, so faces show where the wall runs down the rows
+            front = r + 1.0 + crr.uniform(-0.1, 0.06)
+            HR._block(k, xa_ + gap / 2, xb_ - gap / 2, front, r - 0.25, top, crr.uniform(0.06, 0.18), HR.FACE[crr.randrange(4)], crr,
+                      icicles=0.35)
+            k.box(xa_, r - 0.3, 0.0, xb_, front - 0.22, top - 0.15, ('#3c4252', 0.05), 'crag_core')
+            d += w_
+
+
+def tops_h(x, r):
+    lo, hi = walls(r)
+    d = max(lo - WALL_EDGE - x, x - hi - WALL_EDGE)
+    return wall_z(max(d, 3.6), r) + 0.12 * max(0.0, I.n2(x * 0.5, r * 0.5, 1.0, 91))
+
+
+tops = [(c, r) for (c, r) in wall_cells if inside(c + 0.5, r + 0.5) < -(WALL_EDGE + 3.4)]
+I.ground(k, tops, lambda x, r: 'snow', {'snow': (N.SNOW, 0.04)}, step=0.25, bump=0.01, seed=83, height=tops_h, dither=0.0)
+for _ in range(70):                                                   # rimed rocks and little outcrops breaking the tops' snow
+    x, r = crr.uniform(-1.0, COLS + 1.0), crr.uniform(-10.0, ROWS)
+    if inside(x, r) > -(WALL_EDGE + 4.6):
+        continue
+    z = tops_h(x, r)
+    if crr.random() < 0.55:
+        HR.rime_rock(k, x, r, crr.uniform(0.3, 0.7), z=z - 0.08, rr=crr)
+    else:
+        w_ = crr.uniform(0.7, 1.6)
+        top = z + crr.uniform(0.35, 0.8)
+        HR._block(k, x - w_ / 2, x + w_ / 2, r + 0.4, r - 0.5, top, 0.1, HR.FACE[crr.randrange(4)], crr, icicles=0.3, z_base=z - 0.1)
+        k.box(x - w_ / 2, r - 0.5, z - 0.1, x + w_ / 2, r + 0.15, top - 0.15, ('#3c4252', 0.05), 'crag_core')
 
 # ---- the col: the cornice, the cairn and its iron cross, prayer flags ---------------------------------------------------
 for i in range(10):                                                # drifts carved by the wind across the saddle
