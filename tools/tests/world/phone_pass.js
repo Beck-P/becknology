@@ -71,6 +71,9 @@ const SCREENS = global.PHONE_SCREENS || [   // (world/phone_pass_old.js hands in
   { id: 'map', menu: 'map', world: 'lumar', at: [9, 16] },
   { id: 'pack', menu: 'backpack', world: 'lumar', at: [9, 16], prep: () => { BridgeInventory.addItem('silverfin', 2); BridgeInventory.addItem('wheat', 3); } },
   { id: 'ledger', menu: 'ledger', world: 'lumar', at: [9, 16] },
+  // the way there (js/route.js): a place's map with Show me the way, and All places with a route picked out
+  { id: 'mapway', world: 'lumar', at: [9, 16], open: () => BridgeMenu.open('map', { world: 'lumar-crown-stilts' }), seed: { bridge_log_seen: JSON.stringify({ bridge: 1, hangar: 1, lumar: 1, 'lumar-square': 1, 'lumar-crown': 1, 'lumar-crown-oldtown': 1, 'lumar-crown-stilts': 1 }) } },
+  { id: 'mapallway', world: 'lumar', at: [9, 16], open: () => { BridgeRoute.show('lumar-crown-stilts'); BridgeMenu.open('map', { all: true }); }, seed: { bridge_log_seen: JSON.stringify({ bridge: 1, hangar: 1, lumar: 1, 'lumar-square': 1, 'lumar-crown': 1, 'lumar-crown-oldtown': 1, 'lumar-crown-stilts': 1 }) } },
 ];
 
 (async () => {
@@ -288,6 +291,36 @@ const SCREENS = global.PHONE_SCREENS || [   // (world/phone_pass_old.js hands in
     console.log('controls chained: before ' + before + ' | during ' + during + ' | after ' + after);
     if (/shown/.test(during) || after !== before) fail('controls (chained): ' + during + ' → ' + after);
     await p.context().close();
+  }
+
+  // ---- the way there (js/route.js): the tracker's block for a place you asked the way to, and the pill's "this way" ----
+  if (!global.PHONE_SCREENS && (!ONLY || ONLY.indexOf('way') >= 0)) {
+    for (const size of USE) {
+      const p = await page(size, { bridge_log_seen: JSON.stringify({ bridge: 1, hangar: 1, lumar: 1, 'lumar-square': 1, 'lumar-crown': 1, 'lumar-crown-oldtown': 1, 'lumar-crown-stilts': 1 }),
+                                   bridge_quest_meta: JSON.stringify({ heard: { 'keepers-log': { t: 1, who: 'Hetty' } }, track: 'keepers-log' }) });
+      await go(p, 'lumar', 9, 16); await p.waitForTimeout(1200);
+      await p.evaluate(() => BridgeRoute.show('lumar-crown-stilts')); await p.waitForTimeout(1500);
+      const t = await p.evaluate(() => {
+        const vw = innerWidth, vh = innerHeight, e = document.querySelector('#quest-tracker.on'), out = [];
+        if (!e) return { text: '', problems: ['no tracker'] };
+        const r = e.getBoundingClientRect();
+        if (r.left < 0 || r.right > vw || r.top < 0 || r.bottom > vh) out.push('the tracker off the screen ' + [r.left, r.top, r.right, r.bottom].map(Math.round));
+        const s = e.querySelector('.qtr-stop'), b = s && s.getBoundingClientRect();
+        if (!s) out.push('no Stop'); else if (Math.min(b.width, b.height) < 35.5) out.push('Stop is ' + Math.round(b.width) + 'x' + Math.round(b.height));
+        else { const h = document.elementFromPoint(b.left + b.width / 2, b.top + b.height / 2); if (h && !s.contains(h)) out.push('Stop covered by ' + (h.id || h.className)); }
+        [...document.querySelectorAll('#coin-hud, #journal-pill, #act-pill, #sound-pill, #chart-pill, #home-pill, #mp-pill')].forEach(o => { const q = o.getBoundingClientRect(); if (q.width && q.right > r.left && q.left < r.right && q.bottom > r.top && q.top < r.bottom) out.push('over ' + (o.id || o.className)); });
+        return { text: e.innerText.replace(/\s+/g, ' '), problems: out };
+      });
+      await p.screenshot({ path: OUT + '/pp_way_' + size + '.png' });
+      console.log(size + ' way: ' + t.text + (t.problems.length ? '\n    ' + t.problems.join('\n    ') : ' ok'));
+      t.problems.forEach(m => fail('way (' + size + '): ' + m));
+      if (!/Market Square|Harbour|ship|Crownhaven/i.test(t.text)) fail('way (' + size + '): no line in the tracker: ' + t.text);
+      const tap = await p.evaluate(() => { const s = document.querySelector('.qtr-stop'); if (!s) return null; const b = s.getBoundingClientRect(); return [b.left + b.width / 2, b.top + b.height / 2]; });
+      if (tap) { await tapAt(p, tap[0], tap[1]); await p.waitForTimeout(1500); }
+      const after = await p.evaluate(() => BridgeRoute.showing());
+      if (after) fail('way (' + size + '): Stop didn\'t stop it');
+      await p.context().close();
+    }
   }
 
   // ---- a lead that names someone who's gone home for the night says when they're back (js/routines.js whereabouts) ----
