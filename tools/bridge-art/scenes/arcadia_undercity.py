@@ -245,7 +245,8 @@ k.solid(70.8, RF, 75.8, RF + 0.15)
 D.graffiti(k, 76.2, 79.6, RF + 0.02, 0.2, 1.4, '#ff8030', rng=rng)
 
 # ---- the middle block: a low Kowloon block down the middle, shops facing the south lane, its roof crowded ------------------
-BB, BF, BT = 17.0, 21.5, 3.3        # its back, its face, its roof
+BB, BF, BT = 17.5, 21.5, 3.3        # its back, its face, its roof (its back half a tile in from the walls on the map, BW,
+BW = 17.0                           # so a pilot at a north stall's counter, row 14, stands clear of its roof on screen)
 ALLEYS = ((9.0, 11.0), (24.0, 26.0), (41.0, 43.0), (53.0, 55.0))
 SEGS = [(-0.5, 9.0), (11.0, 24.0), (26.0, 41.0), (43.0, 53.0), (55.0, 60.0)]
 for (a0, a1) in SEGS:
@@ -254,9 +255,9 @@ for (a0, a1) in SEGS:
     U.rooftop(k, dr, a0, a1, BB, BF, BT, rng=rng)
     U.stack_signs(k, a0 + 0.4, a1 - 0.4, BF, z0=1.7, z1=3.3, n=max(1, int((a1 - a0) / 4)), rng=rng)
     k.box(a0, BF - 0.05, 1.55, a1, BF + 0.2, 1.65, '#1e1c24', 'awning_ledge')
-    k.solid(a0, BB, a1, BF)
-    k.solid(a0, BB - 2.0, a1, BB)       # the strip behind it, hidden under its roof on screen (rows 15-16; row 14,
-    #                                     the stalls' customer side, you're only half behind it)
+    k.solid(a0, BW, a1, BF)
+    k.solid(a0, BW - 2.0, a1, BW)       # the strip behind it, hidden under its roof on screen (rows 15-16; row 14,
+    #                                     the stalls' customer side, stays in sight in front of it)
 for (a0, a1) in ALLEYS:                                                            # the alleys through: wet, a tube, a cable over
     U.fluoro(k, dr, (a0 + a1) / 2, (BB + BF) / 2, 2.6, w=0.9, hang=BT + 0.4, energy=18)
     D.cable(k, (a0, BB + 0.6, BT - 0.2), (a1, BB + 1.4, BT - 0.1), sag=0.25, lights=['#ffd080', '#80e0ff'], n=6)
