@@ -414,6 +414,16 @@ const LICHESS = [
   check('a link carrying a game opens it; on a phone nothing runs off the side and the board fills the width', ph.n === 33 && !ph.wide && ph.board >= 330, JSON.stringify(ph));
   check('no button on the phone is too small to tap', ph.small.length === 0, ph.small.join(', '));
   await m.screenshot({ path: SHOTS + '/review_phone.png' });
+  // the short address, as saved on a phone's home screen
+  const c = await ctx3.newPage();
+  watch(c, 'coach link');
+  await c.goto(URL0 + '/coach?cc=BeckP');
+  await ready(c);
+  await c.waitForSelector('#rv-game-list .rv-game', { timeout: 10000 });
+  const short = await c.evaluate(() => ({ review: !document.getElementById('view-review').hidden, wizard: document.getElementById('view-wizard').hidden, title: document.title, icon: (document.querySelector('link[rel="apple-touch-icon"]') || {}).href, user: document.getElementById('rv-user').value, games: document.querySelectorAll('#rv-game-list .rv-game').length }));
+  const icon = await c.request.get(short.icon);
+  check('/coach opens straight on the review board, named Chess Coach, with its icon and the named player\'s games', short.review && short.wizard && short.title === 'Chess Coach · Becknology' && icon.ok() && /image\/png/.test(icon.headers()['content-type']) && short.user === 'BeckP' && short.games === 2, JSON.stringify(short));
+  await c.close();
   await m.evaluate(() => document.getElementById('rv-coach').scrollIntoView());
   await m.screenshot({ path: SHOTS + '/review_phone_coach.png' });
   await ctx3.close();
