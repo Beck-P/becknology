@@ -1,5 +1,5 @@
 /**
- * /api/chess-coach — the chess review board's coach (apps/chess/review), voiced by Claude Opus 5.5.
+ * /api/chess-coach — the chess review board's coach (apps/chess/review), voiced by Claude Sonnet 5.5.
  *
  * GET  → { enabled, env }   (whether a key is configured — the board hides the coach without one)
  * POST → { messages, final? }  the conversation so far, as the Messages API shapes it
@@ -18,7 +18,11 @@
  */
 import Anthropic from '@anthropic-ai/sdk';
 
-const MODEL = 'claude-opus-5-5';
+// Sonnet 5.5 at low effort: Beck's choice for a coach that answers quickly (it was Opus 5.5 at
+// medium, and felt slow). Stockfish does the judging either way; the model explains. For deeper,
+// slower answers: MODEL 'claude-opus-5-5' and EFFORT 'medium'.
+const MODEL = 'claude-sonnet-5-5';
+const EFFORT = 'low';                // at low this model skips thinking on simple questions
 const MAX_TOKENS = 16000;            // thinking counts toward it; the replies themselves are short
 const MAX_MESSAGES = 160;
 const MAX_BODY = 600 * 1024;         // characters of JSON
@@ -34,7 +38,7 @@ With each question you are given the position (FEN, a list of where every piece 
 
 Where the truth comes from:
 - Stockfish's evaluations and lines are the facts about what is good and bad. You are far weaker than the engine at calculating, so never overrule it and never judge a line by working it out in your head. What you add is the part the engine cannot say: why, in terms a person can use - the tactic, the loose piece, the weak square, the plan, the pattern to remember next time.
-- Only say that a move wins or loses material, allows a tactic, or leads to mate when an engine line in front of you shows it. If the player asks about a move or an idea you have no engine line for ("why not Nxe5?", "what if I castle first?", "can't I just take the pawn?", "what is he threatening?"), use the tools to have Stockfish look at it before you answer. One or two tool calls is normal; several candidate moves can go in one call.
+- Only say that a move wins or loses material, allows a tactic, or leads to mate when an engine line in front of you shows it. If the player asks about a move or an idea you have no engine line for ("why not Nxe5?", "what if I castle first?", "can't I just take the pawn?", "what is he threatening?"), use the tools to have Stockfish look at it before you answer, even when you feel confident about the answer. One or two tool calls is normal; several candidate moves can go in one call.
 - Often the message already carries what Stockfish found when it was asked ahead about a move or a threat the question mentions. That is the tool's own result: answer from it, and call a tool only for something it does not cover.
 - A question about the move that was just played - "why not Qc7 instead?", "what should I have done?" - is about the position before that move. The tools start from the position on the board unless you pass start: "before_last_move".
 - Read where the pieces are from the piece list, not from memory of the opening or by decoding the FEN, and check that every piece you mention is on the square you say. After a line of moves the board has changed: ask the tools for the position rather than tracking it yourself.
@@ -47,7 +51,8 @@ How to answer:
 - Keep it brief: usually under 120 words, in plain sentences or a couple of short paragraphs. No headings and no tables. Go longer only when they ask for depth or for a review of the whole game.
 - Write moves in standard algebraic notation with move numbers when you give a line (14. Rd1 Qc7 15. Nb5).
 - A question marked [asked by voice] will be read aloud to them: answer in two to four short spoken sentences, say moves in words ("knight takes e5", "rook to d1", "castles kingside") instead of notation, and leave out evaluation numbers unless they matter.
-- Stay on chess and this board. If the question is about something else, say so in a line and offer what you can help with.`;
+- Stay on chess and this board. If the question is about something else, say so in a line and offer what you can help with.
+- Once you have answered something, treat that answer as done. On later turns your attention goes to what the player is asking now; don't go back over an earlier answer unless they ask about it or point out a problem with it.`;
 
 const MOVES = {
   type: 'array',
@@ -181,7 +186,7 @@ export function createHandler(getClient) {
     const base = {
       model: MODEL,
       max_tokens: MAX_TOKENS,
-      output_config: { effort: 'medium' },
+      output_config: { effort: EFFORT },
       system: SYSTEM,
       tools: TOOLS,
       tool_choice: { type: body.final ? 'none' : 'auto' },

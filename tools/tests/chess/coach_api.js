@@ -75,7 +75,7 @@ const check = (name, ok, more = '') => { if (!ok) failed++; console.log((ok ? 'o
   script = [{ text: ['Because ', 'the knight ', 'is pinned.'], message: answer }];
   r = await call(on, { body: { messages: round } });
   const p = calls[0].params;
-  check('the question goes to Claude Opus 5.5, streamed, through the beta endpoint', calls.length === 1 && calls[0].kind === 'beta' && p.model === 'claude-opus-5-5' && p.max_tokens >= 8000 && p.output_config.effort === 'medium');
+  check('the question goes to Claude Sonnet 5.5 at low effort, streamed, through the beta endpoint', calls.length === 1 && calls[0].kind === 'beta' && p.model === 'claude-sonnet-5-5' && p.max_tokens >= 8000 && p.output_config.effort === 'low');
   check('…with a refusal fallback and thinking that survives an edited history', p.fallbacks === 'default' && p.betas.includes('server-side-fallback-2026-07-01') && p.betas.includes('thinking-binding-controls-2026-08-01') && p.thinking.type === 'adaptive' && p.thinking.block_binding.prefix_mismatch_behavior === 'drop_block');
   check('…the three tools, free to use them, and the conversation exactly as it came', p.tools.map((t) => t.name).join() === 'evaluate_moves,analyze_line,find_threats' && p.tool_choice.type === 'auto' && JSON.stringify(p.messages) === JSON.stringify(round));
   check('…each able to start from the position before the last move', p.tools.every((t) => t.input_schema.properties.start.enum.join() === 'current,before_last_move') && /asked ahead/.test(p.system) && /before_last_move/.test(p.system));
@@ -140,7 +140,7 @@ const check = (name, ok, more = '') => { if (!ok) failed++; console.log((ok ? 'o
   const seen = [];
   const sse = (events) => events.map((e) => `event: ${e.type}\ndata: ${JSON.stringify(e)}\n\n`).join('');
   const reply = (blocks, stop) => {
-    const ev = [{ type: 'message_start', message: { id: 'msg_1', type: 'message', role: 'assistant', model: 'claude-opus-5-5', content: [], stop_reason: null, stop_sequence: null, usage: { input_tokens: 10, output_tokens: 1 } } }];
+    const ev = [{ type: 'message_start', message: { id: 'msg_1', type: 'message', role: 'assistant', model: 'claude-sonnet-5-5', content: [], stop_reason: null, stop_sequence: null, usage: { input_tokens: 10, output_tokens: 1 } } }];
     blocks.forEach((b, i) => {
       if (b.type === 'thinking') ev.push({ type: 'content_block_start', index: i, content_block: { type: 'thinking', thinking: '', signature: '' } }, { type: 'content_block_delta', index: i, delta: { type: 'signature_delta', signature: b.signature } });
       else if (b.type === 'text') { ev.push({ type: 'content_block_start', index: i, content_block: { type: 'text', text: '' } }); b.text.match(/\S+\s*/g).forEach((d) => ev.push({ type: 'content_block_delta', index: i, delta: { type: 'text_delta', text: d } })); }
@@ -169,7 +169,7 @@ const check = (name, ok, more = '') => { if (!ok) failed++; console.log((ok ? 'o
   r = await call(real, { body: { messages: ask } });
   const w = seen[0];
   check('over the wire: the beta endpoint, both betas named, a streamed request', /^\/v1\/messages(\?beta=true)?$/.test(w.url) && /server-side-fallback-2026-07-01/.test(w.beta) && /thinking-binding-controls-2026-08-01/.test(w.beta) && w.body.stream === true && !('betas' in w.body), w.url + ' ' + w.beta);
-  check('…carrying the fallback, the thinking setting, the effort, caching and the tools as written', w.body.fallbacks === 'default' && w.body.thinking.block_binding.prefix_mismatch_behavior === 'drop_block' && w.body.output_config.effort === 'medium' && w.body.cache_control.type === 'ephemeral' && w.body.tools.length === 3 && w.body.tools.every((t) => t.eager_input_streaming === true && t.input_schema.type === 'object') && w.body.model === 'claude-opus-5-5');
+  check('…carrying the fallback, the thinking setting, the effort, caching and the tools as written', w.body.fallbacks === 'default' && w.body.thinking.block_binding.prefix_mismatch_behavior === 'drop_block' && w.body.output_config.effort === 'low' && w.body.cache_control.type === 'ephemeral' && w.body.tools.length === 3 && w.body.tools.every((t) => t.eager_input_streaming === true && t.input_schema.type === 'object') && w.body.model === 'claude-sonnet-5-5' && !('temperature' in w.body) && w.body.tool_choice.type === 'auto');
   const done = r.events[r.events.length - 1];
   check('a streamed tool call is read back whole, with the signed thinking block before it', done.stop === 'tool_use' && done.content[0].type === 'thinking' && done.content[0].signature === 'sig-a' && JSON.stringify(done.content[1].input) === '{"moves":["Nxe5","O-O"],"after":["Rd1"]}', JSON.stringify(done.content));
 

@@ -1,7 +1,8 @@
 /* ===== Review & Coach (review/review.js) — same library, same firelight as styles.css =====
    Three columns: the games and the game's own story (left), the board with Stockfish's lines under it
-   (middle), the coach from top to bottom (right). Narrower, the left drops under the board; on a phone
-   it is one column in the order you use it: board, coach, engine, moves. */
+   (middle), the coach from top to bottom (right). Narrower, the left drops under the board. On a phone
+   it is one fixed screen, like an app: the board, and under it one thing at a time (coach, Stockfish,
+   moves, games) — the page itself never scrolls and nothing zooms. */
 
 :root {
   --mk-best: #7cc46a;
@@ -25,8 +26,13 @@ html.in-frame { --rv-top: 12px; }
 
 .rv-layout[hidden] { display: none !important; }
 
+/* two taps close together are two taps, not a zoom; and a tap leaves no flash behind it */
+.rv-layout { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+.rv-tabs { display: none; }
+
 /* the title block takes less room over a board you want to see whole */
 body.on-review .header { margin-bottom: 14px; }
+body.on-review .library { padding-bottom: 14px; }
 body.on-review .title,
 body.on-review .subtitle { display: none; }
 
@@ -60,7 +66,7 @@ body.on-review .subtitle { display: none; }
   transition: border-color 0.15s, color 0.15s, background 0.15s;
 }
 
-.rv-layout button:hover:not(:disabled) { border-color: var(--firelight); color: var(--ember-bright); }
+@media (hover: hover) { .rv-layout button:hover:not(:disabled) { border-color: var(--firelight); color: var(--ember-bright); } }
 .rv-layout button:disabled { opacity: 0.4; cursor: default; }
 .rv-layout button:focus-visible,
 .rv-layout input:focus-visible,
@@ -103,9 +109,20 @@ body.on-review .subtitle { display: none; }
 
 /* ----- left: the games, and the game ----- */
 
-.rv-left { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+/* One screen tall like the coach, and it stays put: the list of games and the game's moves share
+   the height, each scrolling inside itself. */
+.rv-left {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+  position: sticky;
+  top: var(--rv-top);
+  height: calc(100vh - 118px - var(--rv-top));
+  min-height: 360px;
+}
 
-.rv-games { display: flex; flex-direction: column; gap: 10px; padding-top: 6px; }
+.rv-games { display: flex; flex-direction: column; gap: 10px; padding-top: 6px; flex: 0 0 auto; min-height: 0; max-height: 46%; }
 
 /* the heading is the handle: it folds the picker away once a game is on the board */
 .rv-layout .rv-games-head {
@@ -135,7 +152,7 @@ body.on-review .subtitle { display: none; }
 .rv-games.is-folded .rv-chevron { transform: rotate(-90deg); }
 .rv-games.is-folded { padding-bottom: 8px; }
 .rv-games.is-folded .rv-games-body { display: none; }
-.rv-games-body { display: flex; flex-direction: column; gap: 10px; }
+.rv-games-body { display: flex; flex-direction: column; gap: 10px; flex: 1 1 auto; min-height: 0; }
 
 .rv-sources { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
 
@@ -162,11 +179,15 @@ body.on-review .subtitle { display: none; }
   display: flex;
   flex-direction: column;
   gap: 3px;
-  max-height: min(46vh, 520px);
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
   margin: 0 -4px;
   padding: 0 4px;
 }
+
+.rv-game-list > * { flex: none; }
 
 .rv-game-list:empty { display: none; }
 
@@ -185,7 +206,7 @@ body.on-review .subtitle { display: none; }
   letter-spacing: 0;
 }
 
-.rv-layout .rv-game:hover { background: rgba(74, 40, 24, 0.6); }
+@media (hover: hover) { .rv-layout .rv-game:hover { background: rgba(74, 40, 24, 0.6); } }
 .rv-layout .rv-game.active { border-color: rgba(255, 170, 85, 0.6); background: rgba(107, 64, 48, 0.45); }
 
 .rv-game-who { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--page-bright); }
@@ -211,7 +232,8 @@ body.on-review .subtitle { display: none; }
 .rv-layout .rv-more { font-size: 11px; }
 .rv-more[hidden] { display: none; }
 
-.rv-summary { display: flex; flex-direction: column; gap: 10px; }
+.rv-summary { display: flex; flex-direction: column; gap: 10px; flex: 0 1 auto; min-height: 0; }
+.rv-summary > * { flex: none; }
 
 .rv-game-title { font-family: var(--serif); font-size: 17px; font-weight: 600; color: var(--page-bright); line-height: 1.25; overflow-wrap: anywhere; }
 .rv-vs { font-style: italic; font-weight: 400; font-size: 14px; color: var(--leather); }
@@ -253,13 +275,14 @@ body.on-review .subtitle { display: none; }
   grid-template-columns: 30px 1fr 1fr;
   gap: 1px 4px;
   align-content: start;
-  max-height: max(140px, calc(100vh - 560px));
   overflow-y: auto;
+  overscroll-behavior: contain;
   position: relative;
   font-family: var(--mono);
   font-size: 13px;
 }
 
+.rv-layout .rv-summary > .rv-moves { flex: 1 1 auto; min-height: 60px; }
 .rv-moves:empty { display: none; }
 .rv-placeholder { grid-column: 1 / -1; font-family: var(--serif); font-style: italic; font-size: 14px; color: var(--leather); }
 .rv-mv-no { color: var(--leather); text-align: right; padding: 3px 2px 3px 0; }
@@ -274,7 +297,7 @@ body.on-review .subtitle { display: none; }
   color: var(--page-bright);
 }
 
-.rv-layout .rv-mv:hover { background: rgba(74, 40, 24, 0.6); }
+@media (hover: hover) { .rv-layout .rv-mv:hover { background: rgba(74, 40, 24, 0.6); } }
 .rv-layout .rv-mv.is-now { background: rgba(200, 122, 58, 0.32); border-color: rgba(255, 170, 85, 0.5); }
 .rv-layout .rv-mv.is-now.is-branch { background: none; border-style: dashed; }
 .rv-mv-gap { color: var(--leather); cursor: default; }
@@ -533,7 +556,7 @@ body.on-review .subtitle { display: none; }
   font-size: 13px;
 }
 
-.rv-line[data-first]:hover { background: rgba(74, 40, 24, 0.55); }
+@media (hover: hover) { .rv-line[data-first]:hover { background: rgba(74, 40, 24, 0.55); } }
 .rv-line-note { font-family: var(--serif); font-style: italic; color: var(--leather); font-size: 14px; }
 
 .rv-line-eval {
@@ -562,7 +585,7 @@ body.on-review .subtitle { display: none; }
   color: var(--page-bright);
 }
 
-.rv-layout .rv-line-move:hover { color: var(--ember-bright); text-decoration: underline; }
+@media (hover: hover) { .rv-layout .rv-line-move:hover { color: var(--ember-bright); text-decoration: underline; } }
 
 /* ----- right: the coach -----
    One screen tall and it stays put while the rest of the page scrolls. The conversation takes whatever
@@ -593,6 +616,7 @@ body.on-review .subtitle { display: none; }
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 2px 4px 2px 0;
 }
 
@@ -623,13 +647,13 @@ body.on-review .subtitle { display: none; }
   color: var(--ember-bright);
 }
 
-.rv-layout .rv-san:hover { background: rgba(200, 122, 58, 0.28); border-bottom-style: solid; }
+@media (hover: hover) { .rv-layout .rv-san:hover { background: rgba(200, 122, 58, 0.28); border-bottom-style: solid; } }
 .rv-layout .rv-san.is-off { color: inherit; border-bottom-color: transparent; cursor: default; background: none; }
 
 /* under an answer: how long it took, and reading it aloud */
 .rv-msg-foot { display: flex; justify-content: flex-end; align-items: center; gap: 6px; margin-top: 4px; font-family: var(--mono); font-size: 10px; color: var(--leather); }
 .rv-layout .rv-say { padding: 0 4px; font-size: 12px; line-height: 18px; background: none; border-color: transparent; opacity: 0.65; }
-.rv-layout .rv-say:hover { opacity: 1; }
+@media (hover: hover) { .rv-layout .rv-say:hover { opacity: 1; } }
 
 /* the suggestions: one row, however many there are */
 .rv-chips { display: flex; gap: 5px; flex: none; overflow-x: auto; scrollbar-width: none; }
@@ -685,37 +709,123 @@ body.on-review .subtitle { display: none; }
 @media (max-width: 1240px) {
   .rv-layout { grid-template-columns: minmax(0, 1fr) minmax(300px, 380px); }
   .rv-board-area { grid-column: 1; grid-row: 1; }
-  .rv-left { grid-column: 1; grid-row: 2; flex-direction: row; align-items: flex-start; }
-  .rv-left > * { flex: 1 1 0; min-width: 0; }
+  .rv-left { grid-column: 1; grid-row: 2; flex-direction: row; align-items: flex-start; position: static; height: auto; min-height: 0; }
+  .rv-left > * { flex: 1 1 0; min-width: 0; max-height: none; }
   .rv-coach { grid-column: 2; grid-row: 1 / span 2; }
   .rv-game-list { max-height: 260px; }
-  .rv-moves { max-height: 240px; }
+  .rv-layout .rv-summary > .rv-moves { max-height: 240px; }
 }
 
-/* ----- a phone: one column, in the order you use it ----- */
+/* ----- a phone: one screen that stays where it is -----
+   The page doesn't scroll: the review board fills the screen under the Bridge's bar. Top to bottom:
+   the three modes, the board, the step buttons, the verdict, a row of tabs, and the one pane the
+   tabs choose (it scrolls inside itself; the coach's question box sits at its foot, so at the foot
+   of the screen). Games needs no board, so it takes the board's room too; ⤢ does that for any pane. */
 
 @media (max-width: 860px) {
-  .rv-layout { display: flex; flex-direction: column; align-items: stretch; gap: 10px; }
-  .rv-left, .rv-board-area { display: contents; }
-  .rv-games { order: 1; }
-  .rv-board-area > * { order: 2; }
-  .rv-coach { order: 3; position: static; height: auto; min-height: 0; }
-  .rv-board-area > .rv-engine { order: 4; }
-  .rv-summary { order: 5; }
+  html.on-review, html.on-review body { height: 100%; overflow: hidden; overscroll-behavior: none; }
 
-  .rv-chat { flex: none; max-height: 46vh; }
-  .rv-game-list { max-height: 210px; }
-  .rv-moves { max-height: 190px; }
-  .rv-player, .rv-nav, .rv-verdict { padding-left: 0; }
-  .rv-engine, .rv-editor { margin-left: 0; }
+  body.on-review .library {
+    position: fixed;
+    /* the part of the screen that can be seen: all of it, or what the keyboard leaves (review.js keeps --rv-vh and --rv-vo) */
+    top: calc(44px + var(--rv-vo, 0px));
+    left: 0;
+    right: 0;
+    height: calc(var(--rv-vh, 100vh) - 44px);
+    max-width: none;
+    margin: 0;
+    padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px));
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+    overflow-y: auto;                       /* (only a very short screen ever needs it) */
+  }
+
+  html.in-frame body.on-review .library,
+  html.no-skin-bar body.on-review .library { top: var(--rv-vo, 0px); height: var(--rv-vh, 100vh); }
+
+  body.on-review .header { flex: none; margin: 0 0 6px; }
+  body.on-review .header-top { gap: 6px; }
+  body.on-review .mode-tabs { width: 100%; }
+  body.on-review .mode-tab { flex: 1 1 0; padding: 6px 2px; font-size: 10px; letter-spacing: 0.02em; white-space: nowrap; }
+
+  .rv-layout { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; align-items: stretch; gap: 6px; }
+  .rv-left, .rv-board-area { display: contents; }
+
+  .rv-player { display: none; }
+  .rv-board-row { order: 1; flex: none; align-self: center; width: min(100%, 40vh); width: min(100%, 40dvh); gap: 5px; }
+  #rv-board { touch-action: none; }
+  .rv-nav { order: 2; flex: none; padding-left: 0; justify-content: center; }
+  .rv-layout .rv-nav button { min-width: 50px; min-height: 38px; }
+  .rv-layout .rv-back { margin-left: 0; }
+  .rv-verdict { order: 3; flex: none; padding-left: 0; min-height: 0; font-size: 14px; line-height: 1.3; }
+  .rv-verdict-text { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+  .rv-tabs { order: 4; flex: none; display: grid; grid-template-columns: repeat(4, 1fr) 40px; gap: 4px; }
+  .rv-layout .rv-tab { min-height: 36px; padding: 4px 2px; font-size: 11px; letter-spacing: 0; background: rgba(20, 8, 10, 0.55); border-color: var(--oak); color: var(--page); }
+  .rv-layout .rv-tab.active { background: linear-gradient(180deg, rgba(200, 122, 58, 0.28), rgba(107, 64, 48, 0.35)); border-color: rgba(255, 170, 85, 0.55); color: var(--ember-bright); }
+  .rv-layout.is-tall .rv-tab-tall { border-color: rgba(255, 170, 85, 0.55); color: var(--ember-bright); }
+
+  /* the panes: only the chosen one is there */
+  .rv-coach, .rv-board-area > .rv-engine, .rv-summary, .rv-games, .rv-editor {
+    order: 5;
+    flex: 1 1 0;
+    min-height: 200px;
+    max-height: none;
+    margin: 0;
+    padding: 9px 10px;
+    position: static;
+    height: auto;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    display: none;
+  }
+
+  .rv-layout[data-pane="coach"]:not(.is-editing) .rv-coach,
+  .rv-layout[data-pane="moves"]:not(.is-editing) .rv-summary,
+  .rv-layout[data-pane="games"]:not(.is-editing) .rv-games { display: flex; }
+  .rv-layout[data-pane="engine"]:not(.is-editing) .rv-board-area > .rv-engine { display: block; }
+  .rv-layout.is-editing .rv-editor:not([hidden]) { display: flex; }
+  .rv-layout.is-editing .rv-tabs { display: none; }
+
+  /* more room for the pane: the games always, anything else on ⤢, and whatever is being typed into
+     while the keyboard has half the screen */
+  .rv-layout[data-pane="games"]:not(.is-editing) .rv-board-row,
+  .rv-layout[data-pane="games"]:not(.is-editing) .rv-nav,
+  .rv-layout[data-pane="games"]:not(.is-editing) .rv-verdict,
+  .rv-layout.is-tall:not(.is-editing) .rv-board-row,
+  .rv-layout.is-tall:not(.is-editing) .rv-nav,
+  .rv-layout.is-tall:not(.is-editing) .rv-verdict,
+  .rv-layout.is-typing:not(.is-editing) .rv-board-row,
+  .rv-layout.is-typing:not(.is-editing) .rv-nav,
+  .rv-layout.is-typing:not(.is-editing) .rv-verdict,
+  .rv-layout.is-typing:not(.is-editing) .rv-tabs { display: none; }
+  .rv-layout.is-typing .rv-coach, .rv-layout.is-typing .rv-games { min-height: 0; }
+  html.on-review body.is-typing .header { display: none; }
+  .rv-layout[data-pane="games"] .rv-tab-tall { visibility: hidden; }
+
+  .rv-coach { overflow: hidden; gap: 7px; }
+  .rv-coach-head h2 { display: none; }
+  .rv-coach-state { font-size: 12.5px; }
+  .rv-msg { font-size: 15px; max-width: 100%; }
+
+  .rv-games { padding-top: 9px; }
+  .rv-layout .rv-games-head { display: none; }             /* (a pane of its own: nothing to fold) */
+  .rv-games.is-folded .rv-games-body { display: flex; }
+  .rv-game-list { max-height: none; }
+  .rv-layout .rv-game { min-height: 44px; }
+  .rv-layout .rv-summary > .rv-moves { max-height: none; }
   .rv-legend { display: none; }
-  .rv-evalbar { width: 12px; }
+  .rv-evalbar { width: 10px; }
   .rv-evalbar-num { display: none; }
-  .rv-layout .rv-nav button { min-width: 46px; min-height: 40px; }
+
+  /* a box that is tapped doesn't zoom the page: its text is big enough to read as it is */
+  .rv-layout input[type="text"], .rv-layout textarea { font-size: 16px; }
+
   .rv-layout .rv-source { min-height: 36px; }
   .rv-layout .rv-chip { min-height: 36px; }
-  .rv-layout .rv-mv { min-height: 30px; }
-  .rv-layout .rv-icon-btn { min-height: 36px; min-width: 36px; }
-  .rv-layout .rv-games-head { min-height: 36px; }
+  .rv-layout .rv-mv { min-height: 32px; }
+  .rv-layout .rv-icon-btn { min-height: 32px; min-width: 36px; }
   .rv-layout .rv-say { min-width: 32px; min-height: 30px; }
+  .rv-layout .rv-why { min-height: 34px; }
 }

@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- (maximum-scale: a phone doesn't zoom in when a box is tapped or a button tapped twice) -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
   <title>Wizard Chess 3D, Game Review &amp; Opening Trainer · Becknology</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <!-- the icon a phone uses when the page (the coach, at /coach) is added to its home screen -->
@@ -416,6 +417,15 @@
           <div class="rv-lines" id="rv-lines"></div>
         </div>
       </section>
+
+      <!-- on a phone the screen is the board with one of these under it at a time -->
+      <div class="rv-tabs" id="rv-tabs" role="tablist" aria-label="What to show under the board">
+        <button type="button" class="rv-tab" data-pane="coach" role="tab">Coach</button>
+        <button type="button" class="rv-tab" data-pane="engine" role="tab">Stockfish</button>
+        <button type="button" class="rv-tab" data-pane="moves" role="tab">Moves</button>
+        <button type="button" class="rv-tab" data-pane="games" role="tab">Games</button>
+        <button type="button" class="rv-tab rv-tab-tall" id="rv-tall" title="More room: hide the board" aria-label="More room: hide the board">⤢</button>
+      </div>
 
       <aside class="rv-panel rv-coach" id="rv-coach">
         <div class="rv-coach-head">

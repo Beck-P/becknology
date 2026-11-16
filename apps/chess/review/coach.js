@@ -98,9 +98,16 @@ async function search(engine, fen, multipv) {
   return r;
 }
 
+const TOOL_NAMES = ["evaluate_moves", "analyze_line", "find_threats"];
+
 // Run one tool call against the position the question was asked about. → { text, isError }
-export async function runTool(engine, name, input, base) {
-  const arg = input && typeof input === "object" ? input : {};
+// (A name that differs only in its letters' case, or a list of moves under a near-miss key, is
+// taken as meant: the smaller models do that now and then.)
+export async function runTool(engine, called, input, base) {
+  const arg = input && typeof input === "object" ? { ...input } : {};
+  const name = TOOL_NAMES.find((n) => n === String(called || "").trim().toLowerCase().replace(/[\s-]+/g, "_")) || called;
+  if (name === "evaluate_moves" && !Array.isArray(arg.moves)) arg.moves = [arg.move, arg.candidates, arg.candidate].flat().filter((m) => typeof m === "string");
+  if (name === "analyze_line" && !Array.isArray(arg.moves) && Array.isArray(arg.line)) arg.moves = arg.line;
   try {
     if (name === "evaluate_moves") {
       const cands = Array.isArray(arg.moves) ? arg.moves.filter((m) => typeof m === "string").slice(0, 6) : [];
@@ -163,7 +170,7 @@ export async function runTool(engine, name, input, base) {
         isError: false,
       };
     }
-    return { text: `There is no tool called ${name}.`, isError: true };
+    return { text: `There is no tool called ${called}. The tools are ${TOOL_NAMES.join(", ")}.`, isError: true };
   } catch (e) {
     if (e instanceof CoachError) return { text: "Stockfish isn't available right now, so this couldn't be checked.", isError: true };
     throw e;

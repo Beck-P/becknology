@@ -100,7 +100,7 @@ const LICHESS = [
         const text = 'Stockfish says: ' + lines(ahead);
         events = [...say(text), { t: 'done', stop: 'end_turn', content: [thinking, { type: 'text', text }] }];
       } else if (/check the bishop/i.test(q) && !body.final) {
-        events = [{ t: 'done', stop: 'tool_use', content: [thinking, { type: 'tool_use', id: 'toolu_' + posts.length, name: 'evaluate_moves', input: { moves: ['Bxf6', 'Zz9'] } }] }];
+        events = [{ t: 'done', stop: 'tool_use', content: [thinking, { type: 'tool_use', id: 'toolu_' + posts.length, name: 'Evaluate_Moves', input: { candidates: ['Bxf6', 'Zz9'] } }] }];      // (a near-miss on the name and the key, as a model sometimes writes them)
       } else if (/dig into/i.test(q) && !body.final) {
         events = [{ t: 'done', stop: 'tool_use', content: [thinking, { type: 'tool_use', id: 'toolu_' + posts.length, name: 'find_threats', input: {} }, { type: 'tool_use', id: 'toolu_b' + posts.length, name: 'analyze_line', input: { moves: ['Qc7'], lines: 2, start: 'before_last_move' } }] }];
       } else if (/what was better/i.test(q)) {
@@ -185,11 +185,8 @@ const LICHESS = [
   await p.waitForSelector('#rv-game-list .rv-game', { timeout: 10000 });
   let rows = await p.$$eval('#rv-game-list .rv-game', (els) => els.map((e) => e.innerText.replace(/\s+/g, ' ').trim() + ' [' + e.querySelector('.rv-res').className.replace('rv-res rv-res-', '') + ']'));
   console.log('review: chess.com list —', rows.join(' || '));
-  check("chess.com's newest month lists its standard games, newest first, with how they went", rows.length === 2 && /drawish/.test(rows[0]) && /\[draw\]/.test(rows[0]) && /duke_karl/.test(rows[1]) && /\[win\]/.test(rows[1]) && /Philidor Defense/.test(rows[1]));
-  await p.click('#rv-more');
-  await p.waitForFunction(() => document.querySelectorAll('#rv-game-list .rv-game').length === 3, null, { timeout: 10000 });
-  rows = await p.$$eval('#rv-game-list .rv-game', (els) => els.map((e) => e.querySelector('.rv-res').className));
-  check('Older games reads the month before (a loss), and then there are no more', /loss/.test(rows[2]) && await p.evaluate(() => document.getElementById('rv-more').hidden));
+  check("chess.com's standard games are listed newest first with how they went, the month before read too when this one is thin", rows.length === 3 && /drawish/.test(rows[0]) && /\[draw\]/.test(rows[0]) && /duke_karl/.test(rows[1]) && /\[win\]/.test(rows[1]) && /Philidor Defense/.test(rows[1]) && /rival_one/.test(rows[2]) && /\[loss\]/.test(rows[2]) && await p.evaluate(() => document.getElementById('rv-more').hidden), rows.length + ' rows');
+  check('the name goes into the address, for a bookmark to carry', /[?&]cc=BeckP/.test(await p.evaluate(() => location.search)) && /tab=review/.test(await p.evaluate(() => location.search)), await p.evaluate(() => location.search));
 
   // --- a game opened and reviewed
   await p.click('#rv-game-list .rv-game:nth-child(2)');
@@ -201,7 +198,9 @@ const LICHESS = [
   check("the review marks Black's ...b5 as an error and the winner as the more accurate", /b5:(mistake|blunder|inaccuracy)/.test(g.marks.join(' ')) && g.acc.w > g.acc.b && g.acc.w > 80, JSON.stringify(g.acc));
   check('the accuracy boxes and the graph show', /BeckP \d+\.\d% .*duke_karl \d+\.\d%/.test(await text(p, '#rv-acc')) && await p.evaluate(() => !document.getElementById('rv-graph').hidden && document.getElementById('rv-progress').hidden));
   const folded = await p.evaluate(() => ({ folded: document.getElementById('rv-games').classList.contains('is-folded'), list: document.getElementById('rv-game-list').offsetParent !== null, now: document.getElementById('rv-games-now').textContent }));
-  check('with a game open the picker folds away under its heading, which says whose games they are', folded.folded && !folded.list && folded.now === 'chess.com · BeckP', JSON.stringify(folded));
+  check('on a wide screen the picker stays open beside the game, under a heading that says whose games they are', !folded.folded && folded.list && folded.now === 'chess.com · BeckP', JSON.stringify(folded));
+  const col = await p.evaluate(() => { const r = (sel) => document.querySelector(sel).getBoundingClientRect(); return { left: Math.round(r('.rv-left').bottom), moves: Math.round(r('#rv-moves').height), list: Math.round(r('#rv-game-list').height), h: innerHeight, scroll: document.documentElement.scrollHeight > innerHeight + 1 || document.body.scrollHeight > document.body.clientHeight + 1 }; });
+  check('the games and the moves share the left column, all of it on screen, and the page has nothing to scroll', col.left <= col.h && col.moves >= 120 && col.list >= 140 && !col.scroll, JSON.stringify(col));
   const title = await text(p, '#rv-game-title');
   check('the title says who, the result and the opening', /BeckP vs duke_karl/.test(title) && /1-0/.test(title) && /Philidor Defense/.test(title), title);
 
@@ -266,7 +265,7 @@ const LICHESS = [
   check('the question carries the whole game with its evaluations', /The game: BeckP \(1212\) as White against duke_karl/.test(first) && /The player asking is BeckP, who had White/.test(first) && /9\. Bg5 \([+-]?\d/.test(first) && /b5\?+ \(/.test(first) && /Accuracy: White/.test(first));
   check('…and the position: where it is, the FEN, every piece, the loose ones', /the game after 9\.\.\.b5\. White to move/.test(first) && /FEN: rn2kb1r\/p3qppp\/2p2n2\/1p2p1B1\/2B1P3\/1QN5\/PPP2PPP\/R3K2R w KQkq/.test(first) && /White: Ke1 Qb3 Ra1 Rh1 Bc4 Bg5 Nc3, pawns a2 b2 c2 e4 f2 g2 h2/.test(first) && /Pieces under fire: /.test(first) && /Black's pawn on b5 is attacked/.test(first));
   check("…and Stockfish's lines for it, in notation", /Stockfish 19, depth \d+ - best lines for White here/.test(first) && /1\. \([+-]?[\d.M]+\) 10\. \S+/.test(first) && /In the game, White now played 10\. Nxb5/.test(first), first.split('\n').filter((l) => /^1\. \(/.test(l)).join(''));
-  check('…with nothing checked ahead: the better move it names already has its line there', !/asked ahead/.test(first) && /Stockfish preferred 9\.\.\.Qc7, continuing 9\.\.\.Qc7 10\. /.test(first) && posts.length === 1);
+  check('…with nothing checked ahead: the better move it names already has its line there', !/asked ahead/.test(first) && /Stockfish preferred 9\.\.\.(\S+), continuing 9\.\.\.\1 10\. /.test(first) && posts.length === 1);
   const ans = await lastAnswer(p);
   const made = await p.evaluate(() => { const all = document.querySelectorAll('#rv-chat .rv-msg-coach'), e = all[all.length - 1]; return { strong: Boolean(e.querySelector('strong')), moves: [...e.querySelectorAll('.rv-san')].map((b) => b.textContent), took: (e.querySelector('.rv-took') || {}).textContent, why: (e.querySelector('.rv-took') || {}).title }; });
   check('the answer arrives formatted, its moves as links, with how long it took under it', /The key move is 10\. Nxb5\./.test(ans) && made.strong && made.moves.join() === 'Nxb5,Nxb5,cxb5,Bxb5+' && /^\d+(\.\d)? s$/.test(made.took) && /First words after/.test(made.why), JSON.stringify(made));
@@ -307,6 +306,7 @@ const LICHESS = [
   const result = tool[tool.length - 1].content;
   console.log('review: the tool result —', JSON.stringify(result[0].content).slice(0, 330));
   check('a tool call from the coach is run on the page\'s Stockfish and its result sent back', posts.length === n + 2 && !/asked ahead/.test(posts[n].messages.slice(-1)[0].content) && Array.isArray(result) && result[0].type === 'tool_result' && /^toolu_/.test(result[0].tool_use_id) && /Stockfish's best move is 10\. \S+ \([+-]?[\d.M]+\)/.test(result[0].content) && /- 10\. Bxf6: [+-]?[\d.M]+/.test(result[0].content));
+  check('…even when the coach gets the tool\'s name or a key slightly wrong', /- 10\. Bxf6: /.test(result[0].content) && !result[0].is_error);
   check('an illegal move in a tool call is answered as such, not run', /- Zz9: not a legal move here\. Legal moves like it: /.test(result[0].content));
   check('the answer uses what Stockfish found, and counts the trip', /Stockfish says: - 10\. Bxf6:/.test(await lastAnswer(p)) && /1 trip back for more checks/.test(await p.evaluate(() => { const all = document.querySelectorAll('#rv-chat .rv-msg-coach'); return all[all.length - 1].querySelector('.rv-took').title; })));
   await ask(p, 'dig into the main line');
@@ -340,7 +340,7 @@ const LICHESS = [
   const m0 = posts.length;
   await ask(p, 'ok, the best move?', 'button');
   const after = posts[posts.length - 1].messages;
-  check('…and neither the failed question nor the stopped one leaves a trace in the conversation', posts.length === m0 + 1 && posts.length >= before + 2 && !/and now\?|long story/.test(JSON.stringify(after)) && after.length === held + 1, JSON.stringify({ posts: posts.length, m0, before, messages: after.length, held, trace: (JSON.stringify(after).match(/and now\?|long story/) || [''])[0] }));
+  check('…and neither the failed question nor the stopped one leaves a trace in the conversation', posts.length === m0 + 1 && m0 >= before && !/and now\?|long story/.test(JSON.stringify(after)) && after.length === held + 1, JSON.stringify({ posts: posts.length, m0, before, messages: after.length, held, trace: (JSON.stringify(after).match(/and now\?|long story/) || [''])[0] }));
 
   // --- by voice
   await p.click('#rv-mic');
@@ -468,26 +468,77 @@ const LICHESS = [
   await m.evaluate(() => window.__chessReview.goTo(18));
   await live(m);
   const ph = await m.evaluate(() => {
-    const small = [...document.querySelectorAll('#view-review button')].filter((b) => b.offsetParent && !b.closest('.rv-lines, .rv-moves, .rv-msg') && Math.min(b.getBoundingClientRect().width, b.getBoundingClientRect().height) < 30).map((b) => b.id || b.className);
-    return { wide: document.documentElement.scrollWidth > innerWidth + 1, board: Math.round(document.getElementById('rv-board-wrap').getBoundingClientRect().width), small, n: window.__chessReview.S.game.moves.length };
+    const vis = (e) => e.offsetParent !== null && e.getBoundingClientRect().width > 0;
+    const small = [...document.querySelectorAll('#view-review button')].filter((b) => vis(b) && !b.closest('.rv-lines, .rv-moves, .rv-msg') && Math.min(b.getBoundingClientRect().width, b.getBoundingClientRect().height) < 30).map((b) => b.id || b.className);
+    const r = (id) => document.getElementById(id).getBoundingClientRect();
+    const lib = document.querySelector('.library');
+    return {
+      n: window.__chessReview.S.game.moves.length, small,
+      wide: document.documentElement.scrollWidth > innerWidth + 1,
+      scrolls: document.documentElement.scrollHeight > innerHeight + 1 || document.body.scrollHeight > document.body.clientHeight + 1 || lib.scrollHeight > lib.clientHeight + 1,
+      board: [Math.round(r('rv-board-wrap').top), Math.round(r('rv-board-wrap').bottom), Math.round(r('rv-board-wrap').width)],
+      ask: Math.round(r('rv-ask').bottom), chat: Math.round(r('rv-chat').height), h: innerHeight,
+      pane: document.getElementById('view-review').dataset.pane,
+      shown: ['rv-coach', 'rv-summary', 'rv-games'].filter((id) => vis(document.getElementById(id))).concat(vis(document.querySelector('.rv-engine')) ? ['engine'] : []),
+      zoom: document.querySelector('meta[name=viewport]').content, font: [getComputedStyle(document.getElementById('rv-question')).fontSize, getComputedStyle(document.getElementById('rv-user')).fontSize],
+    };
   });
-  check('a link carrying a game opens it; on a phone nothing runs off the side and the board fills the width', ph.n === 33 && !ph.wide && ph.board >= 330, JSON.stringify(ph));
+  check('a link carrying a game opens it', ph.n === 33);
+  check('on a phone the review board is one screen that does not scroll: the board, and under it the coach with its question box at the foot', !ph.scrolls && !ph.wide && ph.pane === 'coach' && ph.shown.join() === 'rv-coach' && ph.board[0] >= 44 && ph.board[2] >= 290 && ph.ask <= ph.h && ph.ask > ph.h - 40 && ph.chat >= 90, JSON.stringify(ph));
+  check('…that never zooms: the page is held at its size and its boxes are big enough not to be zoomed into', /maximum-scale=1/.test(ph.zoom) && ph.font.every((f) => parseFloat(f) >= 16), ph.zoom + ' ' + ph.font);
   check('no button on the phone is too small to tap', ph.small.length === 0, ph.small.join(', '));
-  const order = await m.evaluate(() => { const t = (id) => Math.round(document.getElementById(id).getBoundingClientRect().top + (scrollY || document.body.scrollTop)); return { games: t('rv-games'), board: t('rv-board-wrap'), verdict: t('rv-verdict'), coach: t('rv-coach'), engine: t('rv-lines'), moves: t('rv-moves'), folded: document.getElementById('rv-games').classList.contains('is-folded') }; });
-  check('on a phone the order is the folded picker, the board, the coach, Stockfish, the moves', order.folded && order.games < order.board && order.board < order.verdict && order.verdict < order.coach && order.coach < order.engine && order.engine < order.moves, JSON.stringify(order));
   await m.screenshot({ path: SHOTS + '/review_phone.png' });
+  const nb = await bubbles(m);
+  await m.tap('#rv-chips .rv-chip:nth-child(2)');
+  await answered(m, nb + 1);
+  const told = await m.evaluate(() => { const r = (id) => document.getElementById(id).getBoundingClientRect(); const all = document.querySelectorAll('#rv-chat .rv-msg-coach'); const a = all[all.length - 1].getBoundingClientRect(); return { board: Math.round(r('rv-board-wrap').top), answer: [Math.round(a.top), Math.round(a.bottom)], chat: [Math.round(r('rv-chat').top), Math.round(r('rv-chat').bottom)], h: innerHeight }; });
+  check('an answer comes up under the board, both on screen', told.board >= 44 && told.answer[1] > told.chat[0] && told.answer[0] < told.chat[1] && told.chat[1] <= told.h, JSON.stringify(told));
+  await m.screenshot({ path: SHOTS + '/review_phone_coach.png' });
+  const panes = {};
+  for (const pane of ['engine', 'moves', 'games']) {
+    await m.tap(`.rv-tab[data-pane="${pane}"]`);
+    panes[pane] = await m.evaluate(() => { const vis = (e) => e && e.offsetParent !== null && e.getBoundingClientRect().height > 0; const lib = document.querySelector('.library'); return { lines: vis(document.getElementById('rv-lines')), moves: vis(document.getElementById('rv-moves')), games: vis(document.getElementById('rv-user-form')) || vis(document.getElementById('rv-paste-box')), coach: vis(document.getElementById('rv-ask')), board: vis(document.getElementById('rv-board-wrap')), scrolls: lib.scrollHeight > lib.clientHeight + 1 }; });
+  }
+  await m.screenshot({ path: SHOTS + '/review_phone_games.png' });
+  check('the tabs under the board swap what is there: Stockfish, the moves, the games (which take the board\'s room too)', panes.engine.lines && !panes.engine.coach && panes.engine.board && panes.moves.moves && !panes.moves.lines && panes.games.games && !panes.games.board && !panes.games.moves && !Object.values(panes).some((x) => x.scrolls), JSON.stringify(panes));
+  await m.tap('.rv-tab[data-pane="coach"]');
+  await m.tap('#rv-tall');
+  const tall = await m.evaluate(() => ({ board: document.getElementById('rv-board-wrap').offsetParent !== null, chat: Math.round(document.getElementById('rv-chat').getBoundingClientRect().height) }));
+  await m.tap('#rv-tall');
+  check('⤢ gives the conversation the board\'s room, and gives it back', !tall.board && tall.chat > told.chat[1] - told.chat[0] + 200 && await m.evaluate(() => document.getElementById('rv-board-wrap').offsetParent !== null), JSON.stringify(tall));
+
+  // a keyboard: the screen shrinks to what can be seen, and the board steps aside for what's being typed
+  await m.evaluate(() => {
+    const vv = window.visualViewport;
+    Object.defineProperty(vv, 'height', { configurable: true, get: () => 500 });
+    document.getElementById('rv-question').focus();
+    vv.dispatchEvent(new Event('resize'));
+  });
+  const kb = await m.evaluate(() => { const r = (id) => document.getElementById(id).getBoundingClientRect(); return { typing: document.getElementById('view-review').classList.contains('is-typing'), board: document.getElementById('rv-board-wrap').offsetParent !== null, ask: Math.round(r('rv-ask').bottom), chat: Math.round(r('rv-chat').height), lib: Math.round(document.querySelector('.library').getBoundingClientRect().bottom) }; });
+  check('with the keyboard up, the question box and the conversation sit in what is left of the screen', kb.typing && !kb.board && kb.ask <= 500 && kb.lib <= 500 && kb.chat >= 150, JSON.stringify(kb));
+  await m.evaluate(() => { const vv = window.visualViewport; delete vv.height; document.getElementById('rv-question').blur(); vv.dispatchEvent(new Event('resize')); });
+  await m.waitForTimeout(150);
+  check('…and the board is back when it goes', await m.evaluate(() => !document.getElementById('view-review').classList.contains('is-typing') && document.getElementById('rv-board-wrap').offsetParent !== null && Math.round(document.querySelector('.library').getBoundingClientRect().bottom) === innerHeight));
+
   // the short address, as saved on a phone's home screen
   const c = await ctx3.newPage();
   watch(c, 'coach link');
   await c.goto(URL0 + '/coach?cc=BeckP');
   await ready(c);
   await c.waitForSelector('#rv-game-list .rv-game', { timeout: 10000 });
-  const short = await c.evaluate(() => ({ review: !document.getElementById('view-review').hidden, wizard: document.getElementById('view-wizard').hidden, title: document.title, icon: (document.querySelector('link[rel="apple-touch-icon"]') || {}).href, user: document.getElementById('rv-user').value, games: document.querySelectorAll('#rv-game-list .rv-game').length }));
+  const short = await c.evaluate(() => ({ review: !document.getElementById('view-review').hidden, wizard: document.getElementById('view-wizard').hidden, title: document.title, icon: (document.querySelector('link[rel="apple-touch-icon"]') || {}).href, user: document.getElementById('rv-user').value, games: document.querySelectorAll('#rv-game-list .rv-game').length, pane: document.getElementById('view-review').dataset.pane, listed: document.getElementById('rv-game-list').offsetParent !== null }));
   const icon = await c.request.get(short.icon);
-  check('/coach opens straight on the review board, named Chess Coach, with its icon and the named player\'s games', short.review && short.wizard && short.title === 'Chess Coach · Becknology' && icon.ok() && /image\/png/.test(icon.headers()['content-type']) && short.user === 'BeckP' && short.games === 2, JSON.stringify(short));
+  check('/coach opens straight on the review board, named Chess Coach, with its icon', short.review && short.wizard && short.title === 'Chess Coach · Becknology' && icon.ok() && /image\/png/.test(icon.headers()['content-type']), JSON.stringify(short));
+  check('…and with a name in the address, that player\'s games are there at once, nothing typed', short.user === 'BeckP' && short.games === 3 && short.pane === 'games' && short.listed, JSON.stringify(short));
+  await c.tap('#rv-game-list .rv-game:nth-child(2)');
+  await c.waitForFunction(() => window.__chessReview.S.game.moves.length === 33, null, { timeout: 10000 });
+  check('a game tapped in the list goes onto the board with the coach under it', await c.evaluate(() => document.getElementById('view-review').dataset.pane === 'coach' && document.getElementById('rv-board-wrap').offsetParent !== null && window.__chessReview.S.game.me === 'w'));
+  await c.reload();
+  await ready(c);
+  await c.waitForSelector('#rv-game-list .rv-game', { state: 'attached', timeout: 10000 });
+  const back = await c.evaluate(() => ({ n: window.__chessReview.S.game.moves.length, user: document.getElementById('rv-user').value, games: document.querySelectorAll('#rv-game-list .rv-game').length, search: location.search }));
+  check('coming back, it remembers: the same game on the board, the name, the games fetched again', back.n === 33 && back.user === 'BeckP' && back.games === 3 && /cc=BeckP/.test(back.search), JSON.stringify(back));
   await c.close();
-  await m.evaluate(() => document.getElementById('rv-coach').scrollIntoView());
-  await m.screenshot({ path: SHOTS + '/review_phone_coach.png' });
   await ctx3.close();
 
   // ================= a short, narrower window =================
@@ -502,6 +553,7 @@ const LICHESS = [
     await live(s2);
     for (const q of ['what is the best move', 'and after that?', 'thanks']) { const n = await bubbles(s2); await s2.fill('#rv-question', q); await s2.press('#rv-question', 'Enter'); await answered(s2, n + 1); }
     const sh = await s2.evaluate(() => { const r = (id) => document.getElementById(id).getBoundingClientRect(); return { coachTop: Math.round(r('rv-coach').top), coach: Math.round(r('rv-coach').bottom), ask: Math.round(r('rv-ask').bottom), chips: Math.round(r('rv-chips').top), chat: Math.round(r('rv-chat').height), h: innerHeight, wide: document.documentElement.scrollWidth > innerWidth + 1 }; });
+    if (w <= 1240) check(`in a ${w}-wide window the picker is folded under its heading`, await s2.evaluate(() => document.getElementById('rv-games').classList.contains('is-folded') && document.getElementById('rv-game-list').offsetParent === null));
     check(`in a ${w} × ${h} window the suggestions and the question box stay inside the coach's panel, on screen`, sh.ask <= sh.coach && sh.chips > sh.coachTop && sh.coach <= sh.h && sh.chat >= 100 && !sh.wide, JSON.stringify(sh));
     await s2.screenshot({ path: SHOTS + `/review_${w}.png` });
     await ctx4.close();

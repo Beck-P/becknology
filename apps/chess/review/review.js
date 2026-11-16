@@ -115,9 +115,15 @@ function entryFromPgn(pgn, i = 0) {
     speed: h.Event && h.Event !== "?" ? h.Event : "",
     opening: h.Opening || "",
     url: /^https?:/.test(h.Link || h.Site || "") ? h.Link || h.Site : "",
-    me: null,
+    me: isMe(h.White) ? "w" : isMe(h.Black) ? "b" : null,
     n: i,
   };
+}
+
+// one of the names you've given for chess.com or lichess
+function isMe(name) {
+  const n = String(name || "").toLowerCase();
+  return Boolean(n) && Object.values(prefs.users).some((u) => String(u || "").toLowerCase() === n);
 }
 
 function hash(s) {
@@ -608,10 +614,40 @@ function note(text, bad = false) {
 
 const SITE = { chesscom: "chess.com", lichess: "lichess" };
 
-// The picker folds away under its heading once a game is on the board (a click on the heading brings it back)
+// The picker can fold away under its heading (a click on the heading brings it back)
 function foldGames(fold) {
   $("rv-games").classList.toggle("is-folded", Boolean(fold));
   $("rv-games-toggle").setAttribute("aria-expanded", String(!fold));
+}
+
+// A game has been opened. On a wide screen the picker has its own place and stays; where the page is
+// narrower it folds out of the way, and on a phone the coach takes its place under the board.
+function gameOpened() {
+  if (window.matchMedia("(max-width: 1240px)").matches) foldGames(true);
+  setPane("coach");
+}
+
+// On a phone, which one thing is under the board: coach | engine | moves | games
+function setPane(pane) {
+  const box = $("view-review");
+  box.dataset.pane = pane;
+  box.classList.remove("is-tall");
+  document.querySelectorAll(".rv-tab[data-pane]").forEach((b) => { const on = b.dataset.pane === pane; b.classList.toggle("active", on); b.setAttribute("aria-selected", String(on)); });
+  if (pane === "coach") $("rv-chat").scrollTop = $("rv-chat").scrollHeight;
+  if (pane === "moves") markCurrentMove();
+}
+
+// The name you gave goes into the page's address, so a bookmark or a home-screen icon made from it
+// knows who you are even on a phone that has forgotten everything else.
+function rememberInAddress() {
+  if (window.self !== window.top) return;                       // (inside the Bridge the address isn't yours to keep)
+  try {
+    const u = new URL(window.location.href);
+    ["pgn", "fen", "cc", "lichess"].forEach((k) => u.searchParams.delete(k));
+    if (prefs.users.chesscom) u.searchParams.set("cc", prefs.users.chesscom);
+    if (prefs.users.lichess) u.searchParams.set("lichess", prefs.users.lichess);
+    window.history.replaceState(null, "", u.pathname + u.search);
+  } catch { /* an address that can't be rewritten is only a convenience lost */ }
 }
 
 function gamesNow() {
@@ -647,6 +683,7 @@ async function fetchGames() {
   if (!user || !SITE[src]) return;
   prefs.users[src] = user;
   savePrefs();
+  rememberInAddress();
   gamesNow();
   S.lists[src] = [];
   S.feeds[src] = null;
@@ -655,7 +692,9 @@ async function fetchGames() {
   $("rv-user-go").disabled = true;
   try {
     const feed = await (src === "chesscom" ? Sources.chessCom(user) : Sources.lichess(user));
-    const games = await feed.more();
+    let games = await feed.more();
+    // (chess.com files games by month: early in a month the newest file holds very few)
+    for (let i = 0; i < 2 && games.length < 20 && !feed.done; i++) games = games.concat(await feed.more());
     if (S.source !== src) { S.feeds[src] = feed; S.lists[src] = games; return; }
     S.feeds[src] = feed;
     S.lists[src] = games;
@@ -717,7 +756,7 @@ function loadPasted() {
     prefs.last = { fen: r.fen };
     savePrefs();
     setGame(positionGame(r.fen));
-    foldGames(true);
+    gameOpened();
     return;
   }
   const games = splitPgn(text).map(entryFromPgn);
@@ -725,7 +764,7 @@ function loadPasted() {
   S.lists.paste = games.length > 1 ? games : [];
   renderList();
   if (games.length > 1) note(`${games.length} games in that file — pick one.`);
-  if (openEntry(games[0]) && games.length === 1) foldGames(true);
+  if (openEntry(games[0]) && games.length === 1) gameOpened();
   renderList();
 }
 
@@ -780,6 +819,7 @@ function enterEditor() {
     $("rv-ed-note").textContent = "";
   });
   $("rv-editor").hidden = false;
+  $("view-review").classList.add("is-editing");
   $("rv-nav").hidden = true;
   $("rv-palette").innerHTML = Object.keys(GLYPH).map((p) => `<button type="button" class="rv-brush rv-brush-${p[0]}" data-brush="${p}" title="${sideName(p[0])} ${p[1]}">${GLYPH[p]}</button>`).join("")
     + `<button type="button" class="rv-brush" data-brush="x" title="Take pieces off">✕</button>`;
@@ -802,6 +842,7 @@ function leaveEditor(redraw = true) {
   board.disableSquareSelect(POINTER_EVENTS.pointerdown);
   board.enableMoveInput(onInput);
   $("rv-editor").hidden = true;
+  $("view-review").classList.remove("is-editing");
   $("rv-nav").hidden = false;
   if (redraw && S.game) show(false);
 }
@@ -977,8 +1018,6 @@ function askButton() {
   b.classList.toggle("is-stop", busy);
 }
 
-const onPhone = () => window.matchMedia("(max-width: 860px)").matches;
-
 async function ask(question, { voice = false } = {}) {
   const q = String(question || "").trim();
   if (!q || !S.game || !coachOn) return;
@@ -994,7 +1033,7 @@ async function ask(question, { voice = false } = {}) {
   const base = { id: S.game.id, ply: S.ply, side: S.side.map((m) => m.uci) };     // what the answer's moves are about
   const t0 = performance.now();
   let text = "", first = 0;
-  if (onPhone()) $("rv-coach").scrollIntoView({ block: "nearest", behavior: "smooth" });
+  setPane("coach");
   const asking = coach.ask(q, {
     voice: Boolean(speak),
     onStatus: (s) => { if (!text) wait.textContent = s; coachState(s); },
@@ -1132,12 +1171,14 @@ function wire() {
     const b = e.target.closest(".rv-game");
     if (!b) return;
     const entry = (S.lists[S.source] || [])[+b.dataset.i];
-    if (entry && openEntry(entry)) { renderList(); foldGames(true); }
+    if (entry && openEntry(entry)) { renderList(); gameOpened(); }
   });
   $("rv-games-toggle").addEventListener("click", () => foldGames(!$("rv-games").classList.contains("is-folded")));
   $("rv-paste-go").addEventListener("click", loadPasted);
-  $("rv-setup-btn").addEventListener("click", () => { if (!S.game) setGame(positionGame(START_FEN)); enterEditor(); foldGames(true); });
-  $("rv-fresh-btn").addEventListener("click", () => { prefs.last = { fen: START_FEN }; savePrefs(); setGame(positionGame(START_FEN)); renderList(); foldGames(true); });
+  $("rv-setup-btn").addEventListener("click", () => { if (!S.game) setGame(positionGame(START_FEN)); gameOpened(); enterEditor(); });
+  $("rv-fresh-btn").addEventListener("click", () => { prefs.last = { fen: START_FEN }; savePrefs(); setGame(positionGame(START_FEN)); renderList(); gameOpened(); });
+  document.querySelectorAll(".rv-tab[data-pane]").forEach((b) => b.addEventListener("click", () => setPane(b.dataset.pane)));
+  $("rv-tall").addEventListener("click", () => $("view-review").classList.toggle("is-tall"));
 
   $("rv-first").addEventListener("click", () => goTo(0));
   $("rv-prev").addEventListener("click", () => step(-1));
@@ -1188,7 +1229,7 @@ function wire() {
     const b = e.target.closest(".rv-san");
     if (!b || b.classList.contains("is-off")) return;
     if (!showMove(b.closest(".rv-msg"), +b.dataset.k)) b.classList.add("is-off");          // nowhere it can be played: just text
-    else if (onPhone()) $("rv-board-wrap").scrollIntoView({ block: "nearest", behavior: "smooth" });
+    else $("view-review").classList.remove("is-tall");                                  // (on a phone: the board back in view)
   });
   $("rv-verdict").addEventListener("click", (e) => { if (e.target.id === "rv-why") { const v = verdict(); if (v && v.why) ask(v.why); } });
   $("rv-coach-new").addEventListener("click", () => { coach.reset(); Voice.hush(); $("rv-chat").innerHTML = ""; greet(); askButton(); renderChips(); });
@@ -1237,6 +1278,37 @@ function greet() {
   }
 }
 
+// ---------- a phone's keyboard ----------
+// On a phone the review board is one fixed screen (review.css). A keyboard covers half of it without
+// the page being told, so the screen is kept to what can be seen, and while something is being typed
+// the board steps aside for the conversation and the box being typed into.
+function watchKeyboard() {
+  const vv = window.visualViewport;
+  if (!vv) return;
+  const root = document.documentElement;
+  const fit = () => {
+    const phone = window.matchMedia("(max-width: 860px)").matches;
+    const typing = phone && S.visible && window.innerHeight - vv.height > 140 && /^(INPUT|TEXTAREA)$/.test((document.activeElement && document.activeElement.tagName) || "");
+    if (phone && S.visible) {
+      root.style.setProperty("--rv-vh", `${Math.round(vv.height)}px`);
+      root.style.setProperty("--rv-vo", `${Math.round(vv.offsetTop)}px`);
+    } else {
+      root.style.removeProperty("--rv-vh");
+      root.style.removeProperty("--rv-vo");
+    }
+    $("view-review").classList.toggle("is-typing", typing);
+    document.body.classList.toggle("is-typing", typing);
+    if (typing) $("rv-chat").scrollTop = $("rv-chat").scrollHeight;
+  };
+  vv.addEventListener("resize", fit);
+  vv.addEventListener("scroll", fit);
+  window.addEventListener("resize", fit);
+  document.addEventListener("focusout", () => setTimeout(fit, 60));
+  return fit;
+}
+
+let fitScreen = null;
+
 // ---------- in and out ----------
 
 let started = false;
@@ -1251,12 +1323,19 @@ export function initReview() {
   coach = new Coach({ engine: fg, snapshot });
   makeBoard();
   wire();
+  fitScreen = watchKeyboard();
   $("rv-engine-name").textContent = ENGINE_NAME;
 
+  // who you are: the names in the address (a saved link carries them), else the ones this browser remembers
   const q = new URLSearchParams(window.location.search);
-  const site = q.get("cc") ? "chesscom" : q.get("lichess") ? "lichess" : null;
-  if (site) prefs.users[site] = (q.get("cc") || q.get("lichess")).trim().slice(0, 40);
+  if (q.get("cc")) prefs.users.chesscom = q.get("cc").trim().slice(0, 40);
+  if (q.get("lichess")) prefs.users.lichess = q.get("lichess").trim().slice(0, 40);
+  if (q.get("cc") || q.get("lichess")) savePrefs();
+  // your games are fetched straight away: the site named in the address, else the one you last looked at, else whichever you've given a name for
+  const named = ["chesscom", "lichess"].filter((k) => prefs.users[k]);
+  const site = q.get("cc") ? "chesscom" : q.get("lichess") ? "lichess" : named.includes(prefs.source) ? prefs.source : named[0] || null;
   setSource(site || (["chesscom", "lichess", "here", "paste"].includes(prefs.source) ? prefs.source : "chesscom"));
+  if (named.length && !q.get("pgn") && !q.get("fen")) rememberInAddress();
 
   // what was on the board last time (or what the link asks for), else an empty analysis board
   let opened = false;
@@ -1264,8 +1343,10 @@ export function initReview() {
   if (!opened && q.get("pgn")) opened = openEntry(entryFromPgn(q.get("pgn")), { remember: false });
   if (!opened && prefs.last && prefs.last.pgn) opened = openEntry(prefs.last, { remember: false });
   if (!opened && prefs.last && prefs.last.fen) { const r = readFen(prefs.last.fen); if (!r.error) { setGame(positionGame(r.fen)); opened = true; } }
-  foldGames(opened && S.game.moves.length > 0);          // a game on the board: the picker waits under its heading
+  const game = opened && S.game.moves.length > 0;
+  foldGames(game && window.matchMedia("(max-width: 1240px)").matches);     // where room is short the picker waits under its heading
   if (!opened) setGame(positionGame(START_FEN));
+  setPane(game ? "coach" : "games");                     // on a phone: nothing open yet, so the games first
   renderList();
 
   $("rv-mic").hidden = true;
@@ -1288,10 +1369,12 @@ const api = {
   // the tab came into view / went out of it
   shown() {
     S.visible = true;
+    if (fitScreen) fitScreen();
     if (S.game) follow();
   },
   hidden() {
     S.visible = false;
+    if (fitScreen) fitScreen();
     if (fg) fg.cancel("live");
     stopListening();
     if (voiceMode) setVoiceMode(false);
@@ -1302,7 +1385,7 @@ const api = {
     if (openEntry(entry)) {
       S.lists.here = Sources.wizardGames();
       if (S.source === "here") renderList();
-      foldGames(true);
+      gameOpened();
       goTo(S.game.moves.length);
     }
   },

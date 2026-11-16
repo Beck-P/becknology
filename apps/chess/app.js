@@ -202,6 +202,7 @@ function switchTab(tab) {
     viewEl.hidden = id !== tab;
   });
   document.body.classList.toggle("on-review", tab === "review");
+  document.documentElement.classList.toggle("on-review", tab === "review"); // (on a phone the review board is the whole screen: review.css)
   // (the name a phone offers when the page is added to its home screen)
   document.title = tab === "review" ? "Chess Coach · Becknology" : PAGE_TITLE;
   if (review && tab !== "review") review.hidden();
