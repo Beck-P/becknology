@@ -40,10 +40,12 @@ let netEscAt = 0;
 // ?theme= picks the board for where the game was opened (the Bridge opens /chess?theme=ship)
 const URL_THEME = (new URLSearchParams(window.location.search).get("theme") || "").toLowerCase();
 const LAUNCH_THEME = WIZARD_THEMES[URL_THEME] ? URL_THEME : "classic";
-// ?tab=review opens on the review board (and so does a link carrying a game or a position for it)
+// /coach (the short address, a rewrite in vercel.json) and ?tab=review open on the review board, and so does a
+// link carrying a game or a position for it
 const URL_PARAMS = new URLSearchParams(window.location.search);
+const COACH_PATH = /^\/coach\/?$/.test(window.location.pathname);
 const LAUNCH_TAB =
-  !TF && (URL_PARAMS.get("tab") === "review" || ["fen", "pgn", "cc", "lichess"].some((k) => URL_PARAMS.get(k)))
+  !TF && (COACH_PATH || URL_PARAMS.get("tab") === "review" || ["fen", "pgn", "cc", "lichess"].some((k) => URL_PARAMS.get(k)))
     ? "review"
     : URL_PARAMS.get("tab") === "trainer" && !TF
       ? "trainer"
@@ -179,6 +181,7 @@ function setupTabs() {
   els.tabReview.addEventListener("click", () => switchTab("review"));
 }
 
+const PAGE_TITLE = document.title;
 const TAB_TITLES = {
   trainer: ["Chess Opening Trainer", "Practice your prep by the fire."],
   review: ["Game Review & Coach", "Your games, Stockfish's verdict, and a coach to ask why."]
@@ -199,6 +202,8 @@ function switchTab(tab) {
     viewEl.hidden = id !== tab;
   });
   document.body.classList.toggle("on-review", tab === "review");
+  // (the name a phone offers when the page is added to its home screen)
+  document.title = tab === "review" ? "Chess Coach · Becknology" : PAGE_TITLE;
   if (review && tab !== "review") review.hidden();
 
   if (isWizard) {

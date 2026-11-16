@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Wizard Chess 3D, Game Review &amp; Opening Trainer · Becknology</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <!-- the icon a phone uses when the page (the coach, at /coach) is added to its home screen -->
+  <link rel="apple-touch-icon" href="/chess/coach-icon.png">
   <script>
     // Inside the Bridge's modal (an iframe) the Bridge draws the chrome: no back links here.
     // Standalone, the shared skin bar (bridge-skin.js) carries the one back button.
@@ -308,36 +310,55 @@
 
     </div>
 
-    <!-- ===== VIEW 3: GAME REVIEW & COACH (review/review.js) ===== -->
+    <!-- ===== VIEW 3: GAME REVIEW & COACH (review/review.js) =====
+         left: the games to pick from, and the game on the board (how it went, its moves)
+         middle: the board and Stockfish's lines        right: the coach, top to bottom -->
     <div class="rv-layout" id="view-review" hidden>
 
-      <aside class="rv-panel rv-games" id="rv-games">
-        <h2>Games</h2>
-        <div class="rv-sources" role="tablist" aria-label="Where the game comes from">
-          <button type="button" class="rv-source" data-source="chesscom" role="tab">Chess.com</button>
-          <button type="button" class="rv-source" data-source="lichess" role="tab">Lichess</button>
-          <button type="button" class="rv-source" data-source="here" role="tab">Played here</button>
-          <button type="button" class="rv-source" data-source="paste" role="tab">Paste / set up</button>
-        </div>
+      <div class="rv-left">
+        <aside class="rv-panel rv-games" id="rv-games">
+          <button type="button" class="rv-games-head" id="rv-games-toggle" aria-expanded="true" title="Show or hide the game picker">
+            <h2>Games</h2>
+            <span class="rv-games-now" id="rv-games-now"></span>
+            <span class="rv-chevron" aria-hidden="true">▾</span>
+          </button>
+          <div class="rv-games-body" id="rv-games-body">
+            <div class="rv-sources" role="tablist" aria-label="Where the game comes from">
+              <button type="button" class="rv-source" data-source="chesscom" role="tab">Chess.com</button>
+              <button type="button" class="rv-source" data-source="lichess" role="tab">Lichess</button>
+              <button type="button" class="rv-source" data-source="here" role="tab">Here</button>
+              <button type="button" class="rv-source" data-source="paste" role="tab">Paste</button>
+            </div>
 
-        <form class="rv-user-form" id="rv-user-form" hidden>
-          <input type="text" id="rv-user" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="40" aria-label="Username">
-          <button type="submit" id="rv-user-go">Load</button>
-        </form>
+            <form class="rv-user-form" id="rv-user-form" hidden>
+              <input type="text" id="rv-user" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="40" aria-label="Username">
+              <button type="submit" id="rv-user-go">Load</button>
+            </form>
 
-        <div class="rv-paste" id="rv-paste-box" hidden>
-          <textarea id="rv-paste" rows="5" spellcheck="false" placeholder="Paste a game (PGN) or a position (FEN)" aria-label="A game as PGN, or a position as FEN"></textarea>
-          <div class="rv-row">
-            <button type="button" id="rv-paste-go">Load</button>
-            <button type="button" id="rv-setup-btn">Set up a position</button>
-            <button type="button" id="rv-fresh-btn" title="An empty analysis board from the starting position">New board</button>
+            <div class="rv-paste" id="rv-paste-box" hidden>
+              <textarea id="rv-paste" rows="4" spellcheck="false" placeholder="Paste a game (PGN) or a position (FEN)" aria-label="A game as PGN, or a position as FEN"></textarea>
+              <div class="rv-row">
+                <button type="button" id="rv-paste-go">Load</button>
+                <button type="button" id="rv-setup-btn">Set up a position</button>
+                <button type="button" id="rv-fresh-btn" title="An empty analysis board from the starting position">New board</button>
+              </div>
+            </div>
+
+            <div class="rv-note" id="rv-list-note"></div>
+            <div class="rv-game-list" id="rv-game-list"></div>
+            <button type="button" class="rv-more" id="rv-more" hidden>Older games</button>
           </div>
-        </div>
+        </aside>
 
-        <div class="rv-note" id="rv-list-note"></div>
-        <div class="rv-game-list" id="rv-game-list"></div>
-        <button type="button" class="rv-more" id="rv-more" hidden>Older games</button>
-      </aside>
+        <div class="rv-panel rv-summary" id="rv-summary">
+          <div class="rv-game-title" id="rv-game-title">No game yet</div>
+          <div class="rv-acc" id="rv-acc" hidden></div>
+          <canvas class="rv-graph" id="rv-graph" width="640" height="150" hidden></canvas>
+          <div class="rv-progress" id="rv-progress" hidden><div class="rv-progress-bar" id="rv-progress-bar"></div><span id="rv-progress-text"></span></div>
+          <div class="rv-moves" id="rv-moves"></div>
+          <div class="rv-sideline" id="rv-sideline" hidden></div>
+        </div>
+      </div>
 
       <section class="rv-board-area">
         <div class="rv-player" id="rv-player-top"></div>
@@ -389,38 +410,27 @@
         <div class="rv-panel rv-engine">
           <div class="rv-engine-head">
             <span class="rv-engine-name" id="rv-engine-name">Stockfish 19</span>
+            <span class="rv-legend"><i class="rv-key rv-key-best"></i>best now <i class="rv-key rv-key-better"></i>better than what was played</span>
             <span class="rv-engine-depth" id="rv-engine-depth"></span>
           </div>
           <div class="rv-lines" id="rv-lines"></div>
-          <div class="rv-legend"><i class="rv-key rv-key-best"></i> best move now <i class="rv-key rv-key-better"></i> better than the move just played · click a line's move to play it out</div>
         </div>
       </section>
 
-      <aside class="rv-side">
-        <div class="rv-panel rv-summary" id="rv-summary">
-          <div class="rv-game-title" id="rv-game-title">No game yet</div>
-          <div class="rv-acc" id="rv-acc" hidden></div>
-          <canvas class="rv-graph" id="rv-graph" width="640" height="150" hidden></canvas>
-          <div class="rv-progress" id="rv-progress" hidden><div class="rv-progress-bar" id="rv-progress-bar"></div><span id="rv-progress-text"></span></div>
-          <div class="rv-moves" id="rv-moves"></div>
-          <div class="rv-sideline" id="rv-sideline" hidden></div>
+      <aside class="rv-panel rv-coach" id="rv-coach">
+        <div class="rv-coach-head">
+          <h2>Coach</h2>
+          <span class="rv-coach-state" id="rv-coach-state"></span>
+          <button type="button" class="rv-icon-btn" id="rv-voice-mode" title="Voice mode: talk with the coach hands-free" hidden>🎧 Voice</button>
+          <button type="button" class="rv-icon-btn" id="rv-coach-new" title="Start the conversation again" aria-label="Start the conversation again">↺</button>
         </div>
-
-        <div class="rv-panel rv-coach" id="rv-coach">
-          <div class="rv-coach-head">
-            <h2>Coach</h2>
-            <span class="rv-coach-state" id="rv-coach-state"></span>
-            <button type="button" class="rv-icon-btn" id="rv-voice-mode" title="Voice mode: talk with the coach hands-free" hidden>🎧 Voice mode</button>
-            <button type="button" class="rv-icon-btn" id="rv-coach-new" title="Start the conversation again">↺</button>
-          </div>
-          <div class="rv-chat" id="rv-chat" aria-live="polite"></div>
-          <div class="rv-chips" id="rv-chips"></div>
-          <form class="rv-ask" id="rv-ask">
-            <textarea id="rv-question" rows="1" maxlength="600" placeholder="Ask about this position…" aria-label="Your question for the coach"></textarea>
-            <button type="button" class="rv-mic" id="rv-mic" title="Ask out loud" aria-label="Ask out loud" hidden>🎤</button>
-            <button type="submit" class="rv-send" id="rv-send" title="Ask">Ask</button>
-          </form>
-        </div>
+        <div class="rv-chat" id="rv-chat" aria-live="polite"></div>
+        <div class="rv-chips" id="rv-chips"></div>
+        <form class="rv-ask" id="rv-ask">
+          <textarea id="rv-question" rows="1" maxlength="600" placeholder="Ask about this position…" aria-label="Your question for the coach"></textarea>
+          <button type="button" class="rv-mic" id="rv-mic" title="Ask out loud" aria-label="Ask out loud" hidden>🎤</button>
+          <button type="submit" class="rv-send" id="rv-send" title="Ask (Enter)">Ask</button>
+        </form>
       </aside>
     </div>
   </main>

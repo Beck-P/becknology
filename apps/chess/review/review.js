@@ -14,7 +14,7 @@ import { Markers } from "https://cdn.jsdelivr.net/npm/cm-chessboard@8.7.6/src/ex
 import {
   Chess, START_FEN, MARKS, castlingFor, checkPosition, evalText, finishedEval, gameAccuracy, judgeMove,
   lineToSan, looksLikeFen, moveLabel, openingFromUrl, pgnHeaders, pickMove, playUci, readFen, readPgn,
-  sideName, splitPgn, winPct,
+  sideName, splitPgn, tryMove, winPct,
 } from "./chessx.js";
 import { Engine, ENGINE_NAME } from "./engine.js";
 import * as Sources from "./sources.js";
@@ -55,6 +55,7 @@ let listening = null;              // stops the microphone, while it's on
 let voiceMode = false;
 let quietTurns = 0;
 let coachOn = null;
+const timings = [];                // how long each answer took (shown under it; kept for comparing settings)
 
 // ---------- the game on the board ----------
 
@@ -469,7 +470,7 @@ function renderSummary() {
     return ["blunder", "mistake", "inaccuracy"].map((k) => `<span class="rv-count rv-mk-${k}" title="${MARKS[k].label}">${MARKS[k].glyph} ${c[k] || 0}</span>`).join("");
   };
   const box = (color) => `<div class="rv-acc-box"><span class="rv-acc-who"><span class="rv-dot rv-dot-${color}"></span>${esc((color === "w" ? g.white : g.black).name)}</span>`
-    + `<span class="rv-acc-num">${g.accuracy[color] === null ? "—" : g.accuracy[color].toFixed(1)}<small>% accuracy</small></span><span class="rv-acc-counts">${count(color)}</span></div>`;
+    + `<span class="rv-acc-num" title="Accuracy">${g.accuracy[color] === null ? "—" : g.accuracy[color].toFixed(1)}<small>%</small></span><span class="rv-acc-counts">${count(color)}</span></div>`;
   acc.innerHTML = box("w") + box("b");
 }
 
@@ -607,6 +608,17 @@ function note(text, bad = false) {
 
 const SITE = { chesscom: "chess.com", lichess: "lichess" };
 
+// The picker folds away under its heading once a game is on the board (a click on the heading brings it back)
+function foldGames(fold) {
+  $("rv-games").classList.toggle("is-folded", Boolean(fold));
+  $("rv-games-toggle").setAttribute("aria-expanded", String(!fold));
+}
+
+function gamesNow() {
+  const src = S.source;
+  $("rv-games-now").textContent = SITE[src] ? `${SITE[src]}${prefs.users[src] ? " · " + prefs.users[src] : ""}` : src === "here" ? "played here" : "paste or set up";
+}
+
 function setSource(src) {
   S.source = src;
   prefs.source = src;
@@ -625,6 +637,7 @@ function setSource(src) {
     S.lists.here = Sources.wizardGames();
     if (!S.lists.here.length) note("No battles yet. Play one in Wizard Chess 3D and it shows up here.");
   }
+  gamesNow();
   renderList();
 }
 
@@ -634,6 +647,7 @@ async function fetchGames() {
   if (!user || !SITE[src]) return;
   prefs.users[src] = user;
   savePrefs();
+  gamesNow();
   S.lists[src] = [];
   S.feeds[src] = null;
   renderList();
@@ -703,6 +717,7 @@ function loadPasted() {
     prefs.last = { fen: r.fen };
     savePrefs();
     setGame(positionGame(r.fen));
+    foldGames(true);
     return;
   }
   const games = splitPgn(text).map(entryFromPgn);
@@ -710,7 +725,7 @@ function loadPasted() {
   S.lists.paste = games.length > 1 ? games : [];
   renderList();
   if (games.length > 1) note(`${games.length} games in that file — pick one.`);
-  openEntry(games[0]);
+  if (openEntry(games[0]) && games.length === 1) foldGames(true);
   renderList();
 }
 
@@ -808,6 +823,7 @@ function snapshot() {
   const fen = curFen();
   const stm = sideName(fen.split(" ")[1]);
   let where, played = "";
+  const known = [];
   const v = verdict();
   if (S.side.length) {
     const from = S.ply > 0 ? `the game position after ${moveLabel(g.moves[S.ply - 1].before, g.moves[S.ply - 1].san)}` : g.moves.length ? "the start of the game" : "the position that was set up";
@@ -820,6 +836,7 @@ function snapshot() {
     if (j) {
       const before = g.evals[S.ply - 1], m = g.moves[S.ply - 1];
       const bestSan = before.best ? lineToSan(m.before, [before.best], 1).text : "";
+      if (before.best && before.pv.length > 1) known.push(lineToSan(m.before, [before.best], 1).sans[0]);
       where += `\nThe move just played, ${v.label}, was judged ${MARKS[j.mark].label === "best move" ? "the best move" : `${/^[aeiou]/.test(MARKS[j.mark].label) ? "an" : "a"} ${MARKS[j.mark].label}`}: the evaluation went from ${evalText(before)} to ${evalText(g.evals[S.ply])}.`
         + (j.mark !== "best" && bestSan ? ` Stockfish preferred ${bestSan}${before.pv.length > 1 ? `, continuing ${lineToSan(m.before, before.pv, 6).text}` : ""}.` : "");
     }
@@ -828,7 +845,11 @@ function snapshot() {
     const nx = g.moves[S.ply], j = g.judged[S.ply + 1];
     played = `In the game, ${sideName(nx.color)} now played ${moveLabel(nx.before, nx.san)}${j ? ` (${MARKS[j.mark].label}; evaluation after it ${evalText(g.evals[S.ply + 1])})` : ""}.`;
   }
-  return { key: g.id, fen, where, played, game: gameText(g), complete: g.reviewed, live: S.live && S.live.fen === fen ? S.live : null };
+  const lm = lastMove();
+  return {
+    key: g.id, fen, where, played, game: gameText(g), complete: g.reviewed, live: S.live && S.live.fen === fen ? S.live : null,
+    prev: lm ? lm.before : null, last: lm ? moveLabel(lm.before, lm.san) : "", lastSan: lm ? lm.san : "", known,
+  };
 }
 
 // The whole game as text: who, the result, and every move with the engine's number after it
@@ -857,14 +878,81 @@ function gameText(g) {
   return head.join("\n");
 }
 
-// A reply's words into safe HTML: paragraphs, **bold**, simple lists
-function rich(text) {
+// --- moves in an answer: each one a link that shows it on the board
+
+const SAN = /(?:O-O-O|O-O|[KQRBN][a-h]?[1-8]?x?[a-h][1-8]|[a-h]x[a-h][1-8](?:=[QRBN])?|[a-h][1-8](?:=[QRBN])?)[+#]?/g;
+const A = "", B = "", C = "";         // marks round a move while the text is made into HTML
+
+// Every move written in a reply: { at, end, san, run, i, no, color }. Moves written one after another
+// ("10. Nxb5 cxb5 11. Bxb5+") are one run; no/color are the move number and side when the text gives them.
+function movesIn(text) {
+  const out = [];
+  let m, run = -1;
+  SAN.lastIndex = 0;
+  while ((m = SAN.exec(text))) {
+    const at = m.index, end = at + m[0].length;
+    if (/[\w-]/.test(text[at - 1] || " ") || /[\w-]/.test(text[end] || " ")) continue;      // part of a word
+    const prev = out[out.length - 1];
+    const gap = prev ? text.slice(prev.end, at) : null;
+    const follows = gap !== null && /^[\s,]*(?:\d+\s*\.(?:\s*\.\.)?\s*)?$/.test(gap) && !/,/.test(gap) && gap.length < 12;
+    const num = text.slice(Math.max(0, at - 9), at).match(/(\d+)\s*\.(\s*\.\.|…)?\s*$/);
+    const bare = /^[a-h][1-8]/.test(m[0]);
+    if (bare && !num && !follows) continue;              // "the pawn on e5" is a square, not a move
+    const t = { at, end, san: m[0], run: follows ? prev.run : ++run, i: follows ? prev.i + 1 : 0, no: null, color: null };
+    if (num) { t.no = +num[1]; t.color = num[2] ? "b" : "w"; }
+    else if (follows && prev.no) { t.no = prev.color === "w" ? prev.no : prev.no + 1; t.color = prev.color === "w" ? "b" : "w"; }
+    out.push(t);
+  }
+  return out;
+}
+
+// A reply's words into safe HTML: paragraphs, **bold**, simple lists, and (links) its moves as buttons
+function rich(text, links = false) {
+  let src = text.trim();
+  const moves = links ? movesIn(src) : [];
+  for (let k = moves.length - 1; k >= 0; k--) src = `${src.slice(0, moves[k].at)}${A}${k}${B}${src.slice(moves[k].at, moves[k].end)}${C}${src.slice(moves[k].end)}`;
   const inline = (s) => esc(s).replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>").replace(/(^|[\s(])\*([^*\s][^*]*)\*(?=[\s).,;:!?]|$)/g, "$1<em>$2</em>").replace(/`([^`]+)`/g, "$1");
-  return text.trim().split(/\n{2,}/).map((block) => {
+  const html = src.split(/\n{2,}/).map((block) => {
     const rows = block.split("\n");
-    if (rows.every((r) => /^\s*([-*•]|\d+[.)])\s+/.test(r) && !/^\s*\d+\.\s*[KQRBNa-hO]/.test(r))) return `<ul>${rows.map((r) => `<li>${inline(r.replace(/^\s*([-*•]|\d+[.)])\s+/, ""))}</li>`).join("")}</ul>`;
+    if (rows.every((r) => /^\s*([-*•]|\d+[.)])\s+/.test(r) && !/^\s*\d+\.\s*[KQRBNa-hO]/.test(r))) return `<ul>${rows.map((r) => `<li>${inline(r.replace(/^\s*([-*•]|\d+[.)])\s+/, ""))}</li>`).join("")}</ul>`;
     return `<p>${rows.map((r) => inline(r.replace(/^#+\s*/, ""))).join("<br>")}</p>`;
-  }).join("");
+  }).join("").replace(/(\d+)([^]*)/g, (m, k, san) => `<button type="button" class="rv-san" data-k="${k}" title="Show on the board">${san}</button>`);
+  return links ? { html, moves } : html;
+}
+
+// A move clicked in an answer: find the position its line starts from and play it out there.
+// The line is the run of moves up to the one clicked; it starts where the answer was asked about, or
+// the position before (what "better was …" means), or wherever in the game its move number says.
+function showMove(msg, k) {
+  const moves = msg.__moves, base = msg.__base, g = S.game;
+  if (!moves || !base || !g || g.id !== base.id || S.editing) return false;
+  const t = moves[k];
+  const line = moves.filter((x) => x.run === t.run && x.i <= t.i);
+  const starts = [];
+  for (let n = base.side.length; n >= 0; n--) starts.push({ ply: base.ply, side: base.side.slice(0, n) });
+  for (let p = base.ply - 1; p >= 0; p--) starts.push({ ply: p, side: [] });
+  for (let p = base.ply + 1; p <= g.moves.length; p++) starts.push({ ply: p, side: [] });
+  const from = (st, toks) => {
+    const c = new Chess(fenAt(g, st.ply));
+    for (const u of st.side) if (!playUci(c, u)) return null;
+    const f = c.fen().split(" ");
+    if (toks[0].no && (+f[5] !== toks[0].no || f[1] !== toks[0].color)) return null;      // not where its number says
+    const ucis = [];
+    for (const x of toks) { const m = tryMove(c, x.san); if (!m) return null; ucis.push(m.from + m.to + (m.promotion || "")); }
+    return ucis;
+  };
+  // the whole line first; failing that the one move, from the position asked about or the one before it
+  for (const [toks, where] of [[line, starts], [[t], t.no ? starts : starts.slice(0, base.side.length + 2)]]) {
+    for (const st of where) {
+      const ucis = from(st, toks);
+      if (!ucis) continue;
+      S.ply = st.ply;
+      S.side = [];
+      play(st.side.concat(ucis), false);
+      return true;
+    }
+  }
+  return false;
 }
 
 function bubble(kind, html) {
@@ -881,6 +969,16 @@ function coachState(text) {
   $("rv-coach-state").textContent = text || "";
 }
 
+// The Ask button is Stop while an answer is on its way
+function askButton() {
+  const b = $("rv-send"), busy = Boolean(coach && coach.busy);
+  b.textContent = busy ? "Stop" : "Ask";
+  b.title = busy ? "Stop this answer" : "Ask (Enter)";
+  b.classList.toggle("is-stop", busy);
+}
+
+const onPhone = () => window.matchMedia("(max-width: 860px)").matches;
+
 async function ask(question, { voice = false } = {}) {
   const q = String(question || "").trim();
   if (!q || !S.game || !coachOn) return;
@@ -889,28 +987,42 @@ async function ask(question, { voice = false } = {}) {
   stopListening();
   const chat = $("rv-chat");
   if (coach.key !== null && coach.key !== S.game.id && chat.children.length) bubble("note", "— a new game —");
-  bubble("you", esc(q));
+  const mine = bubble("you", esc(q));
   const el = bubble("coach is-waiting", `<span class="rv-wait"></span>`);
   const wait = el.querySelector(".rv-wait");
   const speak = voice || voiceMode ? Voice.speaker() : null;
-  let text = "";
-  $("rv-send").disabled = true;
+  const base = { id: S.game.id, ply: S.ply, side: S.side.map((m) => m.uci) };     // what the answer's moves are about
+  const t0 = performance.now();
+  let text = "", first = 0;
+  if (onPhone()) $("rv-coach").scrollIntoView({ block: "nearest", behavior: "smooth" });
+  const asking = coach.ask(q, {
+    voice: Boolean(speak),
+    onStatus: (s) => { if (!text) wait.textContent = s; coachState(s); },
+    onText: (d) => {
+      if (!first) first = performance.now();
+      text += d;
+      el.classList.remove("is-waiting");
+      el.innerHTML = rich(text);
+      chat.scrollTop = chat.scrollHeight;
+      if (speak) speak.add(d);
+    },
+  });
+  askButton();
   renderChips();
   try {
-    const answer = await coach.ask(q, {
-      voice: Boolean(speak),
-      onStatus: (s) => { if (!text) wait.textContent = s; coachState(s); },
-      onText: (d) => {
-        text += d;
-        el.classList.remove("is-waiting");
-        el.innerHTML = rich(text);
-        chat.scrollTop = chat.scrollHeight;
-        if (speak) speak.add(d);
-      },
-    });
+    const answer = await asking;
+    const done = rich(answer, true);
     el.classList.remove("is-waiting");
-    el.innerHTML = rich(answer);
+    el.innerHTML = done.html;
+    el.__moves = done.moves;
+    el.__base = base;
     if (speak) speak.end();
+    // under it: how long it took (and why, on hover), and reading it aloud
+    const secs = (ms) => (ms / 1000).toFixed(ms < 9950 ? 1 : 0) + " s";
+    const last = coach.last;
+    const foot = document.createElement("div");
+    foot.className = "rv-msg-foot";
+    foot.innerHTML = `<span class="rv-took" title="First words after ${secs(first - t0)}${last.ahead ? ` · ${last.ahead} Stockfish check${last.ahead > 1 ? "s" : ""} made before asking` : ""}${last.rounds ? ` · ${last.rounds} trip${last.rounds > 1 ? "s" : ""} back for more checks` : ""}">${secs(performance.now() - t0)}</span>`;
     if (Voice.canSpeak) {
       const again = document.createElement("button");
       again.type = "button";
@@ -918,17 +1030,27 @@ async function ask(question, { voice = false } = {}) {
       again.title = "Read this aloud";
       again.textContent = "🔊";
       again.addEventListener("click", () => { Voice.hush(); stopListening(); Voice.prime(); Voice.say(answer); });
-      el.appendChild(again);
+      foot.appendChild(again);
     }
+    el.appendChild(foot);
+    timings.push({ q, first: Math.round(first - t0), total: Math.round(performance.now() - t0), rounds: last.rounds, ahead: last.ahead });
     quietTurns = 0;
   } catch (e) {
-    if (e && e.name === "AbortError") { el.remove(); return; }
+    if (e && e.name === "AbortError") {
+      // stopped: as if it hadn't been asked, with the question back in the box to change
+      el.remove();
+      mine.remove();
+      Voice.hush();
+      const input = $("rv-question");
+      if (!input.value) { input.value = q; growInput(); }
+      return;
+    }
     el.className = "rv-msg rv-msg-note rv-msg-error";
     el.textContent = e.message || "The coach couldn't answer just now.";
     if (speak) Voice.say(el.textContent);
   } finally {
     coachState("");
-    $("rv-send").disabled = false;
+    askButton();
     chat.scrollTop = chat.scrollHeight;
     renderChips();
     follow();                                    // the coach's checks had the engine; back to the board
@@ -936,20 +1058,28 @@ async function ask(question, { voice = false } = {}) {
   }
 }
 
+// The questions most often asked, one tap each: a short label, the full question behind it
 function renderChips() {
   const box = $("rv-chips"), g = S.game;
   if (!g || !coachOn || S.editing || (coach && coach.busy)) { box.innerHTML = ""; return; }
   const qs = [];
   const v = verdict();
-  if (v && v.why) qs.push(v.why);
-  const over = finishedEval(new Chess(curFen()));
-  if (!over) {
-    qs.push("What's the best move here, and why?");
-    qs.push(`What is ${sideName(curFen().split(" ")[1] === "w" ? "b" : "w")} threatening?`);
-    qs.push("What are the plans for both sides?");
+  if (v && v.why) qs.push([`Why ${v.label}?`, v.why, true]);
+  if (!finishedEval(new Chess(curFen()))) {
+    qs.push(["Best move?", "What's the best move here, and why?"]);
+    qs.push(["Threats?", `What is ${sideName(curFen().split(" ")[1] === "w" ? "b" : "w")} threatening?`]);
+    qs.push(["Plans?", "What are the plans for both sides?"]);
   }
-  if (g.moves.length && g.reviewed && !S.side.length) qs.push(g.me ? "What should I take away from this game?" : "Where did this game turn?");
-  box.innerHTML = qs.slice(0, 4).map((q) => `<button type="button" class="rv-chip">${esc(q)}</button>`).join("");
+  if (g.moves.length && g.reviewed && !S.side.length) qs.push(g.me ? ["Takeaways", "What should I take away from this game?"] : ["Turning point", "Where did this game turn?"]);
+  box.innerHTML = qs.map(([label, q, lead]) => `<button type="button" class="rv-chip${lead ? " is-lead" : ""}" data-q="${esc(q)}" title="${esc(q)}">${esc(label)}</button>`).join("");
+  box.scrollLeft = 0;
+}
+
+// The question box grows with what's typed, up to a few lines
+function growInput() {
+  const input = $("rv-question");
+  input.style.height = "auto";
+  input.style.height = Math.min(120, input.scrollHeight + 2) + "px";
 }
 
 // ---------- voice ----------
@@ -966,13 +1096,14 @@ function startListening() {
   $("rv-mic").classList.add("is-on");
   coachState("Listening…");
   listening = Voice.listen({
-    onHeard: (t) => { input.value = Voice.tidyHeard(t); },
+    onHeard: (t) => { input.value = Voice.tidyHeard(t); growInput(); },
     onEnd: (finalText, error) => {
       listening = null;
       $("rv-mic").classList.remove("is-on");
       coachState("");
       const heard = Voice.tidyHeard(finalText);
       input.value = "";
+      growInput();
       if (error) { bubble("note rv-msg-error", esc(error)); setVoiceMode(false); return; }
       if (heard) { ask(heard, { voice: true }); return; }
       // nothing said: in voice mode keep an ear open a couple of times, then rest
@@ -987,7 +1118,7 @@ function setVoiceMode(on) {
   quietTurns = 0;
   const b = $("rv-voice-mode");
   b.classList.toggle("active", voiceMode);
-  b.textContent = voiceMode ? "🎧 Voice mode: on" : "🎧 Voice mode";
+  b.textContent = voiceMode ? "🎧 Voice: on" : "🎧 Voice";
   if (voiceMode) { if (!coach.busy) startListening(); } else { stopListening(); Voice.hush(); }
 }
 
@@ -1001,11 +1132,12 @@ function wire() {
     const b = e.target.closest(".rv-game");
     if (!b) return;
     const entry = (S.lists[S.source] || [])[+b.dataset.i];
-    if (entry && openEntry(entry)) renderList();
+    if (entry && openEntry(entry)) { renderList(); foldGames(true); }
   });
+  $("rv-games-toggle").addEventListener("click", () => foldGames(!$("rv-games").classList.contains("is-folded")));
   $("rv-paste-go").addEventListener("click", loadPasted);
-  $("rv-setup-btn").addEventListener("click", () => { if (!S.game) setGame(positionGame(START_FEN)); enterEditor(); });
-  $("rv-fresh-btn").addEventListener("click", () => { prefs.last = { fen: START_FEN }; savePrefs(); setGame(positionGame(START_FEN)); renderList(); });
+  $("rv-setup-btn").addEventListener("click", () => { if (!S.game) setGame(positionGame(START_FEN)); enterEditor(); foldGames(true); });
+  $("rv-fresh-btn").addEventListener("click", () => { prefs.last = { fen: START_FEN }; savePrefs(); setGame(positionGame(START_FEN)); renderList(); foldGames(true); });
 
   $("rv-first").addEventListener("click", () => goTo(0));
   $("rv-prev").addEventListener("click", () => step(-1));
@@ -1040,24 +1172,34 @@ function wire() {
 
   $("rv-ask").addEventListener("submit", (e) => {
     e.preventDefault();
+    if (coach.busy) { coach.stop(); return; }            // the button reads Stop while an answer is coming
     const input = $("rv-question");
     const q = input.value;
     input.value = "";
+    growInput();
     ask(q);
   });
   $("rv-question").addEventListener("keydown", (e) => {
-    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $("rv-ask").requestSubmit(); }
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); if (!coach.busy) $("rv-ask").requestSubmit(); }
   });
-  $("rv-chips").addEventListener("click", (e) => { const b = e.target.closest(".rv-chip"); if (b) ask(b.textContent); });
+  $("rv-question").addEventListener("input", growInput);
+  $("rv-chips").addEventListener("click", (e) => { const b = e.target.closest(".rv-chip"); if (b) ask(b.dataset.q); });
+  $("rv-chat").addEventListener("click", (e) => {
+    const b = e.target.closest(".rv-san");
+    if (!b || b.classList.contains("is-off")) return;
+    if (!showMove(b.closest(".rv-msg"), +b.dataset.k)) b.classList.add("is-off");          // nowhere it can be played: just text
+    else if (onPhone()) $("rv-board-wrap").scrollIntoView({ block: "nearest", behavior: "smooth" });
+  });
   $("rv-verdict").addEventListener("click", (e) => { if (e.target.id === "rv-why") { const v = verdict(); if (v && v.why) ask(v.why); } });
-  $("rv-coach-new").addEventListener("click", () => { coach.reset(); Voice.hush(); $("rv-chat").innerHTML = ""; greet(); renderChips(); });
+  $("rv-coach-new").addEventListener("click", () => { coach.reset(); Voice.hush(); $("rv-chat").innerHTML = ""; greet(); askButton(); renderChips(); });
   $("rv-mic").addEventListener("click", () => { Voice.prime(); if (listening) stopListening(); else { quietTurns = 0; startListening(); } });
   $("rv-voice-mode").addEventListener("click", () => { Voice.prime(); setVoiceMode(!voiceMode); });
 
   window.addEventListener("keydown", (e) => {
     if (!S.visible || !S.game || e.altKey || e.ctrlKey || e.metaKey) return;
     if (/^(INPUT|TEXTAREA|SELECT)$/.test((e.target && e.target.tagName) || "")) return;
-    if (e.key === "ArrowLeft") step(-1);
+    if (e.key === "/" && coachOn) $("rv-question").focus();
+    else if (e.key === "ArrowLeft") step(-1);
     else if (e.key === "ArrowRight") step(1);
     else if (e.key === "Home") goTo(0);
     else if (e.key === "End") goTo(S.game.moves.length);
@@ -1091,7 +1233,7 @@ function greet() {
   if (coachOn === false) {
     bubble("note", "The coach is switched off on this copy of the site (it needs the site's AI key). Everything Stockfish does still works.");
   } else if (coachOn) {
-    bubble("coach", `<p>Ask me about whatever is on the board: why a move is good or bad, what the best moves are, what a side is threatening. Stockfish checks anything I say about a line.</p>${Voice.canListen ? "<p>Tap 🎤 to ask out loud, or 🎧 to talk it through hands-free.</p>" : ""}`);
+    bubble("coach", `<p>Ask about whatever is on the board: why a move is good or bad, the best moves, what's threatened. Click a move in my answer to see it played.${Voice.canListen ? " 🎤 asks out loud; 🎧 is hands-free." : ""}</p>`);
   }
 }
 
@@ -1122,6 +1264,7 @@ export function initReview() {
   if (!opened && q.get("pgn")) opened = openEntry(entryFromPgn(q.get("pgn")), { remember: false });
   if (!opened && prefs.last && prefs.last.pgn) opened = openEntry(prefs.last, { remember: false });
   if (!opened && prefs.last && prefs.last.fen) { const r = readFen(prefs.last.fen); if (!r.error) { setGame(positionGame(r.fen)); opened = true; } }
+  foldGames(opened && S.game.moves.length > 0);          // a game on the board: the picker waits under its heading
   if (!opened) setGame(positionGame(START_FEN));
   renderList();
 
@@ -1137,7 +1280,7 @@ export function initReview() {
     renderVerdict();
     renderChips();
   });
-  window.__chessReview = { S, play, goTo, ask, engines: () => ({ fg, bg }), coach: () => coach };       // (for the test scripts)
+  window.__chessReview = { S, play, goTo, ask, timings, engines: () => ({ fg, bg }), coach: () => coach };       // (for the test scripts)
   return api;
 }
 
@@ -1159,6 +1302,7 @@ const api = {
     if (openEntry(entry)) {
       S.lists.here = Sources.wizardGames();
       if (S.source === "here") renderList();
+      foldGames(true);
       goTo(S.game.moves.length);
     }
   },
