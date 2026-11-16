@@ -79,6 +79,9 @@ def jump_at(x, r):
     return z
 
 
+PASS = 4.4                                           # a groomer's pass: its width (tiles)
+
+
 def material(x, r):
     if jump_at(x, r) > 0.02:
         return 'kicker'
@@ -86,10 +89,17 @@ def material(x, r):
         return 'powder'
     if r < DECK_R + 1.2 or r > FINISH_R + 1:
         return 'cord'
-    return 'cord' if int(math.floor(x * 8)) % 2 else 'cord2'
+    # corduroy in the groomer's passes down the hill: each pass its own wobble, ribs a quarter tile apart, a soft seam of
+    # pushed-up snow where two passes meet
+    xs = x - 0.25 * math.sin(r * 0.09) - 0.12 * math.sin(r * 0.31 + 1.3)
+    p_, f = divmod(xs - X0, PASS)
+    if f < 0.07 or f > PASS - 0.07:
+        return 'cord_seam'
+    return 'cord' if int(math.floor((f + p_ * 0.11) * 4)) % 2 else 'cord2'
 
 
-ALB = {'powder': ('#e0e8f4', 0.03), 'cord': (shade(N.SNOW, 1.02), 0.0), 'cord2': (shade(N.SNOW, 0.975), 0.0), 'kicker': (shade(N.SNOW, 1.04), 0.0)}
+ALB = {'powder': ('#e0e8f4', 0.03), 'cord': (shade(N.SNOW, 1.01), 0.0), 'cord2': (shade(N.SNOW, 0.985), 0.0),
+       'cord_seam': (shade(N.SNOW, 0.96), 0.0), 'kicker': (shade(N.SNOW, 1.04), 0.0)}
 
 # ---- the ground, the crest, the forest ----------------------------------------------------------------------------------
 crest = {(x, r) for x in range(-2, COLS + 2) for r in range(-5, 1)}
@@ -222,6 +232,125 @@ for side in (0, 1):                                   # old carves down the marg
         for o in (-0.06, 0.06):
             k.tube((ax + o, ar, 0.008), (bx + o, br, 0.008), 0.014, ('#cdd2da', 0.05), 'print', verts=4, smooth=False)
 HR.windswept(k, 2.0, BOTTOM_R, 38.0, ROWS - 0.5, 18, er, ok=lambda x, r: not 17.5 < x < 22.5)
+
+# ---- the features made to read (Nov 2026, on their own dice; the shapes are the game's own — jump_at, RAILS — so nothing a
+# skier hits, slides or lands on moves or changes size) -------------------------------------------------------------------
+fr = random.Random(6133)
+DYE = ('#2a6ae0', 0.08)                               # the park crew's spray dye: blue on the lips, the knuckles, the edges
+DYE_P = ('#ff5ab0', 0.08)
+
+
+def surf(x, r, lift=0.012):
+    return (x, r, jump_at(x, r) + lift)
+
+
+def patch(xa, xb, ra, rb, nx, nr, albedo, part, lift=0.012):
+    """The ground's own shape over a rectangle, as quads a hair above it."""
+    q = []
+    for i in range(nx):
+        for j in range(nr):
+            x0_, x1_ = xa + (xb - xa) * i / nx, xa + (xb - xa) * (i + 1) / nx
+            r0_, r1_ = ra + (rb - ra) * j / nr, ra + (rb - ra) * (j + 1) / nr
+            q.append((surf(x0_, r0_, lift), surf(x1_, r0_, lift), surf(x1_, r1_, lift), surf(x0_, r1_, lift)))
+    k.quads(q, albedo, part)
+
+
+for (jx, lr, w, L, h) in JUMPS:
+    # the ramp: shaped, packed snow a shade off the groomed run, so it stands up out of it with its own edge
+    # in bands of tone: paler toward the lip where it's packed hardest, the side slopes a step darker
+    n = 20
+    bands = {}
+    for i in range(n):
+        for j in range(n):
+            v0, v1 = -1 + 2 * i / n, -1 + 2 * (i + 1) / n
+            u0, u1 = j / n, (j + 1) / n
+            pts = []
+            for (u, v) in ((u0, v0), (u0, v1), (u1, v1), (u1, v0)):
+                x, r = jx + v * w / 2 * 0.999, lr - L + u * L * 0.999
+                pts.append((x, r, h * u ** 1.4 * (1 - abs(v) ** 6) + 0.014))
+            side = max(abs(v0), abs(v1)) > 0.86
+            key = 'side' if side else ('foot' if u1 <= 0.34 else 'mid' if u1 <= 0.7 else 'lip')
+            bands.setdefault(key, []).append(pts)
+    for key, col in (('foot', '#c2cde0'), ('mid', '#ccd6e6'), ('lip', '#d8e0ee'), ('side', '#a8b6cc')):
+        if key in bands:
+            k.quads(bands[key], (col, 0.05), 'kicker')
+    # the lip's face, cut square where it drops to the table: a shaded wall of packed snow facing down the hill
+    m = 24
+    face = []
+    for i in range(m):
+        va, vb = -1 + 2 * i / m, -1 + 2 * (i + 1) / m
+        xa, xb = jx + va * w / 2, jx + vb * w / 2
+        za, zb = h * (1 - abs(va) ** 6), h * (1 - abs(vb) ** 6)
+        face.append(((xa, lr, 0.0), (xb, lr, 0.0), (xb, lr, zb + 0.014), (xa, lr, za + 0.014)))
+    k.quads(face, ('#8e9cb6', 0.06), 'kicker_face')
+    # dye: a band across the lip, the ramp's edges, the knuckle's dashed line, the sweet spot's two marks
+    patch(jx - w / 2 * 0.92, jx + w / 2 * 0.92, lr - 0.16, lr - 0.01, 12, 1, DYE, 'chalk_dye', lift=0.02)
+    for s_ in (-1, 1):                                                   # along the ramp's edges, its top half
+        patch(jx + s_ * w / 2 * 0.86 - 0.04, jx + s_ * w / 2 * 0.86 + 0.04, lr - L * 0.5, lr - 0.16, 1, 8, DYE, 'chalk_dye', lift=0.02)
+    kr = lr + 0.6
+    xd = jx - w / 2 * 0.9
+    while xd < jx + w / 2 * 0.9 - 0.2:
+        patch(xd, xd + 0.24, kr + 0.02, kr + 0.12, 2, 1, DYE, 'chalk_dye', lift=0.016)
+        xd += 0.4
+    sr = lr + 0.6 + L * 0.9
+    for s_ in (-1, 1):
+        patch(jx + s_ * w / 2 * 0.6 - 0.08, jx + s_ * w / 2 * 0.6 + 0.08, sr - 0.3, sr + 0.3, 1, 3, DYE_P, 'chalk_dye', lift=0.016)
+    # the landing's edges marked down each side in dashes
+    for s_ in (-1, 1):
+        rr0 = lr + 0.9
+        while rr0 < lr + 0.6 + L * 1.7:
+            patch(jx + s_ * w / 2 * 1.05 - 0.05, jx + s_ * w / 2 * 1.05 + 0.05, rr0, rr0 + 0.3, 1, 2, DYE, 'chalk_dye', lift=0.016)
+            rr0 += 0.55
+    # the landing groomed smooth across the corduroy, a shade cooler
+    patch(jx - w / 2 * 1.1, jx + w / 2 * 1.1, lr + 0.6, lr + 0.6 + L * 1.8, 10, 8, (shade(N.SNOW, 0.995), 0.02), 'landing_snow', lift=0.006)
+    # the size sign gets a flag on its post (the post is an obstacle already)
+    sx, sr_ = jx - w / 2 - 0.9, lr - L * 0.5
+    k.cyl(sx, sr_, 1.2, 1.9, 0.025, ('#2a2a30', 0.1), 'flag_pole', verts=5)
+    k.poly([(sx, sr_ + 0.01, 1.88), (sx + 0.42, sr_ + 0.01, 1.78), (sx + 0.38, sr_ + 0.01, 1.42), (sx, sr_ + 0.01, 1.4)], ('#40c8d8', 0.08), 'flag')
+
+RAIL_COL = {'box': '#ff5ab0', 'rail': '#f0c030', 'down': '#40c8d8', 'kink': '#ff5ab0'}
+for (x0, r0, x1, r1, h0, h1, kind) in RAILS:
+    col = RAIL_COL[kind]
+    if kind == 'box':
+        k.bar(x0, r1 - 0.02, x0, r1 + 0.02, 0.0, h0, 0.66, (col, 0.08), 'box_end')      # the downhill end, its colour
+        k.bar(x0, r0, x1, r1, h0 + 0.04, h0 + 0.05, 0.36, ('#f4f4f8', 0.05), 'box_top')  # the slick white strip down the middle
+        for t in (0.15, 0.5, 0.85):
+            rr_ = r0 + (r1 - r0) * t
+            k.bar(x0, rr_ - 0.03, x0, rr_ + 0.03, h0 + 0.05, h0 + 0.055, 0.66, ('#1e1e26', 0.1), 'box_bolt')
+        continue
+    # a fat coloured rail where a hairline was, its posts coloured to match, standing on two skids in the snow
+    k.tube((x0, r0, h0 + 0.01), (x1, r1, h1 + 0.01), 0.075, (col, 0.06), 'rail', verts=10)
+    k.tube((x0, r0, h0 + 0.06), (x1, r1, h1 + 0.06), 0.03, ('#f4f4f8', 0.05), 'rail_shine', verts=6)
+    L_ = math.hypot(x1 - x0, r1 - r0)
+    ux, ur = (x1 - x0) / L_, (r1 - r0) / L_
+    for s_ in (-1, 1):
+        k.tube((x0 + s_ * ur * 0.2, r0 - s_ * ux * 0.2, 0.03), (x1 + s_ * ur * 0.2, r1 - s_ * ux * 0.2, 0.03), 0.035, ('#2a2e3a', 0.1), 'rail_skid', verts=6)
+    nposts = max(2, int(L_ / 1.4) + 1)
+    for i in range(nposts):
+        t = i / (nposts - 1)
+        x, r, hh = x0 + (x1 - x0) * t, r0 + (r1 - r0) * t, h0 + (h1 - h0) * t
+        k.cyl(x, r, 0, hh - 0.04, 0.06, (shade(col, 0.7), 0.08), 'rail_post', verts=8)
+        k.tube((x + ur * 0.2, r - ux * 0.2, 0.03), (x - ur * 0.2, r + ux * 0.2, 0.03), 0.03, ('#2a2e3a', 0.1), 'rail_skid', verts=5)
+
+# the rope tow made to read as one line: a trodden lane up under it, a heavier rope, its handles, sheaves on the poles
+k.box(TX - 0.45, 6.6, -0.02, TX + 0.45, 76.0, 0.005, (N.PACKED, 0.12), 'path')
+for (a, b) in zip(tow, tow[1:]):
+    for s_ in (-0.2, 0.2):
+        k.tube((a[0] + s_, a[1], a[2]), (b[0] + s_, b[1], b[2]), 0.028, ('#1e1e24', 0.1), 'tow_rope', verts=5)
+    r_ = b[1] + 0.8
+    while r_ < a[1] - 0.6:                                     # handles every couple of tiles on the up-going side
+        k.tube((TX - 0.2, r_, 1.45), (TX - 0.2, r_, 0.85), 0.012, ('#2a2a30', 0.1), 'tow_handle', verts=4)
+        k.cyl_x(TX - 0.34, TX - 0.06, r_, 0.83, 0.035, 0.035, ('#e0b030', 0.1), 'tow_handle', verts=6)
+        r_ += 2.2
+for (x_, r_, z_) in tow:
+    for s_ in (-0.2, 0.2):
+        k.cyl_x(TX + s_ - 0.04, TX + s_ + 0.04, r_, 1.5, 0.12, 0.12, ('#3a3a42', 0.1), 'tow_sheave', verts=10)
+    k.cyl(TX, r_, 1.6, 1.68, 0.12, ('#f2f5fa', 0.05), 'tow_snow', verts=8)
+
+# flags at the drop-in: feather banners on the deck's corners, in the park's colours
+for (fx, col) in ((14.5, '#ff5ab0'), (25.5, '#40c8d8')):
+    k.cyl(fx, 4.6, 0.5, 3.0, 0.03, ('#2a2a30', 0.1), 'flag_pole', verts=5)
+    k.poly([(fx + 0.02, 4.61, 2.98), (fx + 0.38, 4.61, 2.8), (fx + 0.4, 4.61, 1.6), (fx + 0.02, 4.61, 1.5)], (col, 0.08), 'flag')
 
 # ---- the light: the alpenglow --------------------------------------------------------------------------------------------------
 k.sun((0.8, 0.25, -0.38), '#ffc4a4', 3.2, angle=3.0)
