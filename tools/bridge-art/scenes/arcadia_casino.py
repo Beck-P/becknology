@@ -58,7 +58,7 @@ C.front_wall(k, 0.4, 43.6, 28.0, (21.0, 23.0))
 C.video_wall(k, live, 1.5, 10.1, RB, 1.32, 3.9, [(0.0, 0.42, 0.31, 1.0, 'sports'), (0.33, 0.3, 0.67, 1.0, 'race'),
                                                 (0.69, 0.42, 1.0, 1.0, 'sports'), (0.0, 0.0, 0.31, 0.4, 'odds'),
                                                 (0.33, 0.0, 0.67, 0.28, 'odds'), (0.69, 0.0, 1.0, 0.4, 'odds')])
-S.letters(k, 'RACE & SPORTS', 'RussoOne', 5.8, RB + 0.1, 4.25, size=0.6, col=Y.CYAN_L, energy=12)
+S.letters(k, 'RACE & SPORTS', 'RussoOne', 5.8, RB + 0.1, 4.25, size=0.6, col=Y.CYAN_L, energy=12, part='letters_lustre')
 C.betting_counter(k, 1.5, 10.1, RB, RB + 0.8)
 for x in (2.5, 5.5, 8.5):
     k.poly([(x - 0.28, RB + 0.2, 1.38), (x + 0.28, RB + 0.2, 1.38), (x + 0.28, RB + 0.55, 1.07), (x - 0.28, RB + 0.55, 1.07)],
@@ -66,36 +66,36 @@ for x in (2.5, 5.5, 8.5):
     live.screens.append([round(x - 0.24, 3), round(RB + 0.2 - 1.38 * C.C45, 3), round(x + 0.24, 3), round(RB + 0.55 - 1.07 * C.C45, 3), 'odds'])
 k.solid(1.5, RB, 10.1, RB + 0.8)
 # the Card Room's arch: gold letters and a neon spade
-S.letters(k, 'CARD ROOM', 'Limelight', ARCHES['cards'], RB + 0.1, 3.35, size=0.36, col=C.GOLD_L, energy=8)
+S.letters(k, 'CARD ROOM', 'Limelight', ARCHES['cards'], RB + 0.1, 3.35, size=0.36, col=C.GOLD_L, energy=8, part='letters_lustre')
 spade = [(-0.0, 0.32), (0.2, 0.1), (0.22, -0.05), (0.1, -0.12), (0.02, -0.06), (0.08, -0.22), (-0.08, -0.22), (-0.02, -0.06),
          (-0.1, -0.12), (-0.22, -0.05), (-0.2, 0.1)]
-Y.neon_shape(k, [(ARCHES['cards'] + x * 1.4, 4.2 + z * 1.4) for (x, z) in spade], RB + 0.12, C.PINK)
+Y.neon_shape(k, [(ARCHES['cards'] + x * 1.4, 4.2 + z * 1.4) for (x, z) in spade], RB + 0.12, C.PINK, part='neon_lustre')
 # the cashier's cage
 CAGE = C.cage(k, live, 14.0, 19.0, RB, depth=1.6, windows=3)
-S.letters(k, 'CASHIER', 'Limelight', 16.5, RB + 0.1, 3.15, size=0.42, col=C.GOLD_L, energy=8)
+S.letters(k, 'CASHIER', 'Limelight', 16.5, RB + 0.1, 3.15, size=0.42, col=C.GOLD_L, energy=8, part='letters_lustre')
 # the Crown Room: the big sign over its arch, a velvet rope across, steps up into the light
 C.neon_crown(k, ARCHES['crown'], RB + 0.1, 3.3, s=0.6, col=C.YEL, gem=C.PINK, energy=20)
 # the frieze along the top of the wall: THE NEON ROYALE in gold, Neon in pink script over it
 k.box(18.2, RB, 4.42, 25.8, RB + 0.1, 5.5, (C.LACQUER, 0.05), 'frieze')
 k.box(18.1, RB, 4.38, 25.9, RB + 0.12, 4.44, (C.GOLD, 0.05), 'frieze_trim')
 k.box(18.1, RB, 5.48, 25.9, RB + 0.12, 5.54, (C.GOLD, 0.05), 'frieze_trim')
-S.letters(k, 'ROYALE', 'Limelight', ARCHES['crown'] + 0.9, RB + 0.1, 4.55, size=0.78, col=C.GOLD_L, energy=18)
-S.neon(k, 'Neon', 'Pacifico', ARCHES['crown'] - 2.45, RB + 0.12, 4.62, size=1.4, col=C.PINK, tube=0.03, energy=16)
+S.letters(k, 'ROYALE', 'Limelight', ARCHES['crown'] + 0.9, RB + 0.1, 4.55, size=0.78, col=C.GOLD_L, energy=18, part='letters_lustre')
+S.neon(k, 'Neon', 'Pacifico', ARCHES['crown'] - 2.45, RB + 0.12, 4.62, size=1.4, col=C.PINK, tube=0.03, energy=16, part='neon_lustre')
 for i in range(3):
     k.box(ARCHES['crown'] - 1.0, RB - 1.2 + i * 0.3, 0.0, ARCHES['crown'] + 1.0, RB - 0.9 + i * 0.3, 0.12 * (3 - i), (C.GOLD_D, 0.05), 'step')
 D.velvet_rope(k, ARCHES['crown'] - 1.15, ARCHES['crown'] + 1.15, RB + 0.45)
 k.solid(ARCHES['crown'] - 1.0, RB, ARCHES['crown'] + 1.0, RB + 0.9)              # the rope: you ask at it
 # crash: the big screen, the rail of terminals
 C.video_wall(k, live, 25.0, 30.9, RB, 1.25, 3.95, [(0.0, 0.0, 1.0, 1.0, 'crash')])
-S.letters(k, 'CRASH', 'Bungee', 27.95, RB + 0.1, 4.25, size=2.2, col='#ff7040', energy=14)      # Bungee sets small: 2.2 is ~3 tiles across
+S.letters(k, 'CRASH', 'Bungee', 27.95, RB + 0.1, 4.25, size=2.2, col='#ff7040', energy=14, part='letters_lustre')      # Bungee sets small: 2.2 is ~3 tiles across
 CRASH = [26.0, 28.0, 30.0]
 for x in CRASH:
     C.bet_terminal(k, live, x, RB + 0.45, 'crashbet', col='#ff7040', w=0.62)
 # Runouts' arch
-S.neon(k, 'RUNOUTS', 'Audiowide', ARCHES['runouts'], RB + 0.1, 3.35, size=0.4, col='#ff60d0', tube=0.018, energy=10)
+S.neon(k, 'RUNOUTS', 'Audiowide', ARCHES['runouts'], RB + 0.1, 3.35, size=0.4, col='#ff60d0', tube=0.018, energy=10, part='neon_lustre')
 # the stage: Lady Velvet at the microphone, the pianist at the grand
 SH = C.stage(k, live, 35.0, 43.0, RB, depth=2.4, h=0.4, crown=False)
-S.neon(k, 'Lady Velvet', 'Pacifico', 39.0, RB + 0.08, SH + 1.62, size=0.85, col=C.PINK, tube=0.026, energy=12)   # her name in lights over the starburst
+S.neon(k, 'Lady Velvet', 'Pacifico', 39.0, RB + 0.08, SH + 1.62, size=0.85, col=C.PINK, tube=0.026, energy=12, part='neon_lustre')   # her name in lights over the starburst
 C.grand_piano(k, 37.35, RB + 1.3, facing='right')
 C.mic_stand(k, 39.5, RB + 1.75, SH)
 for x in (36.0, 39.6, 42.0):                              # spotlights on the stage
@@ -133,7 +133,7 @@ for (x0, side) in ROU:
 # the pit boss's podium between the wheels: a lacquered desk, screens, a lamp
 k.box(21.3, 11.9, 0.0, 23.7, 12.8, 1.05, (C.LACQUER, 0.05), 'podium', bevel=0.03)
 k.box(21.25, 11.85, 1.05, 23.75, 12.85, 1.1, (C.GOLD, 0.05), 'podium_top')
-k.box(21.35, 12.79, 0.88, 23.65, 12.81, 0.94, shade(C.PINK, 0.45), 'podium_neon', emit=(C.PINK, 0.85))
+k.box(21.35, 12.79, 0.88, 23.65, 12.81, 0.94, shade(C.PINK, 0.45), 'podium_neon_lustre', emit=(C.PINK, 0.85))
 for x in (21.6, 23.4):
     k.box(x - 0.05, 12.79, 0.1, x + 0.05, 12.82, 0.85, (C.GOLD, 0.05), 'podium_trim')
 for (x, kind) in ((21.8, 'odds'), (23.2, 'odds')):
@@ -164,7 +164,7 @@ k.point_light(42.6, 22.0, 2.0, '#ffb060', 18, radius=0.4)
 
 # ---- the foyer: Royale Link, the prize car, the boutique, the host, columns, chandeliers ----------------------------------------
 LINK = C.link_kiosk(k, live, 12.6, 17.4, 21.8, n=4)
-S.letters(k, 'ROYALE LINK', 'Audiowide', 15.0, 21.8, 2.12, size=0.5, col=Y.CYAN_L, energy=6)
+S.letters(k, 'ROYALE LINK', 'Audiowide', 15.0, 21.8, 2.12, size=0.5, col=Y.CYAN_L, energy=6, part='letters_lustre')
 # the prize: a gold hover-coupe turning on a bulb-ringed plinth
 k.cyl(15.8, 25.4, 0.0, 0.22, 1.2, (C.LACQUER_L, 0.05), 'plinth', verts=32)
 k.cyl(15.8, 25.4, 0.22, 0.26, 1.15, (C.LACQUER_L, 0.04), 'plinth_top', verts=32)
@@ -172,7 +172,7 @@ k.cyl(15.8, 25.4, 0.26, 0.27, 1.12, (C.GOLD, 0.05), 'plinth_rim', verts=32)
 k.cyl(15.8, 25.4, 0.27, 0.28, 1.0, (C.LACQUER, 0.04), 'plinth_top', verts=32)
 for i in range(28):
     a = 2 * math.pi * i / 28
-    k.sphere(15.8 + math.cos(a) * 1.21, 25.4 + math.sin(a) * 1.21, 0.12, 0.035, 0.035, '#fff0c0', 'plinth_bulb', emit=('#ffe090', 1.0), segs=5)
+    k.sphere(15.8 + math.cos(a) * 1.21, 25.4 + math.sin(a) * 1.21, 0.12, 0.035, 0.035, '#fff0c0', 'plinth_bulb_lustre', emit=('#ffe090', 1.0), segs=5)
     live.bulbs.append(live.at(15.8 + math.cos(a) * 1.21, 25.4 + math.sin(a) * 1.21, 0.12))
 C.prize_coupe(k, 15.8, 25.4, z=0.62)
 k.solid(14.6, 24.2, 17.0, 26.6)
@@ -188,8 +188,8 @@ for zz in (0.5, 0.95, 1.4, 1.85):
             k.sphere(x + 0.1, 21.62, zz + 0.1, 0.09, 0.09, '#c8e8ff', 'snow_globe', emit=('#a0d0ff', 0.3), segs=8)
         else:
             k.box(x, 21.55, zz, x + 0.2, 21.7, zz + rng.uniform(0.12, 0.3), (col, 0.1), 'gift_box')
-k.box(27.0, 21.45, 2.1, 32.0, 21.55, 2.16, shade(C.PINK, 0.45), 'boutique_neon', emit=(C.PINK, 0.85))
-S.letters(k, 'BOUTIQUE', 'Limelight', 29.5, 21.2, 2.22, size=0.55, col=C.GOLD_L, energy=5)
+k.box(27.0, 21.45, 2.1, 32.0, 21.55, 2.16, shade(C.PINK, 0.45), 'boutique_neon_lustre', emit=(C.PINK, 0.85))
+S.letters(k, 'BOUTIQUE', 'Limelight', 29.5, 21.2, 2.22, size=0.55, col=C.GOLD_L, energy=5, part='letters_lustre')
 k.solid(27.0, 21.15, 32.0, 21.8)
 k.box(27.0, 23.0, 0.0, 32.0, 23.6, 0.95, ('#1a1620', 0.05), 'case_base')
 k.box(27.05, 23.05, 0.2, 31.95, 23.55, 0.9, '#2a3040', 'case_glass', emit=('#4a5a7a', 0.35))
@@ -220,8 +220,10 @@ for (x, r) in ((22.0, 10.0), (15.0, 15.0), (29.0, 15.0), (22.0, 20.0), (38.5, 9.
     k.point_light(x, r, 3.0, '#ffd0a0', 26, radius=0.8)
 for (x, r, c) in ((11.5, 6.0, C.PINK), (33.0, 6.0, C.PURP), (22.0, 5.0, C.YEL), (11.5, 18.0, C.CYAN), (33.5, 18.0, C.PINK)):
     k.point_light(x, r, 2.4, c, 18, radius=0.6, group='flicker')
-k.render(OUT, light_states={'full': {'flicker': 1.0, 'pulse': 1.0}, 'dim': {'flicker': 0.86, 'pulse': 0.45}},
-         light_samples=96, world_light=('#2a1830', 0.45))
+k.render(OUT, light_states={'full': {'flicker': 1.0, 'pulse': 1.0, '_art': 0.6}, 'dim': {'flicker': 0.86, 'pulse': 0.45, '_art': 0.6}},
+         light_samples=96, world_light=('#584436', 1.75))
+# (every lamp at 0.6 and the room's ambient lifted to a warm rose, so the carpet lies in one band of the toy finish, the
+# tables in soft pools a band up, instead of breaking into dark shapes where the bands' edges fell across open floor)
 
 # ---- the world ---------------------------------------------------------------------------------------------------------
 P = 'PRESS E TO PLAY'

@@ -74,11 +74,11 @@ def neon_text(k, text, cx, r_face, z0, h=0.4, col=PINK, board=True, energy=6.0, 
     return w
 
 
-def neon_shape(k, pts, r, col, tube=0.022, closed=True):
+def neon_shape(k, pts, r, col, tube=0.022, closed=True, part='neon'):
     """Neon outline through (x, z) points on a wall plane at row r."""
     seq = list(pts) + ([pts[0]] if closed else [])
     for (a, b), (c, d) in zip(seq, seq[1:]):
-        k.tube((a, r, b), (c, r, d), tube, shade(col, 0.5), 'neon', emit=(col, 0.95), verts=6)
+        k.tube((a, r, b), (c, r, d), tube, shade(col, 0.5), part, emit=(col, 0.95), verts=6)
 
 
 # ---- room shell ------------------------------------------------------------------------

@@ -69,10 +69,11 @@ def width(text, fontname, size):
     return w
 
 
-def neon(k, text, fontname, cx, r_face, z, size=0.4, col='#f078a8', tube=0.012, board=None, energy=10, spacing=1.0):
-    """Neon tubes tracing the letters' outlines (and a backing board if given)."""
+def neon(k, text, fontname, cx, r_face, z, size=0.4, col='#f078a8', tube=0.012, board=None, energy=10, spacing=1.0, part='neon'):
+    """Neon tubes tracing the letters' outlines (and a backing board if given). part='neon_lustre' keeps thin tubes lit
+    in the toy finish (scene_post LUSTRE_WORDS)."""
     o = _text_obj(text, fontname, size, bevel=tube, fill=False, spacing=spacing)
-    _place(k, o, cx, r_face + 0.05, z, shade(col, 0.5), 'neon', emit=(col, 0.95))
+    _place(k, o, cx, r_face + 0.05, z, shade(col, 0.5), part, emit=(col, 0.95))
     w = width(text, fontname, size)
     if board:
         k.box(cx - w / 2 - 0.12, r_face, z - size * 0.35, cx + w / 2 + 0.12, r_face + 0.03, z + size * 1.15, board, 'sign_board')
@@ -80,10 +81,11 @@ def neon(k, text, fontname, cx, r_face, z, size=0.4, col='#f078a8', tube=0.012, 
     return w
 
 
-def letters(k, text, fontname, cx, r_face, z, size=0.4, col='#e8c040', depth=0.06, lit=True, energy=8, spacing=1.0):
-    """Solid extruded letters; lit=True glows (channel letters), else painted metal."""
+def letters(k, text, fontname, cx, r_face, z, size=0.4, col='#e8c040', depth=0.06, lit=True, energy=8, spacing=1.0, part='letters'):
+    """Solid extruded letters; lit=True glows (channel letters), else painted metal. part='letters_lustre' keeps thin
+    lit strokes lit in the toy finish (scene_post LUSTRE_WORDS)."""
     o = _text_obj(text, fontname, size, extrude=depth / 2, spacing=spacing)
-    _place(k, o, cx, r_face + depth / 2, z, shade(col, 0.55 if lit else 1.0), 'letters', emit=(col, 0.9) if lit else None)
+    _place(k, o, cx, r_face + depth / 2, z, shade(col, 0.55 if lit else 1.0), part, emit=(col, 0.9) if lit else None)
     w = width(text, fontname, size)
     if lit:
         k.point_light(cx, r_face + 0.45, z + size * 0.5, col, energy, radius=max(0.15, w / 3), group='flicker')

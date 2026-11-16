@@ -50,8 +50,8 @@ for i in range(1, 9):
     grid.append((16.0, RB, i * 0.5, 33.6, RB + 0.01, i * 0.5 + 0.02))
 for i in range(36):
     grid.append((16.2 + i * 0.5, RB, 0.0, 16.22 + i * 0.5, RB + 0.01, H))
-k.boxes(grid, shade('#2a8a9a', 0.5), 'grid_line', emit=('#2a8a9a', 0.35))
-k.box(16.0, RB, H - 0.2, 33.6, RB + 0.04, H - 0.14, shade(C.PINK, 0.45), 'wall_neon', emit=(C.PINK, 0.9))
+k.boxes(grid, shade('#2a8a9a', 0.5), 'grid_line_lustre', emit=('#2a8a9a', 0.35))
+k.box(16.0, RB, H - 0.2, 33.6, RB + 0.04, H - 0.14, shade(C.PINK, 0.45), 'wall_neon_lustre', emit=(C.PINK, 0.9))
 C.side_wall(k, 0.4, 1.0, RB - 0.5, 14.0, H)
 C.side_wall(k, 33.0, 33.6, RB - 0.5, 14.0, H)
 C.front_wall(k, 0.4, 16.0, 14.0, (7.0, 9.0))
@@ -67,7 +67,7 @@ k.solid(16.0, RB, 16.3, 9.6)
 
 # ---- the Card Room -------------------------------------------------------------------------------------------------------------
 C.video_wall(k, live, 1.8, 6.6, RB, 1.3, 3.3, [(0.0, 0.0, 1.0, 1.0, 'board')])
-S.letters(k, 'THE CARD ROOM', 'Limelight', 8.6, RB + 0.1, 3.55, size=0.42, col=C.GOLD_L, energy=10)
+S.letters(k, 'THE CARD ROOM', 'Limelight', 8.6, RB + 0.1, 3.55, size=0.42, col=C.GOLD_L, energy=10, part='letters_lustre')
 k.box(10.1, RB, 1.3, 14.9, RB + 0.1, 3.1, (C.GOLD, 0.05), 'painting_frame')          # robots at cards, in oils
 k.box(10.25, RB + 0.1, 1.45, 14.75, RB + 0.11, 2.95, ('#14321e', 0.15), 'painting')
 k.box(11.0, RB + 0.11, 1.75, 14.0, RB + 0.12, 2.05, ('#1d6a46', 0.1), 'painting_table')
@@ -95,8 +95,8 @@ for (x, r) in ((4.5, 9.0), (12.5, 9.5), (2.5, 12.0), (14.5, 12.5)):
     k.point_light(x, r, 2.4, '#ffd0a0', 14, radius=0.6)
 
 # ---- the Runouts lounge ------------------------------------------------------------------------------------------------------------
-S.neon(k, 'RUNOUTS', 'Audiowide', 24.5, RB + 0.04, 3.3, size=0.8, col='#ff60d0', tube=0.026, energy=24)
-S.letters(k, 'EVERY GAME  EVERY STAKE', 'ZenDots', 24.5, RB + 0.04, 2.9, size=0.22, col=Y.CYAN_L, energy=4)
+S.neon(k, 'RUNOUTS', 'Audiowide', 24.5, RB + 0.04, 3.3, size=0.8, col='#ff60d0', tube=0.026, energy=24, part='neon_lustre')
+S.letters(k, 'EVERY GAME  EVERY STAKE', 'ZenDots', 24.5, RB + 0.04, 2.9, size=0.22, col=Y.CYAN_L, energy=4, part='letters_lustre')
 CAB = []
 for i, (mode, label) in enumerate(MODES[:8]):
     x = 17.5 + i * 2.0
@@ -104,7 +104,7 @@ for i, (mode, label) in enumerate(MODES[:8]):
     CAB.append((int(x), 3, mode, label))
 k.box(16.6, 6.7, 0.0, 32.0, 7.0, 1.9, (C.LACQUER, 0.05), 'island_spine')     # open at the east end: the way round to the back row
 k.box(16.55, 6.65, 1.9, 32.05, 7.05, 1.96, (C.LACQUER_L, 0.05), 'island_cap')
-k.box(16.55, 7.02, 1.8, 32.05, 7.06, 1.86, shade('#2a8a9a', 0.5), 'island_neon', emit=('#40c8d8', 0.9))
+k.box(16.55, 7.02, 1.8, 32.05, 7.06, 1.86, shade('#2a8a9a', 0.5), 'island_neon_lustre', emit=('#40c8d8', 0.9))
 for xx in (16.5, 31.9):
     k.box(xx, 6.6, 0.0, xx + 0.12, 7.8, 2.0, (C.GOLD, 0.05), 'island_end')
 k.solid(16.6, 6.7, 32.0, 7.0)
@@ -115,23 +115,25 @@ for i, (mode, label) in enumerate(MODES[8:]):
 # the Runouts desk, Kit behind it; sofas; a stool at each cabinet
 k.box(25.6, 10.95, 0.0, 28.4, 11.6, 1.0, (C.LACQUER, 0.05), 'desk', bevel=0.03)
 k.box(25.55, 10.9, 1.0, 28.45, 11.65, 1.06, ('#c8ccd8', 0.04), 'desk_top')
-k.box(25.65, 11.6, 0.8, 28.35, 11.62, 0.86, shade('#ff60d0', 0.45), 'desk_neon', emit=('#ff60d0', 0.85))
+k.box(25.65, 11.6, 0.8, 28.35, 11.62, 0.86, shade('#ff60d0', 0.45), 'desk_neon_lustre', emit=('#ff60d0', 0.85))
 k.poly([(26.3, 11.1, 1.42), (27.1, 11.1, 1.42), (27.1, 11.3, 1.06), (26.3, 11.3, 1.06)], '#081020', 'desk_screen', emit=('#2a1a4a', 0.8))
 live.screens.append([26.35, round(11.1 - 1.42 * C.C45, 3), 27.05, round(11.3 - 1.06 * C.C45, 3), 'runouts:hall'])
-S.letters(k, 'RUNOUTS', 'Audiowide', 27.0, 11.62, 0.22, size=0.4, col='#ff60d0', energy=3)
+S.letters(k, 'RUNOUTS', 'Audiowide', 27.0, 11.62, 0.22, size=0.4, col='#ff60d0', energy=3, part='letters_lustre')
 k.solid(25.6, 10.95, 28.4, 11.6)
 for (x0, r) in ((17.3, 11.2), (30.2, 11.2)):
     k.box(x0, r, 0.0, x0 + 2.2, r + 0.75, 0.42, ('#3a1450', 0.1), 'sofa', bevel=0.04)
     k.box(x0, r + 0.6, 0.3, x0 + 2.2, r + 0.85, 0.9, ('#4a1a64', 0.1), 'sofa_back', bevel=0.04)
     k.box(x0 + 0.5, r - 0.9, 0.0, x0 + 1.7, r - 0.3, 0.36, (C.LACQUER, 0.05), 'low_table', bevel=0.02)
-    k.box(x0 + 0.5, r - 0.33, 0.3, x0 + 1.7, r - 0.3, 0.33, shade(Y.CYAN, 0.45), 'low_table_neon', emit=(Y.CYAN, 0.8))
+    k.box(x0 + 0.5, r - 0.33, 0.3, x0 + 1.7, r - 0.3, 0.33, shade(Y.CYAN, 0.45), 'low_table_neon_lustre', emit=(Y.CYAN, 0.8))
     k.solid(x0, r, x0 + 2.2, r + 0.85)
     k.solid(x0 + 0.5, r - 0.9, x0 + 1.7, r - 0.3)
 for (x, r, c) in ((19.0, 5.2, '#ff60d0'), (24.5, 5.2, Y.CYAN), (30.0, 5.2, '#ff60d0'), (21.0, 9.5, Y.PURP), (28.0, 9.5, Y.CYAN),
                   (24.5, 12.5, '#ff60d0'), (31.0, 9.0, Y.CYAN), (18.0, 12.0, Y.PURP)):
     k.point_light(x, r, 2.6, c, 24, radius=0.6, group='flicker')
-k.render(OUT, light_states={'full': {'flicker': 1.0, 'pulse': 1.0}, 'dim': {'flicker': 0.85, 'pulse': 0.5}},
-         light_samples=128, world_light=('#22142c', 0.42))
+k.render(OUT, light_states={'full': {'flicker': 1.0, 'pulse': 1.0, '_art': 0.5}, 'dim': {'flicker': 0.85, 'pulse': 0.5, '_art': 0.5}},
+         light_samples=128, world_light=('#584436', 1.9))
+# (every lamp at half and the room's ambient lifted to a warm amber, so both carpets lie in one band of the toy finish
+# instead of breaking into dark shapes where the bands' edges fell across them)
 
 # ---- the world ---------------------------------------------------------------------------------------------------------------
 P = 'PRESS E TO PLAY'

@@ -39,8 +39,8 @@ C.side_wall(k, 0.4, 1.0, RB - 0.5, 12.0, H, gaps=[(8.0, 10.0)])
 C.side_wall(k, 19.0, 19.6, RB - 0.5, 12.0, H)
 k.box(0.4, 12.0, 0, 19.6, 12.6, 0.42, (C.LACQUER, 0.05), 'front_wall')
 k.box(0.4, 12.0, 0.42, 19.6, 12.6, 0.47, (C.GOLD, 0.05), 'wall_cap')
-k.box(0.4, 11.99, 0.34, 19.6, 12.02, 0.37, shade('#ffb060', 0.45), 'front_neon', emit=('#ffb060', 0.7))
-S.letters(k, 'AURUM', 'CinzelDecorative-Bold', 3.7, RB + 0.1, 3.05, size=0.5, col=C.GOLD_L, energy=10)
+k.box(0.4, 11.99, 0.34, 19.6, 12.02, 0.37, shade('#ffb060', 0.45), 'front_neon_lustre', emit=('#ffb060', 0.7))
+S.letters(k, 'AURUM', 'CinzelDecorative-Bold', 3.7, RB + 0.1, 3.05, size=0.5, col=C.GOLD_L, energy=10, part='letters_lustre')
 
 # ---- the open kitchen ---------------------------------------------------------------------------------------------------------
 C.kitchen_pass(k, 1.2, 5.8, RB, depth=2.4)
@@ -84,7 +84,10 @@ for (x, r) in ((18.2, 11.2), (1.8, 11.2), (18.3, 3.6)):
 for (x, r) in ((10.5, 7.5), (14.5, 7.5), (3.5, 9.5), (8.5, 11.0), (16.5, 11.0)):
     k.point_light(x, r, 2.4, '#ffc890', 14, radius=0.6)
 k.area_light(13.0, RB + 1.0, 3.6, '#8070c0', 60, 8.0, rot=(math.radians(-50), 0, 0))      # the city's glow through the window
-k.render(OUT, light_states={'full': {'flicker': 1.0}, 'dim': {'flicker': 0.78}}, light_samples=128, world_light=('#2a1430', 0.42))
+k.render(OUT, light_states={'full': {'flicker': 1.0, '_art': 0.5}, 'dim': {'flicker': 0.78, '_art': 0.5}}, light_samples=128,
+         world_light=('#584436', 1.05))
+# (every lamp at half and the room's ambient lifted to a warm amber, so the carpet lies in one low band of the toy finish
+# instead of breaking into dark shapes, the candles and chandeliers still the light in the room)
 
 # ---- the world ----------------------------------------------------------------------------------------------------------------------
 w = json.load(open(WORLD)) if os.path.exists(WORLD) else {}
