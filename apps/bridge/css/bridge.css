@@ -2920,6 +2920,7 @@ button.mp-node:hover { border-color: var(--gm-line); background: var(--gm-cell);
 .mp-node.here { color: var(--gm-accent); font-weight: 600; }
 .mp-node i { font-style: normal; font-size: 11px; color: var(--gm-dim); font-weight: 400; }
 .mp-node.unknown { cursor: default; color: var(--gm-dim); font-weight: 600; }
+html.touch button.mp-node { min-height: 36px; align-items: center; margin: 0; }   /* a finger's worth (the phone pass) */
 
 /* the Menu pill: the way in on touch (it was the Journal pill) */
 #journal-pill .jp-ico canvas { width: 16px; height: 16px; image-rendering: pixelated; display: block; }
