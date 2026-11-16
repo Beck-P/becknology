@@ -152,7 +152,11 @@ global.PHONE_EXTRA = async ({ page, go, useIt, press, audit, closeByTap, tapAt, 
     if (/stick:shown|dpad-action:shown|inventory-panel:shown/.test(during)) fail(tag + ': the touch controls show over a line: ' + during);
     if (over) fail(tag + ': something over the line\'s card: ' + over);
     if (!out) fail(tag + ': the line didn\'t close by a tap');
-    if (after !== before) fail(tag + ': not back as they were: ' + before + ' → ' + after);
+    // a fight goes on while the line is up: if she struck, sank or sheered off meanwhile (a slow run), FIRE rightly went with her
+    const over2 = /^fight/.test(tag) && !/sf-fire:shown/.test(after) && !(await p.evaluate(() => BridgeSeaFight.busy()));
+    const cmp = (s) => over2 ? s.replace(/ #sf-fire:\w+/, '') : s;
+    if (over2) console.log(tag + ': the fight ended while the line was up (FIRE not compared)');
+    if (cmp(after) !== cmp(before)) fail(tag + ': not back as they were: ' + before + ' → ' + after);
   };
   if (!ONLY || ONLY.indexOf('ride') >= 0) {
     const p = await page('phone', { bridge_country: JSON.stringify({ horse: { coat: 'bay', name: 'Clover' }, riding: 'horse' }) });
