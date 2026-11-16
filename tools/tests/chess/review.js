@@ -79,7 +79,7 @@ const LICHESS = [
 
     // the coach: says what a real one would, in shape — a tool call when asked about a move or a threat, then an
     // answer built from what the page's Stockfish sent back
-    await ctx.route(/\/api\/chess-coach/, (r) => {
+    await ctx.route(/\/api\/chess-coach/, async (r) => {
       const req = r.request();
       if (req.method() === 'GET') return r.fulfill(json({ enabled: true, env: 'test' }));
       if (coachMode === 'busy') return r.fulfill(json({ error: 'busy' }, 429));
@@ -89,21 +89,29 @@ const LICHESS = [
       const thinking = { type: 'thinking', thinking: '', signature: 'sig-' + posts.length };
       const say = (text) => text.match(/\S+\s*/g).map((d) => ({ t: 'text', d }));
       let events;
-      if (Array.isArray(last.content)) {
-        const got = last.content.map((c) => c.content).join('\n');
-        const text = 'Stockfish says: ' + got.split('\n').filter((l) => /^- |^1\. \(|is in check/.test(l)).slice(0, 2).join(' ');
+      const asked = typeof last.content === 'string';
+      const q = asked ? last.content.split('</board>').pop() : '';
+      const ahead = asked ? (last.content.match(/Stockfish was asked ahead[\s\S]*?(?=\n<\/board>)/) || [''])[0] : '';
+      const lines = (t) => t.split('\n').filter((l) => /^- |^1\. \(|is in check/.test(l)).slice(0, 2).join(' ');
+      if (!asked) {                                                // the results of its tool calls: answer from them
+        const text = 'Stockfish says: ' + lines(last.content.map((c) => c.content).join('\n'));
         events = [...say(text), { t: 'done', stop: 'end_turn', content: [thinking, { type: 'text', text }] }];
-      } else if (/why not|what about/i.test(last.content.split('</board>').pop()) && !body.final) {
-        const q = last.content.split('</board>').pop();
-        const mv = /knight takes b5/.test(q) ? 'Nxb5' : q.match(/(?:why not|what about)\s+([A-Za-z0-9+#=-]+)/i)[1];      // (a real coach turns spoken moves into notation itself)
-        events = [{ t: 'done', stop: 'tool_use', content: [thinking, { type: 'tool_use', id: 'toolu_' + posts.length, name: 'evaluate_moves', input: { moves: [mv, 'Zz9'] } }] }];
-      } else if (/threat/i.test(last.content.split('</board>').pop()) && !body.final) {
-        events = [{ t: 'done', stop: 'tool_use', content: [thinking, { type: 'tool_use', id: 'toolu_' + posts.length, name: 'find_threats', input: {} }, { type: 'tool_use', id: 'toolu_b' + posts.length, name: 'analyze_line', input: { moves: ['Nxb5', 'cxb5'], lines: 2 } }] }];
+      } else if (ahead) {                                          // the page checked ahead: no tool call needed
+        const text = 'Stockfish says: ' + lines(ahead);
+        events = [...say(text), { t: 'done', stop: 'end_turn', content: [thinking, { type: 'text', text }] }];
+      } else if (/check the bishop/i.test(q) && !body.final) {
+        events = [{ t: 'done', stop: 'tool_use', content: [thinking, { type: 'tool_use', id: 'toolu_' + posts.length, name: 'evaluate_moves', input: { moves: ['Bxf6', 'Zz9'] } }] }];
+      } else if (/dig into/i.test(q) && !body.final) {
+        events = [{ t: 'done', stop: 'tool_use', content: [thinking, { type: 'tool_use', id: 'toolu_' + posts.length, name: 'find_threats', input: {} }, { type: 'tool_use', id: 'toolu_b' + posts.length, name: 'analyze_line', input: { moves: ['Qc7'], lines: 2, start: 'before_last_move' } }] }];
+      } else if (/what was better/i.test(q)) {
+        const text = 'Better was 9...Qc7, keeping the pawn on e5 safe.';
+        events = [...say(text), { t: 'done', stop: 'end_turn', content: [thinking, { type: 'text', text }] }];
       } else {
         const text = 'The key move is **10. Nxb5**. After 10. Nxb5 cxb5 11. Bxb5+ White wins material, about +4.4.\n\nLook for loose pieces next time.';
         events = [...say(text), { t: 'done', stop: 'end_turn', content: [thinking, { type: 'text', text }] }];
       }
-      return r.fulfill({ status: 200, contentType: 'text/event-stream', body: events.map((e) => 'data: ' + JSON.stringify(e) + '\n\n').join('') });
+      if (coachMode === 'slow') await new Promise((ok) => setTimeout(ok, 4000));
+      return r.fulfill({ status: 200, contentType: 'text/event-stream', body: events.map((e) => 'data: ' + JSON.stringify(e) + '\n\n').join('') }).catch(() => {});   // (the page may have stopped waiting)
     });
 
     // a microphone that hears what the test tells it to, and a voice that writes down what it's given to say
@@ -142,6 +150,16 @@ const LICHESS = [
       && box.querySelector('.rv-line').dataset.first === S.live.lines[0].pv[0];
   }, depth, { timeout: 30000 });
   const answered = (p, n) => p.waitForFunction((k) => document.querySelectorAll('#rv-chat .rv-msg-coach:not(.is-waiting), #rv-chat .rv-msg-error').length >= k && !window.__chessReview.coach().busy, n, { timeout: 60000 });
+  const bubbles = (p) => p.evaluate(() => document.querySelectorAll('#rv-chat .rv-msg-coach:not(.is-waiting), #rv-chat .rv-msg-error').length);
+  // type a question (or pass a function that asks it another way) and wait for its answer
+  const ask = async (p, q, how = 'enter') => {
+    const n = await bubbles(p);
+    if (typeof q === 'function') await q();
+    else { await p.fill('#rv-question', q); if (how === 'enter') await p.press('#rv-question', 'Enter'); else await p.click('#rv-send'); }
+    await answered(p, n + 1);
+  };
+  const lastAnswer = (p) => p.evaluate(() => { const all = document.querySelectorAll('#rv-chat .rv-msg-coach'); const e = all[all.length - 1]; return e ? e.innerText.replace(/\s+/g, ' ').trim() : ''; });
+  const unfold = async (p) => { if (await p.evaluate(() => document.getElementById('rv-games').classList.contains('is-folded'))) await p.click('#rv-games-toggle'); };
   const text = (p, sel) => p.evaluate((s) => { const e = document.querySelector(s); return e ? e.innerText.replace(/\s+/g, ' ').trim() : null; }, sel);
   const state = (p) => p.evaluate(() => { const S = window.__chessReview.S; return { ply: S.ply, side: S.side.map((m) => m.san), n: S.game.moves.length, id: S.game.id, flipped: S.flipped }; });
 
@@ -181,7 +199,9 @@ const LICHESS = [
   console.log('review: reviewed in', Date.now() - t0, 'ms — accuracy', JSON.stringify(g.acc), '|', g.marks.filter((m) => /inacc|mistake|blunder/.test(m)).join(' '));
   check('the game is read through its clock comments: 33 moves, you as White', g.n === 33 && g.me === 'w' && !g.clk);
   check("the review marks Black's ...b5 as an error and the winner as the more accurate", /b5:(mistake|blunder|inaccuracy)/.test(g.marks.join(' ')) && g.acc.w > g.acc.b && g.acc.w > 80, JSON.stringify(g.acc));
-  check('the accuracy boxes and the graph show', /% accuracy/.test(await text(p, '#rv-acc')) && await p.evaluate(() => !document.getElementById('rv-graph').hidden && document.getElementById('rv-progress').hidden));
+  check('the accuracy boxes and the graph show', /BeckP \d+\.\d% .*duke_karl \d+\.\d%/.test(await text(p, '#rv-acc')) && await p.evaluate(() => !document.getElementById('rv-graph').hidden && document.getElementById('rv-progress').hidden));
+  const folded = await p.evaluate(() => ({ folded: document.getElementById('rv-games').classList.contains('is-folded'), list: document.getElementById('rv-game-list').offsetParent !== null, now: document.getElementById('rv-games-now').textContent }));
+  check('with a game open the picker folds away under its heading, which says whose games they are', folded.folded && !folded.list && folded.now === 'chess.com · BeckP', JSON.stringify(folded));
   const title = await text(p, '#rv-game-title');
   check('the title says who, the result and the opening', /BeckP vs duke_karl/.test(title) && /1-0/.test(title) && /Philidor Defense/.test(title), title);
 
@@ -234,80 +254,120 @@ const LICHESS = [
   check("a move that isn't legal is refused", (await state(p)).side.join() === 'd5');
   await p.click('#rv-back');
 
-  // --- the coach: the Why? button, a typed question with a tool round, a tool pair, an error
+  // --- the coach: the suggestions, the Why? button, moves in an answer, checks made ahead, tool calls, an error, Stop
   await p.click('#rv-moves .rv-mv[data-ply="18"]');
   await live(p, 12);
-  await p.click('#rv-why');
-  await answered(p, 2);                                       // (the greeting is the first bubble)
+  const chips = await p.evaluate(() => { const c = [...document.querySelectorAll('#rv-chips .rv-chip')], box = document.getElementById('rv-coach').getBoundingClientRect(); return { labels: c.map((e) => e.textContent), tops: [...new Set(c.map((e) => Math.round(e.getBoundingClientRect().top)))].length, inside: c[0].getBoundingClientRect().top > box.top && c[0].getBoundingClientRect().bottom < box.bottom, q: c[1].dataset.q }; });
+  check('the suggestions are short, in one row, inside the coach\'s panel', chips.labels.join('|') === 'Why 9...b5?|Best move?|Threats?|Plans?|Takeaways' && chips.tops === 1 && chips.inside && chips.q === "What's the best move here, and why?", JSON.stringify(chips));
+  await ask(p, () => p.click('#rv-why'));
   const first = posts[0].messages[0].content;
   console.log('review: the question as sent —', first.split('</board>').pop().trim());
   check('Why? asks about the move, by name', /Why is 9\.\.\.b5 (a mistake|a blunder|an inaccuracy), and why is \S+ better\?/.test(first));
   check('the question carries the whole game with its evaluations', /The game: BeckP \(1212\) as White against duke_karl/.test(first) && /The player asking is BeckP, who had White/.test(first) && /9\. Bg5 \([+-]?\d/.test(first) && /b5\?+ \(/.test(first) && /Accuracy: White/.test(first));
   check('…and the position: where it is, the FEN, every piece, the loose ones', /the game after 9\.\.\.b5\. White to move/.test(first) && /FEN: rn2kb1r\/p3qppp\/2p2n2\/1p2p1B1\/2B1P3\/1QN5\/PPP2PPP\/R3K2R w KQkq/.test(first) && /White: Ke1 Qb3 Ra1 Rh1 Bc4 Bg5 Nc3, pawns a2 b2 c2 e4 f2 g2 h2/.test(first) && /Pieces under fire: /.test(first) && /Black's pawn on b5 is attacked/.test(first));
   check("…and Stockfish's lines for it, in notation", /Stockfish 19, depth \d+ - best lines for White here/.test(first) && /1\. \([+-]?[\d.M]+\) 10\. \S+/.test(first) && /In the game, White now played 10\. Nxb5/.test(first), first.split('\n').filter((l) => /^1\. \(/.test(l)).join(''));
-  const ans = await text(p, '#rv-chat .rv-msg-coach:last-of-type');
-  check('the answer arrives formatted', /The key move is 10\. Nxb5\./.test(ans) && await p.evaluate(() => Boolean(document.querySelector('#rv-chat .rv-msg-coach:last-of-type strong'))), ans);
+  check('…with nothing checked ahead: the better move it names already has its line there', !/asked ahead/.test(first) && /Stockfish preferred 9\.\.\.Qc7, continuing 9\.\.\.Qc7 10\. /.test(first) && posts.length === 1);
+  const ans = await lastAnswer(p);
+  const made = await p.evaluate(() => { const all = document.querySelectorAll('#rv-chat .rv-msg-coach'), e = all[all.length - 1]; return { strong: Boolean(e.querySelector('strong')), moves: [...e.querySelectorAll('.rv-san')].map((b) => b.textContent), took: (e.querySelector('.rv-took') || {}).textContent, why: (e.querySelector('.rv-took') || {}).title }; });
+  check('the answer arrives formatted, its moves as links, with how long it took under it', /The key move is 10\. Nxb5\./.test(ans) && made.strong && made.moves.join() === 'Nxb5,Nxb5,cxb5,Bxb5+' && /^\d+(\.\d)? s$/.test(made.took) && /First words after/.test(made.why), JSON.stringify(made));
+  await p.evaluate(() => { const all = document.querySelectorAll('#rv-chat .rv-msg-coach'); all[all.length - 1].querySelectorAll('.rv-san')[3].click(); });
+  st = await state(p);
+  check('a move clicked in the answer is played out on the board with the moves before it in its line', st.ply === 21 && st.side.length === 0, JSON.stringify(st));
 
-  await p.fill('#rv-question', 'why not Bxf6?');
-  await p.press('#rv-question', 'Enter');
-  await answered(p, 3);
+  await p.click('#rv-moves .rv-mv[data-ply="18"]');
+  await live(p, 12);
+  await ask(p, 'what was better?');
+  made.moves = await p.evaluate(() => { const all = document.querySelectorAll('#rv-chat .rv-msg-coach'); return [...all[all.length - 1].querySelectorAll('.rv-san')].map((b) => b.textContent); });
+  await p.evaluate(() => { const all = document.querySelectorAll('#rv-chat .rv-msg-coach'); all[all.length - 1].querySelector('.rv-san').click(); });
+  st = await state(p);
+  check('"Better was 9...Qc7" plays from the position before the move; a square that is only mentioned is no link', made.moves.join() === 'Qc7' && st.ply === 17 && st.side.join() === 'Qc7', JSON.stringify(made.moves) + JSON.stringify(st));
+
+  await p.click('#rv-moves .rv-mv[data-ply="18"]');
+  await live(p, 12);
+  let n = posts.length;
+  await ask(p, 'why not Bxf6?');
+  let sentQ = posts[n].messages.slice(-1)[0].content;
+  console.log('review: checked ahead —', (sentQ.match(/Stockfish was asked ahead[\s\S]*?(?=\n<\/board>)/) || [''])[0].replace(/\n/g, ' / ').slice(0, 300));
+  check('a move named in the question is checked on the page\'s Stockfish before the coach is asked', /Stockfish was asked ahead/.test(sentQ) && /In the position on the board \(White to move\), Stockfish's best move is 10\. \S+ \([+-]?[\d.M]+\)/.test(sentQ) && /- 10\. Bxf6: [+-]?[\d.M]+(, [\d.]+ worse than the best move|, about as good as the best move)?\. Then: 10\.\.\.\S+/.test(sentQ));
+  const took = await p.evaluate(() => { const all = document.querySelectorAll('#rv-chat .rv-msg-coach'); return all[all.length - 1].querySelector('.rv-took').title; });
+  check('…so the answer takes one trip, and says so', posts.length === n + 1 && /Stockfish says: - 10\. Bxf6:/.test(await lastAnswer(p)) && /1 Stockfish check made before asking/.test(took) && !/trip/.test(took), took);
+  n = posts.length;
+  await ask(p, 'why not Nbd7 instead?');
+  sentQ = posts[n].messages.slice(-1)[0].content;
+  console.log('review: instead —', (sentQ.match(/Stockfish was asked ahead[\s\S]*?(?=\n<\/board>)/) || [''])[0].replace(/\n/g, ' / ').slice(0, 260));
+  check('a move that could have been played instead of the last one is checked from the position before it', /In the position before 9\.\.\.b5 \(Black to move\), Stockfish's best move is 9\.\.\.\S+/.test(sentQ) && /- 9\.\.\.Nbd7: [+-]?[\d.M]+/.test(sentQ) && posts.length === n + 1);
+  n = posts.length;
+  await ask(p, 'what is he threatening here?', 'button');
+  sentQ = posts[n].messages.slice(-1)[0].content;
+  check('a question about threats has the threat looked up ahead', /If Black could move again at once in the position on the board \(White doing nothing\)/.test(sentQ) && /With White to move as normal the evaluation is/.test(sentQ) && posts.length === n + 1);
+
+  n = posts.length;
+  await ask(p, 'check the bishop capture for me');
   const tool = posts[posts.length - 1].messages;
   const result = tool[tool.length - 1].content;
   console.log('review: the tool result —', JSON.stringify(result[0].content).slice(0, 330));
-  check('a "why not" question comes back as a tool call, run on the page\'s Stockfish', Array.isArray(result) && result[0].type === 'tool_result' && /^toolu_/.test(result[0].tool_use_id) && /Stockfish's best move is 10\. \S+ \([+-]?[\d.M]+\)/.test(result[0].content) && /- 10\. Bxf6: [+-]?[\d.M]+(, [\d.]+ worse than the best move|, about as good as the best move)?\. Then: 10\.\.\.\S+/.test(result[0].content));
+  check('a tool call from the coach is run on the page\'s Stockfish and its result sent back', posts.length === n + 2 && !/asked ahead/.test(posts[n].messages.slice(-1)[0].content) && Array.isArray(result) && result[0].type === 'tool_result' && /^toolu_/.test(result[0].tool_use_id) && /Stockfish's best move is 10\. \S+ \([+-]?[\d.M]+\)/.test(result[0].content) && /- 10\. Bxf6: [+-]?[\d.M]+/.test(result[0].content));
   check('an illegal move in a tool call is answered as such, not run', /- Zz9: not a legal move here\. Legal moves like it: /.test(result[0].content));
-  const sent = posts.map((b) => JSON.stringify(b.messages));
-  check('the conversation only ever grows: each request starts with the one before it', sent.every((s, i) => i === 0 || s.startsWith(sent[i - 1].slice(0, -1))));
-  check('each reply goes back as it came (thinking block and all)', tool[1].content[0].type === 'thinking' && tool[1].content[0].signature === 'sig-1' && tool[3].content[1].type === 'tool_use');
-  check('a later question sends the position again but not the game', !/The game: BeckP/.test(tool[2].content) && /FEN: /.test(tool[2].content));
-  check('the answer uses what Stockfish found', /Stockfish says: - 10\. Bxf6:/.test(await text(p, '#rv-chat .rv-msg-coach:last-of-type')));
-
-  await p.fill('#rv-question', 'what is the threat here?');
-  await p.click('#rv-send');
-  await answered(p, 4);
+  check('the answer uses what Stockfish found, and counts the trip', /Stockfish says: - 10\. Bxf6:/.test(await lastAnswer(p)) && /1 trip back for more checks/.test(await p.evaluate(() => { const all = document.querySelectorAll('#rv-chat .rv-msg-coach'); return all[all.length - 1].querySelector('.rv-took').title; })));
+  await ask(p, 'dig into the main line');
   const pair = posts[posts.length - 1].messages.slice(-1)[0].content;
-  console.log('review: threats —', JSON.stringify(pair[0].content).slice(0, 260));
-  check('two tool calls in one reply get two results in one message', pair.length === 2 && /If Black could move again at once/.test(pair[0].content) && /With White to move as normal the evaluation is/.test(pair[0].content));
-  check('analyze_line plays the moves and describes the board after them', /^After 10\. Nxb5 cxb5:/.test(pair[1].content) && /White: Ke1 Qb3 Ra1 Rh1 Bc4 Bg5, pawns/.test(pair[1].content) && /best lines for White here/.test(pair[1].content) && (pair[1].content.match(/^\d\. \(/gm) || []).length === 2);
+  console.log('review: two tools —', JSON.stringify(pair[1].content).slice(0, 200));
+  check('two tool calls in one reply get two results in one message', pair.length === 2 && /If Black could move again at once/.test(pair[0].content));
+  check('analyze_line can start from the position before the last move, and describes the board after its moves', /^After 9\.\.\.Qc7 from the position before 9\.\.\.b5:/.test(pair[1].content) && /Black: Ke8 Qc7 Ra8 Rh8 Bf8 Nb8 Nf6, pawns/.test(pair[1].content) && /best lines for White here/.test(pair[1].content) && (pair[1].content.match(/^\d\. \(/gm) || []).length === 2, pair[1].content.slice(0, 120));
+  const sent = posts.map((b) => JSON.stringify(b.messages));
+  check('the conversation only ever grows: each request starts with the one before it', sent.every((x, i) => i === 0 || x.startsWith(sent[i - 1].slice(0, -1))));
+  const whole = posts[posts.length - 1].messages;
+  check('each reply goes back as it came (thinking block and all)', whole[1].content[0].type === 'thinking' && whole[1].content[0].signature === 'sig-1' && whole.some((m) => Array.isArray(m.content) && m.content.some((b) => b.type === 'tool_use')));
+  check('a later question sends the position again but not the game', !/The game: BeckP/.test(whole[2].content) && /FEN: /.test(whole[2].content));
 
   coachMode = 'busy';
-  const before = posts.length;
+  const before = posts.length, held = posts[posts.length - 1].messages.length + 1;
   await p.fill('#rv-question', 'and now?');
   await p.click('#rv-send');
   await p.waitForSelector('#rv-chat .rv-msg-error', { timeout: 20000 });
   check('a busy coach says so', /busy right now/.test(await text(p, '#rv-chat .rv-msg-error')));
-  coachMode = 'ok';
-  await p.fill('#rv-question', 'ok, the best move?');
+  coachMode = 'slow';
+  await p.fill('#rv-question', 'tell me a long story');
+  await p.press('#rv-question', 'Enter');
+  await p.waitForFunction(() => document.getElementById('rv-send').textContent === 'Stop', null, { timeout: 10000 });
+  const mid = await p.evaluate(() => document.querySelectorAll('#rv-chat .rv-msg-you').length);
   await p.click('#rv-send');
-  await answered(p, 6);
+  await p.waitForFunction(() => document.getElementById('rv-send').textContent === 'Ask' && !window.__chessReview.coach().busy, null, { timeout: 10000 });
+  const stopped = await p.evaluate(() => ({ you: document.querySelectorAll('#rv-chat .rv-msg-you').length, waiting: document.querySelectorAll('#rv-chat .is-waiting').length, box: document.getElementById('rv-question').value }));
+  check('Ask is Stop while an answer is coming: stopping takes the question back into the box', stopped.you === mid - 1 && stopped.waiting === 0 && stopped.box === 'tell me a long story', JSON.stringify(stopped));
+  coachMode = 'ok';
+  await p.waitForTimeout(4200);                               // (let the slow reply nobody is waiting for go by)
+  const m0 = posts.length;
+  await ask(p, 'ok, the best move?', 'button');
   const after = posts[posts.length - 1].messages;
-  check('…and the question that failed leaves no trace in the conversation', posts.length === before + 1 && !JSON.stringify(after).includes('and now?') && after.length === 11, 'messages ' + after.length);
+  check('…and neither the failed question nor the stopped one leaves a trace in the conversation', posts.length === m0 + 1 && posts.length >= before + 2 && !/and now\?|long story/.test(JSON.stringify(after)) && after.length === held + 1, JSON.stringify({ posts: posts.length, m0, before, messages: after.length, held, trace: (JSON.stringify(after).match(/and now\?|long story/) || [''])[0] }));
 
   // --- by voice
   await p.click('#rv-mic');
   check('the microphone button starts listening', await p.evaluate(() => window.__recStarts === 1 && document.getElementById('rv-mic').classList.contains('is-on')));
-  await p.evaluate(() => window.__hear('what about night takes B5'));
-  await answered(p, 7);
-  const voiced = posts[posts.length - 2].messages.slice(-1)[0].content.split('</board>').pop().trim();
+  n = posts.length;
+  await ask(p, () => p.evaluate(() => window.__hear('what about night takes B5')));
+  const voiced = posts[n].messages.slice(-1)[0].content.split('</board>').pop().trim();
   const spoken = await p.evaluate(() => window.__spoken.join(' | '));
   console.log('review: heard as —', voiced, '| spoken —', spoken.slice(0, 200));
   check('what was heard is tidied into chess and marked as asked by voice', voiced === '[asked by voice] what about knight takes b5');
+  check('a move said in words is checked ahead too', /- 10\. Nxb5: this is the engine's best move/.test(posts[n].messages.slice(-1)[0].content) && posts.length === n + 1);
   check('the answer is read aloud, moves as words', /Stockfish says/.test(spoken) && /knight takes b5/.test(spoken) && !/Nxb5/.test(spoken), spoken);
   await p.click('#rv-voice-mode');
   check('voice mode listens straight away', await p.evaluate(() => window.__recStarts === 2 && document.getElementById('rv-voice-mode').classList.contains('active')));
-  await p.evaluate(() => window.__hear('what is the best move'));
-  await answered(p, 8);
+  await ask(p, () => p.evaluate(() => window.__hear('what is the best move')));
   await p.waitForFunction(() => window.__recStarts === 3, null, { timeout: 10000 });
   check('…and listens again once the answer has been spoken', true);
   await p.evaluate(() => window.__hear(''));
   await p.evaluate(() => window.__hear(''));
   await p.evaluate(() => window.__hear(''));
   check('three silences and voice mode rests', await p.evaluate(() => !document.getElementById('rv-voice-mode').classList.contains('active')) && /Voice mode is resting/.test(await text(p, '#rv-chat')));
-  const fit = await p.evaluate(() => ({ ask: Math.round(document.getElementById('rv-ask').getBoundingClientRect().bottom), h: innerHeight, y: Math.round(scrollY || document.body.scrollTop) }));
-  check("the coach's box is on screen without scrolling the page", fit.ask <= fit.h && fit.y === 0, JSON.stringify(fit));
+  const fit = await p.evaluate(() => { const r = (id) => document.getElementById(id).getBoundingClientRect(); return { ask: Math.round(r('rv-ask').bottom), chips: Math.round(r('rv-chips').bottom), coach: Math.round(r('rv-coach').bottom), h: innerHeight, y: Math.round(scrollY || document.body.scrollTop), chat: Math.round(r('rv-chat').height) }; });
+  check("the coach's box is on screen without scrolling the page, inside its panel, under a tall conversation", fit.ask <= fit.coach && fit.coach <= fit.h && fit.y === 0 && fit.chat > 400, JSON.stringify(fit));
   await p.screenshot({ path: SHOTS + '/review_coach.png' });
 
   // --- lichess
+  await unfold(p);
   await p.click('.rv-source[data-source="lichess"]');
   await p.fill('#rv-user', 'BeckP');
   await p.click('#rv-user-go');
@@ -321,19 +381,19 @@ const LICHESS = [
   check('a game as Black opens from Black\'s side', st.n === 5 && st.flipped === true && st.id === 'li:efgh5678', JSON.stringify(st));
   const n0 = posts.length;
   await p.click('#rv-last');
-  await p.fill('#rv-question', 'what went wrong?');
-  await p.click('#rv-send');
-  await answered(p, 9);
+  await ask(p, 'what went wrong?', 'button');
   const fresh = posts[n0].messages;
   check('a new game starts a new conversation, and a finished position needs no engine lines', fresh.length === 1 && /The game: Stockfish level 3 as White against BeckP/.test(fresh[0].content) && /Black is checkmated/.test(fresh[0].content) && !/best lines for/.test(fresh[0].content) && /a new game/.test(await text(p, '#rv-chat')));
 
   // --- pasted: a position, then one set up by hand
+  await unfold(p);
   await p.click('.rv-source[data-source="paste"]');
   await p.fill('#rv-paste', 'r1bqkbnr/pppp1ppp/2n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3');
   await p.click('#rv-paste-go');
   await live(p);
   st = await state(p);
   check('a pasted FEN becomes the position on the board, Black to move', st.n === 0 && /^pos:r1bqkbnr/.test(st.id) && await p.evaluate(() => /to move/.test(document.getElementById('rv-player-top').textContent)));
+  await unfold(p);
   await p.fill('#rv-paste', 'this is not chess');
   await p.click('#rv-paste-go');
   check('nonsense is refused with a reason', /couldn't read/.test(await text(p, '#rv-list-note')));
@@ -413,6 +473,8 @@ const LICHESS = [
   });
   check('a link carrying a game opens it; on a phone nothing runs off the side and the board fills the width', ph.n === 33 && !ph.wide && ph.board >= 330, JSON.stringify(ph));
   check('no button on the phone is too small to tap', ph.small.length === 0, ph.small.join(', '));
+  const order = await m.evaluate(() => { const t = (id) => Math.round(document.getElementById(id).getBoundingClientRect().top + (scrollY || document.body.scrollTop)); return { games: t('rv-games'), board: t('rv-board-wrap'), verdict: t('rv-verdict'), coach: t('rv-coach'), engine: t('rv-lines'), moves: t('rv-moves'), folded: document.getElementById('rv-games').classList.contains('is-folded') }; });
+  check('on a phone the order is the folded picker, the board, the coach, Stockfish, the moves', order.folded && order.games < order.board && order.board < order.verdict && order.verdict < order.coach && order.coach < order.engine && order.engine < order.moves, JSON.stringify(order));
   await m.screenshot({ path: SHOTS + '/review_phone.png' });
   // the short address, as saved on a phone's home screen
   const c = await ctx3.newPage();
@@ -427,6 +489,23 @@ const LICHESS = [
   await m.evaluate(() => document.getElementById('rv-coach').scrollIntoView());
   await m.screenshot({ path: SHOTS + '/review_phone_coach.png' });
   await ctx3.close();
+
+  // ================= a short, narrower window =================
+  for (const [w, h] of [[1280, 700], [1100, 640]]) {
+    const ctx4 = await context({ viewport: { width: w, height: h } });
+    const s2 = await ctx4.newPage();
+    watch(s2, 'short');
+    await s2.goto(URL0 + '/chess?tab=review&pgn=' + encodeURIComponent(`[White "Morphy"]\n[Black "Duke Karl"]\n[Result "1-0"]\n\n${OPERA}`));
+    await ready(s2);
+    await reviewed(s2);
+    await s2.evaluate(() => window.__chessReview.goTo(18));
+    await live(s2);
+    for (const q of ['what is the best move', 'and after that?', 'thanks']) { const n = await bubbles(s2); await s2.fill('#rv-question', q); await s2.press('#rv-question', 'Enter'); await answered(s2, n + 1); }
+    const sh = await s2.evaluate(() => { const r = (id) => document.getElementById(id).getBoundingClientRect(); return { coachTop: Math.round(r('rv-coach').top), coach: Math.round(r('rv-coach').bottom), ask: Math.round(r('rv-ask').bottom), chips: Math.round(r('rv-chips').top), chat: Math.round(r('rv-chat').height), h: innerHeight, wide: document.documentElement.scrollWidth > innerWidth + 1 }; });
+    check(`in a ${w} × ${h} window the suggestions and the question box stay inside the coach's panel, on screen`, sh.ask <= sh.coach && sh.chips > sh.coachTop && sh.coach <= sh.h && sh.chat >= 100 && !sh.wide, JSON.stringify(sh));
+    await s2.screenshot({ path: SHOTS + `/review_${w}.png` });
+    await ctx4.close();
+  }
 
   console.log('errors:', errs.length + failed);
   await browser.close();

@@ -35,6 +35,8 @@ With each question you are given the position (FEN, a list of where every piece 
 Where the truth comes from:
 - Stockfish's evaluations and lines are the facts about what is good and bad. You are far weaker than the engine at calculating, so never overrule it and never judge a line by working it out in your head. What you add is the part the engine cannot say: why, in terms a person can use - the tactic, the loose piece, the weak square, the plan, the pattern to remember next time.
 - Only say that a move wins or loses material, allows a tactic, or leads to mate when an engine line in front of you shows it. If the player asks about a move or an idea you have no engine line for ("why not Nxe5?", "what if I castle first?", "can't I just take the pawn?", "what is he threatening?"), use the tools to have Stockfish look at it before you answer. One or two tool calls is normal; several candidate moves can go in one call.
+- Often the message already carries what Stockfish found when it was asked ahead about a move or a threat the question mentions. That is the tool's own result: answer from it, and call a tool only for something it does not cover.
+- A question about the move that was just played - "why not Qc7 instead?", "what should I have done?" - is about the position before that move. The tools start from the position on the board unless you pass start: "before_last_move".
 - Read where the pieces are from the piece list, not from memory of the opening or by decoding the FEN, and check that every piece you mention is on the square you say. After a line of moves the board has changed: ask the tools for the position rather than tracking it yourself.
 - Evaluations are from White's point of view in pawns: +1.5 means White is better by about a pawn and a half, -0.8 means Black is a little better, M3 means White mates in 3 and -M2 means Black mates in 2. A change of less than about 0.3 is noise - don't build an explanation on it.
 - If the engine's choice has no reason you can honestly point to, say that it is a small engine preference rather than inventing one.
@@ -53,6 +55,12 @@ const MOVES = {
   description: 'Moves in standard algebraic notation ("Nxe5", "O-O", "e8=Q") or as from-to squares ("g1f3").',
 };
 
+const START = {
+  type: 'string',
+  enum: ['current', 'before_last_move'],
+  description: 'Where to start from: "current" (the default) is the position on the board; "before_last_move" is the position the last move was played in - use it for what could have been played instead of that move.',
+};
+
 const TOOLS = [
   {
     name: 'evaluate_moves',
@@ -62,7 +70,8 @@ const TOOLS = [
       type: 'object',
       properties: {
         moves: { ...MOVES, description: `The candidate moves to try, each on its own from the same position (1 to 6). ${MOVES.description}` },
-        after: { ...MOVES, description: `Optional: moves to play first from the position on the board, in order, before trying the candidates. ${MOVES.description}` },
+        after: { ...MOVES, description: `Optional: moves to play first from the starting position, in order, before trying the candidates. ${MOVES.description}` },
+        start: START,
       },
       required: ['moves'],
     },
@@ -76,6 +85,7 @@ const TOOLS = [
       properties: {
         moves: { ...MOVES, description: `The moves to play from the position on the board, in order (may be empty). ${MOVES.description}` },
         lines: { type: 'integer', description: 'How many of the best lines to return, 1 to 5. Defaults to 3.' },
+        start: START,
       },
       required: [],
     },
@@ -87,7 +97,8 @@ const TOOLS = [
     input_schema: {
       type: 'object',
       properties: {
-        after: { ...MOVES, description: `Optional: moves to play first from the position on the board, in order. ${MOVES.description}` },
+        after: { ...MOVES, description: `Optional: moves to play first from the starting position, in order. ${MOVES.description}` },
+        start: START,
       },
       required: [],
     },
@@ -140,6 +151,9 @@ function foreign(req) {
 }
 
 export function createHandler(getClient) {
+  // Set once the API has refused the fuller request for a reason of its own (a field or a beta this
+  // account doesn't take): from then on this instance asks the plain way first, and saves the trip.
+  let plainOnly = false;
   return async function handler(req, res) {
     const client = getClient();
     if (req.method === 'GET') {
@@ -209,12 +223,13 @@ export function createHandler(getClient) {
     try {
       let msg;
       try {
-        msg = await run(false);
+        msg = await run(plainOnly);
       } catch (err) {
         // refused before anything was said (a history edited after all, or a beta field this
         // account's API doesn't take): once more the plain way, without the thinking blocks
-        if (!(err instanceof Anthropic.BadRequestError) || wrote) throw err;
+        if (plainOnly || !(err instanceof Anthropic.BadRequestError) || wrote) throw err;
         console.error('chess-coach: plain retry after', err.status, err.message);
+        if (!/signature|different conversation/i.test(String(err.message))) plainOnly = true;
         msg = await run(true);
       }
       // A tool call cut off by the token limit or by a refusal mustn't be run: say the turn ended.

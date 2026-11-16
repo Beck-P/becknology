@@ -1,4 +1,7 @@
-/* ===== Review & Coach (review/review.js) — same library, same firelight as styles.css ===== */
+/* ===== Review & Coach (review/review.js) — same library, same firelight as styles.css =====
+   Three columns: the games and the game's own story (left), the board with Stockfish's lines under it
+   (middle), the coach from top to bottom (right). Narrower, the left drops under the board; on a phone
+   it is one column in the order you use it: board, coach, engine, moves. */
 
 :root {
   --mk-best: #7cc46a;
@@ -8,11 +11,14 @@
   --mk-blunder: #e5484d;
   --arrow-best: #6fbf5a;
   --arrow-better: #5aa2ee;
+  --rv-top: 56px;                 /* what stays clear above a panel that sticks: the Bridge's bar */
 }
+
+html.in-frame { --rv-top: 12px; }
 
 .rv-layout {
   display: grid;
-  grid-template-columns: 250px minmax(0, 1fr) minmax(320px, 410px);
+  grid-template-columns: 290px minmax(0, 1fr) minmax(340px, 430px);
   gap: 20px;
   align-items: start;
 }
@@ -95,15 +101,48 @@ body.on-review .subtitle { display: none; }
 .rv-note:empty { display: none; }
 .rv-note-error { color: #f0a08a; font-style: normal; }
 
-/* ----- games ----- */
+/* ----- left: the games, and the game ----- */
 
-.rv-games { display: flex; flex-direction: column; gap: 10px; }
+.rv-left { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
 
-.rv-sources { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+.rv-games { display: flex; flex-direction: column; gap: 10px; padding-top: 6px; }
+
+/* the heading is the handle: it folds the picker away once a game is on the board */
+.rv-layout .rv-games-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 0 2px;
+  background: none;
+  border: 0;
+  text-align: left;
+}
+
+.rv-games-now {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0;
+  color: var(--page);
+}
+
+.rv-chevron { color: var(--leather); font-size: 13px; transition: transform 0.15s; }
+.rv-games.is-folded .rv-chevron { transform: rotate(-90deg); }
+.rv-games.is-folded { padding-bottom: 8px; }
+.rv-games.is-folded .rv-games-body { display: none; }
+.rv-games-body { display: flex; flex-direction: column; gap: 10px; }
+
+.rv-sources { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
 
 .rv-layout .rv-source {
-  padding: 6px 4px;
-  font-size: 11px;
+  padding: 6px 2px;
+  font-size: 10.5px;
+  letter-spacing: 0;
   background: rgba(20, 8, 10, 0.55);
   border-color: var(--oak);
   color: var(--page);
@@ -123,7 +162,7 @@ body.on-review .subtitle { display: none; }
   display: flex;
   flex-direction: column;
   gap: 3px;
-  max-height: min(58vh, 620px);
+  max-height: min(46vh, 520px);
   overflow-y: auto;
   margin: 0 -4px;
   padding: 0 4px;
@@ -172,7 +211,84 @@ body.on-review .subtitle { display: none; }
 .rv-layout .rv-more { font-size: 11px; }
 .rv-more[hidden] { display: none; }
 
-/* ----- the board ----- */
+.rv-summary { display: flex; flex-direction: column; gap: 10px; }
+
+.rv-game-title { font-family: var(--serif); font-size: 17px; font-weight: 600; color: var(--page-bright); line-height: 1.25; overflow-wrap: anywhere; }
+.rv-vs { font-style: italic; font-weight: 400; font-size: 14px; color: var(--leather); }
+.rv-sub { display: block; margin-top: 3px; font-family: var(--mono); font-size: 10.5px; font-weight: 400; line-height: 1.45; color: var(--leather); }
+.rv-sub a { color: var(--firelight); }
+
+.rv-acc { display: flex; flex-direction: column; gap: 5px; }
+.rv-acc[hidden] { display: none; }
+
+.rv-acc-box {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 0 8px;
+  padding: 6px 10px;
+  background: rgba(20, 8, 10, 0.55);
+  border: 1px solid var(--oak);
+  border-radius: 4px;
+}
+
+.rv-acc-who { display: flex; align-items: center; gap: 6px; font-size: 14px; color: var(--page); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.rv-acc-num { font-family: var(--mono); font-size: 18px; color: var(--page-bright); }
+.rv-acc-num small { margin-left: 1px; font-size: 11px; color: var(--leather); }
+.rv-acc-counts { grid-column: 1 / -1; display: flex; gap: 10px; font-family: var(--mono); font-size: 11px; }
+.rv-count.rv-mk-blunder { color: #ff8a8d; }
+.rv-count.rv-mk-mistake { color: var(--mk-mistake); }
+.rv-count.rv-mk-inaccuracy { color: var(--mk-inaccuracy); }
+
+.rv-graph { width: 100%; height: 58px; border-radius: 4px; border: 1px solid var(--oak); cursor: pointer; display: block; }
+.rv-graph[hidden] { display: none; }
+
+.rv-progress { position: relative; height: 20px; border-radius: 3px; background: rgba(20, 8, 10, 0.6); overflow: hidden; }
+.rv-progress[hidden] { display: none; }
+.rv-progress-bar { position: absolute; inset: 0 auto 0 0; width: 0; background: linear-gradient(90deg, rgba(200, 122, 58, 0.35), rgba(255, 170, 85, 0.5)); transition: width 0.2s; }
+.rv-progress span { position: relative; display: block; padding: 0 8px; font-family: var(--mono); font-size: 10.5px; line-height: 20px; color: var(--page-bright); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.rv-moves {
+  display: grid;
+  grid-template-columns: 30px 1fr 1fr;
+  gap: 1px 4px;
+  align-content: start;
+  max-height: max(140px, calc(100vh - 560px));
+  overflow-y: auto;
+  position: relative;
+  font-family: var(--mono);
+  font-size: 13px;
+}
+
+.rv-moves:empty { display: none; }
+.rv-placeholder { grid-column: 1 / -1; font-family: var(--serif); font-style: italic; font-size: 14px; color: var(--leather); }
+.rv-mv-no { color: var(--leather); text-align: right; padding: 3px 2px 3px 0; }
+
+.rv-layout .rv-mv {
+  text-align: left;
+  padding: 3px 6px;
+  border: 1px solid transparent;
+  background: none;
+  font-size: 13px;
+  letter-spacing: 0;
+  color: var(--page-bright);
+}
+
+.rv-layout .rv-mv:hover { background: rgba(74, 40, 24, 0.6); }
+.rv-layout .rv-mv.is-now { background: rgba(200, 122, 58, 0.32); border-color: rgba(255, 170, 85, 0.5); }
+.rv-layout .rv-mv.is-now.is-branch { background: none; border-style: dashed; }
+.rv-mv-gap { color: var(--leather); cursor: default; }
+
+.rv-mk { margin-left: 3px; font-weight: 600; }
+.rv-mk.rv-mk-inaccuracy { color: var(--mk-inaccuracy); }
+.rv-mk.rv-mk-mistake { color: var(--mk-mistake); }
+.rv-mk.rv-mk-blunder { color: #ff8a8d; }
+
+.rv-sideline { font-family: var(--mono); font-size: 12.5px; line-height: 1.5; color: var(--page); padding: 6px 8px; border: 1px dashed var(--oak-light); border-radius: 4px; }
+.rv-sideline[hidden] { display: none; }
+.rv-sideline-tag { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ember); margin-right: 4px; }
+
+/* ----- middle: the board ----- */
 
 .rv-board-area {
   display: flex;
@@ -181,7 +297,7 @@ body.on-review .subtitle { display: none; }
   min-width: 0;
   width: 100%;
   /* the board as big as leaves its engine lines on screen under it */
-  max-width: max(340px, calc(100vh - 400px));
+  max-width: max(340px, calc(100vh - 385px));
   margin: 0 auto;
 }
 
@@ -265,6 +381,7 @@ body.on-review .subtitle { display: none; }
   aspect-ratio: 1;
   border-radius: 3px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55), 0 0 0 4px var(--oak-deep), 0 0 0 5px var(--oak-mid);
+  scroll-margin-top: calc(var(--rv-top) + 30px);
 }
 
 #rv-board { width: 100%; height: 100%; }
@@ -346,7 +463,7 @@ body.on-review .subtitle { display: none; }
   background: linear-gradient(180deg, rgba(200, 122, 58, 0.4), rgba(107, 64, 48, 0.5));
 }
 
-/* ----- setting up a position ----- */
+/* setting up a position */
 
 .rv-editor {
   display: flex;
@@ -379,14 +496,14 @@ body.on-review .subtitle { display: none; }
 .rv-layout .rv-brush[data-brush="x"] { font-family: var(--mono); font-size: 15px; background: var(--oak); color: var(--page-bright); }
 .rv-layout .rv-brush.active { outline: 2px solid var(--ember-bright); outline-offset: 1px; }
 
-/* ----- the engine's lines ----- */
+/* the engine's lines */
 
 .rv-engine { margin-left: 26px; padding: 10px 12px; }
 
 .rv-engine-head {
   display: flex;
-  justify-content: space-between;
   align-items: baseline;
+  gap: 12px;
   margin-bottom: 6px;
   font-family: var(--mono);
   font-size: 11px;
@@ -395,7 +512,13 @@ body.on-review .subtitle { display: none; }
   color: var(--leather);
 }
 
-.rv-engine-depth { letter-spacing: 0.04em; text-transform: none; }
+.rv-engine-name { white-space: nowrap; }
+.rv-engine-depth { margin-left: auto; letter-spacing: 0.04em; text-transform: none; white-space: nowrap; }
+
+.rv-legend { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-family: var(--serif); font-style: italic; font-size: 12px; letter-spacing: 0; text-transform: none; }
+.rv-key { display: inline-block; width: 14px; height: 4px; border-radius: 2px; vertical-align: middle; margin: 0 4px 2px 0; }
+.rv-key-best { background: var(--arrow-best); }
+.rv-key-better { background: var(--arrow-better); margin-left: 8px; }
 
 .rv-lines { display: flex; flex-direction: column; gap: 2px; min-height: 76px; }
 .rv-lines.is-stale { opacity: 0.45; }
@@ -441,109 +564,25 @@ body.on-review .subtitle { display: none; }
 
 .rv-layout .rv-line-move:hover { color: var(--ember-bright); text-decoration: underline; }
 
-.rv-legend { margin-top: 6px; font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--leather); }
-.rv-key { display: inline-block; width: 16px; height: 4px; border-radius: 2px; vertical-align: middle; margin: 0 3px 2px 0; }
-.rv-key-best { background: var(--arrow-best); }
-.rv-key-better { background: var(--arrow-better); margin-left: 8px; }
+/* ----- right: the coach -----
+   One screen tall and it stays put while the rest of the page scrolls. The conversation takes whatever
+   height the heading, the suggestions and the question box leave, so those three can never be pushed out. */
 
-/* ----- the side: summary, moves, coach ----- */
-
-/* On a wide screen the side is one screen tall and stays put while the board's column scrolls: the
-   coach's box is always in reach, and the conversation takes whatever height is left. */
-.rv-side {
+.rv-coach {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 10px;
   min-width: 0;
   position: sticky;
-  top: 12px;
-  height: calc(100vh - 150px);
-  min-height: 560px;
+  top: var(--rv-top);
+  height: calc(100vh - 118px - var(--rv-top));
+  min-height: 360px;
+  scroll-margin-top: var(--rv-top);
 }
 
-.rv-summary { display: flex; flex-direction: column; gap: 10px; flex: none; }
-
-.rv-game-title { font-family: var(--serif); font-size: 18px; font-weight: 600; color: var(--page-bright); line-height: 1.25; }
-.rv-vs { font-style: italic; font-weight: 400; font-size: 14px; color: var(--leather); }
-.rv-sub { display: block; margin-top: 2px; font-family: var(--mono); font-size: 11px; font-weight: 400; color: var(--leather); }
-.rv-sub a { color: var(--firelight); }
-
-.rv-acc { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.rv-acc[hidden] { display: none; }
-
-.rv-acc-box {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-  padding: 8px 10px;
-  background: rgba(20, 8, 10, 0.55);
-  border: 1px solid var(--oak);
-  border-radius: 4px;
-}
-
-.rv-acc-who { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--page); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-.rv-acc-num { font-family: var(--mono); font-size: 22px; color: var(--page-bright); }
-.rv-acc-num small { margin-left: 3px; font-size: 10px; color: var(--leather); }
-.rv-acc-counts { display: flex; gap: 8px; font-family: var(--mono); font-size: 11.5px; }
-.rv-count.rv-mk-blunder { color: #ff8a8d; }
-.rv-count.rv-mk-mistake { color: var(--mk-mistake); }
-.rv-count.rv-mk-inaccuracy { color: var(--mk-inaccuracy); }
-
-.rv-graph { width: 100%; height: 64px; border-radius: 4px; border: 1px solid var(--oak); cursor: pointer; display: block; }
-.rv-graph[hidden] { display: none; }
-
-.rv-progress { position: relative; height: 20px; border-radius: 3px; background: rgba(20, 8, 10, 0.6); overflow: hidden; }
-.rv-progress[hidden] { display: none; }
-.rv-progress-bar { position: absolute; inset: 0 auto 0 0; width: 0; background: linear-gradient(90deg, rgba(200, 122, 58, 0.35), rgba(255, 170, 85, 0.5)); transition: width 0.2s; }
-.rv-progress span { position: relative; display: block; padding: 0 8px; font-family: var(--mono); font-size: 10.5px; line-height: 20px; color: var(--page-bright); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-.rv-moves {
-  display: grid;
-  grid-template-columns: 32px 1fr 1fr;
-  gap: 1px 4px;
-  align-content: start;
-  max-height: 132px;
-  overflow-y: auto;
-  position: relative;
-  font-family: var(--mono);
-  font-size: 13px;
-}
-
-.rv-moves:empty { display: none; }
-.rv-placeholder { grid-column: 1 / -1; font-family: var(--serif); font-style: italic; font-size: 14px; color: var(--leather); }
-.rv-mv-no { color: var(--leather); text-align: right; padding: 3px 2px 3px 0; }
-
-.rv-layout .rv-mv {
-  text-align: left;
-  padding: 3px 6px;
-  border: 1px solid transparent;
-  background: none;
-  font-size: 13px;
-  letter-spacing: 0;
-  color: var(--page-bright);
-}
-
-.rv-layout .rv-mv:hover { background: rgba(74, 40, 24, 0.6); }
-.rv-layout .rv-mv.is-now { background: rgba(200, 122, 58, 0.32); border-color: rgba(255, 170, 85, 0.5); }
-.rv-layout .rv-mv.is-now.is-branch { background: none; border-style: dashed; }
-.rv-mv-gap { color: var(--leather); cursor: default; }
-
-.rv-mk { margin-left: 3px; font-weight: 600; }
-.rv-mk.rv-mk-inaccuracy { color: var(--mk-inaccuracy); }
-.rv-mk.rv-mk-mistake { color: var(--mk-mistake); }
-.rv-mk.rv-mk-blunder { color: #ff8a8d; }
-
-.rv-sideline { font-family: var(--mono); font-size: 12.5px; line-height: 1.5; color: var(--page); padding: 6px 8px; border: 1px dashed var(--oak-light); border-radius: 4px; }
-.rv-sideline[hidden] { display: none; }
-.rv-sideline-tag { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ember); margin-right: 4px; }
-
-/* the coach */
-
-.rv-coach { display: flex; flex-direction: column; gap: 10px; flex: 1 1 auto; min-height: 0; }
-.rv-coach-head { display: flex; align-items: center; gap: 8px; }
+.rv-coach-head { display: flex; align-items: center; gap: 8px; flex: none; }
 .rv-coach-state { flex: 1; min-width: 0; font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--ember); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-.rv-layout .rv-icon-btn { padding: 4px 8px; font-size: 11px; }
+.rv-layout .rv-icon-btn { padding: 4px 8px; font-size: 11px; white-space: nowrap; }
 .rv-icon-btn[hidden] { display: none; }
 .rv-layout .rv-icon-btn.active { border-color: var(--ember); color: var(--ember-bright); box-shadow: 0 0 10px rgba(255, 170, 85, 0.35); }
 
@@ -552,7 +591,7 @@ body.on-review .subtitle { display: none; }
   flex-direction: column;
   gap: 8px;
   flex: 1 1 auto;
-  min-height: 120px;
+  min-height: 0;
   overflow-y: auto;
   padding: 2px 4px 2px 0;
 }
@@ -563,7 +602,7 @@ body.on-review .subtitle { display: none; }
 .rv-msg strong { color: var(--ember-bright); font-weight: 600; }
 
 .rv-msg-you { align-self: flex-end; background: rgba(107, 64, 48, 0.6); border: 1px solid var(--oak-light); color: var(--page-bright); border-bottom-right-radius: 2px; }
-.rv-msg-coach { align-self: flex-start; position: relative; background: rgba(20, 8, 10, 0.65); border: 1px solid var(--oak-mid); color: var(--page-bright); border-bottom-left-radius: 2px; }
+.rv-msg-coach { align-self: flex-start; background: rgba(20, 8, 10, 0.65); border: 1px solid var(--oak-mid); color: var(--page-bright); border-bottom-left-radius: 2px; }
 .rv-msg-note { align-self: center; max-width: 100%; padding: 2px 6px; font-style: italic; font-size: 13.5px; color: var(--leather); text-align: center; }
 .rv-msg-error { color: #f0a08a; font-style: normal; }
 
@@ -572,34 +611,57 @@ body.on-review .subtitle { display: none; }
 .rv-wait:not(:empty)::after { content: ""; }
 @keyframes rv-dots { 0% { width: 0; } 100% { width: 1em; } }
 
-.rv-layout .rv-say { margin: 4px 0 0 8px; float: right; padding: 0 5px; font-size: 13px; line-height: 20px; background: none; border-color: transparent; opacity: 0.6; }
+/* a move in an answer: click it and the board shows it */
+.rv-layout .rv-san {
+  padding: 0 1px;
+  border: 0;
+  border-bottom: 1px dotted rgba(255, 213, 122, 0.55);
+  border-radius: 0;
+  background: none;
+  font: inherit;
+  letter-spacing: 0;
+  color: var(--ember-bright);
+}
+
+.rv-layout .rv-san:hover { background: rgba(200, 122, 58, 0.28); border-bottom-style: solid; }
+.rv-layout .rv-san.is-off { color: inherit; border-bottom-color: transparent; cursor: default; background: none; }
+
+/* under an answer: how long it took, and reading it aloud */
+.rv-msg-foot { display: flex; justify-content: flex-end; align-items: center; gap: 6px; margin-top: 4px; font-family: var(--mono); font-size: 10px; color: var(--leather); }
+.rv-layout .rv-say { padding: 0 4px; font-size: 12px; line-height: 18px; background: none; border-color: transparent; opacity: 0.65; }
 .rv-layout .rv-say:hover { opacity: 1; }
 
-.rv-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+/* the suggestions: one row, however many there are */
+.rv-chips { display: flex; gap: 5px; flex: none; overflow-x: auto; scrollbar-width: none; }
+.rv-chips::-webkit-scrollbar { display: none; }
 .rv-chips:empty { display: none; }
 
 .rv-layout .rv-chip {
-  padding: 5px 9px;
+  flex: none;
+  padding: 5px 10px;
   border-radius: 13px;
   font-family: var(--serif);
   font-size: 13.5px;
   letter-spacing: 0;
-  text-align: left;
+  white-space: nowrap;
   background: rgba(20, 8, 10, 0.55);
   border-color: var(--oak-light);
   color: var(--page);
 }
 
-.rv-ask { display: flex; gap: 6px; align-items: flex-end; }
-.rv-layout .rv-ask textarea { font-family: var(--serif); font-size: 16px; resize: none; min-height: 40px; max-height: 110px; }
-.rv-layout .rv-send { height: 40px; background: linear-gradient(180deg, rgba(200, 122, 58, 0.5), rgba(107, 64, 48, 0.6)); border-color: rgba(255, 170, 85, 0.6); color: var(--ember-bright); }
-.rv-layout .rv-mic { height: 40px; width: 42px; padding: 0; font-size: 17px; }
+.rv-layout .rv-chip.is-lead { border-color: rgba(255, 170, 85, 0.6); color: var(--ember-bright); }
+
+.rv-ask { display: flex; gap: 6px; align-items: flex-end; flex: none; }
+.rv-layout .rv-ask textarea { font-family: var(--serif); font-size: 16px; resize: none; min-height: 40px; max-height: 120px; overflow-y: auto; }
+.rv-layout .rv-send { flex: none; height: 40px; min-width: 56px; background: linear-gradient(180deg, rgba(200, 122, 58, 0.5), rgba(107, 64, 48, 0.6)); border-color: rgba(255, 170, 85, 0.6); color: var(--ember-bright); }
+.rv-layout .rv-send.is-stop { background: rgba(20, 8, 10, 0.6); border-color: var(--oak-light); color: var(--page); }
+.rv-layout .rv-mic { flex: none; height: 40px; width: 42px; padding: 0; font-size: 17px; }
 .rv-mic[hidden] { display: none; }
 .rv-layout .rv-mic.is-on { border-color: var(--mk-blunder); box-shadow: 0 0 0 3px rgba(229, 72, 77, 0.28); animation: rv-pulse 1.1s ease-in-out infinite; }
 @keyframes rv-pulse { 50% { box-shadow: 0 0 0 7px rgba(229, 72, 77, 0.08); } }
 
+.rv-coach.is-off { height: auto; min-height: 0; }
 .rv-coach.is-off .rv-ask, .rv-coach.is-off .rv-chips { display: none; }
-.rv-coach.is-off { flex: none; }
 
 /* from a battle in Wizard Chess to the coach */
 .coach-handoff-btn {
@@ -618,34 +680,42 @@ body.on-review .subtitle { display: none; }
 
 .coach-handoff-btn:hover { border-color: var(--ember-bright); }
 
-/* ----- narrower screens ----- */
+/* ----- narrower: the board and the coach side by side, the games and the moves under the board ----- */
 
 @media (max-width: 1240px) {
   .rv-layout { grid-template-columns: minmax(0, 1fr) minmax(300px, 380px); }
-  .rv-games { grid-column: 1; grid-row: 2; }
   .rv-board-area { grid-column: 1; grid-row: 1; }
-  .rv-side { grid-column: 2; grid-row: 1 / span 2; }
+  .rv-left { grid-column: 1; grid-row: 2; flex-direction: row; align-items: flex-start; }
+  .rv-left > * { flex: 1 1 0; min-width: 0; }
+  .rv-coach { grid-column: 2; grid-row: 1 / span 2; }
   .rv-game-list { max-height: 260px; }
+  .rv-moves { max-height: 240px; }
 }
 
+/* ----- a phone: one column, in the order you use it ----- */
+
 @media (max-width: 860px) {
-  .rv-layout { grid-template-columns: minmax(0, 1fr); gap: 14px; }
-  .rv-games, .rv-board-area, .rv-side { grid-column: 1; grid-row: auto; }
+  .rv-layout { display: flex; flex-direction: column; align-items: stretch; gap: 10px; }
+  .rv-left, .rv-board-area { display: contents; }
   .rv-games { order: 1; }
-  .rv-board-area { order: 2; max-width: 100%; }
-  .rv-side { order: 3; position: static; height: auto; min-height: 0; }
-  .rv-coach { flex: none; }
-  .rv-moves { max-height: 172px; }
-  .rv-game-list { max-height: 190px; }
-  .rv-sources { grid-template-columns: repeat(4, 1fr); }
+  .rv-board-area > * { order: 2; }
+  .rv-coach { order: 3; position: static; height: auto; min-height: 0; }
+  .rv-board-area > .rv-engine { order: 4; }
+  .rv-summary { order: 5; }
+
+  .rv-chat { flex: none; max-height: 46vh; }
+  .rv-game-list { max-height: 210px; }
+  .rv-moves { max-height: 190px; }
   .rv-player, .rv-nav, .rv-verdict { padding-left: 0; }
   .rv-engine, .rv-editor { margin-left: 0; }
+  .rv-legend { display: none; }
   .rv-evalbar { width: 12px; }
   .rv-evalbar-num { display: none; }
-  .rv-chat { flex: none; height: clamp(200px, 46vh, 420px); }
   .rv-layout .rv-nav button { min-width: 46px; min-height: 40px; }
   .rv-layout .rv-source { min-height: 36px; }
   .rv-layout .rv-chip { min-height: 36px; }
   .rv-layout .rv-mv { min-height: 30px; }
   .rv-layout .rv-icon-btn { min-height: 36px; min-width: 36px; }
+  .rv-layout .rv-games-head { min-height: 36px; }
+  .rv-layout .rv-say { min-width: 32px; min-height: 30px; }
 }
