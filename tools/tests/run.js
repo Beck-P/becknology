@@ -194,6 +194,8 @@ for (const n of names) {
     const label = [file, ...args.filter((a) => !a.startsWith('/'))].join(' ');
     results.push([label, ok]);
     console.log((ok ? 'PASS ' : 'FAIL ') + label + '  (' + Math.round((Date.now() - t0) / 1000) + 's)');
+    // a failure says why first: the lines that failed it (a long test's are far past the fourteen kept below)
+    if (!ok) out.split('\n').filter((l) => BAD.test(l) && !/^\s+at /.test(l)).slice(0, 12).forEach((l) => console.log('  !! ' + l.slice(0, 300)));
     out.split('\n').filter((l) => KEEP.test(l) && !/^\s+at /.test(l)).slice(0, 14).forEach((l) => console.log('     ' + l.slice(0, 200)));
   }
 }
