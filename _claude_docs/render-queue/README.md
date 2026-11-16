@@ -47,7 +47,7 @@ finish, the Hollow's floor takes strong bands round its one lantern, and the Hal
 
 ## Found, not yet written (each needs a script fix first)
 Ranked by how much a player would notice; details and images were in the look-over's findings.
-- **Hoarfell** (Beck named it as the planet with things that look off): the **park's** kickers barely show; bands of snow inside the cliff foot are solid on the col and in the valley.
+- **Hoarfell** (Beck named it as the planet with things that look off): bands of snow inside the cliff foot are solid on the col and in the valley.
 - **Old Town** (`lumar-crown-oldtown`): the Old Keep's roof is one flat beige plane (the Admiral's cat was "on the roof of the Old Keep"); tall gable houses reach up into the lane north of them.
 - **The Crater** (`lumar-cinder-volcano`): now that the camera follows you, its walls are stretched noise with square corners at the map's edge and the floor is flat noise. **Cinder Key**'s volcano flank is in coarse stepped bands.
 - **The Spires**: a pale wavy wash across the top of the plaza (check the light first).
