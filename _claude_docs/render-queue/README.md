@@ -31,7 +31,7 @@ The Boughs, the Hollow Bough tavern, the falls, the cave behind them, Mirror Lak
 ## Found, not yet written (each needs a script fix first)
 Ranked by how much a player would notice; details and images were in the look-over's findings.
 - **Hoarfell** (Beck named it as the planet with things that look off): the **monastery's** buildings are plain flat white (rebuild-level); the **park's** kickers barely show; **Fellhaven's** tarn ice is brighter than the snow at night (not the scene: js/litscene.js `hoarfell()` mixes the ice's shade 42% toward a fixed `ICE_SH` that never darkens with the night, so every Hoarfell ice surface — the tarn, the glacier's blue bands, the pistes' ice — is lighter than the snow after dark; an engine change that moves every Hoarfell place's night picture, so it wants Beck's or the engine owner's nod); bands of snow inside the cliff foot are solid on the col and in the valley.
-- **The Crater** (`lumar-cinder-volcano`): now that the camera follows you, its walls are stretched noise with square corners at the map's edge and the floor is flat noise. **Cinder Key**'s volcano flank is in coarse stepped bands.
+- **Cinder Key**'s volcano flank is in coarse stepped bands.
 - **The Spires**: a pale wavy wash across the top of the plaza (check the light first).
 - **The Stilts**: the quay stairs are a plain grey slab.
 - **Starling Holm, built**: the café's parasols overlap the warehouse wall.
